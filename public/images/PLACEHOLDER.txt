@@ -1,0 +1,21 @@
+📸 PLACEZ VOS IMAGES ICI
+
+Ce dossier doit contenir les images suivantes :
+
+✅ hero-shipping.jpg
+✅ how-it-works-process.png
+✅ pricing-illustration.png
+✅ delivery-map.png
+✅ testimonial-1.jpg
+✅ testimonial-2.jpg
+✅ testimonial-3.jpg
+✅ customer-support.png
+✅ tracking-interface.png
+✅ contact-team.jpg
+
+📋 Consultez IMAGE_GUIDE.md à la racine du projet pour :
+   - Les prompts IA complets pour chaque image
+   - Les dimensions recommandées
+   - Les outils de génération suggérés
+
+🚀 Une fois les images placées ici, elles apparaîtront automatiquement sur le site !

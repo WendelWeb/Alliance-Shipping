@@ -1,0 +1,221 @@
+export const es = {
+  nav: {
+    home: 'Inicio',
+    services: 'Servicios',
+    pricing: 'Precios',
+    tracking: 'Rastrear Paquete',
+    locations: 'Ubicaciones',
+    faq: 'Preguntas',
+    contact: 'Contacto',
+    sendPackage: 'Enviar Paquete',
+  },
+  hero: {
+    title: 'Envío Rápido y Confiable',
+    subtitle: 'Entre USA y Haití',
+    description: 'Su socio de confianza para la entrega internacional segura de paquetes. Hacemos que el envío sea simple, rápido y asequible.',
+    ctaPrimary: 'Enviar un Paquete',
+    ctaSecondary: 'Rastrear su Paquete',
+    trustBadge: 'Confianza de miles de clientes',
+  },
+  howItWorks: {
+    title: 'Cómo Funciona',
+    subtitle: 'Un proceso simple y eficiente',
+    steps: [
+      {
+        title: 'Deje su Paquete',
+        description: 'Visite una de nuestras ubicaciones en Miami o Haití y deje su paquete. Aceptamos paquetes de todos los tamaños.',
+      },
+      {
+        title: 'Pesamos y Calculamos',
+        description: 'Nuestro equipo pesa su paquete y calcula el costo de envío según el peso. Pague de forma segura en el sitio.',
+      },
+      {
+        title: 'Transporte Seguro',
+        description: 'Su paquete se carga cuidadosamente y se transporta con nuestros socios de envío seguros a través de las fronteras.',
+      },
+      {
+        title: 'Entrega y Notificación',
+        description: 'El destinatario recibe el paquete en la ubicación designada. Usted recibe actualizaciones de rastreo en tiempo real.',
+      },
+    ],
+  },
+  pricing: {
+    title: 'Precios Transparentes',
+    subtitle: 'Sin tarifas ocultas, solo precios honestos',
+    serviceFee: 'Tarifa de Servicio',
+    perPound: 'Por Libra',
+    deliveryTime: 'Tiempo de Entrega',
+    days: 'días',
+    perfumeNote: 'Los paquetes que contienen perfumes requieren 5 días adicionales para el procesamiento aduanero',
+    features: [
+      'Rastreo en tiempo real',
+      'Seguro incluido',
+      'Manejo seguro',
+      'Entrega puerta a puerta',
+      'Despacho aduanero',
+      'Soporte al cliente 24/7',
+    ],
+    calculate: 'Calcular Costo de Envío',
+  },
+  delivery: {
+    title: 'Rutas de Entrega',
+    subtitle: 'Actualmente disponible: USA a Cabo Haitiano',
+    standard: 'Entrega Estándar',
+    express: 'Express Disponible',
+    comingSoon: 'Próximamente',
+    currentRoute: {
+      from: 'Miami, USA',
+      to: 'Cabo Haitiano, Haití',
+      duration: '3-6 días',
+    },
+    comingSoonRoutes: [
+      { from: 'Miami', to: 'Puerto Príncipe' },
+      { from: 'Miami', to: 'Puerto de Paz' },
+    ],
+  },
+  trust: {
+    title: 'Por qué Confiar en Alliance Shipping',
+    subtitle: 'Su satisfacción es nuestra prioridad',
+    stats: {
+      experience: 'Años de Experiencia',
+      packages: 'Paquetes Entregados',
+      satisfaction: 'Satisfacción del Cliente',
+      success: 'Tasa de Éxito de Entrega',
+    },
+    features: [
+      {
+        title: 'Manejo Seguro',
+        description: 'Cada paquete se maneja con cuidado y se rastrea durante todo el viaje.',
+      },
+      {
+        title: 'Seguro Incluido',
+        description: 'Todos los envíos incluyen cobertura de seguro básica para su tranquilidad.',
+      },
+      {
+        title: 'Experiencia Aduanera',
+        description: 'Manejamos todo el papeleo y despacho aduanero para una entrega sin problemas.',
+      },
+      {
+        title: 'Soporte 24/7',
+        description: 'Nuestro equipo de servicio al cliente siempre está disponible para ayudarlo.',
+      },
+    ],
+    testimonials: {
+      title: 'Lo que Dicen Nuestros Clientes',
+      items: [
+        {
+          name: 'Marie Dupont',
+          location: 'Puerto Príncipe, Haití',
+          comment: '¡Alliance Shipping es el mejor! Rápido, confiable y asequible. Envío paquetes a mi familia en Miami cada mes.',
+          rating: 5,
+        },
+        {
+          name: 'Jean Baptiste',
+          location: 'Miami, USA',
+          comment: '¡Excelente servicio! Mis paquetes siempre llegan a tiempo y en perfectas condiciones. ¡Altamente recomendado!',
+          rating: 5,
+        },
+        {
+          name: 'Sarah Johnson',
+          location: 'Cabo Haitiano, Haití',
+          comment: 'Equipo muy profesional. Hicieron que el envío fuera tan fácil y me mantuvieron informada en cada paso.',
+          rating: 5,
+        },
+      ],
+    },
+  },
+  faq: {
+    title: 'Preguntas Frecuentes',
+    subtitle: 'Todo lo que necesita saber',
+    items: [
+      {
+        question: '¿Qué artículos están prohibidos?',
+        answer: 'No podemos enviar armas, drogas ilegales, alimentos perecederos, animales vivos, materiales peligrosos o productos falsificados. Los perfumes y ciertos líquidos tienen restricciones.',
+      },
+      {
+        question: '¿Cómo se calcula el costo?',
+        answer: 'El costo de envío es $5 de tarifa de servicio + $4 por libra. Por ejemplo, un paquete de 10 libras cuesta $45 en total ($5 + $40).',
+      },
+      {
+        question: '¿Cuánto tiempo tarda la entrega?',
+        answer: 'La entrega estándar tarda de 3 a 6 días. Los paquetes con perfumes tardan 5 días adicionales para el procesamiento aduanero.',
+      },
+      {
+        question: '¿Puedo rastrear mi paquete?',
+        answer: '¡Sí! Recibirá un número de rastreo cuando deje su paquete. Úselo en nuestro sitio web para rastrear en tiempo real.',
+      },
+      {
+        question: '¿Qué métodos de pago aceptan?',
+        answer: 'Aceptamos efectivo, tarjetas de crédito/débito y pagos móviles en todas nuestras ubicaciones.',
+      },
+      {
+        question: '¿El seguro está incluido?',
+        answer: 'Sí, todos los envíos incluyen cobertura de seguro básica. Hay cobertura adicional disponible para artículos de alto valor.',
+      },
+      {
+        question: '¿Qué pasa si mi paquete se retrasa?',
+        answer: 'Los retrasos son raros pero pueden ocurrir debido a la aduana o el clima. Le notificaremos de inmediato y proporcionaremos actualizaciones.',
+      },
+      {
+        question: '¿Manejan el despacho aduanero?',
+        answer: 'Sí, manejamos todo el papeleo y despacho aduanero para USA y Haití.',
+      },
+    ],
+  },
+  tracking: {
+    title: 'Rastrear su Paquete',
+    subtitle: 'Ingrese su número de rastreo para ver el estado actual',
+    placeholder: 'Ingrese número de rastreo',
+    button: 'Rastrear Paquete',
+    status: {
+      pending: 'Paquete Recibido',
+      'in-transit': 'En Tránsito',
+      customs: 'Despacho Aduanero',
+      delivered: 'Entregado',
+    },
+    noResults: 'No se encontró información de rastreo. Por favor, verifique su número de rastreo.',
+  },
+  contact: {
+    title: 'Contáctenos',
+    subtitle: 'Estamos aquí para ayudarlo',
+    form: {
+      name: 'Nombre Completo',
+      email: 'Correo Electrónico',
+      phone: 'Número de Teléfono',
+      subject: 'Asunto',
+      message: 'Su Mensaje',
+      send: 'Enviar Mensaje',
+      success: '¡Mensaje enviado con éxito! Nos pondremos en contacto pronto.',
+      error: 'Ocurrió un error. Por favor, inténtelo de nuevo.',
+    },
+    info: {
+      phone: 'Teléfono',
+      email: 'Correo',
+      whatsapp: 'WhatsApp',
+      hours: 'Horario de Atención',
+      hoursValue: 'Lunes - Sábado: 8AM - 6PM',
+    },
+  },
+  footer: {
+    description: 'Su socio de confianza para envíos rápidos, confiables y asequibles entre USA y Haití.',
+    quickLinks: 'Enlaces Rápidos',
+    services: 'Servicios',
+    legal: 'Legal',
+    followUs: 'Síguenos',
+    allRightsReserved: 'Todos los derechos reservados.',
+    privacyPolicy: 'Política de Privacidad',
+    termsOfService: 'Términos de Servicio',
+    shippingPolicy: 'Política de Envío',
+  },
+  common: {
+    learnMore: 'Aprender Más',
+    getStarted: 'Comenzar',
+    contactUs: 'Contáctenos',
+    readMore: 'Leer Más',
+    viewAll: 'Ver Todo',
+    loading: 'Cargando...',
+    error: 'Ocurrió un error',
+  },
+};
+
+export default es;
