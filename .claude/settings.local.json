@@ -11,7 +11,9 @@
       "Bash(npm install:*)",
       "Bash(npx drizzle-kit:*)",
       "Bash(npm run db:push:*)",
-      "Bash(npm run db:seed:*)"
+      "Bash(npm run db:seed:*)",
+      "Bash(grep:*)",
+      "Bash(cat:*)"
     ]
   }
 }
