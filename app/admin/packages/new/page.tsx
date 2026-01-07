@@ -411,7 +411,7 @@ export default function NewPackagePage() {
                   <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div className="text-xs text-blue-800">
                     <p className="font-semibold mb-1">Note:</p>
-                    <p>Package status will be set to "Requested" and will need approval before processing.</p>
+                    <p>Package status will be set to &quot;Requested&quot; and will need approval before processing.</p>
                   </div>
                 </div>
               </div>
