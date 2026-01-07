@@ -46,7 +46,6 @@ export const fr = {
     perPound: 'Par Livre',
     deliveryTime: 'Délai de Livraison',
     days: 'jours',
-    perfumeNote: 'Les colis contenant des parfums nécessitent 5 jours supplémentaires pour le traitement douanier',
     features: [
       'Suivi en temps réel',
       'Assurance incluse',
@@ -130,7 +129,7 @@ export const fr = {
     items: [
       {
         question: 'Quels articles sont interdits ?',
-        answer: 'Nous ne pouvons pas expédier d\'armes, de drogues illégales, d\'aliments périssables, d\'animaux vivants, de matières dangereuses ou de produits contrefaits. Les parfums et certains liquides ont des restrictions.',
+        answer: 'Nous ne pouvons pas expédier d\'armes, de drogues illégales, d\'aliments périssables, d\'animaux vivants, de matières dangereuses ou de produits contrefaits.',
       },
       {
         question: 'Comment le coût est-il calculé ?',
@@ -138,7 +137,7 @@ export const fr = {
       },
       {
         question: 'Combien de temps prend la livraison ?',
-        answer: 'La livraison standard prend 3 à 6 jours. Les colis contenant des parfums prennent 5 jours supplémentaires pour le traitement douanier.',
+        answer: 'La livraison standard prend 3 à 6 jours.',
       },
       {
         question: 'Puis-je suivre mon colis ?',
@@ -215,6 +214,145 @@ export const fr = {
     viewAll: 'Voir Tout',
     loading: 'Chargement...',
     error: 'Une erreur s\'est produite',
+  },
+  bottomNav: {
+    home: 'Accueil',
+    news: 'News',
+    packages: 'Colis',
+    calculator: 'Prix',
+    profile: 'Profile',
+  },
+  news: {
+    title: 'Dernières Nouvelles',
+    subtitle: 'Restez informé de nos services et mises à jour',
+    categories: {
+      all: 'Tout',
+      updates: 'Mises à Jour',
+      services: 'Services',
+      announcements: 'Annonces',
+    },
+    readMore: 'Lire la suite',
+    noNews: 'Aucune actualité disponible pour le moment',
+  },
+  packages: {
+    title: 'Mes Colis',
+    subtitle: 'Suivez et gérez toutes vos expéditions',
+    search: 'Rechercher par numéro de suivi...',
+    noPackages: 'Vous n\'avez pas encore de colis',
+    createPackage: 'Envoyer un Colis',
+    status: {
+      pending: 'En Attente',
+      'in-transit': 'En Transit',
+      customs: 'Douanes',
+      delivered: 'Livré',
+    },
+    details: {
+      trackingNumber: 'Numéro de Suivi',
+      description: 'Description',
+      weight: 'Poids',
+      status: 'Statut',
+      estimatedDelivery: 'Livraison Estimée',
+      timeline: 'Chronologie d\'Expédition',
+      sender: 'Expéditeur',
+      recipient: 'Destinataire',
+    },
+    timeline: {
+      received: 'Colis Reçu',
+      inTransit: 'En Transit',
+      customs: 'Dédouanement',
+      outForDelivery: 'En Cours de Livraison',
+      delivered: 'Livré',
+    },
+  },
+  calculator: {
+    title: 'Calculatrice d\'Expédition',
+    subtitle: 'Calculez votre coût d\'expédition instantanément',
+    weightLabel: 'Poids du Colis',
+    weightPlaceholder: 'Entrez le poids en livres',
+    calculate: 'Calculer le Prix',
+    result: {
+      title: 'Coût Estimé',
+      serviceFee: 'Frais de Service',
+      weightCost: 'Coût du Poids',
+      total: 'Total',
+      deliveryTime: 'Livraison Estimée',
+      days: 'jours',
+    },
+    pricing: {
+      title: 'Informations Tarifaires',
+      serviceFee: '5$ de frais de service',
+      perPound: '4$ par livre',
+      example: 'Exemple: 10 lbs = 5$ + 40$ = 45$',
+    },
+  },
+  profile: {
+    title: 'Mon Profil',
+    subtitle: 'Gérez votre compte et vos préférences',
+    notConnected: 'Non Connecté',
+    signIn: 'Se Connecter',
+    signUp: 'Créer un Compte',
+    stats: {
+      totalPackages: 'Total de Colis',
+      inTransit: 'En Transit',
+      delivered: 'Livrés',
+    },
+    menu: {
+      myPackages: 'Mes Colis',
+      tracking: 'Suivre un Colis',
+      calculator: 'Calculatrice de Prix',
+      settings: 'Paramètres',
+      support: 'Support',
+      signOut: 'Déconnexion',
+    },
+  },
+  auth: {
+    signIn: {
+      title: 'Alliance Shipping',
+      subtitle: 'Votre partenaire de confiance pour l\'expédition USA - Haïti',
+      welcomeBack: 'Connectez-vous pour continuer',
+      features: {
+        tracking: {
+          title: 'Suivi en Temps Réel',
+          description: 'Suivez vos colis à chaque étape du voyage',
+        },
+        secure: {
+          title: 'Sécurisé et Fiable',
+          description: 'Vos colis sont assurés et protégés',
+        },
+        fast: {
+          title: 'Livraison Rapide',
+          description: '10-15 jours de Miami vers Haïti',
+        },
+      },
+      noAccount: 'Pas encore de compte?',
+      signUpLink: 'Inscrivez-vous gratuitement',
+    },
+    signUp: {
+      title: 'Rejoignez-Nous',
+      subtitle: 'Commencez à envoyer vos colis en toute simplicité',
+      createAccount: 'Créer un Compte',
+      joinAlliance: 'Rejoignez Alliance Shipping',
+      benefits: {
+        management: {
+          title: 'Gestion Simplifiée',
+          description: 'Gérez tous vos colis depuis un seul endroit',
+        },
+        pricing: {
+          title: 'Prix Transparents',
+          description: 'Calculez vos frais instantanément',
+        },
+        security: {
+          title: 'Sécurité Garantie',
+          description: 'Vos informations sont protégées',
+        },
+        notifications: {
+          title: 'Notifications en Temps Réel',
+          description: 'Restez informé à chaque étape',
+        },
+      },
+      hasAccount: 'Vous avez déjà un compte?',
+      signInLink: 'Connectez-vous',
+    },
   },
 };
 

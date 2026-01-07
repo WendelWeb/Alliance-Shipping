@@ -1,12 +1,12 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import { Search, Package, Plane, CheckCircle, MapPin } from 'lucide-react';
 import { Container } from '@/components/Container';
 import { SectionTitle } from '@/components/SectionTitle';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
+import { ImageGallery } from '@/components/ImageGallery';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useState } from 'react';
 
@@ -110,13 +110,11 @@ export function Tracking() {
             </div>
 
             {/* Tracking Interface Illustration */}
-            <div className="relative w-full h-64 mt-8">
-              <Image
-                src="/images/tracking-interface.png"
-                alt="Modern package tracking interface - Clean UI/UX dashboard showing tracking timeline on phone/computer screen, map with delivery route, package location pins, blue interface with green success indicators, timeline checkpoints with delivery truck icon and estimated arrival time"
-                fill
-                className="object-contain"
-                sizes="100vw"
+            <div className="relative w-full h-64 mt-8 rounded-xl overflow-hidden">
+              <ImageGallery
+                section="tracking"
+                className="w-full h-full"
+                imageClassName="object-contain"
               />
             </div>
           </Card>

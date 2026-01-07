@@ -1,12 +1,12 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import { DollarSign, Clock, Check, AlertCircle } from 'lucide-react';
 import { Container } from '@/components/Container';
 import { SectionTitle } from '@/components/SectionTitle';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
+import { ImageGallery } from '@/components/ImageGallery';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { PRICING } from '@/constants';
 import { useState } from 'react';
@@ -77,14 +77,6 @@ export function Pricing() {
                   <span className="text-2xl font-bold">${calculatedPrice}</span>
                 </div>
               </div>
-
-              {/* Perfume Note */}
-              <div className="flex items-start gap-3 p-4 bg-yellow-500/20 border border-yellow-300/30 rounded-lg">
-                <AlertCircle className="w-5 h-5 text-yellow-200 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-yellow-50">
-                  {t.pricing.perfumeNote}
-                </p>
-              </div>
             </Card>
           </motion.div>
 
@@ -127,14 +119,12 @@ export function Pricing() {
               Get Started Today
             </Button>
 
-            {/* Pricing Illustration */}
-            <div className="relative w-full h-64 mt-8">
-              <Image
-                src="/images/pricing-illustration.png"
-                alt="Professional pricing illustration - Calculator with dollar signs, shipping boxes with price tags, cost breakdown chart showing $4/lb rate, transparent and trustworthy pricing"
-                fill
-                className="object-contain"
-                sizes="(max-width: 768px) 100vw, 50vw"
+            {/* Pricing Illustration Carousel */}
+            <div className="relative w-full h-64 mt-8 rounded-xl overflow-hidden">
+              <ImageGallery
+                section="pricing"
+                className="w-full h-full"
+                imageClassName="object-contain"
               />
             </div>
           </motion.div>

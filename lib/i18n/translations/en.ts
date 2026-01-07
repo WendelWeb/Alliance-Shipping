@@ -216,6 +216,148 @@ export const en = {
     loading: 'Loading...',
     error: 'An error occurred',
   },
+  bottomNav: {
+    home: 'Home',
+    news: 'News',
+    packages: 'Packages',
+    calculator: 'Price',
+    profile: 'Profile',
+  },
+  news: {
+    title: 'Latest News',
+    subtitle: 'Stay informed about our services and updates',
+    categories: {
+      all: 'All',
+      updates: 'Updates',
+      services: 'Services',
+      announcements: 'Announcements',
+    },
+    readMore: 'Read more',
+    noNews: 'No news available at the moment',
+  },
+  packages: {
+    title: 'My Packages',
+    subtitle: 'Track and manage all your shipments',
+    search: 'Search by tracking number...',
+    noPackages: 'You have no packages yet',
+    createPackage: 'Send a Package',
+    status: {
+      pending: 'Pending',
+      'in-transit': 'In Transit',
+      customs: 'Customs',
+      delivered: 'Delivered',
+    },
+    details: {
+      trackingNumber: 'Tracking Number',
+      description: 'Description',
+      weight: 'Weight',
+      status: 'Status',
+      estimatedDelivery: 'Estimated Delivery',
+      timeline: 'Shipping Timeline',
+      sender: 'Sender',
+      recipient: 'Recipient',
+    },
+    timeline: {
+      received: 'Package Received',
+      inTransit: 'In Transit',
+      customs: 'Customs Clearance',
+      outForDelivery: 'Out for Delivery',
+      delivered: 'Delivered',
+    },
+  },
+  calculator: {
+    title: 'Shipping Calculator',
+    subtitle: 'Calculate your shipping cost instantly',
+    weightLabel: 'Package Weight',
+    weightPlaceholder: 'Enter weight in pounds',
+    perfumeLabel: 'Contains perfume or fragrance',
+    perfumeNote: '+5 days delivery time',
+    calculate: 'Calculate Price',
+    result: {
+      title: 'Estimated Cost',
+      serviceFee: 'Service Fee',
+      weightCost: 'Weight Cost',
+      total: 'Total',
+      deliveryTime: 'Estimated Delivery',
+      days: 'days',
+    },
+    pricing: {
+      title: 'Pricing Information',
+      serviceFee: '$5 service fee',
+      perPound: '$4 per pound',
+      example: 'Example: 10 lbs = $5 + $40 = $45',
+      perfumeExtra: 'Perfumes: +5 days for customs',
+    },
+  },
+  profile: {
+    title: 'My Profile',
+    subtitle: 'Manage your account and preferences',
+    notConnected: 'Not Connected',
+    signIn: 'Sign In',
+    signUp: 'Create Account',
+    stats: {
+      totalPackages: 'Total Packages',
+      inTransit: 'In Transit',
+      delivered: 'Delivered',
+    },
+    menu: {
+      myPackages: 'My Packages',
+      tracking: 'Track Package',
+      calculator: 'Price Calculator',
+      settings: 'Settings',
+      support: 'Support',
+      signOut: 'Sign Out',
+    },
+  },
+  auth: {
+    signIn: {
+      title: 'Alliance Shipping',
+      subtitle: 'Your trusted partner for USA - Haiti shipping',
+      welcomeBack: 'Sign in to continue',
+      features: {
+        tracking: {
+          title: 'Real-time Tracking',
+          description: 'Track your packages at every step of the journey',
+        },
+        secure: {
+          title: 'Secure & Reliable',
+          description: 'Your packages are insured and protected',
+        },
+        fast: {
+          title: 'Fast Delivery',
+          description: '10-15 days from Miami to Haiti',
+        },
+      },
+      noAccount: "Don't have an account?",
+      signUpLink: 'Sign up for free',
+    },
+    signUp: {
+      title: 'Join Us',
+      subtitle: 'Start shipping your packages with ease',
+      createAccount: 'Create an Account',
+      joinAlliance: 'Join Alliance Shipping',
+      benefits: {
+        management: {
+          title: 'Simplified Management',
+          description: 'Manage all your packages from one place',
+        },
+        pricing: {
+          title: 'Transparent Pricing',
+          description: 'Calculate your fees instantly',
+        },
+        security: {
+          title: 'Guaranteed Security',
+          description: 'Your information is protected',
+        },
+        notifications: {
+          title: 'Real-time Notifications',
+          description: 'Stay informed at every step',
+        },
+      },
+      hasAccount: 'Already have an account?',
+      signInLink: 'Sign in',
+    },
+  },
 };
 
 export default en;

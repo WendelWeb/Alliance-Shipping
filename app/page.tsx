@@ -10,12 +10,13 @@ import { FAQ } from '@/sections/FAQ';
 import { Tracking } from '@/sections/Tracking';
 import { Contact } from '@/sections/Contact';
 import { Footer } from '@/sections/Footer';
+import { BottomNav } from '@/components/BottomNav';
 
 export default function Home() {
   return (
     <>
       <Header />
-      <main>
+      <main className="pb-24 md:pb-32">
         <Hero />
         <HowItWorks />
         <Pricing />
@@ -26,6 +27,7 @@ export default function Home() {
         <Contact />
       </main>
       <Footer />
+      <BottomNav />
     </>
   );
 }

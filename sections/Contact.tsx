@@ -1,7 +1,6 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import {
   Mail,
   Phone,
@@ -18,6 +17,7 @@ import { Container } from '@/components/Container';
 import { SectionTitle } from '@/components/SectionTitle';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
+import { ImageGallery } from '@/components/ImageGallery';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { COMPANY_INFO, SOCIAL_LINKS } from '@/constants';
 import { useState } from 'react';
@@ -192,12 +192,10 @@ export function Contact() {
             {/* Contact Team Illustration */}
             <Card padding="lg" className="mt-6">
               <div className="relative w-full h-64 rounded-xl overflow-hidden">
-                <Image
-                  src="/images/contact-team.jpg"
-                  alt="Friendly customer service team illustration - Modern, welcoming customer service team at work with phones and computers helping customers, blue and white professional palette, diverse team with headsets in modern office, USA and Haiti flags visible"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
+                <ImageGallery
+                  section="contact"
+                  className="w-full h-full"
+                  imageClassName="object-cover"
                 />
               </div>
             </Card>

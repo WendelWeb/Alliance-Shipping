@@ -1,11 +1,11 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import { MapPin, Plane, Clock, Sparkles } from 'lucide-react';
 import { Container } from '@/components/Container';
 import { SectionTitle } from '@/components/SectionTitle';
 import { Card } from '@/components/Card';
+import { ImageGallery } from '@/components/ImageGallery';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { LOCATIONS, COMING_SOON_LOCATIONS } from '@/constants';
 
@@ -167,12 +167,10 @@ export function DeliveryTimeline() {
 
             {/* Delivery Route Map */}
             <div className="relative w-full h-64 md:h-80 mt-8">
-              <Image
-                src="/images/delivery-map.png"
-                alt="Modern map illustration showing shipping routes - Stylized map of USA (Miami) and Haiti with curved shipping route from Miami to Cap-Haïtien, pin markers and airplane icon"
-                fill
-                className="object-contain"
-                sizes="100vw"
+              <ImageGallery
+                section="delivery"
+                className="w-full h-full"
+                imageClassName="object-contain"
               />
             </div>
           </Card>

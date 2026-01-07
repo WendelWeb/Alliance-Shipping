@@ -1,11 +1,11 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import { Shield, Award, Clock, Users, Star, Quote } from 'lucide-react';
 import { Container } from '@/components/Container';
 import { SectionTitle } from '@/components/SectionTitle';
 import { Card } from '@/components/Card';
+import { ImageGallery } from '@/components/ImageGallery';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { STATS } from '@/constants';
 
@@ -138,13 +138,11 @@ export function Trust() {
         </div>
 
         {/* Testimonial Images */}
-        <div className="relative w-full h-64 md:h-80 mt-12">
-          <Image
-            src="/images/testimonials-group.jpg"
-            alt="Professional customer testimonial portraits - Diverse, friendly customers (Haitian and American) with genuine smiles, professional attire, warm natural lighting, satisfied and trustworthy expressions"
-            fill
-            className="object-contain"
-            sizes="100vw"
+        <div className="relative w-full h-64 md:h-80 mt-12 rounded-xl overflow-hidden">
+          <ImageGallery
+            section="testimonials"
+            className="w-full h-full"
+            imageClassName="object-contain"
           />
         </div>
       </Container>

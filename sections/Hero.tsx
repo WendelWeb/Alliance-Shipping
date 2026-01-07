@@ -1,32 +1,14 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { ArrowRight, Package, Shield, Clock } from 'lucide-react';
 import { Container } from '@/components/Container';
 import { Button } from '@/components/Button';
+import { ImageGallery } from '@/components/ImageGallery';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { useState, useEffect } from 'react';
 
 export function Hero() {
   const { t } = useTranslation();
-  const [currentImage, setCurrentImage] = useState(0);
-
-  const heroImages = [
-    '/images/hero-shipping.jpg',
-    '/images/hero-shipping-1.jpg',
-    '/images/hero-shipping-2.jpg',
-    '/images/hero-shipping-3.jpg',
-  ];
-
-  // Auto-rotate images every 5 seconds
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % heroImages.length);
-    }, 5000);
-
-    return () => clearInterval(timer);
-  }, [heroImages.length]);
 
   const stats = [
     { icon: Package, label: '50,000+', sublabel: 'Packages Delivered' },
@@ -111,44 +93,14 @@ export function Hero() {
           >
             <div className="relative aspect-square rounded-2xl overflow-hidden shadow-2xl">
               {/* Hero Images Carousel */}
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentImage}
-                  initial={{ opacity: 0, scale: 1.1 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 1, ease: 'easeInOut' }}
-                  className="absolute inset-0"
-                >
-                  <Image
-                    src={heroImages[currentImage]}
-                    alt="Professional international shipping - Modern cargo port with containers, ships, and logistics operations between USA and Haiti"
-                    fill
-                    className="object-cover"
-                    priority={currentImage === 0}
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                  />
-                </motion.div>
-              </AnimatePresence>
+              <ImageGallery
+                section="hero"
+                className="w-full h-full"
+                imageClassName="object-cover"
+              />
 
               {/* Overlay gradient for better text visibility */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-secondary-600/20" />
-
-              {/* Carousel Indicators */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
-                {heroImages.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImage(index)}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      index === currentImage
-                        ? 'w-8 bg-white'
-                        : 'w-2 bg-white/50 hover:bg-white/75'
-                    }`}
-                    aria-label={`Go to image ${index + 1}`}
-                  />
-                ))}
-              </div>
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-secondary-600/20 pointer-events-none" />
 
               {/* Floating cards */}
               <motion.div

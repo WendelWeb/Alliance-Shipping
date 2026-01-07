@@ -216,6 +216,148 @@ export const es = {
     loading: 'Cargando...',
     error: 'Ocurrió un error',
   },
+  bottomNav: {
+    home: 'Inicio',
+    news: 'Noticias',
+    packages: 'Paquetes',
+    calculator: 'Precio',
+    profile: 'Perfil',
+  },
+  news: {
+    title: 'Últimas Noticias',
+    subtitle: 'Mantente informado sobre nuestros servicios y actualizaciones',
+    categories: {
+      all: 'Todas',
+      updates: 'Actualizaciones',
+      services: 'Servicios',
+      announcements: 'Anuncios',
+    },
+    readMore: 'Leer más',
+    noNews: 'No hay noticias disponibles en este momento',
+  },
+  packages: {
+    title: 'Mis Paquetes',
+    subtitle: 'Rastrea y gestiona todos tus envíos',
+    search: 'Buscar por número de seguimiento...',
+    noPackages: 'Aún no tienes paquetes',
+    createPackage: 'Enviar un Paquete',
+    status: {
+      pending: 'Pendiente',
+      'in-transit': 'En Tránsito',
+      customs: 'Aduanas',
+      delivered: 'Entregado',
+    },
+    details: {
+      trackingNumber: 'Número de Seguimiento',
+      description: 'Descripción',
+      weight: 'Peso',
+      status: 'Estado',
+      estimatedDelivery: 'Entrega Estimada',
+      timeline: 'Cronología de Envío',
+      sender: 'Remitente',
+      recipient: 'Destinatario',
+    },
+    timeline: {
+      received: 'Paquete Recibido',
+      inTransit: 'En Tránsito',
+      customs: 'Despacho de Aduanas',
+      outForDelivery: 'En Reparto',
+      delivered: 'Entregado',
+    },
+  },
+  calculator: {
+    title: 'Calculadora de Envío',
+    subtitle: 'Calcula el costo de tu envío al instante',
+    weightLabel: 'Peso del Paquete',
+    weightPlaceholder: 'Ingresa el peso en libras',
+    perfumeLabel: 'Contiene perfume o fragancia',
+    perfumeNote: '+5 días de tiempo de entrega',
+    calculate: 'Calcular Precio',
+    result: {
+      title: 'Costo Estimado',
+      serviceFee: 'Tarifa de Servicio',
+      weightCost: 'Costo por Peso',
+      total: 'Total',
+      deliveryTime: 'Entrega Estimada',
+      days: 'días',
+    },
+    pricing: {
+      title: 'Información de Precios',
+      serviceFee: '$5 de tarifa de servicio',
+      perPound: '$4 por libra',
+      example: 'Ejemplo: 10 lbs = $5 + $40 = $45',
+      perfumeExtra: 'Perfumes: +5 días para aduanas',
+    },
+  },
+  profile: {
+    title: 'Mi Perfil',
+    subtitle: 'Gestiona tu cuenta y preferencias',
+    notConnected: 'No Conectado',
+    signIn: 'Iniciar Sesión',
+    signUp: 'Crear Cuenta',
+    stats: {
+      totalPackages: 'Total de Paquetes',
+      inTransit: 'En Tránsito',
+      delivered: 'Entregados',
+    },
+    menu: {
+      myPackages: 'Mis Paquetes',
+      tracking: 'Rastrear Paquete',
+      calculator: 'Calculadora de Precio',
+      settings: 'Configuración',
+      support: 'Soporte',
+      signOut: 'Cerrar Sesión',
+    },
+  },
+  auth: {
+    signIn: {
+      title: 'Alliance Shipping',
+      subtitle: 'Tu socio de confianza para envíos USA - Haití',
+      welcomeBack: 'Inicia sesión para continuar',
+      features: {
+        tracking: {
+          title: 'Seguimiento en Tiempo Real',
+          description: 'Rastrea tus paquetes en cada paso del viaje',
+        },
+        secure: {
+          title: 'Seguro y Confiable',
+          description: 'Tus paquetes están asegurados y protegidos',
+        },
+        fast: {
+          title: 'Entrega Rápida',
+          description: '10-15 días de Miami a Haití',
+        },
+      },
+      noAccount: '¿No tienes una cuenta?',
+      signUpLink: 'Regístrate gratis',
+    },
+    signUp: {
+      title: 'Únete a Nosotros',
+      subtitle: 'Comienza a enviar tus paquetes con facilidad',
+      createAccount: 'Crear una Cuenta',
+      joinAlliance: 'Únete a Alliance Shipping',
+      benefits: {
+        management: {
+          title: 'Gestión Simplificada',
+          description: 'Gestiona todos tus paquetes desde un solo lugar',
+        },
+        pricing: {
+          title: 'Precios Transparentes',
+          description: 'Calcula tus tarifas al instante',
+        },
+        security: {
+          title: 'Seguridad Garantizada',
+          description: 'Tu información está protegida',
+        },
+        notifications: {
+          title: 'Notificaciones en Tiempo Real',
+          description: 'Mantente informado en cada paso',
+        },
+      },
+      hasAccount: '¿Ya tienes una cuenta?',
+      signInLink: 'Inicia sesión',
+    },
+  },
 };
 
 export default es;

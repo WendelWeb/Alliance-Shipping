@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Menu, X, Package } from 'lucide-react';
+import Image from 'next/image';
+import { Menu, X } from 'lucide-react';
 import { Container } from './Container';
 import { Button } from './Button';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -26,12 +27,18 @@ export function Header() {
       <Container>
         <nav className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2 group">
-            <div className="bg-gradient-primary p-2 rounded-lg group-hover:scale-105 transition-transform">
-              <Package className="w-6 h-6 text-white" />
+          <a href="#" className="flex items-center gap-2 sm:gap-2.5 group">
+            <div className="relative h-8 w-20 sm:h-10 sm:w-24 flex-shrink-0 rounded-lg overflow-hidden ring-2 ring-primary-100 group-hover:ring-primary-300 transition-all shadow-sm">
+              <Image
+                src="/images/logo/logo.jpg"
+                alt="Alliance Shipping Logo"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
             <div className="flex flex-col">
-              <span className="text-xl font-bold text-gray-900 font-display">
+              <span className="text-lg sm:text-xl font-bold text-gray-900 font-display whitespace-nowrap">
                 Alliance Shipping
               </span>
               <span className="text-xs text-gray-500 hidden sm:block">USA • Haïti</span>

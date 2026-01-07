@@ -216,6 +216,148 @@ export const ht = {
     loading: 'Ap Chaje...',
     error: 'Yon erè rive',
   },
+  bottomNav: {
+    home: 'Akèy',
+    news: 'Nouvèl',
+    packages: 'Koli',
+    calculator: 'Pri',
+    profile: 'Profil',
+  },
+  news: {
+    title: 'Dènye Nouvèl',
+    subtitle: 'Rete enfòme sou sèvis nou yo ak mizajou',
+    categories: {
+      all: 'Tout',
+      updates: 'Mizajou',
+      services: 'Sèvis',
+      announcements: 'Anons',
+    },
+    readMore: 'Li plis',
+    noNews: 'Pa gen nouvèl pou kounye a',
+  },
+  packages: {
+    title: 'Koli Mwen Yo',
+    subtitle: 'Swiv ak jere tout ekspedisyon ou yo',
+    search: 'Chèche ak nimewo swivi...',
+    noPackages: 'Ou poko gen koli',
+    createPackage: 'Voye yon Koli',
+    status: {
+      pending: 'An Atant',
+      'in-transit': 'An Transpò',
+      customs: 'Ladwàn',
+      delivered: 'Livre',
+    },
+    details: {
+      trackingNumber: 'Nimewo Swivi',
+      description: 'Deskripsyon',
+      weight: 'Pwa',
+      status: 'Estati',
+      estimatedDelivery: 'Livrezon Estime',
+      timeline: 'Istwa Transpò',
+      sender: 'Moun ki voye',
+      recipient: 'Moun ki resevwa',
+    },
+    timeline: {
+      received: 'Koli Resevwa',
+      inTransit: 'An Transpò',
+      customs: 'Nan Ladwàn',
+      outForDelivery: 'Pral Livre',
+      delivered: 'Livre',
+    },
+  },
+  calculator: {
+    title: 'Kalkilatè Transpò',
+    subtitle: 'Kalkile pri transpò ou imedyatman',
+    weightLabel: 'Pwa Koli a',
+    weightPlaceholder: 'Antre pwa nan liv',
+    perfumeLabel: 'Gen pafen oswa odè',
+    perfumeNote: '+5 jou tan livrezon',
+    calculate: 'Kalkile Pri',
+    result: {
+      title: 'Pri Estime',
+      serviceFee: 'Frè Sèvis',
+      weightCost: 'Pri Pwa',
+      total: 'Total',
+      deliveryTime: 'Livrezon Estime',
+      days: 'jou',
+    },
+    pricing: {
+      title: 'Enfòmasyon Pri',
+      serviceFee: '$5 frè sèvis',
+      perPound: '$4 pa liv',
+      example: 'Egzanp: 10 lbs = $5 + $40 = $45',
+      perfumeExtra: 'Pafen: +5 jou pou ladwàn',
+    },
+  },
+  profile: {
+    title: 'Profil Mwen',
+    subtitle: 'Jere kont ou ak preferans ou',
+    notConnected: 'Pa Konekte',
+    signIn: 'Konekte',
+    signUp: 'Kreye yon Kont',
+    stats: {
+      totalPackages: 'Total Koli',
+      inTransit: 'An Transpò',
+      delivered: 'Livre',
+    },
+    menu: {
+      myPackages: 'Koli Mwen',
+      tracking: 'Swiv Koli',
+      calculator: 'Kalkilatè Pri',
+      settings: 'Paramèt',
+      support: 'Sipò',
+      signOut: 'Dekonekte',
+    },
+  },
+  auth: {
+    signIn: {
+      title: 'Alliance Shipping',
+      subtitle: 'Patnè konfyans ou pou transpò USA - Ayiti',
+      welcomeBack: 'Konekte pou kontinye',
+      features: {
+        tracking: {
+          title: 'Swivi an Tan Reyèl',
+          description: 'Swiv koli ou yo nan chak etap vwayaj la',
+        },
+        secure: {
+          title: 'Sekirize ak Fyab',
+          description: 'Koli ou yo asiré e pwoteje',
+        },
+        fast: {
+          title: 'Livrezon Rapid',
+          description: '10-15 jou soti Miami pou Ayiti',
+        },
+      },
+      noAccount: 'Ou poko gen kont?',
+      signUpLink: 'Enskri gratis',
+    },
+    signUp: {
+      title: 'Antre Avèk Nou',
+      subtitle: 'Kòmanse voye koli ou yo fasil',
+      createAccount: 'Kreye yon Kont',
+      joinAlliance: 'Antre nan Alliance Shipping',
+      benefits: {
+        management: {
+          title: 'Jesyon Senp',
+          description: 'Jere tout koli ou yo soti yon sèl kote',
+        },
+        pricing: {
+          title: 'Pri Transparan',
+          description: 'Kalkile frè ou yo imedyatman',
+        },
+        security: {
+          title: 'Sekirite Garanti',
+          description: 'Enfòmasyon ou yo pwoteje',
+        },
+        notifications: {
+          title: 'Notifikasyon an Tan Reyèl',
+          description: 'Rete enfòme nan chak etap',
+        },
+      },
+      hasAccount: 'Ou gen yon kont deja?',
+      signInLink: 'Konekte',
+    },
+  },
 };
 
 export default ht;

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ClerkProvider } from '@clerk/nextjs';
 import { Inter, Poppins } from 'next/font/google';
 import './globals.css';
 import { LanguageProvider } from '@/lib/i18n/useTranslation';
@@ -64,10 +65,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className={`${inter.variable} ${poppins.variable} antialiased`}>
-        <LanguageProvider>{children}</LanguageProvider>
-      </body>
-    </html>
+    <ClerkProvider
+      appearance={{
+        variables: {
+          colorPrimary: '#0066CC',
+          colorBackground: '#ffffff',
+          colorText: '#1f2937',
+          colorInputBackground: '#f9fafb',
+          colorInputText: '#1f2937',
+          borderRadius: '0.75rem',
+        },
+        elements: {
+          formButtonPrimary: 'bg-primary-600 hover:bg-primary-700 text-white transition-all',
+          card: 'shadow-2xl backdrop-blur-xl bg-white/90',
+        },
+      }}
+    >
+      <html lang="en" className="scroll-smooth">
+        <body className={`${inter.variable} ${poppins.variable} antialiased`}>
+          <LanguageProvider>{children}</LanguageProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

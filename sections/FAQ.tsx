@@ -1,10 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import { ChevronDown } from 'lucide-react';
 import { Container } from '@/components/Container';
 import { SectionTitle } from '@/components/SectionTitle';
+import { ImageGallery } from '@/components/ImageGallery';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useState } from 'react';
 import { cn } from '@/lib/utils/cn';
@@ -68,13 +68,11 @@ export function FAQ() {
           transition={{ duration: 0.6 }}
           className="mt-12"
         >
-          <div className="relative w-full h-64 md:h-80 rounded-2xl overflow-hidden">
-            <Image
-              src="/images/customer-support.png"
-              alt="Modern customer support illustration - Friendly customer service representative with headset, speech bubbles with question marks, blue and white professional palette, diverse representation in modern office setting with FAQ icons"
-              fill
-              className="object-contain bg-gradient-to-br from-gray-50 to-white"
-              sizes="100vw"
+          <div className="relative w-full h-64 md:h-80 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-50 to-white">
+            <ImageGallery
+              section="faq"
+              className="w-full h-full"
+              imageClassName="object-contain"
             />
           </div>
         </motion.div>
