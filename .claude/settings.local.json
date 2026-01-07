@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:*)",
+      "Bash(if [ -d \"C:\\\\Users\\\\stanl\\\\Desktop\\\\Alliance Shipping - Claude\\\\alliance-shipping-web\\\\public\\\\images\\\\fees\" ])",
+      "Bash(then ls -la \"C:\\\\Users\\\\stanl\\\\Desktop\\\\Alliance Shipping - Claude\\\\alliance-shipping-web\\\\public\\\\images\\\\fees\")",
+      "Bash(else echo \"fees folder not found\")",
+      "Bash(fi)",
+      "Bash(npm install:*)",
+      "Bash(npx drizzle-kit:*)",
+      "Bash(npm run db:push:*)",
+      "Bash(npm run db:seed:*)"
+    ]
+  }
+}
