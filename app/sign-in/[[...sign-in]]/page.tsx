@@ -74,7 +74,7 @@ export default function SignInPage() {
               transition={{ delay: 0.3 }}
               className="text-xl text-gray-600"
             >
-              Votre partenaire de confiance pour l'expédition USA - Haïti
+              Votre partenaire de confiance pour l&apos;expédition USA - Haïti
             </motion.p>
           </div>
 
@@ -184,12 +184,12 @@ export default function SignInPage() {
           >
             <p className="text-sm text-gray-600">
               {t.auth.signIn.noAccount}{' '}
-              <a
+              <Link
                 href="/sign-up"
                 className="text-primary-600 hover:text-primary-700 font-semibold hover:underline transition-all"
               >
                 {t.auth.signIn.signUpLink}
-              </a>
+              </Link>
             </p>
           </motion.div>
 

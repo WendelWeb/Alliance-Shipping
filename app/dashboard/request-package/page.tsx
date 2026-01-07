@@ -82,7 +82,7 @@ export default function RequestPackagePage() {
             Demande envoyée avec succès !
           </h2>
           <p className="text-gray-600 mb-6">
-            Votre demande de colis a été envoyée à notre équipe. Vous recevrez une notification dès qu'elle sera traitée.
+            Votre demande de colis a été envoyée à notre équipe. Vous recevrez une notification dès qu&apos;elle sera traitée.
           </p>
 
           <div className="bg-blue-50 rounded-xl p-4 text-left">

@@ -55,7 +55,7 @@ export default function NewsPage() {
               Actualités & <span className="gradient-primary bg-clip-text text-transparent">Nouveautés</span>
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Restez informé des dernières nouvelles et mises à jour d'Alliance Shipping
+              Restez informé des dernières nouvelles et mises à jour d&apos;Alliance Shipping
             </p>
           </motion.div>
 

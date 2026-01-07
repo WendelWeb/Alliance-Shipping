@@ -149,7 +149,7 @@ export default function CalculatorPage() {
                   <div className="text-center py-12">
                     <Package className="w-16 h-16 text-white/30 mx-auto mb-4" />
                     <p className="text-white/60">
-                      Entrez le poids de votre colis pour voir l'estimation du coût
+                      Entrez le poids de votre colis pour voir l&apos;estimation du coût
                     </p>
                   </div>
                 )}

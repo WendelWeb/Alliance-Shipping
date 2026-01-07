@@ -188,12 +188,12 @@ export default function SignUpPage() {
           >
             <p className="text-sm text-gray-600">
               {t.auth.signUp.hasAccount}{' '}
-              <a
+              <Link
                 href="/sign-in"
                 className="text-primary-600 hover:text-primary-700 font-semibold hover:underline transition-all"
               >
                 {t.auth.signUp.signInLink}
-              </a>
+              </Link>
             </p>
           </motion.div>
 
