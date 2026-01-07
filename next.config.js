@@ -4,6 +4,8 @@ const nextConfig = {
     domains: ['images.unsplash.com', 'placeholder.com'],
     formats: ['image/avif', 'image/webp'],
   },
+  // External packages for server components
+  serverExternalPackages: ['@neondatabase/serverless'],
 }
 
 module.exports = nextConfig
