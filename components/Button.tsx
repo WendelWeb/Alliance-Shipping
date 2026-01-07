@@ -1,5 +1,7 @@
 'use client';
 
+// for button component
+
 import { ButtonHTMLAttributes, ReactNode } from 'react';
 import { cn } from '@/lib/utils/cn';
 
