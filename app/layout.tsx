@@ -81,8 +81,8 @@ export default function RootLayout({
         },
       }}
     >
-      <html lang="en" className="scroll-smooth">
-        <body className={`${inter.variable} ${poppins.variable} antialiased`}>
+      <html lang="en" className="scroll-smooth overflow-x-hidden">
+        <body className={`${inter.variable} ${poppins.variable} antialiased overflow-x-hidden`}>
           <LanguageProvider>{children}</LanguageProvider>
         </body>
       </html>

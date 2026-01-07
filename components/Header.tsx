@@ -23,11 +23,11 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 w-full">
       <Container>
-        <nav className="flex items-center justify-between h-16 lg:h-20">
+        <nav className="flex items-center justify-between h-16 lg:h-20 w-full">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2 sm:gap-2.5 group">
+          <a href="#" className="flex items-center gap-1.5 sm:gap-2.5 group flex-shrink">
             <div className="relative h-8 w-20 sm:h-10 sm:w-24 flex-shrink-0 rounded-lg overflow-hidden ring-2 ring-primary-100 group-hover:ring-primary-300 transition-all shadow-sm">
               <Image
                 src="/images/logo/logo.jpg"
@@ -37,8 +37,8 @@ export function Header() {
                 priority
               />
             </div>
-            <div className="flex flex-col">
-              <span className="text-lg sm:text-xl font-bold text-gray-900 font-display whitespace-nowrap">
+            <div className="flex flex-col min-w-0">
+              <span className="text-base sm:text-xl font-bold text-gray-900 font-display whitespace-nowrap">
                 Alliance Shipping
               </span>
               <span className="text-xs text-gray-500 hidden sm:block">USA • Haïti</span>
@@ -59,7 +59,7 @@ export function Header() {
           </div>
 
           {/* Right Side */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <LanguageSwitcher />
             <Button size="sm" className="hidden sm:inline-flex">
               {t.nav.sendPackage}
@@ -68,7 +68,7 @@ export function Header() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+              className="lg:hidden p-1.5 text-gray-700 hover:bg-gray-100 rounded-lg flex-shrink-0"
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? (

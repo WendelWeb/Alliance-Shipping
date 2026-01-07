@@ -14,7 +14,7 @@ import { BottomNav } from '@/components/BottomNav';
 
 export default function Home() {
   return (
-    <>
+    <div className="overflow-x-hidden">
       <Header />
       <main className="pb-24 md:pb-32">
         <Hero />
@@ -28,6 +28,6 @@ export default function Home() {
       </main>
       <Footer />
       <BottomNav />
-    </>
+    </div>
   );
 }
