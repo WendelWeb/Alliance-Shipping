@@ -20,28 +20,33 @@ export async function GET(request: NextRequest) {
       .select({
         id: packageRequests.id,
         userId: packageRequests.userId,
-        trackingNumber: packageRequests.trackingNumber,
-        destination: packageRequests.destination,
+        externalTrackingNumber: packageRequests.externalTrackingNumber,
+        receiptLocation: packageRequests.receiptLocation,
         description: packageRequests.description,
+        customerNotes: packageRequests.customerNotes,
         estimatedWeight: packageRequests.estimatedWeight,
-        declaredValue: packageRequests.declaredValue,
+        category: packageRequests.category,
+        senderInfo: packageRequests.senderInfo,
+        recipientInfo: packageRequests.recipientInfo,
         status: packageRequests.status,
-        requestedAt: packageRequests.requestedAt,
+        adminNotes: packageRequests.adminNotes,
         reviewedBy: packageRequests.reviewedBy,
         reviewedAt: packageRequests.reviewedAt,
         packageId: packageRequests.packageId,
+        createdAt: packageRequests.createdAt,
+        updatedAt: packageRequests.updatedAt,
         user: {
           id: users.id,
           email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
-          phoneNumber: users.phoneNumber,
+          phone: users.phone,
         },
       })
       .from(packageRequests)
       .leftJoin(users, eq(packageRequests.userId, users.id))
       .where(eq(packageRequests.status, status))
-      .orderBy(desc(packageRequests.requestedAt));
+      .orderBy(desc(packageRequests.createdAt));
 
     return NextResponse.json({ requests });
   } catch (error) {
@@ -84,24 +89,44 @@ export async function PATCH(request: NextRequest) {
     if (action === 'approve') {
       // Calculate fees
       const serviceFee = 5.0;
-      const shippingFee = packageRequest.estimatedWeight! * 4.0;
+      const weight = parseFloat(packageRequest.estimatedWeight || '0');
+      const shippingFee = weight * 4.0;
       const totalFee = serviceFee + shippingFee;
+
+      // Generate Alliance Shipping tracking number
+      const asTrackingNumber = `AS-${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+
+      // Get sender and recipient info from packageRequest
+      const senderInfo = packageRequest.senderInfo as any;
+      const recipientInfo = packageRequest.recipientInfo as any;
 
       // Create actual package
       const [newPackage] = await db
         .insert(packages)
         .values({
+          trackingNumber: asTrackingNumber,
+          externalTrackingNumber: packageRequest.externalTrackingNumber,
           userId: packageRequest.userId,
-          trackingNumber: packageRequest.trackingNumber,
-          destination: packageRequest.destination,
           description: packageRequest.description,
-          weight: packageRequest.estimatedWeight!,
-          declaredValue: packageRequest.declaredValue || 0,
-          serviceFee,
-          shippingFee,
-          totalFee,
+          weight: weight.toString(),
+          weightUnit: 'lbs',
+          category: packageRequest.category || 'general',
+          serviceFee: serviceFee.toString(),
+          weightCost: shippingFee.toString(),
+          totalCost: totalFee.toString(),
+          currency: 'USD',
+          senderName: senderInfo?.name || '',
+          senderAddress: senderInfo?.address || '',
+          senderCity: senderInfo?.city || '',
+          senderCountry: senderInfo?.country || 'USA',
+          senderPhone: senderInfo?.phone || null,
+          recipientName: recipientInfo?.name || '',
+          recipientAddress: recipientInfo?.address || '',
+          recipientCity: recipientInfo?.city || '',
+          recipientCountry: recipientInfo?.country || 'Haiti',
+          recipientPhone: recipientInfo?.phone || null,
           status: 'received',
-          currentLocation: 'Miami Warehouse',
+          currentLocation: packageRequest.receiptLocation,
           assignedToAdmin: session.adminId,
         })
         .returning();

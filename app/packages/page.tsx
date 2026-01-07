@@ -134,11 +134,14 @@ export default function PackagesPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 + 0.2 }}
                 >
-                  <Card
-                    hover
-                    className="overflow-hidden backdrop-blur-xl bg-white/80 border-white/20 shadow-xl cursor-pointer"
+                  <div
+                    className="cursor-pointer"
                     onClick={() => setSelectedPackage(selectedPackage?.id === pkg.id ? null : pkg)}
                   >
+                    <Card
+                      hover
+                      className="overflow-hidden backdrop-blur-xl bg-white/80 border-white/20 shadow-xl"
+                    >
                     <div className="p-6">
                       {/* Header */}
                       <div className="flex items-start justify-between mb-4">
@@ -225,6 +228,7 @@ export default function PackagesPage() {
                       )}
                     </div>
                   </Card>
+                  </div>
                 </motion.div>
               );
             })}

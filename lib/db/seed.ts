@@ -39,7 +39,7 @@ async function seed() {
         email: 'stanleywendeljoseph@gmail.com',
         firstName: 'Stanley',
         lastName: 'Joseph',
-        phoneNumber: '+1 305-555-0000',
+        phone: '+1 305-555-0000',
       })
       .returning();
 
@@ -71,7 +71,7 @@ async function seed() {
         email: 'john@example.com',
         firstName: 'John',
         lastName: 'Doe',
-        phoneNumber: '+509 3612-3456',
+        phone: '+509 3612-3456',
       })
       .returning();
 
@@ -82,7 +82,7 @@ async function seed() {
         email: 'jane@example.com',
         firstName: 'Jane',
         lastName: 'Smith',
-        phoneNumber: '+509 3712-5678',
+        phone: '+509 3712-5678',
       })
       .returning();
 
@@ -93,7 +93,7 @@ async function seed() {
         email: 'bob@example.com',
         firstName: 'Bob',
         lastName: 'Johnson',
-        phoneNumber: '+509 3845-9012',
+        phone: '+509 3845-9012',
       })
       .returning();
 
@@ -104,7 +104,7 @@ async function seed() {
     // Create service fee
     await db.insert(serviceFees).values({
       feeType: 'service_fee',
-      amount: 5.0,
+      amount: '5.00',
       currency: 'USD',
       description: 'Fixed service fee per package',
       effectiveFrom: new Date('2026-01-01'),
@@ -115,7 +115,7 @@ async function seed() {
     // Create per pound fee
     await db.insert(serviceFees).values({
       feeType: 'per_pound',
-      amount: 4.0,
+      amount: '4.00',
       currency: 'USD',
       description: 'Shipping fee per pound',
       effectiveFrom: new Date('2026-01-01'),
@@ -135,7 +135,7 @@ async function seed() {
         itemName: 'iPhone',
         minModel: '7',
         maxModel: '11',
-        fixedFee: 15.0,
+        fixedFee: '15.00',
       },
       {
         category: 'phone',
@@ -143,7 +143,7 @@ async function seed() {
         itemName: 'iPhone',
         minModel: '12',
         maxModel: '14',
-        fixedFee: 20.0,
+        fixedFee: '20.00',
       },
       {
         category: 'phone',
@@ -151,7 +151,7 @@ async function seed() {
         itemName: 'iPhone',
         minModel: '15',
         maxModel: '17',
-        fixedFee: 25.0,
+        fixedFee: '25.00',
       },
       // Samsung Galaxy
       {
@@ -160,7 +160,7 @@ async function seed() {
         itemName: 'Galaxy S',
         minModel: 'S6',
         maxModel: 'S10',
-        fixedFee: 15.0,
+        fixedFee: '15.00',
       },
       {
         category: 'phone',
@@ -168,7 +168,7 @@ async function seed() {
         itemName: 'Galaxy S',
         minModel: 'S20',
         maxModel: 'S24',
-        fixedFee: 20.0,
+        fixedFee: '20.00',
       },
       // Starlink
       {
@@ -177,7 +177,7 @@ async function seed() {
         itemName: 'Starlink',
         minModel: 'Standard',
         maxModel: 'Standard',
-        fixedFee: 50.0,
+        fixedFee: '50.00',
       },
     ];
 
@@ -201,10 +201,10 @@ async function seed() {
         userId: user1.id,
         trackingNumber: 'AS-2026-00001',
         description: 'Electronics and clothing',
-        weight: 5.5,
-        serviceFee: 5.0,
-        weightCost: 22.0,
-        totalCost: 27.0,
+        weight: '5.5',
+        serviceFee: '5.00',
+        weightCost: '22.00',
+        totalCost: '27.00',
         senderName: 'Miami Warehouse',
         senderAddress: '123 Shipping Street',
         senderCity: 'Miami',
@@ -228,10 +228,10 @@ async function seed() {
         userId: user2.id,
         trackingNumber: 'AS-2026-00002',
         description: 'Gift items',
-        weight: 3.2,
-        serviceFee: 5.0,
-        weightCost: 12.8,
-        totalCost: 17.8,
+        weight: '3.2',
+        serviceFee: '5.00',
+        weightCost: '12.80',
+        totalCost: '17.80',
         senderName: 'Miami Warehouse',
         senderAddress: '123 Shipping Street',
         senderCity: 'Miami',
@@ -255,10 +255,10 @@ async function seed() {
         userId: user1.id,
         trackingNumber: 'AS-2026-00003',
         description: 'Documents and accessories',
-        weight: 8.0,
-        serviceFee: 5.0,
-        weightCost: 32.0,
-        totalCost: 37.0,
+        weight: '8.0',
+        serviceFee: '5.00',
+        weightCost: '32.00',
+        totalCost: '37.00',
         senderName: 'Miami Warehouse',
         senderAddress: '123 Shipping Street',
         senderCity: 'Miami',
@@ -282,8 +282,10 @@ async function seed() {
     console.log('Creating package request...');
     await db.insert(packageRequests).values({
       userId: user3.id,
+      externalTrackingNumber: '1Z999AA10123456789',
+      receiptLocation: 'Miami Warehouse',
       description: 'iPhone 15 Pro',
-      estimatedWeight: 0.5,
+      estimatedWeight: '0.5',
       category: 'phone',
       senderInfo: {
         name: 'Best Buy Miami',
@@ -334,7 +336,7 @@ async function seed() {
     await db.insert(revenueRecords).values([
       {
         packageId: pkg3.id,
-        amount: 37.0,
+        amount: '37.00',
         paymentMethod: 'cash',
         recordedBy: adminRecord.id,
       },

@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       receiptLocation: receiptLocation.trim(),
       description: description.trim(),
       customerNotes: customerNotes?.trim() || null,
-      estimatedWeight: estimatedWeight ? parseFloat(estimatedWeight) : null,
+      estimatedWeight: estimatedWeight ? parseFloat(estimatedWeight).toString() : null,
       category: category || 'general',
       senderInfo: {
         name: '', // Will be filled by admin

@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     // 1. Total Revenue
     const [revenueData] = await db
       .select({
-        totalRevenue: sql<number>`COALESCE(SUM(${packages.totalFee}), 0)`,
+        totalRevenue: sql<number>`COALESCE(SUM(${packages.totalCost}), 0)`,
         count: sql<number>`COUNT(*)`,
       })
       .from(packages)
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     const monthlyRevenue = await db
       .select({
         month: sql<string>`TO_CHAR(${packages.createdAt}, 'Mon')`,
-        revenue: sql<number>`COALESCE(SUM(${packages.totalFee}), 0)`,
+        revenue: sql<number>`COALESCE(SUM(${packages.totalCost}), 0)`,
         packages: sql<number>`COUNT(*)`,
       })
       .from(packages)
@@ -82,9 +82,9 @@ export async function GET(request: NextRequest) {
     // 6. Revenue by Destination
     const revenueByDestination = await db
       .select({
-        destination: packages.destination,
+        destination: packages.recipientCountry,
         packages: sql<number>`COUNT(*)`,
-        revenue: sql<number>`COALESCE(SUM(${packages.totalFee}), 0)`,
+        revenue: sql<number>`COALESCE(SUM(${packages.totalCost}), 0)`,
       })
       .from(packages)
       .where(
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
           eq(packages.status, 'delivered')
         )
       )
-      .groupBy(packages.destination);
+      .groupBy(packages.recipientCountry);
 
     // Calculate percentages for destinations
     const totalDestinationRevenue = revenueByDestination.reduce(
@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
       .select({
         userId: packages.userId,
         packages: sql<number>`COUNT(*)`,
-        revenue: sql<number>`COALESCE(SUM(${packages.totalFee}), 0)`,
+        revenue: sql<number>`COALESCE(SUM(${packages.totalCost}), 0)`,
         user: {
           id: users.id,
           firstName: users.firstName,
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
         )
       )
       .groupBy(packages.userId, users.id, users.firstName, users.lastName, users.email)
-      .orderBy(desc(sql<number>`COALESCE(SUM(${packages.totalFee}), 0)`))
+      .orderBy(desc(sql<number>`COALESCE(SUM(${packages.totalCost}), 0)`))
       .limit(5);
 
     // Format top customers

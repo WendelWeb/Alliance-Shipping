@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (category && category !== 'all') {
-      conditions.push(eq(announcements.category, category));
+      conditions.push(eq(announcements.type, category));
     }
 
     if (status && status !== 'all') {
@@ -87,10 +87,10 @@ export async function POST(request: NextRequest) {
       .insert(announcements)
       .values({
         title,
-        category,
+        type: category,
         content,
         isPublished: isPublished || false,
-        publishedAt: isPublished ? new Date() : null,
+        publishDate: isPublished ? new Date() : null,
         imageUrl: imageUrl || null,
         createdBy: session.userId,
       })
@@ -130,7 +130,7 @@ export async function PATCH(request: NextRequest) {
         .update(announcements)
         .set({
           isPublished: true,
-          publishedAt: new Date(),
+          publishDate: new Date(),
         })
         .where(eq(announcements.id, id))
         .returning();
@@ -143,7 +143,7 @@ export async function PATCH(request: NextRequest) {
         .update(announcements)
         .set({
           isPublished: false,
-          publishedAt: null,
+          publishDate: null,
         })
         .where(eq(announcements.id, id))
         .returning();

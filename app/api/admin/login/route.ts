@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       where: eq(admins.userId, user.id),
     });
 
-    if (!admin || !admin.isActive) {
+    if (!admin || !admin.isActive || !admin.password) {
       return NextResponse.json(
         { error: 'Access denied' },
         { status: 403 }

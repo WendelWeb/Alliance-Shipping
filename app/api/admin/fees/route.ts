@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       const allFees = await db
         .select()
         .from(serviceFees)
-        .orderBy(desc(serviceFees.effectiveDate));
+        .orderBy(desc(serviceFees.effectiveFrom));
 
       return NextResponse.json({ fees: allFees });
     } else {
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
         .select()
         .from(serviceFees)
         .where(eq(serviceFees.isActive, true))
-        .orderBy(desc(serviceFees.effectiveDate))
+        .orderBy(desc(serviceFees.effectiveFrom))
         .limit(1);
 
       return NextResponse.json({ fee: currentFee || null });
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     const [existingFutureFee] = await db
       .select()
       .from(serviceFees)
-      .where(eq(serviceFees.effectiveDate, effective));
+      .where(eq(serviceFees.effectiveFrom, effective));
 
     if (existingFutureFee) {
       return NextResponse.json(
@@ -87,9 +87,9 @@ export async function POST(request: NextRequest) {
     const [newFee] = await db
       .insert(serviceFees)
       .values({
-        serviceFee,
-        shippingFeePerLb,
-        effectiveDate: effective,
+        feeType: 'service_fee',
+        amount: serviceFee,
+        effectiveFrom: effective,
         createdBy: session.userId,
         isActive: effective <= new Date(),
       })

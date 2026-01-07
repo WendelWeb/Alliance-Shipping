@@ -46,6 +46,7 @@ export const fr = {
     perPound: 'Par Livre',
     deliveryTime: 'Délai de Livraison',
     days: 'jours',
+    perfumeNote: 'Les colis contenant des parfums nécessitent 5 jours supplémentaires pour le traitement douanier',
     features: [
       'Suivi en temps réel',
       'Assurance incluse',
@@ -269,6 +270,8 @@ export const fr = {
     subtitle: 'Calculez votre coût d\'expédition instantanément',
     weightLabel: 'Poids du Colis',
     weightPlaceholder: 'Entrez le poids en livres',
+    perfumeLabel: 'Contient du parfum ou des fragrances',
+    perfumeNote: '+5 jours de délai de livraison',
     calculate: 'Calculer le Prix',
     result: {
       title: 'Coût Estimé',
@@ -283,6 +286,7 @@ export const fr = {
       serviceFee: '5$ de frais de service',
       perPound: '4$ par livre',
       example: 'Exemple: 10 lbs = 5$ + 40$ = 45$',
+      perfumeExtra: 'Parfums: +5 jours pour la douane',
     },
   },
   profile: {
