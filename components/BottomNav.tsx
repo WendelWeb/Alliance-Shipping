@@ -39,6 +39,8 @@ export function BottomNav() {
   const pathname = usePathname();
   const { t } = useTranslation();
 
+  const activeIndex = navItemsConfig.findIndex(item => item.href === pathname);
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:left-1/2 md:-translate-x-1/2 md:max-w-2xl md:bottom-6">
       {/* Glassmorphism Container */}
@@ -46,8 +48,19 @@ export function BottomNav() {
         {/* Subtle gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary-500/3 via-transparent to-secondary-500/3 pointer-events-none md:rounded-3xl" />
 
+        {/* Active indicator bar (top) - Mobile only */}
+        {activeIndex !== -1 && (
+          <motion.div
+            className="absolute top-0 w-8 h-1 bg-primary-600 rounded-full md:hidden"
+            animate={{
+              left: `calc((100% / 5) * ${activeIndex} + (100% / 5 / 2) - 1rem)`,
+            }}
+            transition={{ type: 'spring', bounce: 0.3, duration: 0.5 }}
+          />
+        )}
+
         {/* Nav Items */}
-        <div className="relative flex items-center justify-around px-1 py-2 md:px-4 md:py-3">
+        <div className="relative flex items-center justify-between px-0 pt-[10px] pb-2 md:px-4 md:py-3">
           {navItemsConfig.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
@@ -56,19 +69,10 @@ export function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="relative flex flex-col items-center justify-center min-w-0 flex-1 py-2 px-1 group"
+                className="relative flex flex-col items-center justify-center flex-1 group"
               >
                 {/* Icon Container */}
-                <div className="relative flex flex-col items-center gap-1 w-full">
-                  {/* Active indicator bar (top) - Mobile only */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeDot"
-                      className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-primary-600 rounded-full md:hidden"
-                      transition={{ type: 'spring', bounce: 0.3, duration: 0.5 }}
-                    />
-                  )}
-
+                <div className="flex flex-col items-center gap-1">
                   {/* Icon */}
                   <motion.div
                     animate={{
@@ -76,7 +80,7 @@ export function BottomNav() {
                       y: isActive ? -2 : 0,
                     }}
                     transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    className="relative"
+                    className="relative flex items-center justify-center"
                   >
                     <Icon
                       className={cn(

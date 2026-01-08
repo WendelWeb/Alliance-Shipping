@@ -40,27 +40,27 @@ const newsArticles = [
 
 export default function NewsPage() {
   return (
-    <>
+    <div className="overflow-x-hidden">
       <Header />
-      <main className="min-h-screen pb-32 pt-20 bg-gradient-to-br from-gray-50 via-white to-primary-50">
+      <main className="min-h-screen pb-32 pt-2 md:pt-4 bg-gradient-to-br from-gray-50 via-white to-primary-50">
         <Container>
           {/* Hero Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-16 pt-8"
+            className="text-center mb-12 md:mb-16"
           >
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4 font-display">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-3 md:mb-4 font-display">
               Actualités & <span className="gradient-primary bg-clip-text text-transparent">Nouveautés</span>
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
               Restez informé des dernières nouvelles et mises à jour d&apos;Alliance Shipping
             </p>
           </motion.div>
 
           {/* News Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {newsArticles.map((article, index) => (
               <motion.div
                 key={article.id}
@@ -91,7 +91,7 @@ export default function NewsPage() {
                   </div>
 
                   {/* Content */}
-                  <div className="p-6">
+                  <div className="p-4 sm:p-5 md:p-6">
                     {/* Meta Info */}
                     <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
                       <div className="flex items-center gap-1">
@@ -105,12 +105,12 @@ export default function NewsPage() {
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary-600 transition-colors">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3 group-hover:text-primary-600 transition-colors">
                       {article.title}
                     </h3>
 
                     {/* Excerpt */}
-                    <p className="text-gray-600 mb-4 line-clamp-3">
+                    <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 line-clamp-3">
                       {article.excerpt}
                     </p>
 
@@ -127,6 +127,6 @@ export default function NewsPage() {
         </Container>
       </main>
       <BottomNav />
-    </>
+    </div>
   );
 }

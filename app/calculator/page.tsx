@@ -40,19 +40,19 @@ export default function CalculatorPage() {
   };
 
   return (
-    <>
+    <div className="overflow-x-hidden">
       <Header />
-      <main className="min-h-screen pb-32 pt-20 bg-gradient-to-br from-gray-50 via-white to-primary-50">
+      <main className="min-h-screen pb-32 pt-2 md:pt-4 bg-gradient-to-br from-gray-50 via-white to-primary-50">
         <Container size="lg">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12 pt-8"
+            className="text-center mb-8 md:mb-12"
           >
-            <h1 className="text-5xl font-bold text-gray-900 mb-4 font-display">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-3 md:mb-4 font-display">
               Calculateur de <span className="gradient-primary bg-clip-text text-transparent">Prix</span>
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
               Estimez le coût de votre envoi en quelques secondes
             </p>
           </motion.div>
@@ -191,6 +191,6 @@ export default function CalculatorPage() {
         </Container>
       </main>
       <BottomNav />
-    </>
+    </div>
   );
 }

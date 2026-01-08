@@ -34,9 +34,9 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <>
+      <div className="overflow-x-hidden">
         <Header />
-        <main className="min-h-screen pb-32 pt-20 bg-gradient-to-br from-gray-50 via-white to-primary-50 flex items-center justify-center">
+        <main className="min-h-screen pb-32 pt-2 md:pt-4 bg-gradient-to-br from-gray-50 via-white to-primary-50 flex items-center justify-center">
           <Container>
             <Card className="max-w-md mx-auto p-8 text-center backdrop-blur-xl bg-white/90">
               <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -53,7 +53,7 @@ export default function ProfilePage() {
           </Container>
         </main>
         <BottomNav />
-      </>
+      </div>
     );
   }
 
@@ -73,21 +73,21 @@ export default function ProfilePage() {
   ];
 
   return (
-    <>
+    <div className="overflow-x-hidden">
       <Header />
-      <main className="min-h-screen pb-32 pt-20 bg-gradient-to-br from-gray-50 via-white to-primary-50">
+      <main className="min-h-screen pb-32 pt-2 md:pt-4 bg-gradient-to-br from-gray-50 via-white to-primary-50">
         <Container>
           {/* Profile Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8 pt-8"
+            className="mb-6 md:mb-8"
           >
-            <Card className="p-8 backdrop-blur-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-2xl">
-              <div className="flex flex-col md:flex-row items-center gap-6">
+            <Card className="p-4 sm:p-6 md:p-8 backdrop-blur-xl bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-2xl">
+              <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
                 {/* Avatar */}
                 <div className="relative">
-                  <div className="w-24 h-24 rounded-full overflow-hidden ring-4 ring-white shadow-xl">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden ring-4 ring-white shadow-xl">
                     <UserButton
                       appearance={{
                         elements: {
@@ -101,13 +101,13 @@ export default function ProfilePage() {
 
                 {/* User Info */}
                 <div className="flex-1 text-center md:text-left">
-                  <h1 className="text-3xl font-bold mb-2">
+                  <h1 className="text-2xl sm:text-3xl font-bold mb-2">
                     {user.firstName} {user.lastName}
                   </h1>
-                  <div className="flex flex-col md:flex-row items-center gap-4 text-white/90">
+                  <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-sm sm:text-base text-white/90">
                     <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      <span>{user.primaryEmailAddress?.emailAddress}</span>
+                      <Mail className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate max-w-[200px] sm:max-w-none">{user.primaryEmailAddress?.emailAddress}</span>
                     </div>
                     {user.primaryPhoneNumber && (
                       <div className="flex items-center gap-2">
@@ -132,20 +132,20 @@ export default function ProfilePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="grid grid-cols-3 gap-4 mb-8"
+            className="grid grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8"
           >
             {stats.map((stat, index) => {
               const Icon = stat.icon;
               return (
                 <Card
                   key={index}
-                  className="p-6 text-center backdrop-blur-xl bg-white/80 hover:bg-white/90 transition-all"
+                  className="p-3 sm:p-4 md:p-6 text-center backdrop-blur-xl bg-white/80 hover:bg-white/90 transition-all"
                 >
-                  <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Icon className="w-6 h-6 text-primary-600" />
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-primary-600" />
                   </div>
-                  <div className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</div>
-                  <div className="text-sm text-gray-600">{stat.label}</div>
+                  <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-1">{stat.value}</div>
+                  <div className="text-[10px] sm:text-xs md:text-sm text-gray-600 leading-tight">{stat.label}</div>
                 </Card>
               );
             })}
@@ -157,7 +157,7 @@ export default function ProfilePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Gérer mon compte</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Gérer mon compte</h2>
             <div className="space-y-3">
               {menuItems.map((item, index) => {
                 const Icon = item.icon;
@@ -222,6 +222,6 @@ export default function ProfilePage() {
         </Container>
       </main>
       <BottomNav />
-    </>
+    </div>
   );
 }

@@ -19,6 +19,7 @@ import {
   Plane,
   TruckIcon,
 } from 'lucide-react';
+import Link from 'next/link';
 
 // Mock data - sera remplacé par les données de la DB
 const mockPackages = [
@@ -73,30 +74,32 @@ export default function PackagesPage() {
   const [selectedPackage, setSelectedPackage] = useState<typeof mockPackages[0] | null>(null);
 
   return (
-    <>
+    <div className="overflow-x-hidden">
       <Header />
-      <main className="min-h-screen pb-32 pt-20 bg-gradient-to-br from-gray-50 via-white to-primary-50">
+      <main className="min-h-screen pb-32 pt-2 md:pt-4 bg-gradient-to-br from-gray-50 via-white to-primary-50">
         <Container>
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8 pt-8"
+            className="mb-6 md:mb-8"
           >
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <h1 className="text-4xl font-bold text-gray-900 mb-2 font-display">
+                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2 font-display">
                   Mes <span className="gradient-primary bg-clip-text text-transparent">Colis</span>
                 </h1>
-                <p className="text-gray-600">
+                <p className="text-sm sm:text-base text-gray-600">
                   Suivez tous vos envois en temps réel
                 </p>
               </div>
 
-              <Button size="lg" className="group">
-                <Plus className="w-5 h-5 mr-2 group-hover:rotate-90 transition-transform" />
-                Nouveau Colis
-              </Button>
+              <Link href="/dashboard/request-package">
+                <Button size="md" className="group sm:text-lg sm:px-7 sm:py-3.5">
+                  <Plus className="w-5 h-5 mr-2 group-hover:rotate-90 transition-transform" />
+                  Nouveau Colis
+                </Button>
+              </Link>
             </div>
           </motion.div>
 
@@ -236,6 +239,6 @@ export default function PackagesPage() {
         </Container>
       </main>
       <BottomNav />
-    </>
+    </div>
   );
 }
