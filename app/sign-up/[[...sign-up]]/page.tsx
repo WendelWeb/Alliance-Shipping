@@ -18,7 +18,7 @@ export default function SignUpPage() {
           className="inline-flex items-center gap-2 text-gray-600 hover:text-primary-600 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
-          <span className="text-sm font-medium">Retour</span>
+          <span className="text-sm font-medium">{t.common.contactUs}</span>
         </Link>
       </div>
       {/* Animated background elements - Subtle on mobile */}
@@ -65,7 +65,7 @@ export default function SignUpPage() {
               transition={{ delay: 0.2 }}
               className="text-5xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent"
             >
-              Rejoignez-nous
+              {t.auth.signUp.title}
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -73,7 +73,7 @@ export default function SignUpPage() {
               transition={{ delay: 0.3 }}
               className="text-xl text-gray-600"
             >
-              Commencez à envoyer vos colis en toute simplicité
+              {t.auth.signUp.subtitle}
             </motion.p>
           </div>
 
@@ -87,23 +87,23 @@ export default function SignUpPage() {
             {[
               {
                 icon: Package,
-                title: 'Gestion simplifiée',
-                description: 'Gérez tous vos colis depuis un seul endroit',
+                title: t.auth.signUp.benefits.management.title,
+                description: t.auth.signUp.benefits.management.description,
               },
               {
                 icon: TrendingUp,
-                title: 'Prix transparents',
-                description: 'Calculez vos frais instantanément',
+                title: t.auth.signUp.benefits.pricing.title,
+                description: t.auth.signUp.benefits.pricing.description,
               },
               {
                 icon: Shield,
-                title: 'Sécurité garantie',
-                description: 'Vos informations sont protégées',
+                title: t.auth.signUp.benefits.security.title,
+                description: t.auth.signUp.benefits.security.description,
               },
               {
                 icon: Zap,
-                title: 'Notifications en temps réel',
-                description: 'Restez informé à chaque étape',
+                title: t.auth.signUp.benefits.notifications.title,
+                description: t.auth.signUp.benefits.notifications.description,
               },
             ].map((benefit, index) => (
               <motion.div

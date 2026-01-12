@@ -133,22 +133,47 @@ export default function AllPackagesPage() {
   const [selectedPackages, setSelectedPackages] = useState<number[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [newStatus, setNewStatus] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     const loadPackages = async () => {
       setLoading(true);
       try {
-        // No simulation delay for instant loading
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        const response = await fetch('/api/admin/packages');
 
-        // TODO: Replace with real API call
-        // const response = await fetch('/api/admin/packages');
-        // const data = await response.json();
-        // setPackages(data.packages);
+        if (!response.ok) {
+          throw new Error('Failed to fetch packages');
+        }
 
-        setPackages(mockPackages);
+        const data = await response.json();
+
+        // Transform API data to match UI format
+        const transformedPackages = data.packages.map((pkg: any) => ({
+          id: pkg.id,
+          trackingNumber: pkg.trackingNumber,
+          userId: pkg.userId,
+          userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
+          userEmail: pkg.user?.email || 'N/A',
+          destination: pkg.recipientCity,
+          status: pkg.status,
+          weight: parseFloat(pkg.weight) || 0,
+          declaredValue: 0, // Not in schema
+          serviceFee: parseFloat(pkg.serviceFee) || 0,
+          shippingFee: parseFloat(pkg.weightCost) || 0,
+          totalFee: parseFloat(pkg.totalCost) || 0,
+          createdAt: new Date(pkg.createdAt).toISOString().split('T')[0],
+          updatedAt: new Date(pkg.updatedAt).toISOString().split('T')[0],
+          assignedAdmin: pkg.assignedToAdmin ? 'Admin User' : null,
+        }));
+
+        setPackages(transformedPackages);
       } catch (error) {
         console.error('Error loading packages:', error);
+        // Fallback to mock data if API fails
+        setPackages(mockPackages);
       } finally {
         setLoading(false);
       }
@@ -181,6 +206,102 @@ export default function AllPackagesPage() {
       setSelectedPackages(filteredPackages.map((p) => p.id));
     } else {
       setSelectedPackages([]);
+    }
+  };
+
+  // Handle bulk status update
+  const handleBulkUpdateStatus = async () => {
+    if (!newStatus || selectedPackages.length === 0) return;
+
+    setIsUpdating(true);
+    try {
+      const response = await fetch('/api/admin/packages/bulk-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packageIds: selectedPackages,
+          status: newStatus,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update packages');
+
+      // Reload packages
+      const loadResponse = await fetch('/api/admin/packages');
+      const data = await loadResponse.json();
+      const transformedPackages = data.packages.map((pkg: any) => ({
+        id: pkg.id,
+        trackingNumber: pkg.trackingNumber,
+        userId: pkg.userId,
+        userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
+        userEmail: pkg.user?.email || 'N/A',
+        destination: pkg.recipientCity,
+        status: pkg.status,
+        weight: parseFloat(pkg.weight) || 0,
+        declaredValue: 0,
+        serviceFee: parseFloat(pkg.serviceFee) || 0,
+        shippingFee: parseFloat(pkg.weightCost) || 0,
+        totalFee: parseFloat(pkg.totalCost) || 0,
+        createdAt: new Date(pkg.createdAt).toISOString().split('T')[0],
+        updatedAt: new Date(pkg.updatedAt).toISOString().split('T')[0],
+        assignedAdmin: pkg.assignedToAdmin ? 'Admin User' : null,
+      }));
+      setPackages(transformedPackages);
+      setSelectedPackages([]);
+      setShowStatusModal(false);
+      setNewStatus('');
+    } catch (error) {
+      console.error('Error updating packages:', error);
+      alert('Failed to update packages. Please try again.');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedPackages.length === 0) return;
+
+    setIsUpdating(true);
+    try {
+      const response = await fetch('/api/admin/packages/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packageIds: selectedPackages,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to delete packages');
+
+      // Reload packages
+      const loadResponse = await fetch('/api/admin/packages');
+      const data = await loadResponse.json();
+      const transformedPackages = data.packages.map((pkg: any) => ({
+        id: pkg.id,
+        trackingNumber: pkg.trackingNumber,
+        userId: pkg.userId,
+        userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
+        userEmail: pkg.user?.email || 'N/A',
+        destination: pkg.recipientCity,
+        status: pkg.status,
+        weight: parseFloat(pkg.weight) || 0,
+        declaredValue: 0,
+        serviceFee: parseFloat(pkg.serviceFee) || 0,
+        shippingFee: parseFloat(pkg.weightCost) || 0,
+        totalFee: parseFloat(pkg.totalCost) || 0,
+        createdAt: new Date(pkg.createdAt).toISOString().split('T')[0],
+        updatedAt: new Date(pkg.updatedAt).toISOString().split('T')[0],
+        assignedAdmin: pkg.assignedToAdmin ? 'Admin User' : null,
+      }));
+      setPackages(transformedPackages);
+      setSelectedPackages([]);
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error('Error deleting packages:', error);
+      alert('Failed to delete packages. Please try again.');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -540,17 +661,102 @@ export default function AllPackagesPage() {
           </span>
           <div className="h-6 w-px bg-gray-700" />
           <div className="flex items-center gap-2">
-            <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg text-sm font-medium transition-colors">
+            <button
+              onClick={() => setShowStatusModal(true)}
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg text-sm font-medium transition-colors"
+            >
               Update Status
             </button>
             <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors">
               Assign Admin
             </button>
-            <button className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-colors">
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-colors"
+            >
               Delete
             </button>
           </div>
         </motion.div>
+      )}
+
+      {/* Status Update Modal */}
+      {showStatusModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl p-6 max-w-md w-full mx-4"
+          >
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Update Package Status</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Select a new status for {selectedPackages.length} package{selectedPackages.length > 1 ? 's' : ''}
+            </p>
+            <select
+              value={newStatus}
+              onChange={(e) => setNewStatus(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent mb-4"
+            >
+              <option value="">Select status...</option>
+              <option value="received">Received</option>
+              <option value="in-transit">In Transit</option>
+              <option value="available">Available for Pickup</option>
+              <option value="delivered">Delivered</option>
+            </select>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setShowStatusModal(false);
+                  setNewStatus('');
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={isUpdating}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkUpdateStatus}
+                disabled={!newStatus || isUpdating}
+                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isUpdating ? 'Updating...' : 'Update'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl p-6 max-w-md w-full mx-4"
+          >
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Delete Packages</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Are you sure you want to delete {selectedPackages.length} package{selectedPackages.length > 1 ? 's' : ''}?
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={isUpdating}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                disabled={isUpdating}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isUpdating ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   );

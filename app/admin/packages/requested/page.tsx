@@ -64,8 +64,10 @@ const mockRequests = [
 interface ValidationState {
   weight: string;
   category: string;
+  status: string;
   isWeightConfirmed: boolean;
   isCategoryConfirmed: boolean;
+  isStatusConfirmed: boolean;
 }
 
 export default function RequestedPackagesPage() {
@@ -79,22 +81,71 @@ export default function RequestedPackagesPage() {
   useEffect(() => {
     const loadRequests = async () => {
       setLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 0));
+      try {
+        const response = await fetch('/api/admin/package-requests');
 
-      // Initialize validation states
-      const initialStates: Record<number, ValidationState> = {};
-      mockRequests.forEach(req => {
-        initialStates[req.id] = {
-          weight: req.estimatedWeight?.toString() || '',
+        if (!response.ok) {
+          throw new Error('Failed to fetch package requests');
+        }
+
+        const data = await response.json();
+
+        // Transform API data to match UI format
+        const transformedRequests = data.requests ? data.requests.map((req: any) => ({
+          id: req.id,
+          externalTrackingNumber: req.externalTrackingNumber || 'N/A',
+          receiptLocation: req.receiptLocation || 'Miami Warehouse',
+          description: req.description || 'No description',
+          customerNotes: req.notes || null,
+          estimatedWeight: req.estimatedWeight ? parseFloat(req.estimatedWeight) : null,
           category: req.category || 'general',
-          isWeightConfirmed: false,
-          isCategoryConfirmed: false,
-        };
-      });
-      setValidationStates(initialStates);
+          userId: req.userId,
+          userName: req.user ? `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() : 'Unknown',
+          userEmail: req.user?.email || 'N/A',
+          userPhone: req.user?.phone || 'N/A',
+          recipientInfo: {
+            name: req.recipientName || 'N/A',
+            phone: req.recipientPhone || 'N/A',
+            city: req.recipientCity || 'N/A',
+          },
+          status: req.status || 'pending',
+          createdAt: req.createdAt || new Date().toISOString(),
+        })) : [];
 
-      setRequests(mockRequests);
-      setLoading(false);
+        // Initialize validation states
+        const initialStates: Record<number, ValidationState> = {};
+        transformedRequests.forEach((req: any) => {
+          initialStates[req.id] = {
+            weight: req.estimatedWeight?.toString() || '',
+            category: req.category || 'general',
+            status: 'received',
+            isWeightConfirmed: false,
+            isCategoryConfirmed: false,
+            isStatusConfirmed: false,
+          };
+        });
+        setValidationStates(initialStates);
+
+        setRequests(transformedRequests);
+      } catch (error) {
+        console.error('Error loading package requests:', error);
+        // Fallback to mock data if API fails
+        const initialStates: Record<number, ValidationState> = {};
+        mockRequests.forEach(req => {
+          initialStates[req.id] = {
+            weight: req.estimatedWeight?.toString() || '',
+            category: req.category || 'general',
+            status: 'received',
+            isWeightConfirmed: false,
+            isCategoryConfirmed: false,
+            isStatusConfirmed: false,
+          };
+        });
+        setValidationStates(initialStates);
+        setRequests(mockRequests);
+      } finally {
+        setLoading(false);
+      }
     };
     loadRequests();
   }, []);
@@ -148,41 +199,74 @@ export default function RequestedPackagesPage() {
     }));
   };
 
+  const handleStatusChange = (requestId: number, value: string) => {
+    setValidationStates(prev => ({
+      ...prev,
+      [requestId]: {
+        ...prev[requestId],
+        status: value,
+        isStatusConfirmed: false,
+      },
+    }));
+  };
+
+  const confirmStatus = (requestId: number) => {
+    setValidationStates(prev => ({
+      ...prev,
+      [requestId]: {
+        ...prev[requestId],
+        isStatusConfirmed: true,
+      },
+    }));
+  };
+
   const canApprove = (requestId: number) => {
     const state = validationStates[requestId];
     if (!state) return false;
 
     const hasWeight = parseFloat(state.weight) > 0;
-    return hasWeight && state.isWeightConfirmed && state.isCategoryConfirmed;
+    return hasWeight && state.isWeightConfirmed && state.isCategoryConfirmed && state.isStatusConfirmed;
   };
 
   const handleApprove = async (request: typeof mockRequests[0]) => {
     const state = validationStates[request.id];
 
     if (!canApprove(request.id)) {
-      alert('Veuillez confirmer le poids et la catégorie avant d\'approuver !');
+      alert('Veuillez confirmer le poids, la catégorie et le statut avant d\'approuver !');
       return;
     }
 
     setProcessingId(request.id);
 
     try {
-      // TODO: API call to approve request and create package
-      console.log('Approving request:', {
-        requestId: request.id,
-        weight: state.weight,
-        category: state.category,
+      const response = await fetch('/api/admin/package-requests', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: request.id,
+          action: 'approve',
+          weight: state.weight,
+          category: state.category,
+          initialStatus: state.status,
+        }),
       });
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to approve request');
+      }
 
-      alert(`Demande approuvée ! Un tracking Alliance Shipping a été généré.`);
+      const data = await response.json();
+
+      alert(`✅ Demande approuvée !\n\nTracking Alliance Shipping: ${data.package.trackingNumber}\nStatut initial: ${state.status}`);
 
       // Remove from list
       setRequests(prev => prev.filter(r => r.id !== request.id));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error approving request:', error);
-      alert('Erreur lors de l\'approbation');
+      alert(`❌ Erreur lors de l'approbation:\n${error.message}`);
     } finally {
       setProcessingId(null);
     }
@@ -194,12 +278,27 @@ export default function RequestedPackagesPage() {
     setProcessingId(requestId);
 
     try {
-      // TODO: API call to reject
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await fetch('/api/admin/package-requests', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: requestId,
+          action: 'reject',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to reject request');
+      }
+
+      alert('✅ Demande rejetée avec succès');
       setRequests(prev => prev.filter(r => r.id !== requestId));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error rejecting request:', error);
-      alert('Erreur lors du rejet');
+      alert(`❌ Erreur lors du rejet:\n${error.message}`);
     } finally {
       setProcessingId(null);
     }
@@ -242,6 +341,7 @@ export default function RequestedPackagesPage() {
             <ul className="list-disc list-inside space-y-1 text-blue-800">
               <li>Ajouter et confirmer le poids réel du colis (obligatoire)</li>
               <li>Vérifier et confirmer la catégorie (obligatoire)</li>
+              <li>Sélectionner et confirmer le statut initial du colis (obligatoire)</li>
               <li>Un tracking Alliance Shipping (AS-XXXXXXXXXX) sera généré automatiquement</li>
             </ul>
           </div>
@@ -392,10 +492,10 @@ export default function RequestedPackagesPage() {
                             value={state.weight}
                             onChange={(e) => handleWeightChange(request.id, e.target.value)}
                             disabled={state.isWeightConfirmed || isProcessing}
-                            step="0.1"
-                            min="0"
+                            step="1"
+                            min="1"
                             className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed font-mono text-lg"
-                            placeholder="0.0"
+                            placeholder="Ex: 5"
                           />
                           {!state.isWeightConfirmed ? (
                             <button
@@ -471,6 +571,54 @@ export default function RequestedPackagesPage() {
                         </div>
                       </div>
 
+                      {/* Status Selection */}
+                      <div className={`rounded-xl p-4 border-2 transition-all ${
+                        state.isStatusConfirmed
+                          ? 'bg-green-50 border-green-500'
+                          : 'bg-orange-50 border-orange-300'
+                      }`}>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-semibold text-gray-900">Statut Initial *</span>
+                          {state.isStatusConfirmed && (
+                            <Check className="h-5 w-5 text-green-600" />
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={state.status}
+                            onChange={(e) => handleStatusChange(request.id, e.target.value)}
+                            disabled={state.isStatusConfirmed || isProcessing}
+                            className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                          >
+                            <option value="received">Reçu (Warehouse Miami)</option>
+                            <option value="in-transit">En Transit vers Haïti</option>
+                            <option value="available">Disponible pour Retrait</option>
+                            <option value="delivered">Déjà Livré</option>
+                          </select>
+                          {!state.isStatusConfirmed ? (
+                            <button
+                              onClick={() => confirmStatus(request.id)}
+                              disabled={isProcessing}
+                              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 font-semibold"
+                            >
+                              Confirmer
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setValidationStates(prev => ({
+                                ...prev,
+                                [request.id]: { ...prev[request.id], isStatusConfirmed: false }
+                              }))}
+                              disabled={isProcessing}
+                              className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors disabled:opacity-50"
+                            >
+                              Modifier
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
                       {/* Action Buttons */}
                       <div className="pt-4 space-y-3">
                         <button
@@ -505,7 +653,7 @@ export default function RequestedPackagesPage() {
                       {!readyToApprove && (
                         <div className="bg-orange-50 border-l-4 border-orange-400 p-3 rounded">
                           <p className="text-sm text-orange-800">
-                            ⚠️ Confirmez le poids ET la catégorie pour pouvoir approuver
+                            ⚠️ Confirmez le poids, la catégorie ET le statut initial pour pouvoir approuver
                           </p>
                         </div>
                       )}

@@ -7,6 +7,7 @@ import { Container } from '@/components/Container';
 import { Card } from '@/components/Card';
 import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 const newsArticles = [
   {
@@ -39,6 +40,8 @@ const newsArticles = [
 ];
 
 export default function NewsPage() {
+  const { t } = useTranslation();
+
   return (
     <div className="overflow-x-hidden">
       <Header />
@@ -52,10 +55,10 @@ export default function NewsPage() {
             className="text-center mb-12 md:mb-16"
           >
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-3 md:mb-4 font-display">
-              Actualités & <span className="gradient-primary bg-clip-text text-transparent">Nouveautés</span>
+              {t.news.title}
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-              Restez informé des dernières nouvelles et mises à jour d&apos;Alliance Shipping
+              {t.news.subtitle}
             </p>
           </motion.div>
 
@@ -116,7 +119,7 @@ export default function NewsPage() {
 
                     {/* Read More */}
                     <div className="flex items-center gap-2 text-primary-600 font-semibold group-hover:gap-3 transition-all">
-                      Lire la suite
+                      {t.news.readMore}
                       <ArrowRight className="w-4 h-4" />
                     </div>
                   </div>

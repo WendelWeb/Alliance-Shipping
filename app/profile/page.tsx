@@ -20,9 +20,11 @@ import {
   Settings,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 export default function ProfilePage() {
   const { user, isLoaded } = useUser();
+  const { t } = useTranslation();
 
   if (!isLoaded) {
     return (
@@ -40,13 +42,13 @@ export default function ProfilePage() {
           <Container>
             <Card className="max-w-md mx-auto p-8 text-center backdrop-blur-xl bg-white/90">
               <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Non connecté</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">{t.profile.notConnected}</h2>
               <p className="text-gray-600 mb-6">
-                Connectez-vous pour accéder à votre profil
+                {t.profile.subtitle}
               </p>
               <Link href="/sign-in">
                 <Button size="lg" fullWidth>
-                  Se connecter
+                  {t.profile.signIn}
                 </Button>
               </Link>
             </Card>
@@ -58,18 +60,18 @@ export default function ProfilePage() {
   }
 
   const stats = [
-    { label: 'Colis Envoyés', value: '12', icon: Package },
-    { label: 'En Transit', value: '2', icon: MapPin },
-    { label: 'Livrés', value: '10', icon: Package },
+    { label: t.profile.stats.totalPackages, value: '12', icon: Package },
+    { label: t.profile.stats.inTransit, value: '2', icon: MapPin },
+    { label: t.profile.stats.delivered, value: '10', icon: Package },
   ];
 
   const menuItems = [
-    { label: 'Informations personnelles', icon: User, href: '/profile/info' },
-    { label: 'Adresses sauvegardées', icon: MapPin, href: '/profile/addresses' },
-    { label: 'Moyens de paiement', icon: CreditCard, href: '/profile/payment' },
-    { label: 'Notifications', icon: Bell, href: '/profile/notifications' },
-    { label: 'Sécurité', icon: Shield, href: '/profile/security' },
-    { label: 'Paramètres', icon: Settings, href: '/profile/settings' },
+    { label: t.profile.menu.myPackages, icon: User, href: '/profile/info' },
+    { label: t.profile.menu.tracking, icon: MapPin, href: '/profile/addresses' },
+    { label: t.profile.menu.calculator, icon: CreditCard, href: '/profile/payment' },
+    { label: t.profile.menu.settings, icon: Bell, href: '/profile/notifications' },
+    { label: t.profile.menu.support, icon: Shield, href: '/profile/security' },
+    { label: t.profile.menu.settings, icon: Settings, href: '/profile/settings' },
   ];
 
   return (
@@ -121,7 +123,7 @@ export default function ProfilePage() {
                 {/* Edit Button */}
                 <Button variant="outline" className="bg-white text-primary-600 border-white hover:bg-white/90">
                   <Settings className="w-4 h-4 mr-2" />
-                  Modifier
+                  {t.profile.menu.settings}
                 </Button>
               </div>
             </Card>
@@ -157,7 +159,7 @@ export default function ProfilePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Gérer mon compte</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">{t.profile.title}</h2>
             <div className="space-y-3">
               {menuItems.map((item, index) => {
                 const Icon = item.icon;
@@ -216,7 +218,7 @@ export default function ProfilePage() {
               className="text-red-600 border-red-600 hover:bg-red-50"
             >
               <LogOut className="w-5 h-5 mr-2" />
-              Se déconnecter
+              {t.profile.menu.signOut}
             </Button>
           </motion.div>
         </Container>

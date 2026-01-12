@@ -9,7 +9,10 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "db:push": "drizzle-kit push",
-    "db:seed": "dotenv -e .env.local -- tsx lib/db/seed.ts"
+    "db:init": "dotenv -e .env.local -- tsx lib/db/init-db.ts",
+    "db:reset": "dotenv -e .env.local -- tsx lib/db/reset-db.ts",
+    "db:seed": "dotenv -e .env.local -- tsx lib/db/seed.ts",
+    "db:setup": "npm run db:reset && npm run db:seed"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.5",

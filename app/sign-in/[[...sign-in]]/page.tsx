@@ -18,7 +18,7 @@ export default function SignInPage() {
           className="inline-flex items-center gap-2 text-gray-600 hover:text-primary-600 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
-          <span className="text-sm font-medium">Retour</span>
+          <span className="text-sm font-medium">{t.common.contactUs}</span>
         </Link>
       </div>
 
@@ -66,7 +66,7 @@ export default function SignInPage() {
               transition={{ delay: 0.2 }}
               className="text-5xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent"
             >
-              Alliance Shipping
+              {t.auth.signIn.title}
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -74,7 +74,7 @@ export default function SignInPage() {
               transition={{ delay: 0.3 }}
               className="text-xl text-gray-600"
             >
-              Votre partenaire de confiance pour l&apos;expédition USA - Haïti
+              {t.auth.signIn.subtitle}
             </motion.p>
           </div>
 
@@ -88,18 +88,18 @@ export default function SignInPage() {
             {[
               {
                 icon: Package,
-                title: 'Suivi en temps réel',
-                description: 'Suivez vos colis à chaque étape du voyage',
+                title: t.auth.signIn.features.tracking.title,
+                description: t.auth.signIn.features.tracking.description,
               },
               {
                 icon: Shield,
-                title: 'Sécurisé & Fiable',
-                description: 'Vos colis sont assurés et protégés',
+                title: t.auth.signIn.features.secure.title,
+                description: t.auth.signIn.features.secure.description,
               },
               {
                 icon: Zap,
-                title: 'Livraison rapide',
-                description: '10-15 jours de Miami vers Haïti',
+                title: t.auth.signIn.features.fast.title,
+                description: t.auth.signIn.features.fast.description,
               },
             ].map((feature, index) => (
               <motion.div

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -80,8 +80,55 @@ export default function AvailablePackagesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPackages, setSelectedPackages] = useState<number[]>([]);
   const [filterPaid, setFilterPaid] = useState<'all' | 'paid' | 'unpaid'>('all');
+  const [packages, setPackages] = useState(mockAvailablePackages);
+  const [loading, setLoading] = useState(true);
 
-  const filteredPackages = mockAvailablePackages.filter((pkg) => {
+  useEffect(() => {
+    const loadPackages = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch('/api/admin/packages?status=available');
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch packages');
+        }
+
+        const data = await response.json();
+
+        // Transform API data to match UI format
+        const transformedPackages = data.packages.map((pkg: any) => ({
+          id: pkg.id,
+          trackingNumber: pkg.trackingNumber,
+          userId: pkg.userId,
+          userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
+          userEmail: pkg.user?.email || 'N/A',
+          userPhone: pkg.user?.phone || 'N/A',
+          destination: pkg.recipientCity,
+          weight: parseFloat(pkg.weight) || 0,
+          totalFee: parseFloat(pkg.totalCost) || 0,
+          arrivedAt: pkg.updatedAt,
+          availableSince: pkg.updatedAt,
+          pickupLocation: `${pkg.recipientCity} Office`,
+          notificationsSent: 0,
+          lastNotified: pkg.updatedAt,
+          isPaid: true, // Not in schema
+          status: pkg.status,
+        }));
+
+        setPackages(transformedPackages);
+      } catch (error) {
+        console.error('Error loading packages:', error);
+        // Fallback to mock data if API fails
+        setPackages(mockAvailablePackages);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPackages();
+  }, []);
+
+  const filteredPackages = packages.filter((pkg) => {
     const matchesSearch =
       pkg.trackingNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pkg.userName.toLowerCase().includes(searchQuery.toLowerCase());

@@ -306,12 +306,13 @@ export default function NewPackagePage() {
                         value={formData.weight}
                         onChange={handleChange}
                         required
-                        min="0"
-                        step="0.1"
+                        min="1"
+                        step="1"
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        placeholder="0.0"
+                        placeholder="Ex: 5"
                       />
                     </div>
+                    <p className="text-xs text-gray-500 mt-1">Whole numbers only (1, 2, 3...)</p>
                   </div>
 
                   <div>

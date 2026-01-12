@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -77,8 +77,54 @@ export default function InTransitPackagesPage() {
   const [selectedPackages, setSelectedPackages] = useState<number[]>([]);
   const [editingLocation, setEditingLocation] = useState<number | null>(null);
   const [newLocations, setNewLocations] = useState<Record<number, string>>({});
+  const [packages, setPackages] = useState(mockInTransitPackages);
+  const [loading, setLoading] = useState(true);
 
-  const filteredPackages = mockInTransitPackages.filter(
+  useEffect(() => {
+    const loadPackages = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch('/api/admin/packages?status=in-transit');
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch packages');
+        }
+
+        const data = await response.json();
+
+        // Transform API data to match UI format
+        const transformedPackages = data.packages.map((pkg: any) => ({
+          id: pkg.id,
+          trackingNumber: pkg.trackingNumber,
+          userId: pkg.userId,
+          userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
+          userEmail: pkg.user?.email || 'N/A',
+          destination: pkg.recipientCity,
+          weight: parseFloat(pkg.weight) || 0,
+          totalFee: parseFloat(pkg.totalCost) || 0,
+          departedMiami: pkg.createdAt,
+          estimatedArrival: pkg.estimatedDelivery || new Date().toISOString(),
+          currentLocation: pkg.currentLocation || 'In Transit',
+          status: pkg.status,
+          carrier: 'Air Cargo Express', // Not in schema
+          flightNumber: 'N/A', // Not in schema
+          progress: 50, // Default progress
+        }));
+
+        setPackages(transformedPackages);
+      } catch (error) {
+        console.error('Error loading packages:', error);
+        // Fallback to mock data if API fails
+        setPackages(mockInTransitPackages);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPackages();
+  }, []);
+
+  const filteredPackages = packages.filter(
     (pkg) =>
       pkg.trackingNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pkg.userName.toLowerCase().includes(searchQuery.toLowerCase())

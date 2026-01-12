@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -75,8 +75,53 @@ export default function ReceivedPackagesPage() {
   const [selectedPackages, setSelectedPackages] = useState<number[]>([]);
   const [editingPackage, setEditingPackage] = useState<number | null>(null);
   const [packageWeights, setPackageWeights] = useState<Record<number, number>>({});
+  const [packages, setPackages] = useState(mockReceivedPackages);
+  const [loading, setLoading] = useState(true);
 
-  const filteredPackages = mockReceivedPackages.filter(
+  useEffect(() => {
+    const loadPackages = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch('/api/admin/packages?status=received');
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch packages');
+        }
+
+        const data = await response.json();
+
+        // Transform API data to match UI format
+        const transformedPackages = data.packages.map((pkg: any) => ({
+          id: pkg.id,
+          trackingNumber: pkg.trackingNumber,
+          userId: pkg.userId,
+          userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
+          userEmail: pkg.user?.email || 'N/A',
+          destination: pkg.recipientCity,
+          description: pkg.description,
+          receivedAt: pkg.createdAt,
+          weight: parseFloat(pkg.weight) || 0,
+          declaredValue: 0,
+          specialItemId: pkg.specialItemId,
+          locationDetails: pkg.locationDetails?.warehouse || 'Warehouse A',
+          photos: [],
+          status: pkg.status,
+        }));
+
+        setPackages(transformedPackages);
+      } catch (error) {
+        console.error('Error loading packages:', error);
+        // Fallback to mock data if API fails
+        setPackages(mockReceivedPackages);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPackages();
+  }, []);
+
+  const filteredPackages = packages.filter(
     (pkg) =>
       pkg.trackingNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pkg.userName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -252,14 +297,14 @@ export default function ReceivedPackagesPage() {
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
-                          step="0.1"
-                          min="0"
+                          step="1"
+                          min="1"
                           value={currentWeight}
                           onChange={(e) =>
                             handleWeightChange(pkg.id, parseFloat(e.target.value) || 0)
                           }
                           className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                          placeholder="0.0"
+                          placeholder="Ex: 5"
                         />
                         <span className="text-sm text-gray-600">lbs</span>
                         <button

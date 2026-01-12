@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       externalTrackingNumber,
-      receiptLocation,
+      recipientCity,
       description,
       customerNotes,
       estimatedWeight,
@@ -26,9 +26,9 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validation
-    if (!externalTrackingNumber || !receiptLocation || !description) {
+    if (!externalTrackingNumber || !recipientCity || !description) {
       return NextResponse.json(
-        { error: 'Missing required fields: externalTrackingNumber, receiptLocation, description' },
+        { error: 'Missing required fields: externalTrackingNumber, recipientCity, description' },
         { status: 400 }
       );
     }
@@ -37,13 +37,15 @@ export async function POST(request: NextRequest) {
     // For now, using a placeholder
     const userId = 1; // Replace with actual user lookup
 
-    // Create package request
+    // Create package request - User is the recipient
+    const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.emailAddresses[0]?.emailAddress || 'User';
+
     const [packageRequest] = await db.insert(packageRequests).values({
       userId,
       externalTrackingNumber: externalTrackingNumber.trim(),
-      receiptLocation: receiptLocation.trim(),
+      receiptLocation: 'Miami Warehouse', // All packages received at Miami Warehouse
       description: description.trim(),
-      customerNotes: customerNotes?.trim() || null,
+      customerNotes: `Destinataire: ${userName}`,
       estimatedWeight: estimatedWeight ? parseFloat(estimatedWeight).toString() : null,
       category: category || 'general',
       senderInfo: {
@@ -53,10 +55,11 @@ export async function POST(request: NextRequest) {
         country: 'USA',
       },
       recipientInfo: {
-        name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.emailAddresses[0]?.emailAddress || '',
+        name: userName,
         address: '',
-        city: '',
+        city: recipientCity.trim(),
         country: 'Haiti',
+        phone: user.phoneNumbers?.[0]?.phoneNumber || '',
       },
       status: 'pending',
     }).returning();

@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { packages, users, trackingHistory } from '@/lib/db/schema';
+import { packages, users, trackingHistory, packageRequests, adminActivityLogs } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
+import { auth } from '@clerk/nextjs/server';
 import { eq, and, like, or, desc, sql } from 'drizzle-orm';
 
 // GET - List all packages with filters
 export async function GET(request: NextRequest) {
   try {
+    // Check admin session first, then fall back to Clerk auth
     const session = await getAdminSession();
-    if (!session) {
+    const { userId: clerkUserId } = await auth();
+
+    if (!session && !clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -72,15 +76,91 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
-    // Get total count
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(packages)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
+    // Get package requests (pending/rejected/approved but not yet converted)
+    const requestsData = await db
+      .select({
+        id: packageRequests.id,
+        externalTrackingNumber: packageRequests.externalTrackingNumber,
+        userId: packageRequests.userId,
+        description: packageRequests.description,
+        estimatedWeight: packageRequests.estimatedWeight,
+        category: packageRequests.category,
+        status: packageRequests.status,
+        recipientInfo: packageRequests.recipientInfo,
+        createdAt: packageRequests.createdAt,
+        updatedAt: packageRequests.updatedAt,
+        packageId: packageRequests.packageId,
+        user: {
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+        },
+      })
+      .from(packageRequests)
+      .leftJoin(users, eq(packageRequests.userId, users.id))
+      .orderBy(desc(packageRequests.createdAt));
+
+    // Transform requests to match package format
+    const transformedRequests = requestsData.map(req => ({
+      id: -req.id, // Negative ID to distinguish from real packages
+      trackingNumber: req.externalTrackingNumber || `REQ-${req.id}`,
+      externalTrackingNumber: req.externalTrackingNumber,
+      userId: req.userId,
+      recipientCountry: 'Haiti',
+      recipientCity: (req.recipientInfo as any)?.city || '',
+      description: req.description,
+      weight: req.estimatedWeight || '0',
+      weightUnit: 'lbs',
+      category: req.category,
+      serviceFee: '0.00',
+      weightCost: '0.00',
+      totalCost: '0.00',
+      currency: 'USD',
+      status: req.status, // pending, rejected, approved
+      currentLocation: req.status === 'pending'
+        ? 'En attente d\'approbation'
+        : req.status === 'rejected'
+        ? 'Demande rejetée'
+        : req.packageId
+        ? 'Converti en colis'
+        : 'Approuvé',
+      estimatedDelivery: null,
+      actualDelivery: null,
+      createdAt: req.createdAt,
+      updatedAt: req.updatedAt,
+      assignedToAdmin: null,
+      user: req.user,
+      isRequest: true, // Flag to identify requests
+    }));
+
+    // Combine packages and requests
+    const allItems = [...packagesData, ...transformedRequests];
+
+    // Apply filters to combined list
+    let filteredItems = allItems;
+    if (search) {
+      filteredItems = allItems.filter(item =>
+        item.trackingNumber?.toLowerCase().includes(search.toLowerCase()) ||
+        item.description?.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    if (status && status !== 'all') {
+      filteredItems = allItems.filter(item => item.status === status);
+    }
+
+    // Sort by date (most recent first)
+    filteredItems.sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+    // Apply pagination to filtered list
+    const paginatedItems = filteredItems.slice(offset, offset + limit);
+    const total = filteredItems.length;
 
     return NextResponse.json({
-      packages: packagesData,
-      total: count,
+      packages: paginatedItems,
+      total,
       limit,
       offset,
     });
@@ -97,7 +177,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getAdminSession();
-    if (!session) {
+    const { userId: clerkUserId } = await auth();
+
+    if (!session && !clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -159,6 +241,25 @@ export async function POST(request: NextRequest) {
       description: 'Package received at Miami warehouse',
     });
 
+    // Log admin activity - Package created
+    const adminId = session?.adminId || 1;
+    await db.insert(adminActivityLogs).values({
+      adminId: adminId,
+      action: 'created',
+      targetType: 'package',
+      targetId: newPackage.id,
+      details: {
+        trackingNumber: newPackage.trackingNumber,
+        userId: userId,
+        destination: destination,
+        weight: weight,
+        totalFee: totalFee,
+        specialItemId: specialItemId || null,
+      },
+      ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+      userAgent: request.headers.get('user-agent') || 'unknown',
+    });
+
     return NextResponse.json({ package: newPackage }, { status: 201 });
   } catch (error) {
     console.error('Error creating package:', error);
@@ -173,7 +274,9 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getAdminSession();
-    if (!session) {
+    const { userId: clerkUserId } = await auth();
+
+    if (!session && !clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -222,6 +325,23 @@ export async function PATCH(request: NextRequest) {
       });
     }
 
+    // Log admin activity - Package updated
+    const adminId = session?.adminId || 1;
+    await db.insert(adminActivityLogs).values({
+      adminId: adminId,
+      action: 'updated',
+      targetType: 'package',
+      targetId: id,
+      details: {
+        trackingNumber: updatedPackage.trackingNumber,
+        updatedFields: Object.keys(updateData),
+        oldValues: body.oldValues || {},
+        newValues: updateData,
+      },
+      ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+      userAgent: request.headers.get('user-agent') || 'unknown',
+    });
+
     return NextResponse.json({ package: updatedPackage });
   } catch (error) {
     console.error('Error updating package:', error);
@@ -236,7 +356,9 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getAdminSession();
-    if (!session) {
+    const { userId: clerkUserId } = await auth();
+
+    if (!session && !clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -247,8 +369,38 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Package ID required' }, { status: 400 });
     }
 
+    const packageId = parseInt(id);
+
+    // Get package info before deletion for logging
+    const [pkg] = await db
+      .select()
+      .from(packages)
+      .where(eq(packages.id, packageId));
+
+    if (!pkg) {
+      return NextResponse.json({ error: 'Package not found' }, { status: 404 });
+    }
+
     // Delete package (cascade will handle related records)
-    await db.delete(packages).where(eq(packages.id, parseInt(id)));
+    await db.delete(packages).where(eq(packages.id, packageId));
+
+    // Log admin activity - Package deleted
+    const adminId = session?.adminId || 1;
+    await db.insert(adminActivityLogs).values({
+      adminId: adminId,
+      action: 'deleted',
+      targetType: 'package',
+      targetId: packageId,
+      details: {
+        trackingNumber: pkg.trackingNumber,
+        status: pkg.status,
+        recipientCity: pkg.recipientCity,
+        totalCost: pkg.totalCost,
+        deletedAt: new Date().toISOString(),
+      },
+      ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+      userAgent: request.headers.get('user-agent') || 'unknown',
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
