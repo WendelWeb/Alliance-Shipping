@@ -116,7 +116,7 @@ export default function RequestedPackagesPage() {
         const initialStates: Record<number, ValidationState> = {};
         transformedRequests.forEach((req: any) => {
           initialStates[req.id] = {
-            weight: req.estimatedWeight?.toString() || '',
+            weight: '', // Admin must add weight - users can no longer provide it
             category: req.category || 'general',
             status: 'received',
             isWeightConfirmed: false,
@@ -133,7 +133,7 @@ export default function RequestedPackagesPage() {
         const initialStates: Record<number, ValidationState> = {};
         mockRequests.forEach(req => {
           initialStates[req.id] = {
-            weight: req.estimatedWeight?.toString() || '',
+            weight: '', // Admin must add weight - users can no longer provide it
             category: req.category || 'general',
             status: 'received',
             isWeightConfirmed: false,
@@ -339,7 +339,7 @@ export default function RequestedPackagesPage() {
           <div className="text-sm text-blue-900">
             <p className="font-semibold mb-1">Actions requises avant approbation :</p>
             <ul className="list-disc list-inside space-y-1 text-blue-800">
-              <li>Ajouter et confirmer le poids réel du colis (obligatoire)</li>
+              <li><strong>Peser et ajouter le poids réel</strong> du colis - Les utilisateurs ne peuvent plus estimer le poids</li>
               <li>Vérifier et confirmer la catégorie (obligatoire)</li>
               <li>Sélectionner et confirmer le statut initial du colis (obligatoire)</li>
               <li>Un tracking Alliance Shipping (AS-XXXXXXXXXX) sera généré automatiquement</li>
@@ -391,11 +391,11 @@ export default function RequestedPackagesPage() {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-lg">
-                        {request.userName.charAt(0)}
+                        {request.userName ? request.userName.charAt(0) : '?'}
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-gray-900">{request.userName}</h3>
-                        <p className="text-sm text-gray-600">{request.userEmail}</p>
+                        <h3 className="text-lg font-bold text-gray-900">{request.userName || 'Unknown'}</h3>
+                        <p className="text-sm text-gray-600">{request.userEmail || 'N/A'}</p>
                         <p className="text-xs text-gray-500">Demande le {formatDate(request.createdAt)}</p>
                       </div>
                     </div>
@@ -480,11 +480,9 @@ export default function RequestedPackagesPage() {
                           )}
                         </div>
 
-                        {request.estimatedWeight && (
-                          <p className="text-xs text-gray-600 mb-2">
-                            Estimation client: {request.estimatedWeight} lbs
-                          </p>
-                        )}
+                        <p className="text-xs text-blue-700 mb-2">
+                          ℹ️ Pesez le colis et entrez le poids exact
+                        </p>
 
                         <div className="flex items-center gap-2">
                           <input

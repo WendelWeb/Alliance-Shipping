@@ -2,20 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { packages, trackingHistory, adminActivityLogs, packageRequests } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
-import { auth } from '@clerk/nextjs/server';
 import { eq, inArray } from 'drizzle-orm';
 
 // POST - Bulk delete packages
 export async function POST(request: NextRequest) {
   try {
     const session = await getAdminSession();
-    const { userId: clerkUserId } = await auth();
-
-    if (!session && !clerkUserId) {
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const adminId = session?.adminId || 1; // Default admin ID if using Clerk
+    const adminId = session.adminId;
 
     const body = await request.json();
     const { packageIds } = body;

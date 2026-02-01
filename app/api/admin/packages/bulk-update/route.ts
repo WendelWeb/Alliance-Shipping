@@ -1,21 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { packages, trackingHistory, adminActivityLogs } from '@/lib/db/schema';
+import { packages, trackingHistory, adminActivityLogs, users } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
-import { auth } from '@clerk/nextjs/server';
 import { eq, inArray } from 'drizzle-orm';
+import {
+  sendPackageStatusChangeEmail,
+  sendPackageAvailableEmail,
+  sendPackageDeliveredEmail
+} from '@/lib/email/service';
 
 // POST - Bulk update package statuses
 export async function POST(request: NextRequest) {
   try {
     const session = await getAdminSession();
-    const { userId: clerkUserId } = await auth();
-
-    if (!session && !clerkUserId) {
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const adminId = session?.adminId || 1; // Default admin ID if using Clerk
+    const adminId = session.adminId;
 
     const body = await request.json();
     const { packageIds, status } = body;
@@ -86,6 +88,53 @@ export async function POST(request: NextRequest) {
         ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
         userAgent: request.headers.get('user-agent') || 'unknown',
       });
+
+      // Send email notification to user
+      const [userInfo] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, pkg.userId));
+
+      if (userInfo?.email) {
+        const userName = `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || userInfo.email;
+
+        // Send appropriate email based on status
+        if (status === 'available') {
+          await sendPackageAvailableEmail(
+            userInfo.email,
+            userName,
+            pkg.trackingNumber,
+            pkg.recipientCity || 'Haiti Office'
+          ).catch(error => {
+            console.error('Failed to send available email:', error);
+          });
+        } else if (status === 'delivered') {
+          await sendPackageDeliveredEmail(
+            userInfo.email,
+            userName,
+            pkg.trackingNumber,
+            pkg.recipientName || userName
+          ).catch(error => {
+            console.error('Failed to send delivered email:', error);
+          });
+        } else {
+          // For other status changes (received, in-transit)
+          const statusMessages: Record<string, string> = {
+            'received': 'Your package has been received at our warehouse and is being processed.',
+            'in-transit': 'Your package is on its way to Haiti and will arrive soon.',
+          };
+
+          await sendPackageStatusChangeEmail(
+            userInfo.email,
+            userName,
+            pkg.trackingNumber,
+            status,
+            statusMessages[status] || 'Your package status has been updated.'
+          ).catch(error => {
+            console.error('Failed to send status change email:', error);
+          });
+        }
+      }
     }
 
     return NextResponse.json({

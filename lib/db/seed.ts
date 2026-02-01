@@ -44,7 +44,8 @@ async function seed() {
       .returning();
 
     // 2. Create Admin Record
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const adminPassword = process.env.ADMIN_SEED_PASSWORD || 'Alliance$hip2026!';
+    const hashedPassword = await bcrypt.hash(adminPassword, 12);
     const [adminRecord] = await db.insert(admins).values({
       userId: superAdminUser.id,
       role: 'super_admin',
@@ -60,7 +61,7 @@ async function seed() {
       isActive: true,
     }).returning();
 
-    console.log('✅ Super admin created: stanleywendeljoseph@gmail.com / admin123');
+    console.log(`✅ Super admin created: stanleywendeljoseph@gmail.com / ${adminPassword}`);
 
     // 3. Create Sample Users
     console.log('Creating sample users...');
@@ -383,7 +384,7 @@ async function seed() {
     console.log('\n✅ Ready to use!');
     console.log('\n🔐 Admin Login:');
     console.log('   Email: stanleywendeljoseph@gmail.com');
-    console.log('   Password: admin123');
+    console.log(`   Password: ${adminPassword}`);
   } catch (error) {
     console.error('❌ Error seeding database:', error);
     throw error;

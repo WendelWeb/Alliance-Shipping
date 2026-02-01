@@ -13,6 +13,7 @@ import {
   DollarSign,
   Smartphone,
   Megaphone,
+  ShieldCheck,
   LogOut,
   ChevronRight,
   User,
@@ -38,6 +39,7 @@ const navigation = [
   { name: 'Fees Management', href: '/admin/fees', icon: DollarSign },
   { name: 'Special Items', href: '/admin/special-items', icon: Smartphone },
   { name: 'Announcements', href: '/admin/announcements', icon: Megaphone },
+  { name: 'Admin Management', href: '/admin/admins', icon: ShieldCheck },
 ];
 
 export default function AdminSidebar() {
@@ -125,9 +127,9 @@ export default function AdminSidebar() {
               {/* Logout */}
               <li className="mt-auto">
                 <button
-                  onClick={() => {
-                    // TODO: Implement logout
-                    window.location.href = '/admin/login';
+                  onClick={async () => {
+                    await fetch('/api/admin/logout', { method: 'POST' });
+                    window.location.href = '/';
                   }}
                   className="group -mx-2 flex gap-x-3 rounded-lg p-3 text-sm font-semibold leading-6 text-gray-700 hover:bg-red-50 hover:text-red-600 w-full transition-all"
                 >

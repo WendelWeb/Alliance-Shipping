@@ -16,6 +16,7 @@ import {
   Clock,
   Camera,
   FileText,
+  Loader2,
 } from 'lucide-react';
 
 // Mock data - Packages available for customer pickup
@@ -82,6 +83,10 @@ export default function AvailablePackagesPage() {
   const [filterPaid, setFilterPaid] = useState<'all' | 'paid' | 'unpaid'>('all');
   const [packages, setPackages] = useState(mockAvailablePackages);
   const [loading, setLoading] = useState(true);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [newStatus, setNewStatus] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [processingIds, setProcessingIds] = useState<number[]>([]);
 
   useEffect(() => {
     const loadPackages = async () => {
@@ -152,11 +157,68 @@ export default function AvailablePackagesPage() {
   const handleNotifyCustomer = (pkg: typeof mockAvailablePackages[0]) => {
     console.log('Sending notification to:', pkg.userName);
     // TODO: API call to send SMS/Email notification
+    alert(`Notification sent to ${pkg.userName} (${pkg.userEmail})`);
   };
 
-  const handleMarkDelivered = (pkg: typeof mockAvailablePackages[0]) => {
-    console.log('Marking as delivered:', pkg.trackingNumber);
-    // TODO: Navigate to delivery proof page
+  const handleMarkDelivered = async (pkg: typeof mockAvailablePackages[0]) => {
+    setProcessingIds(prev => [...prev, pkg.id]);
+    try {
+      const response = await fetch('/api/admin/packages/bulk-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packageIds: [pkg.id],
+          status: 'delivered',
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update status');
+
+      // Show success message
+      alert(`✅ Colis ${pkg.trackingNumber} marqué comme livré`);
+
+      // Wait a bit then remove from list
+      setTimeout(() => {
+        setPackages(prev => prev.filter(p => p.id !== pkg.id));
+        setProcessingIds(prev => prev.filter(id => id !== pkg.id));
+      }, 500);
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('❌ Échec de la mise à jour du statut');
+      setProcessingIds(prev => prev.filter(id => id !== pkg.id));
+    }
+  };
+
+  const handleBulkUpdateStatus = async () => {
+    if (selectedPackages.length === 0 || !newStatus) return;
+
+    setIsUpdating(true);
+    try {
+      const response = await fetch('/api/admin/packages/bulk-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packageIds: selectedPackages,
+          status: newStatus,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update packages');
+
+      // Remove updated packages from list if status changed
+      if (newStatus !== 'available') {
+        setPackages(prev => prev.filter(p => !selectedPackages.includes(p.id)));
+      }
+
+      setSelectedPackages([]);
+      setShowStatusModal(false);
+      setNewStatus('');
+    } catch (error) {
+      console.error('Error updating packages:', error);
+      alert('Failed to update packages');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -320,17 +382,17 @@ export default function AvailablePackagesPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-semibold">
-                    {pkg.userName.charAt(0)}
+                    {pkg.userName ? pkg.userName.charAt(0) : '?'}
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-gray-900">{pkg.userName}</div>
+                    <div className="text-sm font-medium text-gray-900">{pkg.userName || 'Unknown'}</div>
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <Mail className="h-3 w-3" />
-                      {pkg.userEmail}
+                      {pkg.userEmail || 'N/A'}
                     </div>
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <Phone className="h-3 w-3" />
-                      {pkg.userPhone}
+                      {pkg.userPhone || 'N/A'}
                     </div>
                   </div>
                 </div>
@@ -374,10 +436,20 @@ export default function AvailablePackagesPage() {
               <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
                 <button
                   onClick={() => handleMarkDelivered(pkg)}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
+                  disabled={processingIds.includes(pkg.id)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Camera className="h-4 w-4" />
-                  Process Delivery
+                  {processingIds.includes(pkg.id) ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      En cours...
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="h-4 w-4" />
+                      Process Delivery
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={() => handleNotifyCustomer(pkg)}
@@ -435,17 +507,143 @@ export default function AvailablePackagesPage() {
           </span>
           <div className="h-6 w-px bg-gray-700" />
           <div className="flex items-center gap-2">
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors">
+            <button
+              onClick={() => {
+                const selectedPkgs = packages.filter(p => selectedPackages.includes(p.id));
+                selectedPkgs.forEach(pkg => handleNotifyCustomer(pkg));
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors"
+            >
               <Bell className="h-4 w-4" />
               Notify All
             </button>
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition-colors">
+            <button
+              onClick={() => {
+                setNewStatus('delivered');
+                setShowStatusModal(true);
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition-colors"
+            >
               <CheckCircle className="h-4 w-4" />
               Bulk Delivery
+            </button>
+            <button
+              onClick={() => setShowStatusModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg text-sm font-medium transition-colors"
+            >
+              Update Status
             </button>
           </div>
         </motion.div>
       )}
+
+      {/* Status Update Modal */}
+      {showStatusModal && (() => {
+        const statusOrder = ['pending', 'received', 'in-transit', 'available', 'delivered'];
+        const currentStatus = 'available';
+        const currentIndex = statusOrder.indexOf(currentStatus);
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            >
+              {/* Header */}
+              <div className="sticky top-0 bg-gradient-to-r from-primary-600 to-primary-700 text-white px-6 py-4 rounded-t-2xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Package className="h-6 w-6" />
+                    <div>
+                      <h3 className="text-lg font-bold">Update Package Status</h3>
+                      <p className="text-sm text-primary-100">
+                        {selectedPackages.length} package{selectedPackages.length > 1 ? 's' : ''} selected
+                      </p>
+                      <p className="text-xs text-primary-200 mt-1">
+                        ⚠️ Can only move forward, not backward
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowStatusModal(false)}
+                    className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              {/* Status Options */}
+              <div className="p-6">
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { value: 'pending', label: 'Pending', icon: '⏳', color: 'yellow', desc: 'Awaiting processing' },
+                    { value: 'received', label: 'Received', icon: '📦', color: 'blue', desc: 'At warehouse' },
+                    { value: 'in-transit', label: 'In Transit', icon: '🚚', color: 'purple', desc: 'On the way' },
+                    { value: 'available', label: 'Available', icon: '✅', color: 'green', desc: 'Ready for pickup' },
+                    { value: 'delivered', label: 'Delivered', icon: '🎉', color: 'teal', desc: 'Successfully delivered' },
+                    { value: 'rejected', label: 'Rejected', icon: '❌', color: 'red', desc: 'Request rejected' },
+                  ].map((status) => {
+                    const statusIndex = statusOrder.indexOf(status.value);
+                    const isDisabled = status.value !== 'rejected' && statusIndex <= currentIndex;
+
+                    return (
+                      <motion.button
+                        key={status.value}
+                        onClick={() => !isDisabled && setNewStatus(status.value)}
+                        disabled={isDisabled}
+                        whileHover={!isDisabled ? { scale: 1.02 } : {}}
+                        whileTap={!isDisabled ? { scale: 0.98 } : {}}
+                        className={`relative p-4 rounded-xl border-2 transition-all text-left ${
+                          isDisabled
+                            ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
+                            : newStatus === status.value
+                            ? `border-${status.color}-500 bg-${status.color}-50`
+                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className={`text-2xl ${isDisabled ? 'grayscale' : ''}`}>{status.icon}</span>
+                          <div className="flex-1">
+                            <div className={`font-semibold ${isDisabled ? 'text-gray-400' : 'text-gray-900'}`}>
+                              {status.label}
+                              {isDisabled && <span className="ml-2 text-xs">🔒</span>}
+                            </div>
+                            <div className={`text-xs mt-0.5 ${isDisabled ? 'text-gray-400' : 'text-gray-600'}`}>
+                              {isDisabled ? 'Already passed' : status.desc}
+                            </div>
+                          </div>
+                          {!isDisabled && newStatus === status.value && (
+                            <CheckCircle className="h-5 w-5 text-green-600 absolute top-3 right-3" />
+                          )}
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3 mt-6 pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => setShowStatusModal(false)}
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBulkUpdateStatus}
+                  disabled={!newStatus || isUpdating}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                >
+                  {isUpdating ? 'Updating...' : 'Update Status'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+        );
+      })()}
     </div>
   );
 }

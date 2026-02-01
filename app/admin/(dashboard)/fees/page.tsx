@@ -61,26 +61,47 @@ export default function FeesPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [serviceFee, setServiceFee] = useState(mockCurrentFees.serviceFee);
   const [shippingFeePerLb, setShippingFeePerLb] = useState(mockCurrentFees.shippingFeePerLb);
-  const [effectiveDate, setEffectiveDate] = useState('');
+  const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().split('T')[0]);
   const [showHistory, setShowHistory] = useState(false);
+  const [feeHistory, setFeeHistory] = useState<any[]>([]);
 
   useEffect(() => {
     const loadFees = async () => {
       setLoading(true);
       try {
-        // No simulation delay for instant loading
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        const response = await fetch('/api/admin/fees');
 
-        // TODO: Replace with real API call
-        // const response = await fetch('/api/admin/fees');
-        // const data = await response.json();
-        // setCurrentFees(data);
+        if (!response.ok) {
+          throw new Error('Failed to fetch fees');
+        }
 
+        const data = await response.json();
+
+        // Extract fees from grouped response
+        if (data.serviceFee && data.perPound) {
+          const fees = {
+            serviceFee: parseFloat(data.serviceFee.amount),
+            shippingFeePerLb: parseFloat(data.perPound.amount),
+            lastUpdated: data.serviceFee.updatedAt || '',
+            updatedBy: 'Admin',
+            effectiveDate: data.serviceFee.effectiveFrom || '',
+          };
+
+          setCurrentFees(fees);
+          setServiceFee(fees.serviceFee);
+          setShippingFeePerLb(fees.shippingFeePerLb);
+        } else {
+          // Fallback to mock if no data
+          setCurrentFees(mockCurrentFees);
+          setServiceFee(mockCurrentFees.serviceFee);
+          setShippingFeePerLb(mockCurrentFees.shippingFeePerLb);
+        }
+      } catch (error) {
+        console.error('Error loading fees:', error);
+        // Fallback to mock on error
         setCurrentFees(mockCurrentFees);
         setServiceFee(mockCurrentFees.serviceFee);
         setShippingFeePerLb(mockCurrentFees.shippingFeePerLb);
-      } catch (error) {
-        console.error('Error loading fees:', error);
       } finally {
         setLoading(false);
       }
@@ -89,17 +110,115 @@ export default function FeesPage() {
     loadFees();
   }, []);
 
-  const handleSave = () => {
-    console.log('Saving fees:', { serviceFee, shippingFeePerLb, effectiveDate });
-    // TODO: API call to save fees
-    setIsEditing(false);
+  const handleSave = async () => {
+    // Validation: effectiveDate is required
+    if (!effectiveDate) {
+      alert('Effective date is required. Please select a date.');
+      return;
+    }
+
+    // Validation: fees must be positive
+    if (serviceFee <= 0 || shippingFeePerLb <= 0) {
+      alert('Fees must be greater than 0.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/admin/fees', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          serviceFee,
+          shippingFeePerLb,
+          effectiveDate,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save fees');
+      }
+
+      const data = await response.json();
+      console.log('Fees saved successfully:', data);
+
+      // Reload fees to show updated values
+      const reloadResponse = await fetch('/api/admin/fees');
+      const reloadData = await reloadResponse.json();
+
+      if (reloadData.serviceFee && reloadData.perPound) {
+        const fees = {
+          serviceFee: parseFloat(reloadData.serviceFee.amount),
+          shippingFeePerLb: parseFloat(reloadData.perPound.amount),
+          lastUpdated: reloadData.serviceFee.updatedAt || '',
+          updatedBy: 'Admin',
+          effectiveDate: reloadData.serviceFee.effectiveFrom || '',
+        };
+
+        setCurrentFees(fees);
+        setServiceFee(fees.serviceFee);
+        setShippingFeePerLb(fees.shippingFeePerLb);
+      }
+
+      setIsEditing(false);
+      setEffectiveDate(new Date().toISOString().split('T')[0]);
+      alert('Fees updated successfully!');
+    } catch (error) {
+      console.error('Error saving fees:', error);
+      alert(`Error: ${error instanceof Error ? error.message : 'Failed to save fees'}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
-    setServiceFee(mockCurrentFees.serviceFee);
-    setShippingFeePerLb(mockCurrentFees.shippingFeePerLb);
-    setEffectiveDate('');
+    setServiceFee(currentFees.serviceFee);
+    setShippingFeePerLb(currentFees.shippingFeePerLb);
+    setEffectiveDate(new Date().toISOString().split('T')[0]);
     setIsEditing(false);
+  };
+
+  const loadHistory = async () => {
+    if (showHistory) {
+      // If already showing, just toggle off
+      setShowHistory(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/admin/fees?history=true');
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch fee history');
+      }
+
+      const data = await response.json();
+
+      // Transform grouped fees into display format
+      const history = data.fees
+        .filter((group: any) => group.serviceFee && group.perPound)
+        .map((group: any) => ({
+          id: group.serviceFee.id,
+          serviceFee: parseFloat(group.serviceFee.amount),
+          shippingFeePerLb: parseFloat(group.perPound.amount),
+          effectiveDate: group.effectiveFrom,
+          createdAt: group.serviceFee.createdAt,
+          createdBy: group.serviceFee.createdBy,
+          status: group.serviceFee.isActive ? 'active' : 'expired',
+        }));
+
+      setFeeHistory(history);
+      setShowHistory(true);
+    } catch (error) {
+      console.error('Error loading history:', error);
+      alert('Failed to load fee history');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const calculateExampleFees = (weight: number) => {
@@ -145,7 +264,7 @@ export default function FeesPage() {
           </p>
         </div>
         <button
-          onClick={() => setShowHistory(!showHistory)}
+          onClick={loadHistory}
           className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
         >
           <History className="h-5 w-5" />
@@ -263,17 +382,18 @@ export default function FeesPage() {
               <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
               <div className="flex-1">
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  When should these new fees take effect?
+                  When should these new fees take effect? <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
                   value={effectiveDate}
                   onChange={(e) => setEffectiveDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
+                  required
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
                 <p className="text-xs text-gray-600 mt-2">
-                  Leave blank to make changes effective immediately
+                  Select today for immediate effect, or choose a future date to schedule the change
                 </p>
               </div>
             </div>
@@ -374,7 +494,12 @@ export default function FeesPage() {
           </div>
 
           <div className="space-y-4">
-            {mockFeeHistory.map((record) => (
+            {feeHistory.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No fee history available
+              </div>
+            ) : (
+              feeHistory.map((record) => (
               <div
                 key={record.id}
                 className="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors"
@@ -427,7 +552,8 @@ export default function FeesPage() {
                   </div>
                 </div>
               </div>
-            ))}
+            ))
+            )}
           </div>
         </motion.div>
       )}

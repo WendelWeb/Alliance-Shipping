@@ -75,6 +75,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create special item
+    const userId = session.userId;
+
     const [newItem] = await db
       .insert(specialItemFees)
       .values({
@@ -84,7 +86,7 @@ export async function POST(request: NextRequest) {
         minModel,
         maxModel,
         fixedFee,
-        createdBy: session.userId,
+        createdBy: userId,
         isActive: true,
       })
       .returning();

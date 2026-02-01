@@ -94,6 +94,9 @@ export default function DeliveredPackagesPage() {
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [packages, setPackages] = useState(mockDeliveredPackages);
   const [loading, setLoading] = useState(true);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [newStatus, setNewStatus] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     const loadPackages = async () => {
@@ -161,16 +164,52 @@ export default function DeliveredPackagesPage() {
   const handleViewProof = (pkg: typeof mockDeliveredPackages[0]) => {
     console.log('Viewing delivery proof for:', pkg.trackingNumber);
     // TODO: Open modal with signature and photo
+    alert(`Viewing delivery proof for ${pkg.trackingNumber}\n\nRecipient: ${pkg.recipientName}\nSignature: ${pkg.recipientSignature ? 'Available' : 'Not available'}\nPhoto: ${pkg.deliveryPhoto ? 'Available' : 'Not available'}`);
   };
 
   const handleExportReceipt = (pkg: typeof mockDeliveredPackages[0]) => {
     console.log('Exporting receipt for:', pkg.trackingNumber);
     // TODO: Generate PDF receipt
+    alert(`Exporting receipt for ${pkg.trackingNumber}\n\nThis will generate a PDF receipt (feature to be implemented)`);
   };
 
   const handleArchive = (pkg: typeof mockDeliveredPackages[0]) => {
+    if (!confirm(`Archive package ${pkg.trackingNumber}?`)) return;
     console.log('Archiving package:', pkg.trackingNumber);
     // TODO: API call to archive
+    alert('Package archived successfully');
+  };
+
+  const handleBulkUpdateStatus = async () => {
+    if (selectedPackages.length === 0 || !newStatus) return;
+
+    setIsUpdating(true);
+    try {
+      const response = await fetch('/api/admin/packages/bulk-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packageIds: selectedPackages,
+          status: newStatus,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update packages');
+
+      // Remove updated packages from list if status changed
+      if (newStatus !== 'delivered') {
+        setPackages(prev => prev.filter(p => !selectedPackages.includes(p.id)));
+      }
+
+      setSelectedPackages([]);
+      setShowStatusModal(false);
+      setNewStatus('');
+    } catch (error) {
+      console.error('Error updating packages:', error);
+      alert('Failed to update packages');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -359,11 +398,11 @@ export default function DeliveredPackagesPage() {
                   <p className="text-xs text-gray-500 mb-2">CUSTOMER</p>
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-semibold">
-                      {pkg.userName.charAt(0)}
+                      {pkg.userName ? pkg.userName.charAt(0) : '?'}
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{pkg.userName}</div>
-                      <div className="text-xs text-gray-500">{pkg.userEmail}</div>
+                      <div className="text-sm font-medium text-gray-900">{pkg.userName || 'Unknown'}</div>
+                      <div className="text-xs text-gray-500">{pkg.userEmail || 'N/A'}</div>
                     </div>
                   </div>
                 </div>
@@ -373,11 +412,11 @@ export default function DeliveredPackagesPage() {
                   <p className="text-xs text-gray-500 mb-2">RECIPIENT</p>
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold">
-                      {pkg.recipientName.charAt(0)}
+                      {pkg.recipientName ? pkg.recipientName.charAt(0) : '?'}
                     </div>
                     <div>
                       <div className="text-sm font-medium text-gray-900">
-                        {pkg.recipientName}
+                        {pkg.recipientName || 'Unknown Recipient'}
                       </div>
                       <div className="text-xs text-gray-500">
                         Delivered by {pkg.deliveredBy}
@@ -530,17 +569,145 @@ export default function DeliveredPackagesPage() {
           </span>
           <div className="h-6 w-px bg-gray-700" />
           <div className="flex items-center gap-2">
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors">
+            <button
+              onClick={() => {
+                const selectedPkgs = packages.filter(p => selectedPackages.includes(p.id));
+                selectedPkgs.forEach(pkg => handleExportReceipt(pkg));
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors"
+            >
               <Download className="h-4 w-4" />
               Export All
             </button>
-            <button className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors">
+            <button
+              onClick={() => {
+                const selectedPkgs = packages.filter(p => selectedPackages.includes(p.id));
+                if (confirm(`Archive ${selectedPkgs.length} package(s)?`)) {
+                  selectedPkgs.forEach(pkg => handleArchive(pkg));
+                }
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors"
+            >
               <Archive className="h-4 w-4" />
               Archive All
+            </button>
+            <button
+              onClick={() => setShowStatusModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg text-sm font-medium transition-colors"
+            >
+              Update Status
             </button>
           </div>
         </motion.div>
       )}
+
+      {/* Status Update Modal */}
+      {showStatusModal && (() => {
+        const statusOrder = ['pending', 'received', 'in-transit', 'available', 'delivered'];
+        const currentStatus = 'delivered';
+        const currentIndex = statusOrder.indexOf(currentStatus);
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            >
+              {/* Header */}
+              <div className="sticky top-0 bg-gradient-to-r from-primary-600 to-primary-700 text-white px-6 py-4 rounded-t-2xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Package className="h-6 w-6" />
+                    <div>
+                      <h3 className="text-lg font-bold">Update Package Status</h3>
+                      <p className="text-sm text-primary-100">
+                        {selectedPackages.length} package{selectedPackages.length > 1 ? 's' : ''} selected
+                      </p>
+                      <p className="text-xs text-primary-200 mt-1">
+                        ⚠️ Package already delivered - only rejection possible
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowStatusModal(false)}
+                    className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              {/* Status Options */}
+              <div className="p-6">
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { value: 'pending', label: 'Pending', icon: '⏳', color: 'yellow', desc: 'Awaiting processing' },
+                    { value: 'received', label: 'Received', icon: '📦', color: 'blue', desc: 'At warehouse' },
+                    { value: 'in-transit', label: 'In Transit', icon: '🚚', color: 'purple', desc: 'On the way' },
+                    { value: 'available', label: 'Available', icon: '✅', color: 'green', desc: 'Ready for pickup' },
+                    { value: 'delivered', label: 'Delivered', icon: '🎉', color: 'teal', desc: 'Successfully delivered' },
+                    { value: 'rejected', label: 'Rejected', icon: '❌', color: 'red', desc: 'Request rejected' },
+                  ].map((status) => {
+                    const statusIndex = statusOrder.indexOf(status.value);
+                    const isDisabled = status.value !== 'rejected' && statusIndex <= currentIndex;
+
+                    return (
+                      <motion.button
+                        key={status.value}
+                        onClick={() => !isDisabled && setNewStatus(status.value)}
+                        disabled={isDisabled}
+                        whileHover={!isDisabled ? { scale: 1.02 } : {}}
+                        whileTap={!isDisabled ? { scale: 0.98 } : {}}
+                        className={`relative p-4 rounded-xl border-2 transition-all text-left ${
+                          isDisabled
+                            ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
+                            : newStatus === status.value
+                            ? `border-${status.color}-500 bg-${status.color}-50`
+                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className={`text-2xl ${isDisabled ? 'grayscale' : ''}`}>{status.icon}</span>
+                          <div className="flex-1">
+                            <div className={`font-semibold ${isDisabled ? 'text-gray-400' : 'text-gray-900'}`}>
+                              {status.label}
+                              {isDisabled && <span className="ml-2 text-xs">🔒</span>}
+                            </div>
+                            <div className={`text-xs mt-0.5 ${isDisabled ? 'text-gray-400' : 'text-gray-600'}`}>
+                              {isDisabled ? 'Already passed' : status.desc}
+                            </div>
+                          </div>
+                          {!isDisabled && newStatus === status.value && (
+                            <CheckCircle className="h-5 w-5 text-green-600 absolute top-3 right-3" />
+                          )}
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3 mt-6 pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => setShowStatusModal(false)}
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBulkUpdateStatus}
+                  disabled={!newStatus || isUpdating}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                >
+                  {isUpdating ? 'Updating...' : 'Update Status'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      );
+    })()}
     </div>
   );
 }

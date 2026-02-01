@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -19,6 +19,8 @@ import {
 export default function NewPackagePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [currentServiceFee, setCurrentServiceFee] = useState(5.00); // Fallback
+  const [currentPricePerLb, setCurrentPricePerLb] = useState(4.00); // Fallback
   const [formData, setFormData] = useState({
     // Sender Information
     senderName: '',
@@ -43,6 +45,20 @@ export default function NewPackagePage() {
     notes: '',
   });
 
+  // Fetch current fees from API
+  useEffect(() => {
+    fetch('/api/fees/current')
+      .then(res => res.json())
+      .then(data => {
+        setCurrentServiceFee(data.serviceFee);
+        setCurrentPricePerLb(data.pricePerLb);
+      })
+      .catch(error => {
+        console.error('Error fetching fees:', error);
+        // Keep fallback values
+      });
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
@@ -55,8 +71,8 @@ export default function NewPackagePage() {
 
   const calculateFees = () => {
     const weight = parseFloat(formData.weight) || 0;
-    const serviceFee = 5.00;
-    const shippingFee = weight * 4.00;
+    const serviceFee = currentServiceFee;
+    const shippingFee = weight * currentPricePerLb;
     const total = serviceFee + shippingFee;
 
     return { serviceFee, shippingFee, total };

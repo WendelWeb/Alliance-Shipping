@@ -118,15 +118,12 @@ export default function SpecialItemsPage() {
     const loadSpecialItems = async () => {
       setLoading(true);
       try {
-        // No simulation delay for instant loading
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        // TODO: Replace with real API call
-        // const response = await fetch('/api/admin/special-items');
-        // const data = await response.json();
-        // setItems(data);
-
-        setItems(mockSpecialItems);
+        const response = await fetch('/api/admin/special-items');
+        if (!response.ok) {
+          throw new Error('Failed to load special items');
+        }
+        const data = await response.json();
+        setItems(data.items);
       } catch (error) {
         console.error('Error loading special items:', error);
       } finally {
@@ -143,19 +140,34 @@ export default function SpecialItemsPage() {
       item.itemName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleAdd = () => {
-    console.log('Adding new item:', formData);
-    // TODO: API call to create
-    setIsAddingNew(false);
-    setFormData({
-      category: 'phone',
-      brand: '',
-      itemName: '',
-      minModel: '',
-      maxModel: '',
-      fixedFee: 0,
-      isActive: true,
-    });
+  const handleAdd = async () => {
+    try {
+      const response = await fetch('/api/admin/special-items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create special item');
+      }
+
+      const data = await response.json();
+      setItems([data.item, ...items]);
+      setIsAddingNew(false);
+      setFormData({
+        category: 'phone',
+        brand: '',
+        itemName: '',
+        minModel: '',
+        maxModel: '',
+        fixedFee: 0,
+        isActive: true,
+      });
+    } catch (error) {
+      console.error('Error adding special item:', error);
+      alert('Failed to add special item. Please try again.');
+    }
   };
 
   const handleEdit = (item: typeof mockSpecialItems[0]) => {
@@ -163,16 +175,52 @@ export default function SpecialItemsPage() {
     setFormData(item);
   };
 
-  const handleUpdate = () => {
-    console.log('Updating item:', formData);
-    // TODO: API call to update
-    setEditingId(null);
+  const handleUpdate = async () => {
+    try {
+      const response = await fetch('/api/admin/special-items', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingId, ...formData }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update special item');
+      }
+
+      const data = await response.json();
+      setItems(items.map(item => item.id === editingId ? data.item : item));
+      setEditingId(null);
+      setFormData({
+        category: 'phone',
+        brand: '',
+        itemName: '',
+        minModel: '',
+        maxModel: '',
+        fixedFee: 0,
+        isActive: true,
+      });
+    } catch (error) {
+      console.error('Error updating special item:', error);
+      alert('Failed to update special item. Please try again.');
+    }
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (confirm('Are you sure you want to delete this item?')) {
-      console.log('Deleting item:', id);
-      // TODO: API call to delete
+      try {
+        const response = await fetch(`/api/admin/special-items?id=${id}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete special item');
+        }
+
+        setItems(items.filter(item => item.id !== id));
+      } catch (error) {
+        console.error('Error deleting special item:', error);
+        alert('Failed to delete special item. Please try again.');
+      }
     }
   };
 

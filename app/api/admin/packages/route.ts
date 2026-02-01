@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { packages, users, trackingHistory, packageRequests, adminActivityLogs } from '@/lib/db/schema';
+import { packages, users, trackingHistory, packageRequests, adminActivityLogs, serviceFees, specialItemFees } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
-import { auth } from '@clerk/nextjs/server';
-import { eq, and, like, or, desc, sql } from 'drizzle-orm';
+import { eq, and, like, or, desc, sql, lte } from 'drizzle-orm';
 
 // GET - List all packages with filters
 export async function GET(request: NextRequest) {
   try {
-    // Check admin session first, then fall back to Clerk auth
     const session = await getAdminSession();
-    const { userId: clerkUserId } = await auth();
-
-    if (!session && !clerkUserId) {
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -177,9 +173,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getAdminSession();
-    const { userId: clerkUserId } = await auth();
-
-    if (!session && !clerkUserId) {
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -193,10 +187,62 @@ export async function POST(request: NextRequest) {
       specialItemId,
     } = body;
 
-    // Calculate fees (simplified - should use actual fee configuration)
-    const serviceFee = 5.0;
-    const shippingFee = specialItemId ? 20.0 : weight * 4.0;
-    const totalFee = serviceFee + shippingFee;
+    // Query current fees from database for SNAPSHOT (immutable)
+    const now = new Date();
+
+    const [serviceFeeRecord] = await db
+      .select()
+      .from(serviceFees)
+      .where(
+        and(
+          eq(serviceFees.isActive, true),
+          eq(serviceFees.feeType, 'service_fee'),
+          lte(serviceFees.effectiveFrom, now)
+        )
+      )
+      .orderBy(desc(serviceFees.effectiveFrom))
+      .limit(1);
+
+    const [perPoundRecord] = await db
+      .select()
+      .from(serviceFees)
+      .where(
+        and(
+          eq(serviceFees.isActive, true),
+          eq(serviceFees.feeType, 'per_pound'),
+          lte(serviceFees.effectiveFrom, now)
+        )
+      )
+      .orderBy(desc(serviceFees.effectiveFrom))
+      .limit(1);
+
+    const currentServiceFee = serviceFeeRecord
+      ? parseFloat(serviceFeeRecord.amount)
+      : 5.0; // Fallback
+    const currentPricePerLb = perPoundRecord
+      ? parseFloat(perPoundRecord.amount)
+      : 4.0; // Fallback
+
+    // Calculate shipping fee
+    let shippingFee: number;
+
+    if (specialItemId) {
+      // Get special item fixed fee
+      const [specialItem] = await db
+        .select()
+        .from(specialItemFees)
+        .where(and(eq(specialItemFees.id, specialItemId), eq(specialItemFees.isActive, true)))
+        .limit(1);
+
+      shippingFee = specialItem ? parseFloat(specialItem.fixedFee) : 20.0; // Fallback
+    } else {
+      // Weight-based calculation
+      shippingFee = weight * currentPricePerLb;
+    }
+
+    const totalFee = currentServiceFee + shippingFee;
+
+    // IMPORTANT: These values are SNAPSHOT and will NEVER change even if fees change later
 
     // Generate tracking number
     const year = new Date().getFullYear();
@@ -214,7 +260,7 @@ export async function POST(request: NextRequest) {
         weight: weight.toString(),
         weightUnit: 'lbs',
         category: 'general',
-        serviceFee: serviceFee.toString(),
+        serviceFee: currentServiceFee.toString(),
         weightCost: shippingFee.toString(),
         totalCost: totalFee.toString(),
         currency: 'USD',
@@ -242,7 +288,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Log admin activity - Package created
-    const adminId = session?.adminId || 1;
+    const adminId = session.adminId;
     await db.insert(adminActivityLogs).values({
       adminId: adminId,
       action: 'created',
@@ -274,9 +320,7 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getAdminSession();
-    const { userId: clerkUserId } = await auth();
-
-    if (!session && !clerkUserId) {
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -326,7 +370,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Log admin activity - Package updated
-    const adminId = session?.adminId || 1;
+    const adminId = session.adminId;
     await db.insert(adminActivityLogs).values({
       adminId: adminId,
       action: 'updated',
@@ -356,9 +400,7 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getAdminSession();
-    const { userId: clerkUserId } = await auth();
-
-    if (!session && !clerkUserId) {
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -385,7 +427,7 @@ export async function DELETE(request: NextRequest) {
     await db.delete(packages).where(eq(packages.id, packageId));
 
     // Log admin activity - Package deleted
-    const adminId = session?.adminId || 1;
+    const adminId = session.adminId;
     await db.insert(adminActivityLogs).values({
       adminId: adminId,
       action: 'deleted',

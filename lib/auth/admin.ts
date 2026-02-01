@@ -3,9 +3,14 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 
-const secret = new TextEncoder().encode(
-  process.env.ADMIN_JWT_SECRET || 'your-super-secret-admin-jwt-key-change-in-production'
-);
+// Lazy secret - avoids crash at build time, throws explicitly at runtime if missing
+function getJwtSecret(): Uint8Array {
+  const raw = process.env.ADMIN_JWT_SECRET;
+  if (!raw) {
+    throw new Error('ADMIN_JWT_SECRET environment variable is not set');
+  }
+  return new TextEncoder().encode(raw);
+}
 
 export interface AdminSession {
   adminId: number;
@@ -20,14 +25,14 @@ export async function createAdminToken(session: AdminSession): Promise<string> {
   return await new SignJWT({ ...session })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('24h') // Token expires in 24 hours
-    .sign(secret);
+    .setExpirationTime('24h')
+    .sign(getJwtSecret());
 }
 
 // Verify JWT token
 export async function verifyAdminToken(token: string): Promise<AdminSession | null> {
   try {
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     return payload as unknown as AdminSession;
   } catch (error) {
     return null;
@@ -66,9 +71,9 @@ export async function clearAdminSession() {
   cookieStore.delete('admin_token');
 }
 
-// Hash password
+// Hash password (12 rounds)
 export async function hashPassword(password: string): Promise<string> {
-  return await bcrypt.hash(password, 10);
+  return await bcrypt.hash(password, 12);
 }
 
 // Verify password
@@ -81,13 +86,13 @@ export async function requireAdmin(request: NextRequest): Promise<NextResponse |
   const token = request.cookies.get('admin_token')?.value;
 
   if (!token) {
-    return NextResponse.redirect(new URL('/admin/login', request.url));
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   const session = await verifyAdminToken(token);
 
   if (!session) {
-    return NextResponse.redirect(new URL('/admin/login', request.url));
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   return session;

@@ -2,16 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { packageRequests, users, packages, trackingHistory, adminActivityLogs } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
-import { auth } from '@clerk/nextjs/server';
 import { eq, desc, sql } from 'drizzle-orm';
+import { sendPackageApprovedEmail, sendPackageRejectedEmail } from '@/lib/email/service';
 
 // GET - List all package requests
 export async function GET(request: NextRequest) {
   try {
     const session = await getAdminSession();
-    const { userId: clerkUserId } = await auth();
-
-    if (!session && !clerkUserId) {
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -65,14 +63,11 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getAdminSession();
-    const { userId: clerkUserId } = await auth();
-
-    if (!session && !clerkUserId) {
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // For actions that need adminId, use 1 as default if no session
-    const adminId = session?.adminId || 1;
+    const adminId = session.adminId;
 
     const body = await request.json();
     const { id, action, weight, category, initialStatus } = body; // action: 'approve' or 'reject'
@@ -215,6 +210,26 @@ export async function PATCH(request: NextRequest) {
         userAgent: request.headers.get('user-agent') || 'unknown',
       });
 
+      // Get user info for email
+      const [userInfo] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, packageRequest.userId));
+
+      // Send approval email to user
+      if (userInfo?.email) {
+        const userName = `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || userInfo.email;
+        await sendPackageApprovedEmail(
+          userInfo.email,
+          userName,
+          asTrackingNumber,
+          totalFee
+        ).catch(error => {
+          console.error('Failed to send approval email:', error);
+          // Don't fail the request if email fails
+        });
+      }
+
       return NextResponse.json({
         success: true,
         package: newPackage,
@@ -244,6 +259,26 @@ export async function PATCH(request: NextRequest) {
         ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
         userAgent: request.headers.get('user-agent') || 'unknown',
       });
+
+      // Get user info for email
+      const [userInfo] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, packageRequest.userId));
+
+      // Send rejection email to user
+      if (userInfo?.email) {
+        const userName = `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || userInfo.email;
+        await sendPackageRejectedEmail(
+          userInfo.email,
+          userName,
+          packageRequest.externalTrackingNumber,
+          packageRequest.adminNotes || undefined
+        ).catch(error => {
+          console.error('Failed to send rejection email:', error);
+          // Don't fail the request if email fails
+        });
+      }
 
       return NextResponse.json({ success: true });
     }

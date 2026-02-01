@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { serviceFees } from '@/lib/db/schema';
+import { serviceFees, announcements } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and, lte } from 'drizzle-orm';
+import {
+  feeChangeTemplates,
+  shouldCreateAnnouncement,
+  SUPPORTED_LANGUAGES,
+} from '@/lib/announcements/fee-change-templates';
 
 // GET - Get current and historical fees
 export async function GET(request: NextRequest) {
@@ -22,17 +27,55 @@ export async function GET(request: NextRequest) {
         .from(serviceFees)
         .orderBy(desc(serviceFees.effectiveFrom));
 
-      return NextResponse.json({ fees: allFees });
+      // Group by effectiveFrom to pair service_fee + per_pound
+      const grouped = allFees.reduce((acc: any[], fee) => {
+        const dateKey = fee.effectiveFrom.toISOString();
+        const existing = acc.find(g => g.effectiveFrom === dateKey);
+
+        if (existing) {
+          if (fee.feeType === 'service_fee') {
+            existing.serviceFee = fee;
+          } else if (fee.feeType === 'per_pound') {
+            existing.perPound = fee;
+          }
+        } else {
+          acc.push({
+            effectiveFrom: dateKey,
+            serviceFee: fee.feeType === 'service_fee' ? fee : null,
+            perPound: fee.feeType === 'per_pound' ? fee : null,
+          });
+        }
+
+        return acc;
+      }, []);
+
+      return NextResponse.json({ fees: grouped });
     } else {
-      // Get only current active fee
-      const [currentFee] = await db
+      // Get current active fees (both service_fee and per_pound)
+      const [serviceFeeRecord] = await db
         .select()
         .from(serviceFees)
-        .where(eq(serviceFees.isActive, true))
+        .where(and(
+          eq(serviceFees.isActive, true),
+          eq(serviceFees.feeType, 'service_fee')
+        ))
         .orderBy(desc(serviceFees.effectiveFrom))
         .limit(1);
 
-      return NextResponse.json({ fee: currentFee || null });
+      const [perPoundRecord] = await db
+        .select()
+        .from(serviceFees)
+        .where(and(
+          eq(serviceFees.isActive, true),
+          eq(serviceFees.feeType, 'per_pound')
+        ))
+        .orderBy(desc(serviceFees.effectiveFrom))
+        .limit(1);
+
+      return NextResponse.json({
+        serviceFee: serviceFeeRecord || null,
+        perPound: perPoundRecord || null,
+      });
     }
   } catch (error) {
     console.error('Error fetching fees:', error);
@@ -75,7 +118,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // If effective date is now or in the past, deactivate current active fee
+    // Fetch OLD fees for comparison (to generate announcements)
+    const now = new Date();
+    const [oldServiceFee] = await db
+      .select()
+      .from(serviceFees)
+      .where(and(
+        eq(serviceFees.isActive, true),
+        eq(serviceFees.feeType, 'service_fee'),
+        lte(serviceFees.effectiveFrom, now)
+      ))
+      .orderBy(desc(serviceFees.effectiveFrom))
+      .limit(1);
+
+    const [oldPerPound] = await db
+      .select()
+      .from(serviceFees)
+      .where(and(
+        eq(serviceFees.isActive, true),
+        eq(serviceFees.feeType, 'per_pound'),
+        lte(serviceFees.effectiveFrom, now)
+      ))
+      .orderBy(desc(serviceFees.effectiveFrom))
+      .limit(1);
+
+    // If effective date is now or in the past, deactivate current active fees of BOTH types
     if (effective <= new Date()) {
       await db
         .update(serviceFees)
@@ -83,19 +150,68 @@ export async function POST(request: NextRequest) {
         .where(eq(serviceFees.isActive, true));
     }
 
-    // Create new fee configuration
-    const [newFee] = await db
+    // Create TWO new fee records (service_fee + per_pound)
+    const userId = session.userId;
+
+    const [newServiceFee] = await db
       .insert(serviceFees)
       .values({
         feeType: 'service_fee',
-        amount: serviceFee,
+        amount: serviceFee.toString(),
         effectiveFrom: effective,
-        createdBy: session.userId,
+        createdBy: userId,
         isActive: effective <= new Date(),
       })
       .returning();
 
-    return NextResponse.json({ fee: newFee }, { status: 201 });
+    const [newPerPound] = await db
+      .insert(serviceFees)
+      .values({
+        feeType: 'per_pound',
+        amount: shippingFeePerLb.toString(),
+        effectiveFrom: effective,
+        createdBy: userId,
+        isActive: effective <= new Date(),
+      })
+      .returning();
+
+    // Create multilingual announcements if fees changed
+    const feeChange = {
+      oldServiceFee: oldServiceFee ? parseFloat(oldServiceFee.amount) : 5.0,
+      newServiceFee: parseFloat(newServiceFee.amount),
+      oldPricePerLb: oldPerPound ? parseFloat(oldPerPound.amount) : 4.0,
+      newPricePerLb: parseFloat(newPerPound.amount),
+      effectiveDate: effective,
+    };
+
+    let announcementsCreated = 0;
+
+    if (shouldCreateAnnouncement(feeChange)) {
+      // Create announcements in all 4 languages
+      for (const lang of SUPPORTED_LANGUAGES) {
+        const template = feeChangeTemplates[lang](feeChange);
+
+        await db.insert(announcements).values({
+          title: `[${lang.toUpperCase()}] ${template.title}`,
+          content: template.content,
+          type: 'alert', // Important change
+          targetAudience: 'all',
+          isPublished: effective <= new Date(), // Publish immediately if effective now, schedule if future
+          publishDate: effective,
+          showOnHomepage: true,
+          isPinned: true, // Pin for visibility
+          createdBy: userId,
+        });
+
+        announcementsCreated++;
+      }
+    }
+
+    return NextResponse.json({
+      serviceFee: newServiceFee,
+      perPound: newPerPound,
+      announcementsCreated,
+    }, { status: 201 });
   } catch (error) {
     console.error('Error creating fee:', error);
     return NextResponse.json(
