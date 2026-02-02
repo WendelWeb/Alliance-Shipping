@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
   // Envoyer email de test
   const result = await sendEmail({
     to: testEmail,
-    subject: '✅ Test Email - Alliance Shipping Configuration',
+    subject: 'Test Email - Alliance Shipping Configuration',
     html: `
       <!DOCTYPE html>
       <html>

@@ -136,7 +136,7 @@ interface EmailStrings {
 
 const packageRequestStrings: Record<Locale, EmailStrings> = {
   ht: {
-    subject: '📦 Demann Koli Soumèt - Alliance Shipping',
+    subject: 'Demann Koli Soumèt - Alliance Shipping',
     greeting: 'Bonjou',
     body: 'Mèsi paske ou soumèt demann koli ou avèk Alliance Shipping. Nou resevwa demann ou an epi n ap trete li kounye a.',
     trackingLabel: 'Nimewo Tracking Ou:',
@@ -154,7 +154,7 @@ const packageRequestStrings: Record<Locale, EmailStrings> = {
     automated: 'Sa a se yon mesaj otomatik, tanpri pa reponn imèl sa a.',
   },
   fr: {
-    subject: '📦 Demande de Colis Soumise - Alliance Shipping',
+    subject: 'Demande de Colis Soumise - Alliance Shipping',
     greeting: 'Bonjour',
     body: 'Merci d\'avoir soumis votre demande de colis avec Alliance Shipping. Nous avons bien reçu votre demande et elle est en cours de traitement.',
     trackingLabel: 'Votre Numéro de Suivi :',
@@ -172,7 +172,7 @@ const packageRequestStrings: Record<Locale, EmailStrings> = {
     automated: 'Ceci est un message automatique, merci de ne pas répondre à cet e-mail.',
   },
   en: {
-    subject: '📦 Package Request Submitted - Alliance Shipping',
+    subject: 'Package Request Submitted - Alliance Shipping',
     greeting: 'Hello',
     body: 'Thank you for submitting your package request with Alliance Shipping. We have received your request and it is now being processed.',
     trackingLabel: 'Your Tracking Number:',
@@ -190,7 +190,7 @@ const packageRequestStrings: Record<Locale, EmailStrings> = {
     automated: 'This is an automated message, please do not reply to this email.',
   },
   es: {
-    subject: '📦 Solicitud de Paquete Enviada - Alliance Shipping',
+    subject: 'Solicitud de Paquete Enviada - Alliance Shipping',
     greeting: 'Hola',
     body: 'Gracias por enviar su solicitud de paquete con Alliance Shipping. Hemos recibido su solicitud y se está procesando.',
     trackingLabel: 'Su Número de Seguimiento:',
@@ -296,7 +296,7 @@ export const sendPackageApprovedEmail = async (
   trackingNumber: string,
   totalCost: number
 ) => {
-  const subject = '✅ Package Request Approved - Alliance Shipping';
+  const subject = 'Package Request Approved - Alliance Shipping';
   const html = `
     <!DOCTYPE html>
     <html>
@@ -377,7 +377,7 @@ export const sendPackageRejectedEmail = async (
   trackingNumber: string,
   reason?: string
 ) => {
-  const subject = '❌ Package Request Rejected - Alliance Shipping';
+  const subject = 'Package Request Update - Alliance Shipping';
   const html = `
     <!DOCTYPE html>
     <html>
@@ -483,7 +483,7 @@ export const sendPackageStatusChangeEmail = async (
   const emoji = statusEmojis[newStatus] || '📦';
   const label = statusLabels[newStatus] || newStatus;
 
-  const subject = `${emoji} Package Status Update - ${label}`;
+  const subject = `Package Status Update: ${label} - Alliance Shipping`;
   const html = `
     <!DOCTYPE html>
     <html>
@@ -550,7 +550,7 @@ export const sendPackageAvailableEmail = async (
   trackingNumber: string,
   pickupLocation: string
 ) => {
-  const subject = '✅ Package Available for Pickup - Alliance Shipping';
+  const subject = 'Package Available for Pickup - Alliance Shipping';
   const html = `
     <!DOCTYPE html>
     <html>
@@ -632,7 +632,7 @@ export const sendPackageDeliveredEmail = async (
   trackingNumber: string,
   recipientName: string
 ) => {
-  const subject = '🎉 Package Delivered Successfully - Alliance Shipping';
+  const subject = 'Package Delivered Successfully - Alliance Shipping';
   const html = `
     <!DOCTYPE html>
     <html>
