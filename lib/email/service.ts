@@ -1,6 +1,15 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy init — avoids crash at build time when env vars are not yet available
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) {
+    const key = process.env.RESEND_API_KEY;
+    if (!key) throw new Error('RESEND_API_KEY is not configured');
+    _resend = new Resend(key);
+  }
+  return _resend;
+}
 
 const FROM_EMAIL = process.env.SMTP_FROM || 'Alliance Shipping <noreply@allianceshipping.com>';
 
@@ -87,7 +96,7 @@ export const sendEmail = async ({ to, subject, html }: EmailParams) => {
   logEmailAttempt(to, subject, 'START');
 
   try {
-    const data = await resend.emails.send({
+    const data = await getResend().emails.send({
       from: FROM_EMAIL,
       to,
       subject,
