@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useUser, UserButton } from '@clerk/nextjs';
+import { useUser, UserButton, useClerk } from '@clerk/nextjs';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Container } from '@/components/Container';
@@ -18,13 +18,50 @@ import {
   Shield,
   LogOut,
   Settings,
+  Wallet,
+  HelpCircle,
+  Clock,
+  Home,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useState, useEffect } from 'react';
 
 export default function ProfilePage() {
   const { user, isLoaded } = useUser();
+  const { signOut } = useClerk();
+  const router = useRouter();
   const { t } = useTranslation();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.push('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    fetch('/api/admin/elevate')
+      .then((res) => res.json())
+      .then((data) => setIsAdmin(data.isAdmin === true))
+      .catch(() => setIsAdmin(false));
+  }, [user]);
+
+  const handleAdminAccess = async () => {
+    try {
+      const res = await fetch('/api/admin/elevate', { method: 'POST' });
+      if (res.ok) {
+        router.push('/admin');
+      }
+    } catch (error) {
+      console.error('Admin elevation error:', error);
+    }
+  };
 
   if (!isLoaded) {
     return (
@@ -66,12 +103,15 @@ export default function ProfilePage() {
   ];
 
   const menuItems = [
-    { label: t.profile.menu.myPackages, icon: User, href: '/profile/info' },
-    { label: t.profile.menu.tracking, icon: MapPin, href: '/profile/addresses' },
-    { label: t.profile.menu.calculator, icon: CreditCard, href: '/profile/payment' },
-    { label: t.profile.menu.settings, icon: Bell, href: '/profile/notifications' },
-    { label: t.profile.menu.support, icon: Shield, href: '/profile/security' },
-    { label: t.profile.menu.settings, icon: Settings, href: '/profile/settings' },
+    { label: 'Mes Colis', icon: Package, href: '/packages' },
+    { label: 'Demander un Colis', icon: MapPin, href: '/dashboard/request-package' },
+    { label: 'Calculateur de Prix', icon: CreditCard, href: '/calculator' },
+    { label: 'Méthodes de Paiement', icon: Wallet, href: '/profile/payment' },
+    { label: 'Mes Adresses', icon: Home, href: '/profile/addresses' },
+    { label: 'Historique', icon: Clock, href: '/profile/history' },
+    { label: 'Notifications', icon: Bell, href: '/profile/notifications' },
+    { label: 'Support & Aide', icon: HelpCircle, href: '/profile/support' },
+    { label: 'Paramètres du Profil', icon: Settings, href: '/profile/settings' },
   ];
 
   return (
@@ -121,10 +161,12 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Edit Button */}
-                <Button variant="outline" className="bg-white text-primary-600 border-white hover:bg-white/90">
-                  <Settings className="w-4 h-4 mr-2" />
-                  {t.profile.menu.settings}
-                </Button>
+                <Link href="/profile/settings">
+                  <Button variant="outline" className="bg-white text-primary-600 border-white hover:bg-white/90">
+                    <Settings className="w-4 h-4 mr-2" />
+                    {t.profile.menu.settings}
+                  </Button>
+                </Link>
               </div>
             </Card>
           </motion.div>
@@ -204,22 +246,38 @@ export default function ProfilePage() {
             </div>
           </motion.div>
 
+          {/* Admin Dashboard */}
+          {isAdmin && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              className="mt-8"
+            >
+              <button
+                onClick={handleAdminAccess}
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-red-600 to-orange-500 text-white font-semibold rounded-xl border-2 border-red-600 hover:from-red-700 hover:to-orange-600 transition-all shadow-lg"
+              >
+                <Shield className="w-5 h-5" />
+                Admin Dashboard
+              </button>
+            </motion.div>
+          )}
+
           {/* Sign Out */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
+            transition={{ delay: isAdmin ? 0.9 : 0.8 }}
             className="mt-8"
           >
-            <Button
-              variant="outline"
-              fullWidth
-              size="lg"
-              className="text-red-600 border-red-600 hover:bg-red-50"
+            <button
+              onClick={handleSignOut}
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 border-2 border-red-600 text-red-600 font-semibold rounded-xl hover:bg-red-50 transition-colors"
             >
-              <LogOut className="w-5 h-5 mr-2" />
+              <LogOut className="w-5 h-5" />
               {t.profile.menu.signOut}
-            </Button>
+            </button>
           </motion.div>
         </Container>
       </main>

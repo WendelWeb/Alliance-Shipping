@@ -47,3 +47,13 @@
     @apply bg-gradient-to-r from-accent-600 to-accent-400;
   }
 }
+
+/* Clerk responsive styles - Only fix container widths, keep Clerk styles normal */
+@media (max-width: 500px) {
+  /* Make sure Clerk components fit in small screens but keep their normal styling */
+  .cl-rootBox,
+  .cl-card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}

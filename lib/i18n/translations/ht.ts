@@ -233,6 +233,7 @@ export const ht = {
       announcements: 'Anons',
     },
     readMore: 'Li plis',
+    viewAll: 'Gade tout nouvèl yo',
     noNews: 'Pa gen nouvèl pou kounye a',
   },
   packages: {
@@ -240,8 +241,8 @@ export const ht = {
     subtitle: 'Swiv ak jere tout ekspedisyon ou yo',
     search: 'Chèche ak nimewo swivi...',
     noPackages: 'Ou poko gen koli',
-    noPackagesDescription: 'Kòmanse pa demann yon ekspedisyon koli',
-    createPackage: 'Voye yon Koli',
+    noPackagesDescription: 'Kòmanse pa reklame yon koli yo te voye ba ou',
+    createPackage: 'Reklame yon Koli',
     loading: 'Ap chaje koli yo...',
     noResults: 'Okenn rezilta',
     noResultsDescription: 'Okenn koli pa koresponn ak rechèch ou a',

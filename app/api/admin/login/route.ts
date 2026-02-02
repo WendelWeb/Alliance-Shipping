@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users, admins } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { setAdminSession } from '@/lib/auth/admin';
+import { createAdminToken } from '@/lib/auth/admin';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: NextRequest) {
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create session
+    // Create session token
     const session = {
       adminId: admin.id,
       userId: user.id,
@@ -58,15 +58,26 @@ export async function POST(request: NextRequest) {
       permissions: admin.permissions || {},
     };
 
-    await setAdminSession(session);
+    const token = await createAdminToken(session);
 
-    return NextResponse.json({
+    // Set cookie on the response directly (more reliable in Route Handlers)
+    const response = NextResponse.json({
       success: true,
       admin: {
         email: user.email,
         role: admin.role,
       },
     });
+
+    response.cookies.set('admin_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24, // 24 hours
+      path: '/',
+    });
+
+    return response;
   } catch (error) {
     console.error('Admin login error:', error);
     return NextResponse.json(

@@ -233,6 +233,7 @@ export const fr = {
       announcements: 'Annonces',
     },
     readMore: 'Lire la suite',
+    viewAll: 'Voir toutes les nouvelles',
     noNews: 'Aucune actualité disponible pour le moment',
   },
   packages: {
@@ -240,8 +241,8 @@ export const fr = {
     subtitle: 'Suivez et gérez toutes vos expéditions',
     search: 'Rechercher par numéro de suivi...',
     noPackages: 'Vous n\'avez pas encore de colis',
-    noPackagesDescription: 'Commencez par demander l\'envoi d\'un colis',
-    createPackage: 'Envoyer un Colis',
+    noPackagesDescription: 'Commencez par réclamer un colis qu\'on vous a envoyé',
+    createPackage: 'Réclamer un Colis',
     loading: 'Chargement des colis...',
     noResults: 'Aucun résultat',
     noResultsDescription: 'Aucun colis ne correspond à vos critères de recherche',

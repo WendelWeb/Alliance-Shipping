@@ -10,15 +10,55 @@ export default function SignInPage() {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex flex-col">
+    <>
+      <style jsx global>{`
+        @media (max-width: 500px) {
+          /* Remove padding/margin from page container ONLY */
+          .auth-page-container {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+
+          /* Remove padding/margin from card wrapper - take full width */
+          .auth-card-wrapper {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            max-width: 100vw !important;
+          }
+
+          /* Card takes full width - keep padding for Clerk inside */
+          .auth-card {
+            border-radius: 0 !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            border-left: none !important;
+            border-right: none !important;
+          }
+
+          /* Mobile header text */
+          .auth-card-wrapper > div:first-child {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+          }
+
+          /* Mobile features list at bottom */
+          .auth-card-wrapper + div + div {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+        }
+      `}</style>
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex flex-col">
       {/* Mobile Header */}
-      <div className="relative z-10 p-4 md:p-6">
+      <div className="relative z-10 p-3 xs:p-4 md:p-6">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-primary-600 transition-colors"
+          className="inline-flex items-center gap-1.5 xs:gap-2 text-gray-600 hover:text-primary-600 transition-colors"
         >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="text-sm font-medium">{t.common.contactUs}</span>
+          <ArrowLeft className="w-4 h-4 xs:w-5 xs:h-5" />
+          <span className="text-xs xs:text-sm font-medium">{t.common.contactUs}</span>
         </Link>
       </div>
 
@@ -50,8 +90,8 @@ export default function SignInPage() {
         />
       </div>
 
-      <div className="relative flex-1 flex items-center justify-center px-4 pb-8">
-        <div className="w-full max-w-6xl mx-auto grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+      <div className="auth-page-container relative flex-1 flex items-center justify-center px-2 xs:px-4 pb-4 xs:pb-8">
+        <div className="w-full max-w-6xl mx-auto grid md:grid-cols-2 gap-6 xs:gap-8 md:gap-12 items-center">
         {/* Left side - Marketing content */}
         <motion.div
           initial={{ opacity: 0, x: -50 }}
@@ -129,16 +169,17 @@ export default function SignInPage() {
           className="flex flex-col items-center justify-center w-full"
         >
           {/* Mobile header - Simplified */}
-          <div className="text-center mb-6 md:mb-8">
-            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent mb-2">
+          <div className="text-center mb-4 xs:mb-6 md:mb-8 px-2">
+            <h1 className="text-xl xs:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent mb-2">
               {t.auth.signIn.title}
             </h1>
-            <p className="text-sm md:text-base text-gray-600">{t.auth.signIn.welcomeBack}</p>
+            <p className="text-xs xs:text-sm md:text-base text-gray-600">{t.auth.signIn.welcomeBack}</p>
           </div>
 
           {/* Clerk sign-in component wrapper - Optimized for mobile */}
-          <div className="w-full max-w-md">
-            <div className="relative bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 shadow-xl border border-gray-100">
+          <div className="auth-card-wrapper w-full max-w-md px-1 xs:px-0">
+            <div className="auth-card relative bg-white rounded-xl xs:rounded-2xl md:rounded-3xl p-3 xs:p-6 md:p-8 shadow-xl border border-gray-100">
+              <div className="w-full">
               <SignIn
                 appearance={{
                   elements: {
@@ -172,6 +213,7 @@ export default function SignInPage() {
                 path="/sign-in"
                 signUpUrl="/sign-up"
               />
+              </div>
             </div>
           </div>
 
@@ -180,9 +222,9 @@ export default function SignInPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="mt-6 text-center"
+            className="mt-4 xs:mt-6 text-center px-2"
           >
-            <p className="text-sm text-gray-600">
+            <p className="text-xs xs:text-sm text-gray-600">
               {t.auth.signIn.noAccount}{' '}
               <Link
                 href="/sign-up"
@@ -194,7 +236,7 @@ export default function SignInPage() {
           </motion.div>
 
           {/* Mobile features - Compact */}
-          <div className="md:hidden mt-8 w-full max-w-md space-y-3">
+          <div className="md:hidden mt-6 xs:mt-8 w-full max-w-md space-y-2 xs:space-y-3 px-1 xs:px-0">
             {[
               {
                 icon: Package,
@@ -211,18 +253,19 @@ export default function SignInPage() {
             ].map((feature, index) => (
               <div
                 key={index}
-                className="flex items-center gap-3 p-3 rounded-xl bg-white/60 backdrop-blur-sm border border-gray-100"
+                className="flex items-center gap-2 xs:gap-3 p-2 xs:p-3 rounded-lg xs:rounded-xl bg-white/60 backdrop-blur-sm border border-gray-100"
               >
-                <div className="p-2 rounded-lg bg-primary-100">
-                  <feature.icon className="w-4 h-4 text-primary-600" />
+                <div className="p-1.5 xs:p-2 rounded-md xs:rounded-lg bg-primary-100 flex-shrink-0">
+                  <feature.icon className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-primary-600" />
                 </div>
-                <span className="text-sm font-medium text-gray-700">{feature.title}</span>
+                <span className="text-xs xs:text-sm font-medium text-gray-700">{feature.title}</span>
               </div>
             ))}
           </div>
         </motion.div>
       </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

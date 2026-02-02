@@ -31,6 +31,12 @@ export const metadata: Metadata = {
     'Alliance Shipping',
   ],
   authors: [{ name: 'Alliance Shipping' }],
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',

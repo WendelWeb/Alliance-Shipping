@@ -8,11 +8,12 @@ import { Container } from '@/components/Container';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { Calculator as CalcIcon, Package, DollarSign, Clock } from 'lucide-react';
-import { PRICING } from '@/constants';
+import { usePricing } from '@/hooks/usePricing';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
 export default function CalculatorPage() {
   const { t } = useTranslation();
+  const { pricing } = usePricing();
   const [weight, setWeight] = useState('');
   const [result, setResult] = useState<{
     serviceFee: number;
@@ -28,10 +29,10 @@ export default function CalculatorPage() {
       return;
     }
 
-    const serviceFee = PRICING.serviceFee;
-    const weightCost = weightNum * PRICING.pricePerLb;
+    const serviceFee = pricing.serviceFee;
+    const weightCost = weightNum * pricing.pricePerLb;
     const total = serviceFee + weightCost;
-    const deliveryDays = `${PRICING.standardDelivery.min}-${PRICING.standardDelivery.max}`;
+    const deliveryDays = `${pricing.standardDelivery.min}-${pricing.standardDelivery.max}`;
 
     setResult({
       serviceFee,

@@ -233,6 +233,7 @@ export const en = {
       announcements: 'Announcements',
     },
     readMore: 'Read more',
+    viewAll: 'View all news',
     noNews: 'No news available at the moment',
   },
   packages: {
@@ -240,8 +241,8 @@ export const en = {
     subtitle: 'Track and manage all your shipments',
     search: 'Search by tracking number...',
     noPackages: 'You have no packages yet',
-    noPackagesDescription: 'Start by requesting a package shipment',
-    createPackage: 'Send a Package',
+    noPackagesDescription: 'Start by claiming a package that someone sent you',
+    createPackage: 'Claim a Package',
     loading: 'Loading packages...',
     noResults: 'No results',
     noResultsDescription: 'No packages match your search criteria',

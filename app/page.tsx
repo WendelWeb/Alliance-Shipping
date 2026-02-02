@@ -7,6 +7,7 @@ import { Pricing } from '@/sections/Pricing';
 import { DeliveryTimeline } from '@/sections/DeliveryTimeline';
 import { Trust } from '@/sections/Trust';
 import { FAQ } from '@/sections/FAQ';
+import { News } from '@/sections/News';
 import { Tracking } from '@/sections/Tracking';
 import { Contact } from '@/sections/Contact';
 import { Footer } from '@/sections/Footer';
@@ -23,6 +24,7 @@ export default function Home() {
         <DeliveryTimeline />
         <Trust />
         <FAQ />
+        <News />
         <Tracking />
         <Contact />
       </main>

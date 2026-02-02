@@ -233,6 +233,7 @@ export const es = {
       announcements: 'Anuncios',
     },
     readMore: 'Leer más',
+    viewAll: 'Ver todas las noticias',
     noNews: 'No hay noticias disponibles en este momento',
   },
   packages: {
@@ -240,8 +241,8 @@ export const es = {
     subtitle: 'Rastrea y gestiona todos tus envíos',
     search: 'Buscar por número de seguimiento...',
     noPackages: 'Aún no tienes paquetes',
-    noPackagesDescription: 'Comienza solicitando el envío de un paquete',
-    createPackage: 'Enviar un Paquete',
+    noPackagesDescription: 'Comienza reclamando un paquete que te enviaron',
+    createPackage: 'Reclamar un Paquete',
     loading: 'Cargando paquetes...',
     noResults: 'Sin resultados',
     noResultsDescription: 'Ningún paquete coincide con tus criterios de búsqueda',

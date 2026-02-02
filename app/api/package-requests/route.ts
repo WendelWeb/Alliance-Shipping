@@ -1,17 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { packageRequests } from '@/lib/db/schema';
+import { packageRequests, users } from '@/lib/db/schema';
 import { currentUser } from '@clerk/nextjs/server';
+import { eq, inArray } from 'drizzle-orm';
+import { sendPackageRequestEmail } from '@/lib/email/service';
+
+// Resolve Clerk user → DB user (by clerkId first, then by email fallback + auto-sync)
+async function resolveDbUser(clerkUser: NonNullable<Awaited<ReturnType<typeof currentUser>>>) {
+  // 1. Try by clerkId
+  let dbUser = await db.query.users.findFirst({
+    where: eq(users.clerkId, clerkUser.id),
+  });
+  if (dbUser) return dbUser;
+
+  // 2. Fallback: try by any of the Clerk emails
+  const emails = clerkUser.emailAddresses.map(e => e.emailAddress);
+  if (emails.length > 0) {
+    dbUser = await db.query.users.findFirst({
+      where: inArray(users.email, emails),
+    });
+    if (dbUser) {
+      // Auto-sync the clerkId so future lookups are fast
+      await db.update(users)
+        .set({ clerkId: clerkUser.id, updatedAt: new Date() })
+        .where(eq(users.id, dbUser.id));
+      return dbUser;
+    }
+  }
+
+  // 3. User doesn't exist at all → create
+  const primaryEmail = emails[0];
+  if (!primaryEmail) return null;
+  const [newUser] = await db.insert(users).values({
+    clerkId: clerkUser.id,
+    email: primaryEmail,
+    firstName: clerkUser.firstName || null,
+    lastName: clerkUser.lastName || null,
+    phone: clerkUser.phoneNumbers?.[0]?.phoneNumber || null,
+  }).returning();
+  return newUser;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    // Get current user
-    const user = await currentUser();
+    const clerkUser = await currentUser();
 
-    if (!user) {
+    if (!clerkUser) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    const dbUser = await resolveDbUser(clerkUser);
+
+    if (!dbUser) {
+      return NextResponse.json(
+        { error: 'Could not resolve user account.' },
+        { status: 500 }
       );
     }
 
@@ -21,11 +67,10 @@ export async function POST(request: NextRequest) {
       recipientCity,
       description,
       customerNotes,
-      estimatedWeight,
       category,
+      locale,
     } = body;
 
-    // Validation
     if (!externalTrackingNumber || !recipientCity || !description) {
       return NextResponse.json(
         { error: 'Missing required fields: externalTrackingNumber, recipientCity, description' },
@@ -33,23 +78,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Get userId from database based on clerkId
-    // For now, using a placeholder
-    const userId = 1; // Replace with actual user lookup
-
-    // Create package request - User is the recipient
-    const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.emailAddresses[0]?.emailAddress || 'User';
+    const userName = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || dbUser.email;
 
     const [packageRequest] = await db.insert(packageRequests).values({
-      userId,
+      userId: dbUser.id,
       externalTrackingNumber: externalTrackingNumber.trim(),
-      receiptLocation: 'Miami Warehouse', // All packages received at Miami Warehouse
+      receiptLocation: 'Miami Warehouse',
       description: description.trim(),
-      customerNotes: `Destinataire: ${userName}`,
-      estimatedWeight: estimatedWeight ? parseFloat(estimatedWeight).toString() : null,
+      customerNotes: customerNotes?.trim() || null,
+      estimatedWeight: null,
       category: category || 'general',
       senderInfo: {
-        name: '', // Will be filled by admin
+        name: '',
         address: '',
         city: '',
         country: 'USA',
@@ -59,13 +99,23 @@ export async function POST(request: NextRequest) {
         address: '',
         city: recipientCity.trim(),
         country: 'Haiti',
-        phone: user.phoneNumbers?.[0]?.phoneNumber || '',
+        phone: clerkUser.phoneNumbers?.[0]?.phoneNumber || '',
       },
       status: 'pending',
     }).returning();
 
-    // TODO: Send notification to admin
-    // TODO: Send confirmation email to user
+    // Send confirmation email in user's language
+    const userEmail = clerkUser.emailAddresses[0]?.emailAddress;
+    if (userEmail) {
+      await sendPackageRequestEmail(
+        userEmail,
+        userName,
+        packageRequest.externalTrackingNumber,
+        locale || 'ht'
+      ).catch(error => {
+        console.error('Failed to send confirmation email:', error);
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -86,24 +136,25 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Get current user
-    const user = await currentUser();
+    const clerkUser = await currentUser();
 
-    if (!user) {
+    if (!clerkUser) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    // TODO: Get userId from database based on clerkId
-    const userId = 1;
+    const dbUser = await resolveDbUser(clerkUser);
 
-    // Get user's package requests
+    if (!dbUser) {
+      return NextResponse.json({ success: true, requests: [] });
+    }
+
     const requests = await db.query.packageRequests.findMany({
-      where: (packageRequests, { eq }) => eq(packageRequests.userId, userId),
+      where: (packageRequests, { eq }) => eq(packageRequests.userId, dbUser.id),
       orderBy: (packageRequests, { desc }) => [desc(packageRequests.createdAt)],
     });
 

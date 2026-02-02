@@ -15,6 +15,7 @@ const isPublicRoute = createRouteMatcher([
   '/admin/login',
   '/api/admin/login',
   '/api/admin/logout',
+  '/api/setup',
 ]);
 
 // Admin page routes (not API)
@@ -56,7 +57,7 @@ export default clerkMiddleware(async (auth, request) => {
   }
 
   // --- Admin API routes (except login/logout) ---
-  if (isAdminApi(pathname) && pathname !== '/api/admin/login' && pathname !== '/api/admin/logout') {
+  if (isAdminApi(pathname) && pathname !== '/api/admin/login' && pathname !== '/api/admin/logout' && pathname !== '/api/admin/elevate') {
     const valid = await verifyAdminJwt(request);
     if (!valid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -23,7 +23,7 @@ import {
 
 export default function RequestPackagePage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -32,7 +32,6 @@ export default function RequestPackagePage() {
     recipientCity: '',
     description: '',
     customerNotes: '',
-    estimatedWeight: '',
     category: '',
     otherCategoryDescription: '', // Pour la catégorie "Autre"
   });
@@ -92,12 +91,6 @@ export default function RequestPackagePage() {
       newErrors.otherCategoryDescription = t.requestPackage.fields.category.otherDescription.minLength;
     }
 
-    if (!formData.estimatedWeight) {
-      newErrors.estimatedWeight = t.requestPackage.fields.weight.required;
-    } else if (parseInt(formData.estimatedWeight) < 1) {
-      newErrors.estimatedWeight = t.requestPackage.fields.weight.minValue;
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -122,7 +115,7 @@ export default function RequestPackagePage() {
       const response = await fetch('/api/package-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, locale }),
       });
 
       if (!response.ok) {
@@ -700,41 +693,6 @@ export default function RequestPackagePage() {
                   <AlertCircle className="h-5 w-5" />
                   {errors.category}
                 </motion.p>
-              )}
-            </div>
-
-            {/* Poids estimé */}
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t.requestPackage.fields.weight.label} <span className="text-red-600">*</span>
-              </label>
-              <input
-                type="number"
-                name="estimatedWeight"
-                value={formData.estimatedWeight}
-                onChange={handleChange}
-                required
-                step="1"
-                min="1"
-                className={`w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:ring-2 transition-colors ${
-                  errors.estimatedWeight
-                    ? 'border-red-400 focus:ring-red-500 focus:border-red-500'
-                    : 'border-gray-300 focus:ring-primary-500 focus:border-transparent'
-                }`}
-                placeholder={t.requestPackage.fields.weight.placeholder}
-              />
-              {errors.estimatedWeight && (
-                <motion.p
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-sm text-red-600 mt-2 flex items-center gap-2"
-                >
-                  <AlertCircle className="h-4 w-4" />
-                  {errors.estimatedWeight}
-                </motion.p>
-              )}
-              {!errors.estimatedWeight && (
-                <p className="text-xs text-gray-500 mt-1">{t.requestPackage.fields.weight.helper}</p>
               )}
             </div>
           </motion.div>

@@ -8,14 +8,15 @@ import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { ImageGallery } from '@/components/ImageGallery';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { PRICING } from '@/constants';
+import { usePricing } from '@/hooks/usePricing';
 import { useState } from 'react';
 
 export function Pricing() {
   const { t } = useTranslation();
+  const { pricing } = usePricing();
   const [weight, setWeight] = useState(10);
 
-  const calculatedPrice = PRICING.serviceFee + weight * PRICING.pricePerLb;
+  const calculatedPrice = pricing.serviceFee + weight * pricing.pricePerLb;
 
   return (
     <section id="pricing" className="section-padding bg-gradient-to-br from-gray-50 to-white">
@@ -43,18 +44,18 @@ export function Pricing() {
               <div className="space-y-6 mb-8">
                 <div className="flex items-center justify-between p-4 bg-white/10 rounded-lg backdrop-blur-sm">
                   <span className="text-lg">{t.pricing.serviceFee}</span>
-                  <span className="text-3xl font-bold">${PRICING.serviceFee}</span>
+                  <span className="text-3xl font-bold">${pricing.serviceFee}</span>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-white/10 rounded-lg backdrop-blur-sm">
                   <span className="text-lg">{t.pricing.perPound}</span>
-                  <span className="text-3xl font-bold">${PRICING.pricePerLb}</span>
+                  <span className="text-3xl font-bold">${pricing.pricePerLb}</span>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-white/10 rounded-lg backdrop-blur-sm">
                   <span className="text-lg">{t.pricing.deliveryTime}</span>
                   <span className="text-3xl font-bold">
-                    {PRICING.standardDelivery.min}-{PRICING.standardDelivery.max} {t.pricing.days}
+                    {pricing.standardDelivery.min}-{pricing.standardDelivery.max} {t.pricing.days}
                   </span>
                 </div>
               </div>
