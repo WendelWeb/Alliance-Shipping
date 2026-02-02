@@ -96,18 +96,21 @@ export const sendEmail = async ({ to, subject, html }: EmailParams) => {
   logEmailAttempt(to, subject, 'START');
 
   try {
-    const data = await getResend().emails.send({
+    const { data, error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to,
       subject,
       html,
     });
 
-    // Log success
+    if (error) {
+      logEmailAttempt(to, subject, 'ERROR', error);
+      return { success: false, error };
+    }
+
     logEmailAttempt(to, subject, 'SUCCESS', data);
     return { success: true, data };
   } catch (error: any) {
-    // Log error with details
     logEmailAttempt(to, subject, 'ERROR', error);
     return { success: false, error };
   }
