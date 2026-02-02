@@ -105,16 +105,25 @@ export async function POST(request: NextRequest) {
     }).returning();
 
     // Send confirmation email in user's language
+    let emailResult: any = null;
     const userEmail = clerkUser.emailAddresses[0]?.emailAddress;
+    console.log('[PACKAGE-REQUEST] User:', userEmail, '| Name:', userName, '| Tracking:', packageRequest.externalTrackingNumber, '| Locale:', locale || 'ht');
     if (userEmail) {
-      await sendPackageRequestEmail(
-        userEmail,
-        userName,
-        packageRequest.externalTrackingNumber,
-        locale || 'ht'
-      ).catch(error => {
-        console.error('Failed to send confirmation email:', error);
-      });
+      try {
+        console.log('[PACKAGE-REQUEST] Sending email to:', userEmail);
+        emailResult = await sendPackageRequestEmail(
+          userEmail,
+          userName,
+          packageRequest.externalTrackingNumber,
+          locale || 'ht'
+        );
+        console.log('[PACKAGE-REQUEST] Email result:', JSON.stringify(emailResult));
+      } catch (error: any) {
+        console.error('[PACKAGE-REQUEST] Email exception:', error);
+        emailResult = { success: false, error: error?.message || 'Unknown error' };
+      }
+    } else {
+      console.warn('[PACKAGE-REQUEST] No email found for user');
     }
 
     return NextResponse.json({
@@ -124,6 +133,12 @@ export async function POST(request: NextRequest) {
         externalTrackingNumber: packageRequest.externalTrackingNumber,
         receiptLocation: packageRequest.receiptLocation,
         status: packageRequest.status,
+      },
+      email: {
+        sent: emailResult?.success || false,
+        to: userEmail || null,
+        error: emailResult?.error || null,
+        id: emailResult?.data?.id || null,
       },
     });
 
