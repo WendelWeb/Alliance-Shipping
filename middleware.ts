@@ -67,7 +67,9 @@ export default clerkMiddleware(async (auth, request) => {
 
   // --- All other non-public routes: Clerk auth ---
   if (!isPublicRoute(request)) {
-    await auth.protect();
+    await auth.protect({
+      unauthenticatedUrl: new URL('/sign-up', request.url).toString(),
+    });
   }
 });
 
