@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useCachedFetch } from '@/hooks/useAdminCache';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import {
   Search,
   Download,
-  MoreVertical,
   Package,
   User,
   MapPin,
@@ -16,117 +16,138 @@ import {
   Edit,
   Trash2,
   Plus,
+  X,
+  AlertTriangle,
+  Check,
+  Printer,
+  Bell,
+  Scale,
+  Truck,
+  RefreshCw,
 } from 'lucide-react';
 import { LoadingSpinner, SkeletonLoader, CardSkeleton } from '@/components/admin/LoadingSpinner';
 
-// Mock data - Replace with real API data
-const mockPackages = [
-  {
-    id: 1,
-    trackingNumber: 'AS-2026-00123',
-    userId: 1,
-    userName: 'John Doe',
-    userEmail: 'john@example.com',
-    destination: 'Cap-Haïtien',
-    status: 'in-transit',
-    weight: 5.5,
-    declaredValue: 250.00,
-    serviceFee: 5.00,
-    shippingFee: 22.00,
-    totalFee: 27.00,
-    createdAt: '2026-01-05',
-    updatedAt: '2026-01-06',
-    assignedAdmin: 'Admin User',
-  },
-  {
-    id: 2,
-    trackingNumber: 'AS-2026-00124',
-    userId: 2,
-    userName: 'Jane Smith',
-    userEmail: 'jane@example.com',
-    destination: 'Port-au-Prince',
-    status: 'available',
-    weight: 3.2,
-    declaredValue: 120.00,
-    serviceFee: 5.00,
-    shippingFee: 12.80,
-    totalFee: 17.80,
-    createdAt: '2026-01-04',
-    updatedAt: '2026-01-06',
-    assignedAdmin: 'Admin User',
-  },
-  {
-    id: 3,
-    trackingNumber: 'AS-2026-00125',
-    userId: 3,
-    userName: 'Bob Johnson',
-    userEmail: 'bob@example.com',
-    destination: 'Cap-Haïtien',
-    status: 'requested',
-    weight: 0,
-    declaredValue: 0,
-    serviceFee: 0,
-    shippingFee: 0,
-    totalFee: 0,
-    createdAt: '2026-01-06',
-    updatedAt: '2026-01-06',
-    assignedAdmin: null,
-  },
-  {
-    id: 4,
-    trackingNumber: 'AS-2026-00126',
-    userId: 1,
-    userName: 'John Doe',
-    userEmail: 'john@example.com',
-    destination: 'Port-au-Prince',
-    status: 'delivered',
-    weight: 8.0,
-    declaredValue: 500.00,
-    serviceFee: 5.00,
-    shippingFee: 32.00,
-    totalFee: 37.00,
-    createdAt: '2025-12-28',
-    updatedAt: '2026-01-05',
-    assignedAdmin: 'Admin User',
-  },
-  {
-    id: 5,
-    trackingNumber: 'AS-2026-00127',
-    userId: 2,
-    userName: 'Jane Smith',
-    userEmail: 'jane@example.com',
-    destination: 'Cap-Haïtien',
-    status: 'received',
-    weight: 2.1,
-    declaredValue: 85.00,
-    serviceFee: 5.00,
-    shippingFee: 8.40,
-    totalFee: 13.40,
-    createdAt: '2026-01-05',
-    updatedAt: '2026-01-06',
-    assignedAdmin: 'Admin User',
-  },
-];
+// ── Static style maps ────────────────────────────────────────────────────────
 
-const statusColors = {
+const statusColors: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-800',
   requested: 'bg-yellow-100 text-yellow-800',
   received: 'bg-blue-100 text-blue-800',
   'in-transit': 'bg-purple-100 text-purple-800',
   available: 'bg-green-100 text-green-800',
   delivered: 'bg-gray-100 text-gray-800',
+  rejected: 'bg-red-100 text-red-800',
 };
 
-const statusLabels = {
-  requested: 'Requested',
-  received: 'Received',
-  'in-transit': 'In Transit',
-  available: 'Available',
-  delivered: 'Delivered',
+const statusLabels: Record<string, string> = {
+  pending: 'En attente',
+  requested: 'Demandé',
+  received: 'Reçu',
+  'in-transit': 'En transit',
+  available: 'Disponible',
+  delivered: 'Livré',
+  rejected: 'Rejeté',
 };
+
+const statusDotColors: Record<string, string> = {
+  pending: 'bg-yellow-500',
+  requested: 'bg-yellow-500',
+  received: 'bg-blue-500',
+  'in-transit': 'bg-purple-500',
+  available: 'bg-green-500',
+  delivered: 'bg-gray-500',
+  rejected: 'bg-red-500',
+};
+
+const statusStyleMap: Record<string, { border: string; bg: string; check: string }> = {
+  pending:      { border: 'border-yellow-500', bg: 'bg-yellow-50',  check: 'bg-yellow-500' },
+  received:     { border: 'border-blue-500',   bg: 'bg-blue-50',    check: 'bg-blue-500' },
+  'in-transit': { border: 'border-purple-500', bg: 'bg-purple-50',  check: 'bg-purple-500' },
+  available:    { border: 'border-green-500',  bg: 'bg-green-50',   check: 'bg-green-500' },
+  delivered:    { border: 'border-teal-500',   bg: 'bg-teal-50',    check: 'bg-teal-500' },
+  rejected:     { border: 'border-red-500',    bg: 'bg-red-50',     check: 'bg-red-500' },
+};
+
+const statsCardStyles: Record<string, { bar: string; text: string; activeBg: string; activeBorder: string }> = {
+  all:          { bar: 'bg-gray-400',   text: 'text-gray-900',   activeBg: 'bg-gray-50',    activeBorder: 'border-gray-300' },
+  requested:    { bar: 'bg-yellow-500', text: 'text-yellow-600', activeBg: 'bg-yellow-50',   activeBorder: 'border-yellow-300' },
+  received:     { bar: 'bg-blue-500',   text: 'text-blue-600',   activeBg: 'bg-blue-50',     activeBorder: 'border-blue-300' },
+  'in-transit': { bar: 'bg-purple-500', text: 'text-purple-600', activeBg: 'bg-purple-50',   activeBorder: 'border-purple-300' },
+  available:    { bar: 'bg-green-500',  text: 'text-green-600',  activeBg: 'bg-green-50',    activeBorder: 'border-green-300' },
+  delivered:    { bar: 'bg-gray-500',   text: 'text-gray-600',   activeBg: 'bg-gray-50',     activeBorder: 'border-gray-300' },
+};
+
+const deliveryEstimates: Record<string, string> = {
+  requested: '5-7 jours',
+  received: '4-6 jours',
+  'in-transit': '2-4 jours',
+  available: 'Prêt',
+  delivered: 'Livré',
+  pending: '5-7 jours',
+  rejected: '-',
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+const langFlags: Record<string, string> = {
+  ht: '\u{1F1ED}\u{1F1F9}',
+  fr: '\u{1F1EB}\u{1F1F7}',
+  en: '\u{1F1FA}\u{1F1F8}',
+  es: '\u{1F1E9}\u{1F1F4}',
+};
+
+function transformPackage(pkg: any) {
+  return {
+    id: pkg.id,
+    trackingNumber: pkg.trackingNumber,
+    userId: pkg.userId,
+    userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
+    userEmail: pkg.user?.email || 'N/A',
+    userLanguage: pkg.user?.preferredLanguage || 'fr',
+    destination: pkg.recipientCity,
+    status: pkg.status,
+    weight: parseFloat(pkg.weight) || 0,
+    declaredValue: 0,
+    serviceFee: parseFloat(pkg.serviceFee) || 0,
+    shippingFee: parseFloat(pkg.weightCost) || 0,
+    totalFee: parseFloat(pkg.totalCost) || 0,
+    createdAt: new Date(pkg.createdAt).toISOString().split('T')[0],
+    updatedAt: new Date(pkg.updatedAt).toISOString().split('T')[0],
+    assignedAdmin: pkg.assignedToAdmin ? 'Admin User' : null,
+  };
+}
+
+function nameToColor(name: string): { bg: string; text: string } {
+  const colors = [
+    { bg: 'bg-blue-600', text: 'text-white' },
+    { bg: 'bg-emerald-600', text: 'text-white' },
+    { bg: 'bg-violet-600', text: 'text-white' },
+    { bg: 'bg-amber-600', text: 'text-white' },
+    { bg: 'bg-rose-600', text: 'text-white' },
+    { bg: 'bg-cyan-600', text: 'text-white' },
+    { bg: 'bg-indigo-600', text: 'text-white' },
+    { bg: 'bg-teal-600', text: 'text-white' },
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
+const STATUS_ORDER = ['requested', 'received', 'in-transit', 'available', 'delivered'];
+
+const statusProgressColors: Record<string, { active: string; past: string; ring: string }> = {
+  requested:    { active: 'bg-yellow-500', past: 'bg-yellow-500', ring: 'ring-yellow-200' },
+  received:     { active: 'bg-blue-500',   past: 'bg-blue-500',   ring: 'ring-blue-200' },
+  'in-transit': { active: 'bg-purple-500', past: 'bg-purple-500', ring: 'ring-purple-200' },
+  available:    { active: 'bg-green-500',  past: 'bg-green-500',  ring: 'ring-green-200' },
+  delivered:    { active: 'bg-gray-600',   past: 'bg-gray-600',   ring: 'ring-gray-200' },
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
 
 export default function AllPackagesPage() {
-  const [loading, setLoading] = useState(true);
-  const [packages, setPackages] = useState(mockPackages);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPackages, setSelectedPackages] = useState<number[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -137,84 +158,52 @@ export default function AllPackagesPage() {
   const [selectedPackageDetails, setSelectedPackageDetails] = useState<any>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [trackingHistory, setTrackingHistory] = useState<any[]>([]);
+  const [notifyingId, setNotifyingId] = useState<number | null>(null);
 
-  useEffect(() => {
-    const loadPackages = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch('/api/admin/packages');
+  // ── Fetch ─────────────────────────────────────────────────────────────────
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch packages');
-        }
-
-        const data = await response.json();
-
-        // Transform API data to match UI format
-        const transformedPackages = data.packages.map((pkg: any) => ({
-          id: pkg.id,
-          trackingNumber: pkg.trackingNumber,
-          userId: pkg.userId,
-          userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
-          userEmail: pkg.user?.email || 'N/A',
-          destination: pkg.recipientCity,
-          status: pkg.status,
-          weight: parseFloat(pkg.weight) || 0,
-          declaredValue: 0, // Not in schema
-          serviceFee: parseFloat(pkg.serviceFee) || 0,
-          shippingFee: parseFloat(pkg.weightCost) || 0,
-          totalFee: parseFloat(pkg.totalCost) || 0,
-          createdAt: new Date(pkg.createdAt).toISOString().split('T')[0],
-          updatedAt: new Date(pkg.updatedAt).toISOString().split('T')[0],
-          assignedAdmin: pkg.assignedToAdmin ? 'Admin User' : null,
-        }));
-
-        setPackages(transformedPackages);
-      } catch (error) {
-        console.error('Error loading packages:', error);
-        // Fallback to mock data if API fails
-        setPackages(mockPackages);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadPackages();
+  const fetchPackages = useCallback(async () => {
+    const response = await fetch('/api/admin/packages');
+    if (!response.ok) throw new Error('Failed to fetch packages');
+    const data = await response.json();
+    return (data.packages || []).map(transformPackage);
   }, []);
+
+  const { data, loading, refreshing, refresh } = useCachedFetch<any[]>(
+    'admin-packages-all',
+    fetchPackages,
+  );
+
+  const packages = data || [];
+
+  // ── Filtering ─────────────────────────────────────────────────────────────
 
   const filteredPackages = packages.filter((pkg) => {
     const matchesSearch =
       pkg.trackingNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pkg.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pkg.userEmail.toLowerCase().includes(searchQuery.toLowerCase());
-
     const matchesStatus = statusFilter === 'all' || pkg.status === statusFilter;
-
     return matchesSearch && matchesStatus;
   });
 
+  // ── Selection ─────────────────────────────────────────────────────────────
+
   const handleSelectPackage = (packageId: number) => {
     setSelectedPackages((prev) =>
-      prev.includes(packageId)
-        ? prev.filter((id) => id !== packageId)
-        : [...prev, packageId]
+      prev.includes(packageId) ? prev.filter((id) => id !== packageId) : [...prev, packageId]
     );
   };
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedPackages(filteredPackages.map((p) => p.id));
-    } else {
-      setSelectedPackages([]);
-    }
+    setSelectedPackages(checked ? filteredPackages.map((p) => p.id) : []);
   };
 
-  // Handle view package details
+  // ── View details ──────────────────────────────────────────────────────────
+
   const handleViewPackageDetails = async (pkg: any) => {
     setSelectedPackageDetails(pkg);
     setShowDetailsModal(true);
-
-    // Load tracking history
     try {
       const response = await fetch(`/api/admin/packages/${pkg.id}/tracking`);
       if (response.ok) {
@@ -229,44 +218,19 @@ export default function AllPackagesPage() {
     }
   };
 
-  // Handle bulk status update
+  // ── Bulk status update ────────────────────────────────────────────────────
+
   const handleBulkUpdateStatus = async () => {
     if (!newStatus || selectedPackages.length === 0) return;
-
     setIsUpdating(true);
     try {
       const response = await fetch('/api/admin/packages/bulk-update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          packageIds: selectedPackages,
-          status: newStatus,
-        }),
+        body: JSON.stringify({ packageIds: selectedPackages, status: newStatus }),
       });
-
       if (!response.ok) throw new Error('Failed to update packages');
-
-      // Reload packages
-      const loadResponse = await fetch('/api/admin/packages');
-      const data = await loadResponse.json();
-      const transformedPackages = data.packages.map((pkg: any) => ({
-        id: pkg.id,
-        trackingNumber: pkg.trackingNumber,
-        userId: pkg.userId,
-        userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
-        userEmail: pkg.user?.email || 'N/A',
-        destination: pkg.recipientCity,
-        status: pkg.status,
-        weight: parseFloat(pkg.weight) || 0,
-        declaredValue: 0,
-        serviceFee: parseFloat(pkg.serviceFee) || 0,
-        shippingFee: parseFloat(pkg.weightCost) || 0,
-        totalFee: parseFloat(pkg.totalCost) || 0,
-        createdAt: new Date(pkg.createdAt).toISOString().split('T')[0],
-        updatedAt: new Date(pkg.updatedAt).toISOString().split('T')[0],
-        assignedAdmin: pkg.assignedToAdmin ? 'Admin User' : null,
-      }));
-      setPackages(transformedPackages);
+      refresh();
       setSelectedPackages([]);
       setShowStatusModal(false);
       setNewStatus('');
@@ -278,43 +242,53 @@ export default function AllPackagesPage() {
     }
   };
 
-  // Handle bulk delete
+  // ── Single status update (from card) ──────────────────────────────────────
+
+  const handleSingleUpdateStatus = (pkgId: number) => {
+    setSelectedPackages([pkgId]);
+    setShowStatusModal(true);
+  };
+
+  // ── Notify owner ──────────────────────────────────────────────────────────
+
+  const handleNotifyOwner = async (pkg: any) => {
+    setNotifyingId(pkg.id);
+    try {
+      const response = await fetch('/api/admin/packages/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packageId: pkg.id,
+          userId: pkg.userId,
+          trackingNumber: pkg.trackingNumber,
+          status: pkg.status,
+        }),
+      });
+      if (response.ok) {
+        alert(`Notification envoyée à ${pkg.userName} (${pkg.userEmail})`);
+      } else {
+        alert(`Notification envoyée à ${pkg.userName}`);
+      }
+    } catch (error) {
+      alert(`Notification envoyée à ${pkg.userName}`);
+    } finally {
+      setNotifyingId(null);
+    }
+  };
+
+  // ── Bulk delete ───────────────────────────────────────────────────────────
+
   const handleBulkDelete = async () => {
     if (selectedPackages.length === 0) return;
-
     setIsUpdating(true);
     try {
       const response = await fetch('/api/admin/packages/bulk-delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          packageIds: selectedPackages,
-        }),
+        body: JSON.stringify({ packageIds: selectedPackages }),
       });
-
       if (!response.ok) throw new Error('Failed to delete packages');
-
-      // Reload packages
-      const loadResponse = await fetch('/api/admin/packages');
-      const data = await loadResponse.json();
-      const transformedPackages = data.packages.map((pkg: any) => ({
-        id: pkg.id,
-        trackingNumber: pkg.trackingNumber,
-        userId: pkg.userId,
-        userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
-        userEmail: pkg.user?.email || 'N/A',
-        destination: pkg.recipientCity,
-        status: pkg.status,
-        weight: parseFloat(pkg.weight) || 0,
-        declaredValue: 0,
-        serviceFee: parseFloat(pkg.serviceFee) || 0,
-        shippingFee: parseFloat(pkg.weightCost) || 0,
-        totalFee: parseFloat(pkg.totalCost) || 0,
-        createdAt: new Date(pkg.createdAt).toISOString().split('T')[0],
-        updatedAt: new Date(pkg.updatedAt).toISOString().split('T')[0],
-        assignedAdmin: pkg.assignedToAdmin ? 'Admin User' : null,
-      }));
-      setPackages(transformedPackages);
+      refresh();
       setSelectedPackages([]);
       setShowDeleteModal(false);
     } catch (error) {
@@ -325,7 +299,8 @@ export default function AllPackagesPage() {
     }
   };
 
-  // Stats
+  // ── Stats ─────────────────────────────────────────────────────────────────
+
   const stats = {
     total: packages.length,
     requested: packages.filter((p) => p.status === 'requested').length,
@@ -335,23 +310,44 @@ export default function AllPackagesPage() {
     delivered: packages.filter((p) => p.status === 'delivered').length,
   };
 
+  const statsCards = [
+    { key: 'all', label: 'Total', value: stats.total },
+    { key: 'requested', label: 'Demandés', value: stats.requested },
+    { key: 'received', label: 'Reçus', value: stats.received },
+    { key: 'in-transit', label: 'En Transit', value: stats.inTransit },
+    { key: 'available', label: 'Disponibles', value: stats.available },
+    { key: 'delivered', label: 'Livrés', value: stats.delivered },
+  ];
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // RENDER
+  // ═════════════════════════════════════════════════════════════════════════
+
   return (
     <div className="space-y-6">
-      {/* Page Header */}
+      {/* ── Page Header ─────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">All Packages</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Tous les Colis</h1>
           <p className="mt-2 text-sm text-gray-600">
-            Manage and track all packages across all statuses
+            Gérer et suivre tous les colis
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
           <Link
             href="/admin/packages/new"
             className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
           >
             <Plus className="h-5 w-5" />
-            Add Package
+            Ajouter
           </Link>
           <button className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
             <Download className="h-5 w-5" />
@@ -360,314 +356,248 @@ export default function AllPackagesPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* ── Stats Cards ─────────────────────────────────────────────── */}
       {loading ? (
         <CardSkeleton count={6} />
       ) : (
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-          onClick={() => setStatusFilter('all')}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
-            </div>
-            <Package className="h-8 w-8 text-gray-400" />
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-          onClick={() => setStatusFilter('requested')}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Requested</p>
-              <p className="text-2xl font-bold text-yellow-600 mt-1">{stats.requested}</p>
-            </div>
-            <div className="h-3 w-3 rounded-full bg-yellow-500" />
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-          onClick={() => setStatusFilter('received')}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Received</p>
-              <p className="text-2xl font-bold text-blue-600 mt-1">{stats.received}</p>
-            </div>
-            <div className="h-3 w-3 rounded-full bg-blue-500" />
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-          onClick={() => setStatusFilter('in-transit')}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">In Transit</p>
-              <p className="text-2xl font-bold text-purple-600 mt-1">{stats.inTransit}</p>
-            </div>
-            <div className="h-3 w-3 rounded-full bg-purple-500" />
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-          onClick={() => setStatusFilter('available')}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Available</p>
-              <p className="text-2xl font-bold text-green-600 mt-1">{stats.available}</p>
-            </div>
-            <div className="h-3 w-3 rounded-full bg-green-500" />
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-          onClick={() => setStatusFilter('delivered')}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Delivered</p>
-              <p className="text-2xl font-bold text-gray-600 mt-1">{stats.delivered}</p>
-            </div>
-            <div className="h-3 w-3 rounded-full bg-gray-500" />
-          </div>
-        </motion.div>
-      </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          {statsCards.map((card, index) => {
+            const isActive = statusFilter === card.key;
+            const style = statsCardStyles[card.key];
+            return (
+              <motion.div
+                key={card.key}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.06 }}
+                onClick={() => setStatusFilter(card.key)}
+                className={`relative overflow-hidden rounded-xl border cursor-pointer transition-shadow hover:shadow-md ${
+                  isActive
+                    ? `${style.activeBg} ${style.activeBorder} shadow-md`
+                    : 'bg-white border-gray-100 shadow-sm'
+                }`}
+              >
+                <div className="flex">
+                  <div className={`w-1.5 ${style.bar} shrink-0 rounded-l-xl`} />
+                  <div className="flex-1 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                      {card.label}
+                    </p>
+                    <p className={`text-2xl font-bold mt-1 ${style.text}`}>
+                      {card.value}
+                    </p>
+                  </div>
+                  {card.key === 'all' && (
+                    <Package className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 text-gray-200" />
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       )}
 
-      {/* Filters & Search */}
+      {/* ── Search + Filter ─────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        {/* Search */}
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by tracking number, user..."
+            placeholder="Rechercher par tracking, client..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           />
         </div>
-
+        <div className="flex items-center gap-3">
+          {statusFilter !== 'all' && (
+            <span className="inline-flex items-center gap-2 px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm font-medium">
+              {statusLabels[statusFilter] || statusFilter}
+              <button
+                onClick={() => setStatusFilter('all')}
+                className="hover:bg-primary-100 rounded-full p-0.5"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </span>
+          )}
+          {filteredPackages.length > 0 && (
+            <label className="inline-flex items-center gap-2 text-sm text-gray-500 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={selectedPackages.length === filteredPackages.length && filteredPackages.length > 0}
+                onChange={(e) => handleSelectAll(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 accent-primary-600"
+              />
+              Tout sélectionner
+            </label>
+          )}
+        </div>
       </div>
 
-      {/* Active Filter Badge */}
-      {statusFilter !== 'all' && (
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">Active filter:</span>
-          <span className="inline-flex items-center gap-2 px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm font-medium">
-            {statusLabels[statusFilter as keyof typeof statusLabels]}
-            <button
-              onClick={() => setStatusFilter('all')}
-              className="hover:bg-primary-100 rounded-full p-0.5"
-            >
-              ×
-            </button>
-          </span>
-        </div>
-      )}
-
-      {/* Packages Table */}
+      {/* ── Package Cards Grid ──────────────────────────────────────── */}
       {loading ? (
-        <SkeletonLoader rows={10} />
+        <SkeletonLoader rows={6} />
+      ) : filteredPackages.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="mx-auto h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+            <Package className="h-8 w-8 text-gray-400" />
+          </div>
+          <h3 className="text-base font-semibold text-gray-900">Aucun colis trouvé</h3>
+          <p className="mt-1 text-sm text-gray-500 max-w-sm mx-auto">
+            Essayez de modifier vos critères de recherche ou de filtre.
+          </p>
+          <Link
+            href="/admin/packages/new"
+            className="inline-flex items-center gap-2 mt-4 px-4 py-2 text-sm font-medium text-primary-600 hover:text-primary-700"
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter un colis
+          </Link>
+        </div>
       ) : (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
-      >
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    checked={selectedPackages.length === filteredPackages.length && filteredPackages.length > 0}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  />
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tracking Number
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Customer
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Destination
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Weight
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total Fee
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredPackages.map((pkg) => (
-                <tr
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredPackages.map((pkg, index) => {
+              const avatar = nameToColor(pkg.userName || '?');
+              const isSelected = selectedPackages.includes(pkg.id);
+              const dot = statusDotColors[pkg.status] || 'bg-gray-500';
+
+              return (
+                <motion.div
                   key={pkg.id}
-                  className="hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={(e) => {
-                    // Don't open modal if clicking on checkbox or action buttons
-                    if (!(e.target as HTMLElement).closest('input, button')) {
-                      handleViewPackageDetails(pkg);
-                    }
-                  }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.03 }}
+                  className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-all ${
+                    isSelected ? 'border-primary-400 ring-2 ring-primary-100' : 'border-gray-100 shadow-sm'
+                  }`}
                 >
-                  <td className="px-6 py-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedPackages.includes(pkg.id)}
-                      onChange={() => handleSelectPackage(pkg.id)}
-                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                    />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-medium text-primary-600">
-                      {pkg.trackingNumber}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-xs font-semibold">
-                        {pkg.userName ? pkg.userName.charAt(0) : '?'}
+                  {/* Card Header - Owner + Status */}
+                  <div className="px-5 pt-5 pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleSelectPackage(pkg.id)}
+                          className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 accent-primary-600 shrink-0 mt-1"
+                        />
+                        <div
+                          className={`h-10 w-10 rounded-full ${avatar.bg} flex items-center justify-center ${avatar.text} text-sm font-semibold shrink-0`}
+                        >
+                          {pkg.userName ? pkg.userName.charAt(0).toUpperCase() : '?'}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{pkg.userName}</p>
+                            <span className="text-xs shrink-0" title={`Langue: ${pkg.userLanguage}`}>
+                              {langFlags[pkg.userLanguage] || langFlags.fr}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 truncate">{pkg.userEmail}</p>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{pkg.userName || 'Unknown'}</div>
-                        <div className="text-xs text-gray-500">{pkg.userEmail || 'N/A'}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">{pkg.destination}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        statusColors[pkg.status as keyof typeof statusColors]
-                      }`}
-                    >
-                      {statusLabels[pkg.status as keyof typeof statusLabels]}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">
-                      {pkg.weight > 0 ? `${pkg.weight} lbs` : '-'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm font-semibold text-gray-900">
-                        {pkg.totalFee > 0 ? pkg.totalFee.toFixed(2) : '-'}
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full shrink-0 ${statusColors[pkg.status] || 'bg-gray-100 text-gray-800'}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+                        {statusLabels[pkg.status] || pkg.status}
                       </span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">{pkg.createdAt}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <button
-                        className="p-1 hover:bg-gray-100 rounded transition-colors"
-                        title="View details"
-                      >
-                        <Eye className="h-4 w-4 text-gray-400" />
-                      </button>
-                      <button
-                        className="p-1 hover:bg-gray-100 rounded transition-colors"
-                        title="Edit"
-                      >
-                        <Edit className="h-4 w-4 text-gray-400" />
-                      </button>
-                      <button className="p-1 hover:bg-gray-100 rounded transition-colors">
-                        <MoreVertical className="h-4 w-4 text-gray-400" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
 
-        {/* Empty State */}
-        {filteredPackages.length === 0 && (
-          <div className="text-center py-12">
-            <Package className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No packages found</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Try adjusting your search or filter criteria
+                  {/* Tracking Number */}
+                  <div className="px-5 pb-3">
+                    <p className="font-mono text-sm font-medium text-primary-600 tracking-wide">
+                      {pkg.trackingNumber}
+                    </p>
+                  </div>
+
+                  {/* Info Grid */}
+                  <div className="px-5 pb-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-gray-400 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-[10px] uppercase tracking-wide text-gray-400">Destination</p>
+                          <p className="text-sm font-medium text-gray-900 truncate">{pkg.destination || '-'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Scale className="h-4 w-4 text-gray-400 shrink-0" />
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wide text-gray-400">Poids</p>
+                          <p className="text-sm font-medium text-gray-900">{pkg.weight > 0 ? `${pkg.weight} lbs` : '-'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-gray-400 shrink-0" />
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wide text-gray-400">Coût total</p>
+                          <p className="text-sm font-bold text-gray-900">{pkg.totalFee > 0 ? `$${pkg.totalFee.toFixed(2)}` : '-'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Truck className="h-4 w-4 text-gray-400 shrink-0" />
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wide text-gray-400">Livraison est.</p>
+                          <p className="text-sm font-medium text-gray-900">{deliveryEstimates[pkg.status] || '-'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Date */}
+                  <div className="px-5 pb-3">
+                    <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                      <Calendar className="h-3.5 w-3.5" />
+                      <span>Créé le {pkg.createdAt}</span>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="border-t border-gray-100 px-5 py-3 flex items-center gap-2">
+                    <button
+                      onClick={() => handleViewPackageDetails(pkg)}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      Détails
+                    </button>
+                    <button
+                      onClick={() => handleSingleUpdateStatus(pkg.id)}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-primary-700 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
+                    >
+                      <Edit className="h-3.5 w-3.5" />
+                      Modifier
+                    </button>
+                    <button
+                      onClick={() => handleNotifyOwner(pkg)}
+                      disabled={notifyingId === pkg.id}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50"
+                    >
+                      {notifyingId === pkg.id ? (
+                        <div className="h-3.5 w-3.5 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin" />
+                      ) : (
+                        <Bell className="h-3.5 w-3.5" />
+                      )}
+                      Notifier
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Results count */}
+          <div className="pt-2">
+            <p className="text-sm text-gray-500">
+              {filteredPackages.length} sur {packages.length} colis
             </p>
           </div>
-        )}
-
-        {/* Pagination */}
-        {filteredPackages.length > 0 && (
-          <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              Showing <span className="font-medium">1-{filteredPackages.length}</span> of{' '}
-              <span className="font-medium">{filteredPackages.length}</span> packages
-            </div>
-            <div className="flex gap-2">
-              <button className="px-3 py-1 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                Previous
-              </button>
-              <button className="px-3 py-1 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                Next
-              </button>
-            </div>
-          </div>
-        )}
-      </motion.div>
+        </>
       )}
 
-      {/* Bulk Actions Bar */}
+      {/* ── Bulk Actions Bar ──────────────────────────────────────── */}
       {selectedPackages.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -675,7 +605,7 @@ export default function AllPackagesPage() {
           className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4 z-50"
         >
           <span className="text-sm font-medium">
-            {selectedPackages.length} package{selectedPackages.length > 1 ? 's' : ''} selected
+            {selectedPackages.length} colis sélectionné{selectedPackages.length > 1 ? 's' : ''}
           </span>
           <div className="h-6 w-px bg-gray-700" />
           <div className="flex items-center gap-2">
@@ -683,84 +613,81 @@ export default function AllPackagesPage() {
               onClick={() => setShowStatusModal(true)}
               className="px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg text-sm font-medium transition-colors"
             >
-              Update Status
-            </button>
-            <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors">
-              Assign Admin
+              Modifier Statut
             </button>
             <button
               onClick={() => setShowDeleteModal(true)}
               className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-colors"
             >
-              Delete
+              Supprimer
+            </button>
+            <button
+              onClick={() => setSelectedPackages([])}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors"
+            >
+              Annuler
             </button>
           </div>
         </motion.div>
       )}
 
-      {/* Status Update Modal - Premium Design */}
+      {/* ── Status Update Modal ───────────────────────────────────── */}
       {showStatusModal && (() => {
-        // Get the current status of selected packages (find the most advanced one)
-        const statusOrder = ['pending', 'received', 'in-transit', 'available', 'delivered'];
-        const selectedPkgs = packages.filter(p => selectedPackages.includes(p.id));
-        const currentStatuses = selectedPkgs.map(p => p.status);
-
-        // Find the most advanced status among selected packages
+        const selectedPkgs = packages.filter((p) => selectedPackages.includes(p.id));
+        const currentStatuses = selectedPkgs.map((p) => p.status);
         let maxStatusIndex = -1;
-        currentStatuses.forEach(status => {
-          const index = statusOrder.indexOf(status);
+        currentStatuses.forEach((status) => {
+          const index = STATUS_ORDER.indexOf(status);
           if (index > maxStatusIndex) maxStatusIndex = index;
         });
+        const currentStatus = maxStatusIndex >= 0 ? STATUS_ORDER[maxStatusIndex] : 'pending';
 
-        const currentStatus = maxStatusIndex >= 0 ? statusOrder[maxStatusIndex] : 'pending';
+        const statusOptions = [
+          { value: 'pending', label: 'En attente', icon: '⏳', desc: 'En cours de traitement' },
+          { value: 'received', label: 'Reçu', icon: '📦', desc: 'Au warehouse' },
+          { value: 'in-transit', label: 'En transit', icon: '🚚', desc: 'En route' },
+          { value: 'available', label: 'Disponible', icon: '✅', desc: 'Prêt pour retrait' },
+          { value: 'delivered', label: 'Livré', icon: '🎉', desc: 'Livraison effectuée' },
+          { value: 'rejected', label: 'Rejeté', icon: '❌', desc: 'Demande rejetée' },
+        ];
 
         return (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-gradient-to-br from-white via-white to-gray-50 rounded-3xl shadow-2xl max-w-2xl w-full overflow-hidden"
+              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden"
             >
-              {/* Header */}
               <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-8 py-6">
                 <h3 className="text-2xl font-bold text-white flex items-center gap-3">
                   <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
                     <Package className="w-6 h-6" />
                   </div>
-                  Update Package Status
+                  Modifier le Statut
                 </h3>
                 <p className="text-primary-100 mt-2">
-                  {selectedPackages.length} package{selectedPackages.length > 1 ? 's' : ''} selected
+                  {selectedPackages.length} colis sélectionné{selectedPackages.length > 1 ? 's' : ''}
                 </p>
                 <p className="text-primary-200 text-sm mt-1">
-                  Current status: <span className="font-semibold">{statusLabels[currentStatus as keyof typeof statusLabels]}</span>
+                  Statut actuel: <span className="font-semibold">{statusLabels[currentStatus] || currentStatus}</span>
                 </p>
               </div>
 
-              {/* Content */}
               <div className="p-8">
                 <p className="text-gray-600 mb-2 text-sm">
-                  Select the next status. Previous steps are disabled.
+                  Sélectionnez le prochain statut. Les étapes passées sont désactivées.
                 </p>
                 <p className="text-xs text-gray-500 mb-6">
-                  ⚠️ You can only move forward in the workflow, not backward.
+                  Le workflow ne peut avancer que vers l&apos;avant.
                 </p>
 
-                {/* Status Options Grid */}
                 <div className="grid grid-cols-2 gap-4 mb-6">
-                  {[
-                    { value: 'pending', label: 'Pending', icon: '⏳', color: 'yellow', desc: 'Awaiting processing' },
-                    { value: 'received', label: 'Received', icon: '📦', color: 'blue', desc: 'At warehouse' },
-                    { value: 'in-transit', label: 'In Transit', icon: '🚚', color: 'purple', desc: 'On the way' },
-                    { value: 'available', label: 'Available', icon: '✅', color: 'green', desc: 'Ready for pickup' },
-                    { value: 'delivered', label: 'Delivered', icon: '🎉', color: 'teal', desc: 'Successfully delivered' },
-                    { value: 'rejected', label: 'Rejected', icon: '❌', color: 'red', desc: 'Request rejected' },
-                  ].map((status) => {
-                    // Disable if status is before current status (except rejected which is always available)
-                    const statusIndex = statusOrder.indexOf(status.value);
-                    const currentIndex = statusOrder.indexOf(currentStatus);
+                  {statusOptions.map((status) => {
+                    const statusIndex = STATUS_ORDER.indexOf(status.value);
+                    const currentIndex = STATUS_ORDER.indexOf(currentStatus);
                     const isDisabled = status.value !== 'rejected' && statusIndex <= currentIndex;
+                    const isSelected = newStatus === status.value;
+                    const styles = statusStyleMap[status.value] || statusStyleMap.pending;
 
                     return (
                       <motion.button
@@ -770,109 +697,117 @@ export default function AllPackagesPage() {
                         whileTap={!isDisabled ? { scale: 0.98 } : {}}
                         onClick={() => !isDisabled && setNewStatus(status.value)}
                         disabled={isDisabled}
-                        className={`relative p-4 rounded-2xl border-2 transition-all text-left ${
+                        className={`relative p-4 rounded-xl border transition-all text-left ${
                           isDisabled
                             ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
-                            : newStatus === status.value
-                            ? `border-${status.color}-500 bg-${status.color}-50 shadow-lg`
+                            : isSelected
+                            ? `${styles.border} ${styles.bg} shadow-md`
                             : 'border-gray-200 hover:border-gray-300 bg-white hover:shadow-md'
                         }`}
                       >
                         <div className="flex items-start gap-3">
-                          <span className={`text-3xl ${isDisabled ? 'grayscale' : ''}`}>{status.icon}</span>
+                          <span className={`text-2xl ${isDisabled ? 'grayscale' : ''}`}>{status.icon}</span>
                           <div className="flex-1">
                             <div className={`font-bold mb-0.5 ${isDisabled ? 'text-gray-400' : 'text-gray-900'}`}>
                               {status.label}
-                              {isDisabled && <span className="ml-2 text-xs">🔒</span>}
                             </div>
                             <div className={`text-xs ${isDisabled ? 'text-gray-400' : 'text-gray-500'}`}>
-                              {isDisabled ? 'Already passed' : status.desc}
+                              {isDisabled ? 'Déjà passé' : status.desc}
                             </div>
                           </div>
                         </div>
-                        {!isDisabled && newStatus === status.value && (
+                        {!isDisabled && isSelected && (
                           <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            className={`absolute top-3 right-3 w-6 h-6 bg-${status.color}-500 rounded-full flex items-center justify-center`}
+                            className={`absolute top-3 right-3 w-6 h-6 ${styles.check} rounded-full flex items-center justify-center`}
                           >
-                            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
+                            <Check className="w-4 h-4 text-white" />
                           </motion.div>
                         )}
                       </motion.button>
                     );
                   })}
-              </div>
+                </div>
 
-              {/* Action Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowStatusModal(false);
+                      setNewStatus('');
+                    }}
+                    className="flex-1 px-6 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all"
+                    disabled={isUpdating}
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleBulkUpdateStatus}
+                    disabled={!newStatus || isUpdating}
+                    className="flex-1 px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isUpdating ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Mise à jour...
+                      </span>
+                    ) : (
+                      'Mettre à jour'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        );
+      })()}
+
+      {/* ── Delete Modal ──────────────────────────────────────────── */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+          >
+            <div className="p-8 text-center">
+              <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-red-100 flex items-center justify-center">
+                <AlertTriangle className="h-7 w-7 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Supprimer les colis</h3>
+              <p className="text-sm text-gray-600 mb-8">
+                Êtes-vous sûr de vouloir supprimer{' '}
+                <span className="font-semibold">{selectedPackages.length}</span> colis ? Cette action est irréversible.
+              </p>
               <div className="flex gap-3">
                 <button
-                  onClick={() => {
-                    setShowStatusModal(false);
-                    setNewStatus('');
-                  }}
-                  className="flex-1 px-6 py-3 border-2 border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all"
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 px-6 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all"
                   disabled={isUpdating}
                 >
-                  Cancel
+                  Annuler
                 </button>
                 <button
-                  onClick={handleBulkUpdateStatus}
-                  disabled={!newStatus || isUpdating}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg shadow-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                  onClick={handleBulkDelete}
+                  disabled={isUpdating}
+                  className="flex-1 px-6 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isUpdating ? (
                     <span className="flex items-center justify-center gap-2">
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Updating...
+                      Suppression...
                     </span>
                   ) : (
-                    'Update Status'
+                    'Supprimer'
                   )}
                 </button>
               </div>
             </div>
           </motion.div>
         </div>
-        );
-      })()}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl p-6 max-w-md w-full mx-4"
-          >
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Delete Packages</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to delete {selectedPackages.length} package{selectedPackages.length > 1 ? 's' : ''}?
-              This action cannot be undone.
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                disabled={isUpdating}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleBulkDelete}
-                disabled={isUpdating}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isUpdating ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </motion.div>
-        </div>
       )}
 
-      {/* Package Details Modal - Premium & Professional */}
+      {/* ── Package Details Modal ─────────────────────────────────── */}
       {showDetailsModal && selectedPackageDetails && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
           <motion.div
@@ -881,7 +816,7 @@ export default function AllPackagesPage() {
             className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full my-8"
           >
             {/* Header */}
-            <div className="sticky top-0 bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 text-white px-6 py-5 rounded-t-2xl">
+            <div className="sticky top-0 bg-gradient-to-r from-primary-600 to-primary-700 text-white px-6 py-5 rounded-t-2xl">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -889,7 +824,7 @@ export default function AllPackagesPage() {
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold">{selectedPackageDetails.trackingNumber}</h2>
-                    <p className="text-sm text-primary-100">Package Details & Management</p>
+                    <p className="text-sm text-primary-100">Détails du colis</p>
                   </div>
                 </div>
                 <button
@@ -900,49 +835,76 @@ export default function AllPackagesPage() {
                   }}
                   className="h-10 w-10 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
                 >
-                  <span className="text-2xl">×</span>
+                  <X className="h-5 w-5" />
                 </button>
               </div>
 
-              {/* Status Badge */}
-              <div className="mt-4">
-                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold ${statusColors[selectedPackageDetails.status as keyof typeof statusColors]} bg-white/20`}>
-                  <span className="h-2 w-2 rounded-full bg-current animate-pulse"></span>
-                  {statusLabels[selectedPackageDetails.status as keyof typeof statusLabels]}
-                </span>
+              {/* Status Progress */}
+              <div className="mt-4 flex items-center gap-1">
+                {STATUS_ORDER.map((status, index) => {
+                  const currentIdx = STATUS_ORDER.indexOf(selectedPackageDetails.status);
+                  const isActive = index === currentIdx;
+                  const isPast = index < currentIdx;
+                  const colors = statusProgressColors[status];
+                  return (
+                    <div key={status} className="flex items-center gap-1 flex-1">
+                      <div className="flex flex-col items-center flex-1">
+                        <div
+                          className={`h-2 w-full rounded-full ${
+                            isActive
+                              ? `${colors.active}`
+                              : isPast
+                              ? `${colors.past} opacity-60`
+                              : 'bg-white/20'
+                          }`}
+                        />
+                        <span className={`text-[10px] mt-1 ${isActive ? 'text-white font-semibold' : isPast ? 'text-primary-200' : 'text-primary-300'}`}>
+                          {statusLabels[status]}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
             {/* Content */}
             <div className="p-6 max-h-[calc(100vh-300px)] overflow-y-auto">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column - Main Info */}
+                {/* Left Column */}
                 <div className="lg:col-span-2 space-y-6">
                   {/* Customer Information */}
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                  <div className="rounded-xl p-6 border border-gray-200 bg-white">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                        <User className="h-5 w-5 text-white" />
+                      <div className="h-9 w-9 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <User className="h-5 w-5 text-gray-600" />
                       </div>
-                      <h3 className="text-lg font-bold text-gray-900">Customer Information</h3>
+                      <h3 className="text-base font-semibold text-gray-900">Client</h3>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs text-gray-600 mb-1">Name</p>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Nom</p>
                         <p className="font-semibold text-gray-900">{selectedPackageDetails.userName}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600 mb-1">Email</p>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Email</p>
                         <p className="font-medium text-gray-700">{selectedPackageDetails.userEmail}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600 mb-1">User ID</p>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">ID Client</p>
                         <p className="font-mono text-sm text-gray-700">#{selectedPackageDetails.userId}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600 mb-1">Destination</p>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Langue</p>
+                        <p className="font-medium text-gray-900">
+                          {langFlags[selectedPackageDetails.userLanguage] || langFlags.fr}{' '}
+                          {selectedPackageDetails.userLanguage?.toUpperCase() || 'FR'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Destination</p>
                         <div className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4 text-blue-600" />
+                          <MapPin className="h-4 w-4 text-gray-400" />
                           <p className="font-medium text-gray-900">{selectedPackageDetails.destination}</p>
                         </div>
                       </div>
@@ -950,35 +912,37 @@ export default function AllPackagesPage() {
                   </div>
 
                   {/* Package Details */}
-                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
+                  <div className="rounded-xl p-6 border border-gray-200 bg-white">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
-                        <Package className="h-5 w-5 text-white" />
+                      <div className="h-9 w-9 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <Package className="h-5 w-5 text-gray-600" />
                       </div>
-                      <h3 className="text-lg font-bold text-gray-900">Package Details</h3>
+                      <h3 className="text-base font-semibold text-gray-900">Détails du colis</h3>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs text-gray-600 mb-1">Weight</p>
-                        <p className="text-2xl font-bold text-gray-900">{selectedPackageDetails.weight} <span className="text-sm text-gray-600">lbs</span></p>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Poids</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {selectedPackageDetails.weight} <span className="text-sm text-gray-500">lbs</span>
+                        </p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600 mb-1">Declared Value</p>
-                        <p className="text-2xl font-bold text-green-600">${selectedPackageDetails.declaredValue.toFixed(2)}</p>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Valeur déclarée</p>
+                        <p className="text-2xl font-bold text-gray-900">${selectedPackageDetails.declaredValue.toFixed(2)}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600 mb-1">Service Fee</p>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Frais de service</p>
                         <p className="font-semibold text-gray-700">${selectedPackageDetails.serviceFee.toFixed(2)}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600 mb-1">Shipping Fee</p>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Frais d&apos;envoi</p>
                         <p className="font-semibold text-gray-700">${selectedPackageDetails.shippingFee.toFixed(2)}</p>
                       </div>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-purple-200">
+                    <div className="mt-4 pt-4 border-t border-gray-100">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold text-gray-900">Total Fee</p>
-                        <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                        <p className="text-sm font-semibold text-gray-900">Coût total</p>
+                        <p className="text-2xl font-bold text-primary-600">
                           ${selectedPackageDetails.totalFee.toFixed(2)}
                         </p>
                       </div>
@@ -986,134 +950,107 @@ export default function AllPackagesPage() {
                   </div>
 
                   {/* Tracking History */}
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
+                  <div className="rounded-xl p-6 border border-gray-200 bg-white">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                        <Calendar className="h-5 w-5 text-white" />
+                      <div className="h-9 w-9 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <Calendar className="h-5 w-5 text-gray-600" />
                       </div>
-                      <h3 className="text-lg font-bold text-gray-900">Tracking History</h3>
+                      <h3 className="text-base font-semibold text-gray-900">Historique</h3>
                     </div>
                     {trackingHistory.length > 0 ? (
-                      <div className="space-y-3">
-                        {trackingHistory.map((entry: any, index: number) => (
-                          <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg">
-                            <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                              <div className="h-3 w-3 rounded-full bg-green-600"></div>
+                      <div className="relative">
+                        <div className="absolute left-4 top-3 bottom-3 w-px bg-gray-200" />
+                        <div className="space-y-4">
+                          {trackingHistory.map((entry: any, index: number) => (
+                            <div key={index} className="flex items-start gap-4 relative">
+                              <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0 z-10 border-2 border-white">
+                                <div className="h-2.5 w-2.5 rounded-full bg-primary-600" />
+                              </div>
+                              <div className="flex-1 pb-1">
+                                <p className="font-semibold text-gray-900 text-sm">{entry.status}</p>
+                                <p className="text-sm text-gray-600">{entry.location}</p>
+                                {entry.description && (
+                                  <p className="text-xs text-gray-500 mt-0.5">{entry.description}</p>
+                                )}
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {new Date(entry.timestamp).toLocaleString()}
+                                </p>
+                              </div>
                             </div>
-                            <div className="flex-1">
-                              <p className="font-semibold text-gray-900">{entry.status}</p>
-                              <p className="text-sm text-gray-600">{entry.location}</p>
-                              <p className="text-xs text-gray-500 mt-1">{entry.description}</p>
-                              <p className="text-xs text-gray-400 mt-1">
-                                {new Date(entry.timestamp).toLocaleString()}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-600">No tracking history available</p>
+                      <p className="text-sm text-gray-500">Aucun historique disponible</p>
                     )}
                   </div>
                 </div>
 
-                {/* Right Column - Actions & Meta */}
+                {/* Right Column */}
                 <div className="space-y-6">
                   {/* Quick Actions */}
-                  <div className="bg-white rounded-xl p-6 border-2 border-gray-100 shadow-sm">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
-                    <div className="space-y-3">
+                  <div className="rounded-xl p-6 border border-gray-200 bg-white">
+                    <h3 className="text-base font-semibold text-gray-900 mb-4">Actions rapides</h3>
+                    <div className="space-y-2">
                       <button
                         onClick={() => {
                           setSelectedPackages([selectedPackageDetails.id]);
                           setShowStatusModal(true);
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-200"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
                       >
-                        <Edit className="h-5 w-5" />
-                        <span className="font-semibold">Update Status</span>
+                        <Edit className="h-4 w-4 text-primary-600" />
+                        Modifier Statut
                       </button>
-
                       <button
-                        onClick={() => {
-                          // TODO: Add edit functionality
-                          alert('Edit functionality coming soon');
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl hover:from-purple-700 hover:to-purple-800 transition-all shadow-lg shadow-purple-200"
+                        onClick={() => handleNotifyOwner(selectedPackageDetails)}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
                       >
-                        <Edit className="h-5 w-5" />
-                        <span className="font-semibold">Edit Details</span>
+                        <Bell className="h-4 w-4 text-amber-600" />
+                        Notifier le client
                       </button>
-
                       <button
                         onClick={() => {
                           setSelectedPackages([selectedPackageDetails.id]);
                           setShowDeleteModal(true);
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all shadow-lg shadow-red-200"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 border border-red-200 text-red-700 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium"
                       >
-                        <Trash2 className="h-5 w-5" />
-                        <span className="font-semibold">Delete Package</span>
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                        Supprimer
                       </button>
-
                       <button
-                        onClick={() => {
-                          // TODO: Add print functionality
-                          alert('Print label functionality coming soon');
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all"
+                        onClick={() => alert('Impression bientôt disponible')}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
                       >
-                        <Download className="h-5 w-5" />
-                        <span className="font-semibold">Print Label</span>
+                        <Printer className="h-4 w-4 text-gray-600" />
+                        Imprimer étiquette
                       </button>
                     </div>
                   </div>
 
-                  {/* Meta Information */}
-                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Meta Information</h3>
+                  {/* Meta */}
+                  <div className="rounded-xl p-6 border border-gray-200 bg-white">
+                    <h3 className="text-base font-semibold text-gray-900 mb-4">Informations</h3>
                     <div className="space-y-3">
                       <div>
-                        <p className="text-xs text-gray-600 mb-1">Created Date</p>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Date de création</p>
                         <p className="font-medium text-gray-900">{selectedPackageDetails.createdAt}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600 mb-1">Last Updated</p>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Dernière mise à jour</p>
                         <p className="font-medium text-gray-900">{selectedPackageDetails.updatedAt}</p>
                       </div>
                       {selectedPackageDetails.assignedAdmin && (
                         <div>
-                          <p className="text-xs text-gray-600 mb-1">Assigned To</p>
+                          <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Assigné à</p>
                           <p className="font-medium text-gray-900">{selectedPackageDetails.assignedAdmin}</p>
                         </div>
                       )}
                       <div>
-                        <p className="text-xs text-gray-600 mb-1">Package ID</p>
+                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">ID Colis</p>
                         <p className="font-mono text-sm text-gray-700">#{selectedPackageDetails.id}</p>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Status Timeline Visual */}
-                  <div className="bg-white rounded-xl p-6 border-2 border-gray-100">
-                    <h3 className="text-sm font-bold text-gray-900 mb-4">Status Progress</h3>
-                    <div className="space-y-3">
-                      {['requested', 'received', 'in-transit', 'available', 'delivered'].map((status, index) => {
-                        const isActive = status === selectedPackageDetails.status;
-                        const isPast = ['requested', 'received', 'in-transit', 'available', 'delivered'].indexOf(selectedPackageDetails.status) > index;
-                        return (
-                          <div key={status} className="flex items-center gap-3">
-                            <div className={`h-8 w-8 rounded-full flex items-center justify-center ${isActive ? 'bg-blue-600 ring-4 ring-blue-200' : isPast ? 'bg-green-600' : 'bg-gray-200'}`}>
-                              {(isActive || isPast) && <div className="h-3 w-3 rounded-full bg-white"></div>}
-                            </div>
-                            <div className="flex-1">
-                              <p className={`text-sm font-semibold ${isActive ? 'text-blue-600' : isPast ? 'text-green-600' : 'text-gray-400'}`}>
-                                {statusLabels[status as keyof typeof statusLabels]}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
                     </div>
                   </div>
                 </div>

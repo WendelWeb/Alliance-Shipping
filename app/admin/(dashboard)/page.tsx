@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import {
@@ -13,106 +13,90 @@ import {
   Clock,
   CheckCircle,
   Plus,
+  RefreshCw,
 } from 'lucide-react';
 import { LoadingSpinner, CardSkeleton, SkeletonLoader } from '@/components/admin/LoadingSpinner';
+import { useCachedFetch } from '@/hooks/useAdminCache';
 
-// Mock data - Replace with real data from API
-const statsTemplate = [
-  {
-    name: 'Total Revenue',
-    value: '$45,231',
-    change: '+12.5%',
-    changeType: 'positive',
-    icon: DollarSign,
-    bgColor: 'bg-green-50',
-    iconColor: 'text-green-600',
-  },
-  {
-    name: 'Active Packages',
-    value: '2,345',
-    change: '+8.2%',
-    changeType: 'positive',
-    icon: Package,
-    bgColor: 'bg-blue-50',
-    iconColor: 'text-blue-600',
-  },
-  {
-    name: 'Total Users',
-    value: '1,234',
-    change: '+23.1%',
-    changeType: 'positive',
-    icon: Users,
-    bgColor: 'bg-purple-50',
-    iconColor: 'text-purple-600',
-  },
-  {
-    name: 'Avg. Delivery Time',
-    value: '5.2 days',
-    change: '-0.5 days',
-    changeType: 'positive',
-    icon: Clock,
-    bgColor: 'bg-orange-50',
-    iconColor: 'text-orange-600',
-  },
-];
+interface DashboardStats {
+  totalRevenue: number;
+  activePackages: number;
+  totalUsers: number;
+  pendingRequests: number;
+  inTransitCount: number;
+  availableCount: number;
+  recentPackages: { id: string; customer: string; destination: string; status: string; amount: string }[];
+}
 
-const recentPackages = [
-  {
-    id: 'AS-2026-00123',
-    customer: 'John Doe',
-    destination: 'Cap-Haïtien',
-    status: 'in-transit',
-    amount: '$85.00',
-  },
-  {
-    id: 'AS-2026-00124',
-    customer: 'Jane Smith',
-    destination: 'Port-au-Prince',
-    status: 'delivered',
-    amount: '$120.50',
-  },
-  {
-    id: 'AS-2026-00125',
-    customer: 'Bob Johnson',
-    destination: 'Cap-Haïtien',
-    status: 'pending',
-    amount: '$95.00',
-  },
-];
-
-const statusColors = {
+const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
-  'in-transit': 'bg-blue-100 text-blue-800',
-  delivered: 'bg-green-100 text-green-800',
+  received: 'bg-blue-100 text-blue-800',
+  'in-transit': 'bg-purple-100 text-purple-800',
+  available: 'bg-green-100 text-green-800',
+  delivered: 'bg-teal-100 text-teal-800',
+  rejected: 'bg-red-100 text-red-800',
 };
 
 export default function AdminDashboard() {
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState(statsTemplate);
-
-  useEffect(() => {
-    // Simulate API call - Replace with real API
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        // No simulation delay for instant loading
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        // TODO: Replace with real API call
-        // const response = await fetch('/api/admin/dashboard');
-        // const data = await response.json();
-        // setStats(data.stats);
-
-        setStats(statsTemplate);
-      } catch (error) {
-        console.error('Error loading dashboard:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
+  const fetchDashboard = useCallback(async () => {
+    const response = await fetch('/api/admin/dashboard');
+    if (!response.ok) throw new Error('Failed to fetch dashboard');
+    return response.json();
   }, []);
+
+  const { data, loading, refreshing, refresh } = useCachedFetch<DashboardStats>(
+    'admin-dashboard',
+    fetchDashboard,
+  );
+
+  const dashboardData = data || {
+    totalRevenue: 0,
+    activePackages: 0,
+    totalUsers: 0,
+    pendingRequests: 0,
+    inTransitCount: 0,
+    availableCount: 0,
+    recentPackages: [],
+  };
+
+  const stats = [
+    {
+      name: 'Total Revenue',
+      value: `$${dashboardData.totalRevenue.toLocaleString()}`,
+      change: '',
+      changeType: 'positive',
+      icon: DollarSign,
+      bgColor: 'bg-green-50',
+      iconColor: 'text-green-600',
+    },
+    {
+      name: 'Active Packages',
+      value: dashboardData.activePackages.toString(),
+      change: '',
+      changeType: 'positive',
+      icon: Package,
+      bgColor: 'bg-blue-50',
+      iconColor: 'text-blue-600',
+    },
+    {
+      name: 'Total Users',
+      value: dashboardData.totalUsers.toString(),
+      change: '',
+      changeType: 'positive',
+      icon: Users,
+      bgColor: 'bg-purple-50',
+      iconColor: 'text-purple-600',
+    },
+    {
+      name: 'Pending Requests',
+      value: dashboardData.pendingRequests.toString(),
+      change: '',
+      changeType: 'positive',
+      icon: Clock,
+      bgColor: 'bg-orange-50',
+      iconColor: 'text-orange-600',
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -124,13 +108,23 @@ export default function AdminDashboard() {
             Overview of your shipping operations
           </p>
         </div>
-        <Link
-          href="/admin/packages/new"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          <Plus className="h-5 w-5" />
-          Add Package
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <Link
+            href="/admin/packages/new"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            <Plus className="h-5 w-5" />
+            Add Package
+          </Link>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -150,6 +144,7 @@ export default function AdminDashboard() {
               <div className={`${stat.bgColor} p-3 rounded-xl`}>
                 <stat.icon className={`h-6 w-6 ${stat.iconColor}`} />
               </div>
+              {stat.change && (
               <div
                 className={`flex items-center gap-1 text-sm font-semibold ${
                   stat.changeType === 'positive'
@@ -164,6 +159,7 @@ export default function AdminDashboard() {
                 )}
                 {stat.change}
               </div>
+              )}
             </div>
             <div className="mt-4">
               <p className="text-sm font-medium text-gray-600">{stat.name}</p>
@@ -216,7 +212,7 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {recentPackages.map((pkg) => (
+              {dashboardData.recentPackages.map((pkg) => (
                 <tr
                   key={pkg.id}
                   className="hover:bg-gray-50 transition-colors cursor-pointer"
@@ -273,7 +269,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between text-white">
             <div>
               <p className="text-sm font-medium opacity-90">Pending Requests</p>
-              <p className="mt-2 text-3xl font-bold">12</p>
+              <p className="mt-2 text-3xl font-bold">{dashboardData.pendingRequests}</p>
             </div>
             <Package className="h-12 w-12 opacity-50" />
           </div>
@@ -289,7 +285,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between text-white">
             <div>
               <p className="text-sm font-medium opacity-90">In Transit</p>
-              <p className="mt-2 text-3xl font-bold">45</p>
+              <p className="mt-2 text-3xl font-bold">{dashboardData.inTransitCount}</p>
             </div>
             <TrendingUp className="h-12 w-12 opacity-50" />
           </div>
@@ -305,7 +301,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between text-white">
             <div>
               <p className="text-sm font-medium opacity-90">Ready for Pickup</p>
-              <p className="mt-2 text-3xl font-bold">8</p>
+              <p className="mt-2 text-3xl font-bold">{dashboardData.availableCount}</p>
             </div>
             <CheckCircle className="h-12 w-12 opacity-50" />
           </div>

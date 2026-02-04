@@ -11,6 +11,7 @@ import {
   revenueRecords,
   trackingHistory,
 } from './schema';
+// Note: All tables imported for clearing; only admin, fees, and special items are seeded
 import bcrypt from 'bcryptjs';
 
 async function seed() {
@@ -63,44 +64,7 @@ async function seed() {
 
     console.log(`✅ Super admin created: stanleywendeljoseph@gmail.com / ${adminPassword}`);
 
-    // 3. Create Sample Users
-    console.log('Creating sample users...');
-    const [user1] = await db
-      .insert(users)
-      .values({
-        clerkId: 'user_1_clerk_id',
-        email: 'john@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        phone: '+509 3612-3456',
-      })
-      .returning();
-
-    const [user2] = await db
-      .insert(users)
-      .values({
-        clerkId: 'user_2_clerk_id',
-        email: 'jane@example.com',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        phone: '+509 3712-5678',
-      })
-      .returning();
-
-    const [user3] = await db
-      .insert(users)
-      .values({
-        clerkId: 'user_3_clerk_id',
-        email: 'bob@example.com',
-        firstName: 'Bob',
-        lastName: 'Johnson',
-        phone: '+509 3845-9012',
-      })
-      .returning();
-
-    console.log('✅ Sample users created');
-
-    // 4. Create Service Fees (Default)
+    // 3. Create Service Fees (Default)
     console.log('Creating default service fees...');
     // Create service fee
     await db.insert(serviceFees).values({
@@ -192,195 +156,11 @@ async function seed() {
 
     console.log('✅ Special items created (6 items)');
 
-    // 6. Create Sample Packages
-    console.log('Creating sample packages...');
-
-    // Package 1 - In Transit
-    const [pkg1] = await db
-      .insert(packages)
-      .values({
-        userId: user1.id,
-        trackingNumber: 'AS-2026-00001',
-        description: 'Electronics and clothing',
-        weight: '5.5',
-        serviceFee: '5.00',
-        weightCost: '22.00',
-        totalCost: '27.00',
-        senderName: 'Miami Warehouse',
-        senderAddress: '123 Shipping Street',
-        senderCity: 'Miami',
-        senderCountry: 'USA',
-        senderPhone: '+1 305-555-1000',
-        recipientName: 'John Doe',
-        recipientAddress: '456 Delivery Ave',
-        recipientCity: 'Cap-Haïtien',
-        recipientCountry: 'Haiti',
-        recipientPhone: '+509 3612-3456',
-        status: 'in-transit',
-        currentLocation: 'Port-au-Prince Airport',
-        assignedToAdmin: adminRecord.id,
-      })
-      .returning();
-
-    // Package 2 - Available
-    const [pkg2] = await db
-      .insert(packages)
-      .values({
-        userId: user2.id,
-        trackingNumber: 'AS-2026-00002',
-        description: 'Gift items',
-        weight: '3.2',
-        serviceFee: '5.00',
-        weightCost: '12.80',
-        totalCost: '17.80',
-        senderName: 'Miami Warehouse',
-        senderAddress: '123 Shipping Street',
-        senderCity: 'Miami',
-        senderCountry: 'USA',
-        senderPhone: '+1 305-555-1000',
-        recipientName: 'Jane Smith',
-        recipientAddress: '789 Main St',
-        recipientCity: 'Port-au-Prince',
-        recipientCountry: 'Haiti',
-        recipientPhone: '+509 3712-5678',
-        status: 'available',
-        currentLocation: 'Port-au-Prince Office',
-        assignedToAdmin: adminRecord.id,
-      })
-      .returning();
-
-    // Package 3 - Delivered
-    const [pkg3] = await db
-      .insert(packages)
-      .values({
-        userId: user1.id,
-        trackingNumber: 'AS-2026-00003',
-        description: 'Documents and accessories',
-        weight: '8.0',
-        serviceFee: '5.00',
-        weightCost: '32.00',
-        totalCost: '37.00',
-        senderName: 'Miami Warehouse',
-        senderAddress: '123 Shipping Street',
-        senderCity: 'Miami',
-        senderCountry: 'USA',
-        senderPhone: '+1 305-555-1000',
-        recipientName: 'John Doe',
-        recipientAddress: '456 Delivery Ave',
-        recipientCity: 'Port-au-Prince',
-        recipientCountry: 'Haiti',
-        recipientPhone: '+509 3612-3456',
-        status: 'delivered',
-        currentLocation: 'Delivered',
-        assignedToAdmin: adminRecord.id,
-        actualDelivery: new Date('2026-01-05'),
-      })
-      .returning();
-
-    console.log('✅ Sample packages created');
-
-    // 7. Create Package Request
-    console.log('Creating package request...');
-    await db.insert(packageRequests).values({
-      userId: user3.id,
-      externalTrackingNumber: '1Z999AA10123456789',
-      receiptLocation: 'Miami Warehouse',
-      description: 'iPhone 15 Pro',
-      estimatedWeight: '0.5',
-      category: 'phone',
-      senderInfo: {
-        name: 'Best Buy Miami',
-        address: '789 Store Ave',
-        city: 'Miami',
-        country: 'USA',
-        phone: '+1 305-555-2000',
-      },
-      recipientInfo: {
-        name: 'Bob Johnson',
-        address: '321 Mountain Rd',
-        city: 'Cap-Haïtien',
-        country: 'Haiti',
-        phone: '+509 3845-9012',
-      },
-      status: 'pending',
-    });
-
-    console.log('✅ Package request created');
-
-    // 8. Create Tracking History
-    console.log('Creating tracking history...');
-    await db.insert(trackingHistory).values([
-      {
-        packageId: pkg1.id,
-        status: 'received',
-        location: 'Miami Warehouse',
-        description: 'Package received at Miami warehouse',
-      },
-      {
-        packageId: pkg1.id,
-        status: 'in-transit',
-        location: 'In Flight to Haiti',
-        description: 'Package departed Miami',
-      },
-      {
-        packageId: pkg1.id,
-        status: 'in-transit',
-        location: 'Port-au-Prince Airport',
-        description: 'Package arrived in Haiti',
-      },
-    ]);
-
-    console.log('✅ Tracking history created');
-
-    // 9. Create Revenue Records
-    console.log('Creating revenue records...');
-    await db.insert(revenueRecords).values([
-      {
-        packageId: pkg3.id,
-        amount: '37.00',
-        paymentMethod: 'cash',
-        recordedBy: adminRecord.id,
-      },
-    ]);
-
-    console.log('✅ Revenue records created');
-
-    // 10. Create Announcements
-    console.log('Creating announcements...');
-    await db.insert(announcements).values([
-      {
-        title: 'Welcome to Alliance Shipping!',
-        type: 'news',
-        content:
-          'We are excited to announce the launch of our new shipping platform. Track your packages in real-time and enjoy faster delivery times!',
-        isPublished: true,
-        publishDate: new Date(),
-        createdBy: adminRecord.id,
-      },
-      {
-        title: 'Holiday Shipping Schedule',
-        type: 'alert',
-        content:
-          'Please note our modified schedule during the holiday season. We will be operating with reduced hours from December 24-26.',
-        isPublished: true,
-        publishDate: new Date(),
-        createdBy: adminRecord.id,
-      },
-    ]);
-
-    console.log('✅ Announcements created');
-
     console.log('\n🎉 Database seed completed successfully!\n');
     console.log('📋 Summary:');
     console.log('  - 1 Super Admin');
-    console.log('  - 3 Sample Users');
     console.log('  - 1 Service Fee Configuration');
     console.log('  - 6 Special Item Fees');
-    console.log('  - 3 Sample Packages');
-    console.log('  - 1 Package Request');
-    console.log('  - 3 Tracking History Entries');
-    console.log('  - 1 Revenue Record');
-    console.log('  - 2 Announcements');
     console.log('\n✅ Ready to use!');
     console.log('\n🔐 Admin Login:');
     console.log('   Email: stanleywendeljoseph@gmail.com');

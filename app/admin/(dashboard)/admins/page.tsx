@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useCachedFetch } from '@/hooks/useAdminCache';
 import { motion } from 'framer-motion';
 import {
   ShieldCheck,
@@ -12,6 +13,7 @@ import {
   X,
   Eye,
   EyeOff,
+  RefreshCw,
 } from 'lucide-react';
 
 interface AdminUser {
@@ -56,8 +58,6 @@ const PERMISSION_RESOURCES = [
 ];
 
 export default function AdminManagementPage() {
-  const [adminsList, setAdminsList] = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -81,27 +81,21 @@ export default function AdminManagementPage() {
   };
 
   const fetchAdmins = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/admins');
-      if (!res.ok) {
-        if (res.status === 403) {
-          showToast('Access denied: super_admin only', 'error');
-          return;
-        }
-        throw new Error('Failed to fetch');
-      }
-      const data = await res.json();
-      setAdminsList(data.admins);
-    } catch (err) {
-      showToast('Failed to load admins', 'error');
-    } finally {
-      setLoading(false);
+    const res = await fetch('/api/admin/admins');
+    if (!res.ok) {
+      if (res.status === 403) throw new Error('Access denied: super_admin only');
+      throw new Error('Failed to fetch');
     }
+    const data = await res.json();
+    return data.admins as AdminUser[];
   }, []);
 
-  useEffect(() => {
-    fetchAdmins();
-  }, [fetchAdmins]);
+  const { data, loading, refreshing, refresh } = useCachedFetch<AdminUser[]>(
+    'admin-admins',
+    fetchAdmins,
+  );
+
+  const adminsList = data || [];
 
   const getDefaultPermissions = (role: string) => {
     const defaults: Record<string, any> = {
@@ -187,7 +181,7 @@ export default function AdminManagementPage() {
 
       showToast('Admin created successfully', 'success');
       setShowCreateModal(false);
-      fetchAdmins();
+      refresh();
     } catch (err) {
       showToast('Failed to create admin', 'error');
     } finally {
@@ -229,7 +223,7 @@ export default function AdminManagementPage() {
       showToast('Admin updated successfully', 'success');
       setShowEditModal(false);
       setEditingAdmin(null);
-      fetchAdmins();
+      refresh();
     } catch (err) {
       showToast('Failed to update admin', 'error');
     } finally {
@@ -258,7 +252,7 @@ export default function AdminManagementPage() {
         admin.isActive ? 'Admin deactivated' : 'Admin activated',
         'success'
       );
-      fetchAdmins();
+      refresh();
     } catch (err) {
       showToast('Failed to update admin', 'error');
     }
@@ -306,13 +300,23 @@ export default function AdminManagementPage() {
             Manage administrator accounts and permissions
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          <Plus className="h-5 w-5" />
-          Add Admin
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <button
+            onClick={openCreateModal}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            <Plus className="h-5 w-5" />
+            Add Admin
+          </button>
+        </div>
       </div>
 
       {/* Search */}

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useCachedFetch } from '@/hooks/useAdminCache';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -14,52 +15,30 @@ import {
   X,
   AlertCircle,
   Loader2,
+  RefreshCw,
 } from 'lucide-react';
 import { LoadingSpinner, SkeletonLoader } from '@/components/admin/LoadingSpinner';
 
-// Mock data - remplacer par vraie API
-const mockRequests = [
-  {
-    id: 1,
-    externalTrackingNumber: '1Z999AA10123456784',
-    receiptLocation: 'Miami Warehouse',
-    description: 'Vêtements, chaussures et accessoires pour la famille',
-    customerNotes: 'Colis fragile, contient des articles en verre. Merci de manipuler avec précaution.',
-    estimatedWeight: 5.0,
-    category: 'clothing',
-    userId: 1,
-    userName: 'John Doe',
-    userEmail: 'john@example.com',
-    userPhone: '+1 305-555-0123',
-    recipientInfo: {
-      name: 'Marie Dupont',
-      phone: '+509 1234 5678',
-      city: 'Port-au-Prince',
-    },
-    status: 'pending',
-    createdAt: '2026-01-07T10:30:00',
-  },
-  {
-    id: 2,
-    externalTrackingNumber: '9400111206213567891234',
-    receiptLocation: 'Alliance Shipping USA Address',
-    description: 'Electronics - laptop and accessories',
-    customerNotes: null,
-    estimatedWeight: null,
-    category: 'electronics',
-    userId: 2,
-    userName: 'Jane Smith',
-    userEmail: 'jane@example.com',
-    userPhone: '+1 305-555-0124',
-    recipientInfo: {
-      name: 'Jean Baptiste',
-      phone: '+509 9876 5432',
-      city: 'Cap-Haïtien',
-    },
-    status: 'pending',
-    createdAt: '2026-01-07T09:15:00',
-  },
-];
+interface PackageRequest {
+  id: number;
+  externalTrackingNumber: string;
+  receiptLocation: string;
+  description: string;
+  customerNotes: string | null;
+  estimatedWeight: number | null;
+  category: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  userPhone: string;
+  recipientInfo: {
+    name: string;
+    phone: string;
+    city: string;
+  };
+  status: string;
+  createdAt: string;
+}
 
 interface ValidationState {
   weight: string;
@@ -70,85 +49,82 @@ interface ValidationState {
   isStatusConfirmed: boolean;
 }
 
+// ── Helper: generate a consistent color from a name string ──────────────────
+
+function nameToColor(name: string): { bg: string; text: string } {
+  const colors = [
+    { bg: 'bg-blue-600', text: 'text-white' },
+    { bg: 'bg-emerald-600', text: 'text-white' },
+    { bg: 'bg-violet-600', text: 'text-white' },
+    { bg: 'bg-amber-600', text: 'text-white' },
+    { bg: 'bg-rose-600', text: 'text-white' },
+    { bg: 'bg-cyan-600', text: 'text-white' },
+    { bg: 'bg-indigo-600', text: 'text-white' },
+    { bg: 'bg-teal-600', text: 'text-white' },
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
 export default function RequestedPackagesPage() {
-  const [loading, setLoading] = useState(true);
-  const [requests, setRequests] = useState(mockRequests);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRequest, setSelectedRequest] = useState<typeof mockRequests[0] | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<PackageRequest | null>(null);
   const [validationStates, setValidationStates] = useState<Record<number, ValidationState>>({});
   const [processingId, setProcessingId] = useState<number | null>(null);
 
-  useEffect(() => {
-    const loadRequests = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch('/api/admin/package-requests');
+  const fetchRequests = useCallback(async (): Promise<PackageRequest[]> => {
+    const response = await fetch('/api/admin/package-requests');
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch package requests');
-        }
+    if (!response.ok) {
+      throw new Error('Failed to fetch package requests');
+    }
 
-        const data = await response.json();
+    const data = await response.json();
 
-        // Transform API data to match UI format
-        const transformedRequests = data.requests ? data.requests.map((req: any) => ({
-          id: req.id,
-          externalTrackingNumber: req.externalTrackingNumber || 'N/A',
-          receiptLocation: req.receiptLocation || 'Miami Warehouse',
-          description: req.description || 'No description',
-          customerNotes: req.notes || null,
-          estimatedWeight: req.estimatedWeight ? parseFloat(req.estimatedWeight) : null,
-          category: req.category || 'general',
-          userId: req.userId,
-          userName: req.user ? `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() : 'Unknown',
-          userEmail: req.user?.email || 'N/A',
-          userPhone: req.user?.phone || 'N/A',
-          recipientInfo: {
-            name: req.recipientName || 'N/A',
-            phone: req.recipientPhone || 'N/A',
-            city: req.recipientCity || 'N/A',
-          },
-          status: req.status || 'pending',
-          createdAt: req.createdAt || new Date().toISOString(),
-        })) : [];
+    // Transform API data to match UI format
+    const transformedRequests: PackageRequest[] = data.requests ? data.requests.map((req: any) => ({
+      id: req.id,
+      externalTrackingNumber: req.externalTrackingNumber || 'N/A',
+      receiptLocation: req.receiptLocation || 'Miami Warehouse',
+      description: req.description || 'No description',
+      customerNotes: req.notes || null,
+      estimatedWeight: req.estimatedWeight ? parseFloat(req.estimatedWeight) : null,
+      category: req.category || 'general',
+      userId: req.userId,
+      userName: req.user ? `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() : 'Unknown',
+      userEmail: req.user?.email || 'N/A',
+      userPhone: req.user?.phone || 'N/A',
+      recipientInfo: {
+        name: req.recipientName || 'N/A',
+        phone: req.recipientPhone || 'N/A',
+        city: req.recipientCity || 'N/A',
+      },
+      status: req.status || 'pending',
+      createdAt: req.createdAt || new Date().toISOString(),
+    })) : [];
 
-        // Initialize validation states
-        const initialStates: Record<number, ValidationState> = {};
-        transformedRequests.forEach((req: any) => {
-          initialStates[req.id] = {
-            weight: '', // Admin must add weight - users can no longer provide it
-            category: req.category || 'general',
-            status: 'received',
-            isWeightConfirmed: false,
-            isCategoryConfirmed: false,
-            isStatusConfirmed: false,
-          };
-        });
-        setValidationStates(initialStates);
+    // Initialize validation states
+    const initialStates: Record<number, ValidationState> = {};
+    transformedRequests.forEach((req: any) => {
+      initialStates[req.id] = {
+        weight: '', // Admin must add weight - users can no longer provide it
+        category: req.category || 'general',
+        status: 'received',
+        isWeightConfirmed: false,
+        isCategoryConfirmed: false,
+        isStatusConfirmed: false,
+      };
+    });
+    setValidationStates(initialStates);
 
-        setRequests(transformedRequests);
-      } catch (error) {
-        console.error('Error loading package requests:', error);
-        // Fallback to mock data if API fails
-        const initialStates: Record<number, ValidationState> = {};
-        mockRequests.forEach(req => {
-          initialStates[req.id] = {
-            weight: '', // Admin must add weight - users can no longer provide it
-            category: req.category || 'general',
-            status: 'received',
-            isWeightConfirmed: false,
-            isCategoryConfirmed: false,
-            isStatusConfirmed: false,
-          };
-        });
-        setValidationStates(initialStates);
-        setRequests(mockRequests);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadRequests();
+    return transformedRequests;
   }, []);
+
+  const { data, loading, refreshing, refresh } = useCachedFetch<PackageRequest[]>('admin-packages-requested', fetchRequests);
+  const requests = data || [];
 
   const filteredRequests = requests.filter(
     (req) =>
@@ -228,7 +204,7 @@ export default function RequestedPackagesPage() {
     return hasWeight && state.isWeightConfirmed && state.isCategoryConfirmed && state.isStatusConfirmed;
   };
 
-  const handleApprove = async (request: typeof mockRequests[0]) => {
+  const handleApprove = async (request: PackageRequest) => {
     const state = validationStates[request.id];
 
     if (!canApprove(request.id)) {
@@ -262,8 +238,8 @@ export default function RequestedPackagesPage() {
 
       alert(`✅ Demande approuvée !\n\nTracking Alliance Shipping: ${data.package.trackingNumber}\nStatut initial: ${state.status}`);
 
-      // Remove from list
-      setRequests(prev => prev.filter(r => r.id !== request.id));
+      // Refresh the list
+      refresh();
     } catch (error: any) {
       console.error('Error approving request:', error);
       alert(`❌ Erreur lors de l'approbation:\n${error.message}`);
@@ -295,7 +271,7 @@ export default function RequestedPackagesPage() {
       }
 
       alert('✅ Demande rejetée avec succès');
-      setRequests(prev => prev.filter(r => r.id !== requestId));
+      refresh();
     } catch (error: any) {
       console.error('Error rejecting request:', error);
       alert(`❌ Erreur lors du rejet:\n${error.message}`);
@@ -324,11 +300,21 @@ export default function RequestedPackagesPage() {
             Validez et approuvez les demandes des clients
           </p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <Package className="h-5 w-5 text-yellow-600" />
-          <span className="text-sm font-semibold text-yellow-700">
-            {filteredRequests.length} En Attente
-          </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <div className="flex items-center gap-2 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <Package className="h-5 w-5 text-yellow-600" />
+            <span className="text-sm font-semibold text-yellow-700">
+              {filteredRequests.length} En Attente
+            </span>
+          </div>
         </div>
       </div>
 
@@ -339,10 +325,10 @@ export default function RequestedPackagesPage() {
           <div className="text-sm text-blue-900">
             <p className="font-semibold mb-1">Actions requises avant approbation :</p>
             <ul className="list-disc list-inside space-y-1 text-blue-800">
-              <li><strong>Peser et ajouter le poids réel</strong> du colis - Les utilisateurs ne peuvent plus estimer le poids</li>
-              <li>Vérifier et confirmer la catégorie (obligatoire)</li>
-              <li>Sélectionner et confirmer le statut initial du colis (obligatoire)</li>
-              <li>Un tracking Alliance Shipping (AS-XXXXXXXXXX) sera généré automatiquement</li>
+              <li>Peser et ajouter le poids réel du colis</li>
+              <li>Vérifier et confirmer la catégorie</li>
+              <li>Sélectionner et confirmer le statut initial</li>
+              <li>Un tracking AS-XXXXXXXXXX sera généré automatiquement</li>
             </ul>
           </div>
         </div>
@@ -364,7 +350,7 @@ export default function RequestedPackagesPage() {
       {loading ? (
         <SkeletonLoader rows={3} />
       ) : filteredRequests.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
+        <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
           <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900">Aucune demande en attente</h3>
           <p className="mt-1 text-sm text-gray-500">
@@ -377,6 +363,7 @@ export default function RequestedPackagesPage() {
             const state = validationStates[request.id] || { weight: '', category: 'general', isWeightConfirmed: false, isCategoryConfirmed: false };
             const isProcessing = processingId === request.id;
             const readyToApprove = canApprove(request.id);
+            const avatar = nameToColor(request.userName || '?');
 
             return (
               <motion.div
@@ -384,14 +371,14 @@ export default function RequestedPackagesPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="bg-white rounded-2xl shadow-sm border-2 border-gray-100 overflow-hidden hover:shadow-md transition-all"
+                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all"
               >
                 <div className="p-6">
                   {/* Header Info */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-lg">
-                        {request.userName ? request.userName.charAt(0) : '?'}
+                      <div className={`h-12 w-12 rounded-full ${avatar.bg} flex items-center justify-center ${avatar.text} font-bold text-lg`}>
+                        {request.userName ? request.userName.charAt(0).toUpperCase() : '?'}
                       </div>
                       <div>
                         <h3 className="text-lg font-bold text-gray-900">{request.userName || 'Unknown'}</h3>
@@ -412,67 +399,67 @@ export default function RequestedPackagesPage() {
                     {/* Left Column - Request Info */}
                     <div className="space-y-4">
                       {/* External Tracking */}
-                      <div className="bg-red-50 rounded-xl p-4 border-2 border-red-200">
+                      <div className="bg-white rounded-lg p-4 border border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
-                          <Hash className="h-5 w-5 text-red-600" />
-                          <span className="text-sm font-semibold text-red-900">Tracking Transporteur</span>
+                          <Hash className="h-5 w-5 text-gray-500" />
+                          <span className="text-xs uppercase tracking-wide text-gray-500">Tracking Transporteur</span>
                         </div>
-                        <p className="text-lg font-mono font-bold text-red-700">{request.externalTrackingNumber}</p>
+                        <p className="text-lg font-mono font-bold text-gray-900">{request.externalTrackingNumber}</p>
                       </div>
 
                       {/* Receipt Location */}
-                      <div className="bg-green-50 rounded-xl p-4 border-2 border-green-200">
+                      <div className="bg-white rounded-lg p-4 border border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
-                          <MapPin className="h-5 w-5 text-green-600" />
-                          <span className="text-sm font-semibold text-green-900">Lieu de Réception</span>
+                          <MapPin className="h-5 w-5 text-gray-500" />
+                          <span className="text-xs uppercase tracking-wide text-gray-500">Lieu de Réception</span>
                         </div>
-                        <p className="text-base font-medium text-green-700">{request.receiptLocation}</p>
+                        <p className="text-base font-medium text-gray-900">{request.receiptLocation}</p>
                       </div>
 
                       {/* Description */}
-                      <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="bg-white rounded-lg p-4 border border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
-                          <Package className="h-5 w-5 text-gray-600" />
-                          <span className="text-sm font-semibold text-gray-900">Description</span>
+                          <Package className="h-5 w-5 text-gray-500" />
+                          <span className="text-xs uppercase tracking-wide text-gray-500">Description</span>
                         </div>
                         <p className="text-sm text-gray-700">{request.description}</p>
                       </div>
 
                       {/* Customer Notes */}
                       {request.customerNotes && (
-                        <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
+                        <div className="bg-white rounded-lg p-4 border border-gray-200">
                           <div className="flex items-center gap-2 mb-2">
-                            <MessageSquare className="h-5 w-5 text-yellow-600" />
-                            <span className="text-sm font-semibold text-yellow-900">Notes Client</span>
+                            <MessageSquare className="h-5 w-5 text-gray-500" />
+                            <span className="text-xs uppercase tracking-wide text-gray-500">Notes Client</span>
                           </div>
-                          <p className="text-sm text-yellow-800">{request.customerNotes}</p>
+                          <p className="text-sm text-gray-700">{request.customerNotes}</p>
                         </div>
                       )}
 
                       {/* Recipient */}
-                      <div className="bg-purple-50 rounded-xl p-4">
+                      <div className="bg-white rounded-lg p-4 border border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
-                          <User className="h-5 w-5 text-purple-600" />
-                          <span className="text-sm font-semibold text-purple-900">Destinataire</span>
+                          <User className="h-5 w-5 text-gray-500" />
+                          <span className="text-xs uppercase tracking-wide text-gray-500">Destinataire</span>
                         </div>
-                        <p className="text-sm text-purple-700">
+                        <p className="text-sm text-gray-700">
                           {request.recipientInfo.name} - {request.recipientInfo.city}
                         </p>
-                        <p className="text-sm text-purple-600">{request.recipientInfo.phone}</p>
+                        <p className="text-sm text-gray-500">{request.recipientInfo.phone}</p>
                       </div>
                     </div>
 
                     {/* Right Column - Validation */}
                     <div className="space-y-4">
                       {/* Weight Validation */}
-                      <div className={`rounded-xl p-4 border-2 transition-all ${
+                      <div className={`rounded-lg p-4 border transition-all ${
                         state.isWeightConfirmed
-                          ? 'bg-green-50 border-green-500'
-                          : 'bg-blue-50 border-blue-300'
+                          ? 'bg-green-50 border-green-300'
+                          : 'bg-gray-50 border-gray-200'
                       }`}>
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <Scale className={`h-5 w-5 ${state.isWeightConfirmed ? 'text-green-600' : 'text-blue-600'}`} />
+                            <Scale className={`h-5 w-5 ${state.isWeightConfirmed ? 'text-green-600' : 'text-gray-500'}`} />
                             <span className="text-sm font-semibold text-gray-900">Poids Réel (lbs) *</span>
                           </div>
                           {state.isWeightConfirmed && (
@@ -480,8 +467,8 @@ export default function RequestedPackagesPage() {
                           )}
                         </div>
 
-                        <p className="text-xs text-blue-700 mb-2">
-                          ℹ️ Pesez le colis et entrez le poids exact
+                        <p className="text-xs text-gray-500 mb-2">
+                          Pesez le colis et entrez le poids exact
                         </p>
 
                         <div className="flex items-center gap-2">
@@ -492,14 +479,14 @@ export default function RequestedPackagesPage() {
                             disabled={state.isWeightConfirmed || isProcessing}
                             step="1"
                             min="1"
-                            className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed font-mono text-lg"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100 disabled:cursor-not-allowed font-mono text-lg"
                             placeholder="Ex: 5"
                           />
                           {!state.isWeightConfirmed ? (
                             <button
                               onClick={() => confirmWeight(request.id)}
                               disabled={!state.weight || parseFloat(state.weight) <= 0 || isProcessing}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                             >
                               Confirmer
                             </button>
@@ -519,10 +506,10 @@ export default function RequestedPackagesPage() {
                       </div>
 
                       {/* Category Validation */}
-                      <div className={`rounded-xl p-4 border-2 transition-all ${
+                      <div className={`rounded-lg p-4 border transition-all ${
                         state.isCategoryConfirmed
-                          ? 'bg-green-50 border-green-500'
-                          : 'bg-purple-50 border-purple-300'
+                          ? 'bg-green-50 border-green-300'
+                          : 'bg-gray-50 border-gray-200'
                       }`}>
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-sm font-semibold text-gray-900">Catégorie *</span>
@@ -536,7 +523,7 @@ export default function RequestedPackagesPage() {
                             value={state.category}
                             onChange={(e) => handleCategoryChange(request.id, e.target.value)}
                             disabled={state.isCategoryConfirmed || isProcessing}
-                            className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                           >
                             <option value="general">Général</option>
                             <option value="clothing">Vêtements</option>
@@ -550,7 +537,7 @@ export default function RequestedPackagesPage() {
                             <button
                               onClick={() => confirmCategory(request.id)}
                               disabled={isProcessing}
-                              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 font-semibold"
+                              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 font-semibold"
                             >
                               Confirmer
                             </button>
@@ -570,10 +557,10 @@ export default function RequestedPackagesPage() {
                       </div>
 
                       {/* Status Selection */}
-                      <div className={`rounded-xl p-4 border-2 transition-all ${
+                      <div className={`rounded-lg p-4 border transition-all ${
                         state.isStatusConfirmed
-                          ? 'bg-green-50 border-green-500'
-                          : 'bg-orange-50 border-orange-300'
+                          ? 'bg-green-50 border-green-300'
+                          : 'bg-gray-50 border-gray-200'
                       }`}>
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-sm font-semibold text-gray-900">Statut Initial *</span>
@@ -587,7 +574,7 @@ export default function RequestedPackagesPage() {
                             value={state.status}
                             onChange={(e) => handleStatusChange(request.id, e.target.value)}
                             disabled={state.isStatusConfirmed || isProcessing}
-                            className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                           >
                             <option value="received">Reçu (Warehouse Miami)</option>
                             <option value="in-transit">En Transit vers Haïti</option>
@@ -598,7 +585,7 @@ export default function RequestedPackagesPage() {
                             <button
                               onClick={() => confirmStatus(request.id)}
                               disabled={isProcessing}
-                              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 font-semibold"
+                              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 font-semibold"
                             >
                               Confirmer
                             </button>
@@ -622,7 +609,7 @@ export default function RequestedPackagesPage() {
                         <button
                           onClick={() => handleApprove(request)}
                           disabled={!readyToApprove || isProcessing}
-                          className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                          className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isProcessing ? (
                             <>
@@ -640,7 +627,7 @@ export default function RequestedPackagesPage() {
                         <button
                           onClick={() => handleReject(request.id)}
                           disabled={isProcessing}
-                          className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 border-2 border-red-300 text-red-700 font-semibold rounded-xl hover:bg-red-50 transition-colors disabled:opacity-50"
+                          className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 border border-red-300 text-red-700 font-semibold rounded-xl hover:bg-red-50 transition-colors disabled:opacity-50"
                         >
                           <X className="h-5 w-5" />
                           Rejeter la Demande
@@ -651,7 +638,7 @@ export default function RequestedPackagesPage() {
                       {!readyToApprove && (
                         <div className="bg-orange-50 border-l-4 border-orange-400 p-3 rounded">
                           <p className="text-sm text-orange-800">
-                            ⚠️ Confirmez le poids, la catégorie ET le statut initial pour pouvoir approuver
+                            Confirmez le poids, la catégorie ET le statut initial pour pouvoir approuver
                           </p>
                         </div>
                       )}

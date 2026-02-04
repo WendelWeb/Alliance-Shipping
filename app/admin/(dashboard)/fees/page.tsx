@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useCachedFetch } from '@/hooks/useAdminCache';
 import { motion } from 'framer-motion';
 import {
   DollarSign,
@@ -12,103 +13,65 @@ import {
   AlertCircle,
   History,
   Plus,
+  RefreshCw,
 } from 'lucide-react';
 import { LoadingSpinner, CardSkeleton, SkeletonLoader } from '@/components/admin/LoadingSpinner';
+import { useToast } from '@/components/admin/Toast';
 
-// Mock data - Current fee configuration
-const mockCurrentFees = {
-  serviceFee: 5.00,
-  shippingFeePerLb: 4.00,
-  lastUpdated: '2026-01-01T00:00:00',
-  updatedBy: 'Super Admin',
-  effectiveDate: '2026-01-01',
+interface FeeConfig {
+  serviceFee: number;
+  shippingFeePerLb: number;
+  lastUpdated: string;
+  updatedBy: string;
+  effectiveDate: string;
+}
+
+const initialFees: FeeConfig = {
+  serviceFee: 0,
+  shippingFeePerLb: 0,
+  lastUpdated: '',
+  updatedBy: '',
+  effectiveDate: '',
 };
 
-// Mock fee history
-const mockFeeHistory = [
-  {
-    id: 1,
-    serviceFee: 5.00,
-    shippingFeePerLb: 4.00,
-    effectiveDate: '2026-01-01',
-    createdAt: '2025-12-28T10:00:00',
-    createdBy: 'Super Admin',
-    status: 'active',
-  },
-  {
-    id: 2,
-    serviceFee: 5.00,
-    shippingFeePerLb: 3.50,
-    effectiveDate: '2025-10-01',
-    createdAt: '2025-09-25T14:30:00',
-    createdBy: 'Super Admin',
-    status: 'expired',
-  },
-  {
-    id: 3,
-    serviceFee: 4.50,
-    shippingFeePerLb: 3.50,
-    effectiveDate: '2025-07-01',
-    createdAt: '2025-06-20T09:15:00',
-    createdBy: 'Admin User',
-    status: 'expired',
-  },
-];
-
 export default function FeesPage() {
-  const [loading, setLoading] = useState(true);
-  const [currentFees, setCurrentFees] = useState(mockCurrentFees);
   const [isEditing, setIsEditing] = useState(false);
-  const [serviceFee, setServiceFee] = useState(mockCurrentFees.serviceFee);
-  const [shippingFeePerLb, setShippingFeePerLb] = useState(mockCurrentFees.shippingFeePerLb);
+  const [serviceFee, setServiceFee] = useState(0);
+  const [shippingFeePerLb, setShippingFeePerLb] = useState(0);
   const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().split('T')[0]);
   const [showHistory, setShowHistory] = useState(false);
   const [feeHistory, setFeeHistory] = useState<any[]>([]);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    const loadFees = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch('/api/admin/fees');
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch fees');
-        }
-
-        const data = await response.json();
-
-        // Extract fees from grouped response
-        if (data.serviceFee && data.perPound) {
-          const fees = {
-            serviceFee: parseFloat(data.serviceFee.amount),
-            shippingFeePerLb: parseFloat(data.perPound.amount),
-            lastUpdated: data.serviceFee.updatedAt || '',
-            updatedBy: 'Admin',
-            effectiveDate: data.serviceFee.effectiveFrom || '',
-          };
-
-          setCurrentFees(fees);
-          setServiceFee(fees.serviceFee);
-          setShippingFeePerLb(fees.shippingFeePerLb);
-        } else {
-          // Fallback to mock if no data
-          setCurrentFees(mockCurrentFees);
-          setServiceFee(mockCurrentFees.serviceFee);
-          setShippingFeePerLb(mockCurrentFees.shippingFeePerLb);
-        }
-      } catch (error) {
-        console.error('Error loading fees:', error);
-        // Fallback to mock on error
-        setCurrentFees(mockCurrentFees);
-        setServiceFee(mockCurrentFees.serviceFee);
-        setShippingFeePerLb(mockCurrentFees.shippingFeePerLb);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadFees();
+  const fetchFees = useCallback(async () => {
+    const response = await fetch('/api/admin/fees');
+    if (!response.ok) throw new Error('Failed to fetch fees');
+    const data = await response.json();
+    if (data.serviceFee && data.perPound) {
+      const fees: FeeConfig = {
+        serviceFee: parseFloat(data.serviceFee.amount),
+        shippingFeePerLb: parseFloat(data.perPound.amount),
+        lastUpdated: data.serviceFee.updatedAt || '',
+        updatedBy: 'Admin',
+        effectiveDate: data.serviceFee.effectiveFrom || '',
+      };
+      return fees;
+    }
+    return initialFees;
   }, []);
+
+  const { data, loading, refreshing, refresh } = useCachedFetch<FeeConfig>(
+    'admin-fees',
+    fetchFees,
+  );
+
+  const currentFees = data || initialFees;
+
+  // Sync local edit state when data loads
+  if (data && serviceFee === 0 && shippingFeePerLb === 0 && data.serviceFee > 0) {
+    setServiceFee(data.serviceFee);
+    setShippingFeePerLb(data.shippingFeePerLb);
+  }
 
   const handleSave = async () => {
     // Validation: effectiveDate is required
@@ -123,7 +86,7 @@ export default function FeesPage() {
       return;
     }
 
-    setLoading(true);
+    setSaving(true);
     try {
       const response = await fetch('/api/admin/fees', {
         method: 'POST',
@@ -142,35 +105,15 @@ export default function FeesPage() {
         throw new Error(errorData.error || 'Failed to save fees');
       }
 
-      const data = await response.json();
-      console.log('Fees saved successfully:', data);
-
-      // Reload fees to show updated values
-      const reloadResponse = await fetch('/api/admin/fees');
-      const reloadData = await reloadResponse.json();
-
-      if (reloadData.serviceFee && reloadData.perPound) {
-        const fees = {
-          serviceFee: parseFloat(reloadData.serviceFee.amount),
-          shippingFeePerLb: parseFloat(reloadData.perPound.amount),
-          lastUpdated: reloadData.serviceFee.updatedAt || '',
-          updatedBy: 'Admin',
-          effectiveDate: reloadData.serviceFee.effectiveFrom || '',
-        };
-
-        setCurrentFees(fees);
-        setServiceFee(fees.serviceFee);
-        setShippingFeePerLb(fees.shippingFeePerLb);
-      }
-
       setIsEditing(false);
       setEffectiveDate(new Date().toISOString().split('T')[0]);
+      refresh();
       alert('Fees updated successfully!');
     } catch (error) {
       console.error('Error saving fees:', error);
       alert(`Error: ${error instanceof Error ? error.message : 'Failed to save fees'}`);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -183,12 +126,10 @@ export default function FeesPage() {
 
   const loadHistory = async () => {
     if (showHistory) {
-      // If already showing, just toggle off
       setShowHistory(false);
       return;
     }
 
-    setLoading(true);
     try {
       const response = await fetch('/api/admin/fees?history=true');
 
@@ -216,8 +157,6 @@ export default function FeesPage() {
     } catch (error) {
       console.error('Error loading history:', error);
       alert('Failed to load fee history');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -263,13 +202,23 @@ export default function FeesPage() {
             Configure service and shipping fees
           </p>
         </div>
-        <button
-          onClick={loadHistory}
-          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          <History className="h-5 w-5" />
-          {showHistory ? 'Hide' : 'Show'} History
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <button
+            onClick={loadHistory}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <History className="h-5 w-5" />
+            {showHistory ? 'Hide' : 'Show'} History
+          </button>
+        </div>
       </div>
 
       {/* Current Fees Card */}
@@ -286,7 +235,7 @@ export default function FeesPage() {
             <div>
               <h2 className="text-xl font-bold text-gray-900">Current Fee Structure</h2>
               <p className="text-sm text-gray-600">
-                Effective since {formatDate(mockCurrentFees.effectiveDate)}
+                Effective since {currentFees.effectiveDate ? formatDate(currentFees.effectiveDate) : 'N/A'}
               </p>
             </div>
           </div>

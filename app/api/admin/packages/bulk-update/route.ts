@@ -97,6 +97,7 @@ export async function POST(request: NextRequest) {
 
       if (userInfo?.email) {
         const userName = `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || userInfo.email;
+        const userLocale = userInfo.preferredLanguage || 'fr';
 
         // Send appropriate email based on status
         if (status === 'available') {
@@ -104,7 +105,8 @@ export async function POST(request: NextRequest) {
             userInfo.email,
             userName,
             pkg.trackingNumber,
-            pkg.recipientCity || 'Haiti Office'
+            pkg.recipientCity || 'Haiti Office',
+            userLocale
           ).catch(error => {
             console.error('Failed to send available email:', error);
           });
@@ -113,7 +115,8 @@ export async function POST(request: NextRequest) {
             userInfo.email,
             userName,
             pkg.trackingNumber,
-            pkg.recipientName || userName
+            pkg.recipientName || userName,
+            userLocale
           ).catch(error => {
             console.error('Failed to send delivered email:', error);
           });
@@ -129,7 +132,8 @@ export async function POST(request: NextRequest) {
             userName,
             pkg.trackingNumber,
             status,
-            statusMessages[status] || 'Your package status has been updated.'
+            statusMessages[status] || 'Your package status has been updated.',
+            userLocale
           ).catch(error => {
             console.error('Failed to send status change email:', error);
           });

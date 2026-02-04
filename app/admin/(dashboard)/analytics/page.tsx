@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useCachedFetch } from '@/hooks/useAdminCache';
 import { motion } from 'framer-motion';
 import {
   DollarSign,
@@ -12,83 +13,59 @@ import {
   Download,
   ArrowUpRight,
   ArrowDownRight,
+  RefreshCw,
 } from 'lucide-react';
 import { LoadingSpinner, CardSkeleton, SkeletonLoader } from '@/components/admin/LoadingSpinner';
 
-// Mock data - Replace with real API data
-const mockAnalytics = {
-  totalRevenue: 15420.50,
-  totalPackages: 156,
-  totalCustomers: 89,
-  averageOrderValue: 98.85,
-  revenueGrowth: 12.5,
-  packageGrowth: 8.2,
-  customerGrowth: 15.3,
+interface AnalyticsData {
+  totalRevenue: number;
+  totalPackages: number;
+  totalCustomers: number;
+  averageOrderValue: number;
+  revenueGrowth: number;
+  packageGrowth: number;
+  customerGrowth: number;
+  monthlyRevenue: { month: string; revenue: number; packages: number }[];
+  topCustomers: { id: number; name: string; packages: number; revenue: number }[];
+  revenueByDestination: { destination: string; packages: number; revenue: number; percentage: number }[];
+  paymentMethods: { method: string; count: number; revenue: number; percentage: number }[];
+}
 
-  // Revenue by month
-  monthlyRevenue: [
-    { month: 'Jan', revenue: 3200, packages: 42 },
-    { month: 'Feb', revenue: 3800, packages: 48 },
-    { month: 'Mar', revenue: 4100, packages: 52 },
-    { month: 'Apr', revenue: 4320, packages: 54 },
-  ],
-
-  // Top customers
-  topCustomers: [
-    { id: 1, name: 'John Doe', packages: 15, revenue: 1245.00 },
-    { id: 2, name: 'Jane Smith', packages: 12, revenue: 980.00 },
-    { id: 3, name: 'Bob Johnson', packages: 10, revenue: 875.00 },
-    { id: 4, name: 'Sarah Williams', packages: 8, revenue: 720.00 },
-    { id: 5, name: 'Mike Brown', packages: 7, revenue: 650.00 },
-  ],
-
-  // Revenue by destination
-  revenueByDestination: [
-    { destination: 'Port-au-Prince', packages: 89, revenue: 8950.00, percentage: 58 },
-    { destination: 'Cap-Haïtien', packages: 67, revenue: 6470.50, percentage: 42 },
-  ],
-
-  // Payment methods
-  paymentMethods: [
-    { method: 'Cash', count: 92, revenue: 9200.00, percentage: 60 },
-    { method: 'Card', count: 38, revenue: 3800.00, percentage: 25 },
-    { method: 'Mobile Money', count: 26, revenue: 2420.50, percentage: 15 },
-  ],
+const defaultAnalytics: AnalyticsData = {
+  totalRevenue: 0,
+  totalPackages: 0,
+  totalCustomers: 0,
+  averageOrderValue: 0,
+  revenueGrowth: 0,
+  packageGrowth: 0,
+  customerGrowth: 0,
+  monthlyRevenue: [],
+  topCustomers: [],
+  revenueByDestination: [],
+  paymentMethods: [],
 };
 
 export default function AnalyticsPage() {
-  const [loading, setLoading] = useState(true);
-  const [analytics, setAnalytics] = useState(mockAnalytics);
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('month');
 
-  useEffect(() => {
-    const loadAnalytics = async () => {
-      setLoading(true);
-      try {
-        // No simulation delay for instant loading
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        // TODO: Replace with real API call
-        // const response = await fetch('/api/admin/analytics');
-        // const data = await response.json();
-        // setAnalytics(data);
-
-        setAnalytics(mockAnalytics);
-      } catch (error) {
-        console.error('Error loading analytics:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAnalytics();
+  const fetchAnalytics = useCallback(async () => {
+    const response = await fetch('/api/admin/analytics');
+    if (!response.ok) throw new Error('Failed to fetch analytics');
+    return response.json();
   }, []);
+
+  const { data, loading, refreshing, refresh } = useCachedFetch<AnalyticsData>(
+    'admin-analytics',
+    fetchAnalytics,
+  );
+
+  const analytics = data || defaultAnalytics;
 
   const stats = [
     {
       name: 'Total Revenue',
-      value: `$${mockAnalytics.totalRevenue.toLocaleString()}`,
-      change: `+${mockAnalytics.revenueGrowth}%`,
+      value: `$${analytics.totalRevenue.toLocaleString()}`,
+      change: `+${analytics.revenueGrowth}%`,
       changeType: 'positive' as const,
       icon: DollarSign,
       bgColor: 'bg-green-50',
@@ -96,8 +73,8 @@ export default function AnalyticsPage() {
     },
     {
       name: 'Total Packages',
-      value: mockAnalytics.totalPackages.toString(),
-      change: `+${mockAnalytics.packageGrowth}%`,
+      value: analytics.totalPackages.toString(),
+      change: `+${analytics.packageGrowth}%`,
       changeType: 'positive' as const,
       icon: Package,
       bgColor: 'bg-blue-50',
@@ -105,8 +82,8 @@ export default function AnalyticsPage() {
     },
     {
       name: 'Total Customers',
-      value: mockAnalytics.totalCustomers.toString(),
-      change: `+${mockAnalytics.customerGrowth}%`,
+      value: analytics.totalCustomers.toString(),
+      change: `+${analytics.customerGrowth}%`,
       changeType: 'positive' as const,
       icon: Users,
       bgColor: 'bg-purple-50',
@@ -114,7 +91,7 @@ export default function AnalyticsPage() {
     },
     {
       name: 'Avg. Order Value',
-      value: `$${mockAnalytics.averageOrderValue.toFixed(2)}`,
+      value: `$${analytics.averageOrderValue.toFixed(2)}`,
       change: '+5.2%',
       changeType: 'positive' as const,
       icon: TrendingUp,
@@ -182,6 +159,14 @@ export default function AnalyticsPage() {
               Year
             </button>
           </div>
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
           <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors">
             <Download className="h-5 w-5" />
             Export Report
@@ -243,8 +228,8 @@ export default function AnalyticsPage() {
 
           {/* Simple Bar Chart */}
           <div className="space-y-4">
-            {mockAnalytics.monthlyRevenue.map((item) => {
-              const maxRevenue = Math.max(...mockAnalytics.monthlyRevenue.map((r) => r.revenue));
+            {analytics.monthlyRevenue.map((item) => {
+              const maxRevenue = Math.max(...analytics.monthlyRevenue.map((r) => r.revenue));
               const percentage = (item.revenue / maxRevenue) * 100;
 
               return (
@@ -279,7 +264,7 @@ export default function AnalyticsPage() {
           <h2 className="text-lg font-bold text-gray-900 mb-6">Revenue by Destination</h2>
 
           <div className="space-y-6">
-            {mockAnalytics.revenueByDestination.map((item) => (
+            {analytics.revenueByDestination.map((item) => (
               <div key={item.destination}>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -347,7 +332,7 @@ export default function AnalyticsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {mockAnalytics.topCustomers.map((customer, index) => (
+                {analytics.topCustomers.map((customer, index) => (
                   <tr key={customer.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3">
                       <div
@@ -399,7 +384,7 @@ export default function AnalyticsPage() {
           <h2 className="text-lg font-bold text-gray-900 mb-4">Payment Methods</h2>
 
           <div className="space-y-4">
-            {mockAnalytics.paymentMethods.map((method) => {
+            {analytics.paymentMethods.map((method) => {
               const colors = {
                 Cash: 'from-green-500 to-green-600',
                 Card: 'from-blue-500 to-blue-600',
@@ -449,7 +434,7 @@ export default function AnalyticsPage() {
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-gray-900">Total Revenue</span>
               <span className="text-lg font-bold text-primary-600">
-                ${mockAnalytics.totalRevenue.toLocaleString()}
+                ${analytics.totalRevenue.toLocaleString()}
               </span>
             </div>
           </div>

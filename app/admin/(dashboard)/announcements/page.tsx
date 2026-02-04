@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useCachedFetch } from '@/hooks/useAdminCache';
 import { motion } from 'framer-motion';
 import {
   Megaphone,
@@ -16,48 +17,12 @@ import {
   X,
   Save,
   Image as ImageIcon,
+  RefreshCw,
 } from 'lucide-react';
 import { LoadingSpinner, SkeletonLoader, CardSkeleton } from '@/components/admin/LoadingSpinner';
 
-// Mock data - Announcements
-const mockAnnouncements = [
-  {
-    id: 1,
-    title: 'Holiday Shipping Schedule',
-    category: 'shipping',
-    content: 'We will be operating on a modified schedule during the holidays. Please check our website for specific dates and times.',
-    isPublished: true,
-    publishedAt: '2026-01-05T10:00:00',
-    createdBy: 'Super Admin',
-    createdAt: '2026-01-04T14:30:00',
-    imageUrl: null,
-  },
-  {
-    id: 2,
-    title: 'New Port-au-Prince Location Opening',
-    category: 'update',
-    content: 'We are excited to announce the opening of our new location in downtown Port-au-Prince! Now offering faster pickup times and extended hours.',
-    isPublished: true,
-    publishedAt: '2026-01-03T09:00:00',
-    createdBy: 'Admin User',
-    createdAt: '2026-01-02T16:20:00',
-    imageUrl: '/news-placeholder.jpg',
-  },
-  {
-    id: 3,
-    title: 'Special Promotion: 20% Off',
-    category: 'promotion',
-    content: 'Get 20% off your shipping fees for packages over 10 lbs this month! Use code SAVE20 at checkout.',
-    isPublished: false,
-    publishedAt: null,
-    createdBy: 'Super Admin',
-    createdAt: '2026-01-06T11:45:00',
-    imageUrl: null,
-  },
-];
-
 interface Announcement {
-  id?: number;
+  id: number;
   title: string;
   category: string;
   content: string;
@@ -68,43 +33,39 @@ interface Announcement {
   createdAt?: string;
 }
 
+interface AnnouncementForm {
+  title: string;
+  category: string;
+  content: string;
+  isPublished: boolean;
+}
+
 export default function AnnouncementsPage() {
-  const [loading, setLoading] = useState(true);
-  const [announcements, setAnnouncements] = useState(mockAnnouncements);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'published' | 'draft'>('all');
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [formData, setFormData] = useState<Announcement>({
+  const [formData, setFormData] = useState<AnnouncementForm>({
     title: '',
     category: 'update',
     content: '',
     isPublished: false,
   });
 
-  useEffect(() => {
-    const loadAnnouncements = async () => {
-      setLoading(true);
-      try {
-        // No simulation delay for instant loading
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        // TODO: Replace with real API call
-        // const response = await fetch('/api/admin/announcements');
-        // const data = await response.json();
-        // setAnnouncements(data);
-
-        setAnnouncements(mockAnnouncements);
-      } catch (error) {
-        console.error('Error loading announcements:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAnnouncements();
+  const fetchAnnouncements = useCallback(async () => {
+    const response = await fetch('/api/admin/announcements');
+    if (!response.ok) throw new Error('Failed to fetch announcements');
+    const data = await response.json();
+    return data.announcements || [];
   }, []);
+
+  const { data, loading, refreshing, refresh } = useCachedFetch<Announcement[]>(
+    'admin-announcements',
+    fetchAnnouncements,
+  );
+
+  const announcements = data || [];
 
   const filteredAnnouncements = announcements.filter((announcement) => {
     const matchesSearch =
@@ -129,7 +90,7 @@ export default function AnnouncementsPage() {
     resetForm();
   };
 
-  const handleEdit = (announcement: typeof mockAnnouncements[0]) => {
+  const handleEdit = (announcement: Announcement) => {
     setEditingId(announcement.id);
     setFormData(announcement);
   };
@@ -224,13 +185,23 @@ export default function AnnouncementsPage() {
             Create and manage news announcements for customers
           </p>
         </div>
-        <button
-          onClick={() => setIsCreating(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          <Plus className="h-5 w-5" />
-          New Announcement
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <button
+            onClick={() => setIsCreating(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            <Plus className="h-5 w-5" />
+            New Announcement
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}

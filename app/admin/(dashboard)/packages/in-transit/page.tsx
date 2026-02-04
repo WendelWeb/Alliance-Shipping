@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useCachedFetch } from '@/hooks/useAdminCache';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -15,119 +16,71 @@ import {
   TrendingUp,
   AlertTriangle,
   Loader2,
+  RefreshCw,
 } from 'lucide-react';
 
-// Mock data - Packages in transit to Haiti
-const mockInTransitPackages = [
-  {
-    id: 1,
-    trackingNumber: 'AS-2026-00123',
-    userId: 1,
-    userName: 'John Doe',
-    userEmail: 'john@example.com',
-    destination: 'Cap-Haïtien',
-    weight: 5.5,
-    totalFee: 27.00,
-    departedMiami: '2026-01-05T10:00:00',
-    estimatedArrival: '2026-01-08T14:00:00',
-    currentLocation: 'Port-au-Prince Airport',
-    status: 'in-transit',
-    carrier: 'Air Cargo Express',
-    flightNumber: 'ACX-2134',
-    progress: 75, // percentage
-  },
-  {
-    id: 2,
-    trackingNumber: 'AS-2026-00132',
-    userId: 2,
-    userName: 'Jane Smith',
-    userEmail: 'jane@example.com',
-    destination: 'Port-au-Prince',
-    weight: 3.2,
-    totalFee: 17.80,
-    departedMiami: '2026-01-06T08:30:00',
-    estimatedArrival: '2026-01-09T12:00:00',
-    currentLocation: 'In Flight',
-    status: 'in-transit',
-    carrier: 'Haiti Air Freight',
-    flightNumber: 'HAF-891',
-    progress: 40,
-  },
-  {
-    id: 3,
-    trackingNumber: 'AS-2026-00133',
-    userId: 3,
-    userName: 'Bob Johnson',
-    userEmail: 'bob@example.com',
-    destination: 'Cap-Haïtien',
-    weight: 8.0,
-    totalFee: 37.00,
-    departedMiami: '2026-01-04T16:00:00',
-    estimatedArrival: '2026-01-07T10:00:00',
-    currentLocation: 'Cap-Haïtien Customs',
-    status: 'in-transit',
-    carrier: 'Air Cargo Express',
-    flightNumber: 'ACX-2130',
-    progress: 90,
-    delayed: true,
-  },
-];
+interface InTransitPackage {
+  id: number;
+  trackingNumber: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  destination: string;
+  weight: number;
+  totalFee: number;
+  departedMiami: string;
+  estimatedArrival: string;
+  currentLocation: string;
+  status: string;
+  carrier: string;
+  flightNumber: string;
+  progress: number;
+  delayed?: boolean;
+}
 
 export default function InTransitPackagesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPackages, setSelectedPackages] = useState<number[]>([]);
   const [editingLocation, setEditingLocation] = useState<number | null>(null);
   const [newLocations, setNewLocations] = useState<Record<number, string>>({});
-  const [packages, setPackages] = useState(mockInTransitPackages);
-  const [loading, setLoading] = useState(true);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [processingIds, setProcessingIds] = useState<number[]>([]);
 
-  useEffect(() => {
-    const loadPackages = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch('/api/admin/packages?status=in-transit');
+  const fetchPackages = useCallback(async () => {
+    const response = await fetch('/api/admin/packages?status=in-transit');
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch packages');
-        }
+    if (!response.ok) {
+      throw new Error('Failed to fetch packages');
+    }
 
-        const data = await response.json();
+    const data = await response.json();
 
-        // Transform API data to match UI format
-        const transformedPackages = data.packages.map((pkg: any) => ({
-          id: pkg.id,
-          trackingNumber: pkg.trackingNumber,
-          userId: pkg.userId,
-          userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
-          userEmail: pkg.user?.email || 'N/A',
-          destination: pkg.recipientCity,
-          weight: parseFloat(pkg.weight) || 0,
-          totalFee: parseFloat(pkg.totalCost) || 0,
-          departedMiami: pkg.createdAt,
-          estimatedArrival: pkg.estimatedDelivery || new Date().toISOString(),
-          currentLocation: pkg.currentLocation || 'In Transit',
-          status: pkg.status,
-          carrier: 'Air Cargo Express', // Not in schema
-          flightNumber: 'N/A', // Not in schema
-          progress: 50, // Default progress
-        }));
+    // Transform API data to match UI format
+    const transformedPackages = data.packages.map((pkg: any) => ({
+      id: pkg.id,
+      trackingNumber: pkg.trackingNumber,
+      userId: pkg.userId,
+      userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
+      userEmail: pkg.user?.email || 'N/A',
+      destination: pkg.recipientCity,
+      weight: parseFloat(pkg.weight) || 0,
+      totalFee: parseFloat(pkg.totalCost) || 0,
+      departedMiami: pkg.createdAt,
+      estimatedArrival: pkg.estimatedDelivery || new Date().toISOString(),
+      currentLocation: pkg.currentLocation || 'In Transit',
+      status: pkg.status,
+      carrier: 'Air Cargo Express', // Not in schema
+      flightNumber: 'N/A', // Not in schema
+      progress: 50, // Default progress
+    }));
 
-        setPackages(transformedPackages);
-      } catch (error) {
-        console.error('Error loading packages:', error);
-        // Fallback to mock data if API fails
-        setPackages(mockInTransitPackages);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadPackages();
+    return transformedPackages;
   }, []);
+
+  const { data, loading, refreshing, refresh } = useCachedFetch<InTransitPackage[]>('admin-packages-in-transit', fetchPackages);
+  const packages = data || [];
 
   const filteredPackages = packages.filter(
     (pkg) =>
@@ -143,14 +96,14 @@ export default function InTransitPackagesPage() {
     );
   };
 
-  const handleUpdateLocation = (pkg: typeof mockInTransitPackages[0]) => {
+  const handleUpdateLocation = (pkg: InTransitPackage) => {
     const newLocation = newLocations[pkg.id] || pkg.currentLocation;
     console.log('Updating location for', pkg.trackingNumber, ':', newLocation);
     // TODO: API call to update location
     setEditingLocation(null);
   };
 
-  const handleMarkAvailable = async (pkg: typeof mockInTransitPackages[0]) => {
+  const handleMarkAvailable = async (pkg: InTransitPackage) => {
     setProcessingIds(prev => [...prev, pkg.id]);
     try {
       const response = await fetch('/api/admin/packages/bulk-update', {
@@ -167,11 +120,9 @@ export default function InTransitPackagesPage() {
       // Show success message
       alert(`✅ Colis ${pkg.trackingNumber} est maintenant disponible pour retrait`);
 
-      // Wait a bit then remove from list
-      setTimeout(() => {
-        setPackages(prev => prev.filter(p => p.id !== pkg.id));
-        setProcessingIds(prev => prev.filter(id => id !== pkg.id));
-      }, 500);
+      // Refresh the list and clean up processing state
+      setProcessingIds(prev => prev.filter(id => id !== pkg.id));
+      refresh();
     } catch (error) {
       console.error('Error updating status:', error);
       alert('❌ Échec de la mise à jour du statut');
@@ -195,10 +146,8 @@ export default function InTransitPackagesPage() {
 
       if (!response.ok) throw new Error('Failed to update packages');
 
-      // Remove updated packages from list if status changed
-      if (newStatus !== 'in-transit') {
-        setPackages(prev => prev.filter(p => !selectedPackages.includes(p.id)));
-      }
+      // Refresh the list to reflect status changes
+      refresh();
 
       setSelectedPackages([]);
       setShowStatusModal(false);
@@ -238,6 +187,14 @@ export default function InTransitPackagesPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
           <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 border border-purple-200 rounded-lg">
             <Plane className="h-5 w-5 text-purple-600" />
             <span className="text-sm font-semibold text-purple-700">

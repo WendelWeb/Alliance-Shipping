@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useCachedFetch } from '@/hooks/useAdminCache';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -17,121 +18,73 @@ import {
   Camera,
   FileText,
   Loader2,
+  RefreshCw,
 } from 'lucide-react';
 
-// Mock data - Packages available for customer pickup
-const mockAvailablePackages = [
-  {
-    id: 2,
-    trackingNumber: 'AS-2026-00124',
-    userId: 2,
-    userName: 'Jane Smith',
-    userEmail: 'jane@example.com',
-    userPhone: '+509 3712-5678',
-    destination: 'Port-au-Prince',
-    weight: 3.2,
-    totalFee: 17.80,
-    arrivedAt: '2026-01-06T10:00:00',
-    availableSince: '2026-01-06T10:00:00',
-    pickupLocation: 'Port-au-Prince Office - 123 Rue Capois',
-    notificationsSent: 2,
-    lastNotified: '2026-01-06T14:00:00',
-    isPaid: true,
-    status: 'available',
-  },
-  {
-    id: 8,
-    trackingNumber: 'AS-2026-00134',
-    userId: 4,
-    userName: 'Sarah Williams',
-    userEmail: 'sarah@example.com',
-    userPhone: '+509 3845-9012',
-    destination: 'Port-au-Prince',
-    weight: 1.5,
-    totalFee: 11.00,
-    arrivedAt: '2026-01-05T16:30:00',
-    availableSince: '2026-01-05T16:30:00',
-    pickupLocation: 'Port-au-Prince Office - 123 Rue Capois',
-    notificationsSent: 3,
-    lastNotified: '2026-01-06T09:00:00',
-    isPaid: false,
-    status: 'available',
-  },
-  {
-    id: 9,
-    trackingNumber: 'AS-2026-00135',
-    userId: 1,
-    userName: 'John Doe',
-    userEmail: 'john@example.com',
-    userPhone: '+509 3612-3456',
-    destination: 'Cap-Haïtien',
-    weight: 6.8,
-    totalFee: 32.20,
-    arrivedAt: '2026-01-06T08:00:00',
-    availableSince: '2026-01-06T08:00:00',
-    pickupLocation: 'Cap-Haïtien Office - 45 Rue 12',
-    notificationsSent: 1,
-    lastNotified: '2026-01-06T08:30:00',
-    isPaid: true,
-    status: 'available',
-  },
-];
+interface AvailablePackage {
+  id: number;
+  trackingNumber: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  userPhone: string;
+  destination: string;
+  weight: number;
+  totalFee: number;
+  arrivedAt: string;
+  availableSince: string;
+  pickupLocation: string;
+  notificationsSent: number;
+  lastNotified: string;
+  isPaid: boolean;
+  status: string;
+}
 
 export default function AvailablePackagesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPackages, setSelectedPackages] = useState<number[]>([]);
   const [filterPaid, setFilterPaid] = useState<'all' | 'paid' | 'unpaid'>('all');
-  const [packages, setPackages] = useState(mockAvailablePackages);
-  const [loading, setLoading] = useState(true);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [processingIds, setProcessingIds] = useState<number[]>([]);
 
-  useEffect(() => {
-    const loadPackages = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch('/api/admin/packages?status=available');
+  const fetchPackages = useCallback(async (): Promise<AvailablePackage[]> => {
+    const response = await fetch('/api/admin/packages?status=available');
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch packages');
-        }
+    if (!response.ok) {
+      throw new Error('Failed to fetch packages');
+    }
 
-        const data = await response.json();
+    const data = await response.json();
 
-        // Transform API data to match UI format
-        const transformedPackages = data.packages.map((pkg: any) => ({
-          id: pkg.id,
-          trackingNumber: pkg.trackingNumber,
-          userId: pkg.userId,
-          userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
-          userEmail: pkg.user?.email || 'N/A',
-          userPhone: pkg.user?.phone || 'N/A',
-          destination: pkg.recipientCity,
-          weight: parseFloat(pkg.weight) || 0,
-          totalFee: parseFloat(pkg.totalCost) || 0,
-          arrivedAt: pkg.updatedAt,
-          availableSince: pkg.updatedAt,
-          pickupLocation: `${pkg.recipientCity} Office`,
-          notificationsSent: 0,
-          lastNotified: pkg.updatedAt,
-          isPaid: true, // Not in schema
-          status: pkg.status,
-        }));
-
-        setPackages(transformedPackages);
-      } catch (error) {
-        console.error('Error loading packages:', error);
-        // Fallback to mock data if API fails
-        setPackages(mockAvailablePackages);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadPackages();
+    // Transform API data to match UI format
+    return data.packages.map((pkg: any) => ({
+      id: pkg.id,
+      trackingNumber: pkg.trackingNumber,
+      userId: pkg.userId,
+      userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
+      userEmail: pkg.user?.email || 'N/A',
+      userPhone: pkg.user?.phone || 'N/A',
+      destination: pkg.recipientCity,
+      weight: parseFloat(pkg.weight) || 0,
+      totalFee: parseFloat(pkg.totalCost) || 0,
+      arrivedAt: pkg.updatedAt,
+      availableSince: pkg.updatedAt,
+      pickupLocation: `${pkg.recipientCity} Office`,
+      notificationsSent: 0,
+      lastNotified: pkg.updatedAt,
+      isPaid: true, // Not in schema
+      status: pkg.status,
+    }));
   }, []);
+
+  const { data, loading, refreshing, refresh } = useCachedFetch<AvailablePackage[]>(
+    'admin-packages-available',
+    fetchPackages,
+  );
+
+  const packages = data || [];
 
   const filteredPackages = packages.filter((pkg) => {
     const matchesSearch =
@@ -154,13 +107,13 @@ export default function AvailablePackagesPage() {
     );
   };
 
-  const handleNotifyCustomer = (pkg: typeof mockAvailablePackages[0]) => {
+  const handleNotifyCustomer = (pkg: AvailablePackage) => {
     console.log('Sending notification to:', pkg.userName);
     // TODO: API call to send SMS/Email notification
     alert(`Notification sent to ${pkg.userName} (${pkg.userEmail})`);
   };
 
-  const handleMarkDelivered = async (pkg: typeof mockAvailablePackages[0]) => {
+  const handleMarkDelivered = async (pkg: AvailablePackage) => {
     setProcessingIds(prev => [...prev, pkg.id]);
     try {
       const response = await fetch('/api/admin/packages/bulk-update', {
@@ -177,11 +130,9 @@ export default function AvailablePackagesPage() {
       // Show success message
       alert(`✅ Colis ${pkg.trackingNumber} marqué comme livré`);
 
-      // Wait a bit then remove from list
-      setTimeout(() => {
-        setPackages(prev => prev.filter(p => p.id !== pkg.id));
-        setProcessingIds(prev => prev.filter(id => id !== pkg.id));
-      }, 500);
+      // Refresh to get updated list
+      setProcessingIds(prev => prev.filter(id => id !== pkg.id));
+      refresh();
     } catch (error) {
       console.error('Error updating status:', error);
       alert('❌ Échec de la mise à jour du statut');
@@ -205,12 +156,8 @@ export default function AvailablePackagesPage() {
 
       if (!response.ok) throw new Error('Failed to update packages');
 
-      // Remove updated packages from list if status changed
-      if (newStatus !== 'available') {
-        setPackages(prev => prev.filter(p => !selectedPackages.includes(p.id)));
-      }
-
       setSelectedPackages([]);
+      refresh();
       setShowStatusModal(false);
       setNewStatus('');
     } catch (error) {
@@ -235,9 +182,9 @@ export default function AvailablePackagesPage() {
   };
 
   const stats = {
-    total: mockAvailablePackages.length,
-    paid: mockAvailablePackages.filter((p) => p.isPaid).length,
-    unpaid: mockAvailablePackages.filter((p) => !p.isPaid).length,
+    total: packages.length,
+    paid: packages.filter((p) => p.isPaid).length,
+    unpaid: packages.filter((p) => !p.isPaid).length,
   };
 
   return (
@@ -251,6 +198,14 @@ export default function AvailablePackagesPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
           <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
             <CheckCircle className="h-5 w-5 text-green-600" />
             <span className="text-sm font-semibold text-green-700">

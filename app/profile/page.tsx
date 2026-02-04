@@ -22,17 +22,20 @@ import {
   HelpCircle,
   Clock,
   Home,
+  Globe,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { localeNames, localeFlags } from '@/lib/i18n/config';
+import { Locale } from '@/types';
 import { useState, useEffect } from 'react';
 
 export default function ProfilePage() {
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale, setLocale } = useTranslation();
   const [isAdmin, setIsAdmin] = useState(false);
 
   const handleSignOut = async () => {
@@ -103,15 +106,15 @@ export default function ProfilePage() {
   ];
 
   const menuItems = [
-    { label: 'Mes Colis', icon: Package, href: '/packages' },
-    { label: 'Demander un Colis', icon: MapPin, href: '/dashboard/request-package' },
-    { label: 'Calculateur de Prix', icon: CreditCard, href: '/calculator' },
-    { label: 'Méthodes de Paiement', icon: Wallet, href: '/profile/payment' },
-    { label: 'Mes Adresses', icon: Home, href: '/profile/addresses' },
-    { label: 'Historique', icon: Clock, href: '/profile/history' },
-    { label: 'Notifications', icon: Bell, href: '/profile/notifications' },
-    { label: 'Support & Aide', icon: HelpCircle, href: '/profile/support' },
-    { label: 'Paramètres du Profil', icon: Settings, href: '/profile/settings' },
+    { label: t.profile.menuItems.myPackages, icon: Package, href: '/packages' },
+    { label: t.profile.menuItems.requestPackage, icon: MapPin, href: '/dashboard/request-package' },
+    { label: t.profile.menuItems.priceCalculator, icon: CreditCard, href: '/calculator' },
+    { label: t.profile.menuItems.paymentMethods, icon: Wallet, href: '/profile/payment' },
+    { label: t.profile.menuItems.myAddresses, icon: Home, href: '/profile/addresses' },
+    { label: t.profile.menuItems.history, icon: Clock, href: '/profile/history' },
+    { label: t.profile.menuItems.notifications, icon: Bell, href: '/profile/notifications' },
+    { label: t.profile.menuItems.support, icon: HelpCircle, href: '/profile/support' },
+    { label: t.profile.menuItems.profileSettings, icon: Settings, href: '/profile/settings' },
   ];
 
   return (
@@ -167,6 +170,39 @@ export default function ProfilePage() {
                     {t.profile.menu.settings}
                   </Button>
                 </Link>
+              </div>
+            </Card>
+          </motion.div>
+
+          {/* Language Selector */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="mb-6 md:mb-8"
+          >
+            <Card className="p-4 sm:p-5 backdrop-blur-xl bg-white/80">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 bg-primary-100 rounded-xl">
+                  <Globe className="w-5 h-5 text-primary-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900">{t.profile.language}</h3>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {(['ht', 'fr', 'en', 'es'] as Locale[]).map((lang) => (
+                  <button
+                    key={lang}
+                    onClick={() => setLocale(lang)}
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl font-medium text-sm transition-all ${
+                      locale === lang
+                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30'
+                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
+                    }`}
+                  >
+                    <span className="text-lg">{localeFlags[lang]}</span>
+                    <span>{localeNames[lang]}</span>
+                  </button>
+                ))}
               </div>
             </Card>
           </motion.div>
@@ -259,7 +295,7 @@ export default function ProfilePage() {
                 className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-red-600 to-orange-500 text-white font-semibold rounded-xl border-2 border-red-600 hover:from-red-700 hover:to-orange-600 transition-all shadow-lg"
               >
                 <Shield className="w-5 h-5" />
-                Admin Dashboard
+                {t.profile.adminDashboard}
               </button>
             </motion.div>
           )}

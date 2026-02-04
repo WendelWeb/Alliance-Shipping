@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useCachedFetch } from '@/hooks/useAdminCache';
 import { motion } from 'framer-motion';
+import { useToast } from '@/components/admin/Toast';
 import {
   Search,
   Filter,
@@ -17,114 +19,68 @@ import {
   CheckCircle,
   Smartphone,
   Loader2,
+  RefreshCw,
 } from 'lucide-react';
 
-// Mock data - Packages received in Miami warehouse
-const mockReceivedPackages = [
-  {
-    id: 5,
-    trackingNumber: 'AS-2026-00127',
-    userId: 2,
-    userName: 'Jane Smith',
-    userEmail: 'jane@example.com',
-    destination: 'Cap-Haïtien',
-    description: 'Electronics and accessories',
-    receivedAt: '2026-01-06T08:00:00',
-    weight: 0, // Not weighed yet
-    declaredValue: 85.00,
-    specialItemId: null,
-    locationDetails: 'Warehouse A - Shelf 12',
-    photos: [],
-    status: 'received',
-  },
-  {
-    id: 6,
-    trackingNumber: 'AS-2026-00130',
-    userId: 1,
-    userName: 'John Doe',
-    userEmail: 'john@example.com',
-    destination: 'Port-au-Prince',
-    description: 'Clothing and shoes',
-    receivedAt: '2026-01-06T09:30:00',
-    weight: 4.2,
-    declaredValue: 180.00,
-    specialItemId: null,
-    locationDetails: 'Warehouse A - Shelf 15',
-    photos: ['photo1.jpg'],
-    status: 'received',
-  },
-  {
-    id: 7,
-    trackingNumber: 'AS-2026-00131',
-    userId: 3,
-    userName: 'Bob Johnson',
-    userEmail: 'bob@example.com',
-    destination: 'Cap-Haïtien',
-    description: 'iPhone 15 Pro',
-    receivedAt: '2026-01-05T14:20:00',
-    weight: 0.5,
-    declaredValue: 999.00,
-    specialItemId: 15, // iPhone 15 Pro
-    locationDetails: 'Warehouse B - Secure Section',
-    photos: ['iphone_photo.jpg'],
-    status: 'received',
-  },
-];
+interface ReceivedPackage {
+  id: number;
+  trackingNumber: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  destination: string;
+  description: string;
+  receivedAt: string;
+  weight: number;
+  declaredValue: number;
+  specialItemId: number | null;
+  locationDetails: string;
+  photos: string[];
+  status: string;
+}
 
 export default function ReceivedPackagesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPackages, setSelectedPackages] = useState<number[]>([]);
   const [editingPackage, setEditingPackage] = useState<number | null>(null);
   const [packageWeights, setPackageWeights] = useState<Record<number, number>>({});
-  const [packages, setPackages] = useState(mockReceivedPackages);
-  const [loading, setLoading] = useState(true);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [processingIds, setProcessingIds] = useState<number[]>([]);
 
-  useEffect(() => {
-    const loadPackages = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch('/api/admin/packages?status=received');
+  const fetchPackages = useCallback(async () => {
+    const response = await fetch('/api/admin/packages?status=received');
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch packages');
-        }
+    if (!response.ok) {
+      throw new Error('Failed to fetch packages');
+    }
 
-        const data = await response.json();
+    const data = await response.json();
 
-        // Transform API data to match UI format
-        const transformedPackages = data.packages.map((pkg: any) => ({
-          id: pkg.id,
-          trackingNumber: pkg.trackingNumber,
-          userId: pkg.userId,
-          userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
-          userEmail: pkg.user?.email || 'N/A',
-          destination: pkg.recipientCity,
-          description: pkg.description,
-          receivedAt: pkg.createdAt,
-          weight: parseFloat(pkg.weight) || 0,
-          declaredValue: 0,
-          specialItemId: pkg.specialItemId,
-          locationDetails: pkg.locationDetails?.warehouse || 'Warehouse A',
-          photos: [],
-          status: pkg.status,
-        }));
+    // Transform API data to match UI format
+    const transformedPackages = data.packages.map((pkg: any) => ({
+      id: pkg.id,
+      trackingNumber: pkg.trackingNumber,
+      userId: pkg.userId,
+      userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
+      userEmail: pkg.user?.email || 'N/A',
+      destination: pkg.recipientCity,
+      description: pkg.description,
+      receivedAt: pkg.createdAt,
+      weight: parseFloat(pkg.weight) || 0,
+      declaredValue: 0,
+      specialItemId: pkg.specialItemId,
+      locationDetails: pkg.locationDetails?.warehouse || 'Warehouse A',
+      photos: [],
+      status: pkg.status,
+    }));
 
-        setPackages(transformedPackages);
-      } catch (error) {
-        console.error('Error loading packages:', error);
-        // Fallback to mock data if API fails
-        setPackages(mockReceivedPackages);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadPackages();
+    return transformedPackages;
   }, []);
+
+  const { data, loading, refreshing, refresh } = useCachedFetch<ReceivedPackage[]>('admin-packages-received', fetchPackages);
+  const packages = data || [];
 
   const filteredPackages = packages.filter(
     (pkg) =>
@@ -144,14 +100,14 @@ export default function ReceivedPackagesPage() {
     setPackageWeights((prev) => ({ ...prev, [packageId]: weight }));
   };
 
-  const handleSaveWeight = (pkg: typeof mockReceivedPackages[0]) => {
+  const handleSaveWeight = (pkg: ReceivedPackage) => {
     const newWeight = packageWeights[pkg.id] || pkg.weight;
     console.log('Saving weight for', pkg.trackingNumber, ':', newWeight);
     // TODO: API call to update weight
     setEditingPackage(null);
   };
 
-  const handleMarkInTransit = async (pkg: typeof mockReceivedPackages[0]) => {
+  const handleMarkInTransit = async (pkg: ReceivedPackage) => {
     setProcessingIds(prev => [...prev, pkg.id]);
     try {
       const response = await fetch('/api/admin/packages/bulk-update', {
@@ -168,9 +124,9 @@ export default function ReceivedPackagesPage() {
       // Show success message
       alert(`✅ Colis ${pkg.trackingNumber} marqué comme "En Transit"`);
 
-      // Wait a bit then remove from list
+      // Wait a bit then refresh the list
       setTimeout(() => {
-        setPackages(prev => prev.filter(p => p.id !== pkg.id));
+        refresh();
         setProcessingIds(prev => prev.filter(id => id !== pkg.id));
       }, 500);
     } catch (error) {
@@ -196,9 +152,9 @@ export default function ReceivedPackagesPage() {
 
       if (!response.ok) throw new Error('Failed to update packages');
 
-      // Remove updated packages from list if status changed
+      // Refresh the list to reflect status changes
       if (newStatus !== 'received') {
-        setPackages(prev => prev.filter(p => !selectedPackages.includes(p.id)));
+        refresh();
       }
 
       setSelectedPackages([]);
@@ -243,6 +199,14 @@ export default function ReceivedPackagesPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
           <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
             <Package className="h-5 w-5 text-blue-600" />
             <span className="text-sm font-semibold text-blue-700">

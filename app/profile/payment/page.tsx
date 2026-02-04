@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Container } from '@/components/Container';
@@ -29,6 +30,7 @@ interface PaymentMethod {
 
 export default function PaymentPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
     {
       id: '1',
@@ -109,12 +111,12 @@ export default function PaymentPage() {
               className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
-              Retour au profil
+              {t.profile.backToProfile}
             </Link>
 
-            <h1 className="text-3xl font-bold text-gray-900">Méthodes de Paiement</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t.profile.payment.title}</h1>
             <p className="text-gray-600 mt-2">
-              Gérez vos méthodes de paiement pour vos colis
+              {t.profile.payment.subtitle}
             </p>
           </div>
 
@@ -128,10 +130,10 @@ export default function PaymentPage() {
               >
                 <Wallet className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  Aucune méthode de paiement
+                  {t.profile.payment.empty}
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  Ajoutez votre première méthode de paiement pour faciliter vos transactions
+                  {t.profile.payment.emptyDesc}
                 </p>
               </motion.div>
             ) : (
@@ -158,7 +160,7 @@ export default function PaymentPage() {
                             {method.isDefault && (
                               <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
                                 <Star className="h-3 w-3 fill-current" />
-                                Par défaut
+                                {t.profile.payment.defaultBadge}
                               </span>
                             )}
                           </div>
@@ -171,7 +173,7 @@ export default function PaymentPage() {
                           <button
                             onClick={() => handleSetDefault(method.id)}
                             className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Définir par défaut"
+                            title={t.profile.payment.setDefault}
                           >
                             <Star className="h-5 w-5" />
                           </button>
@@ -179,7 +181,7 @@ export default function PaymentPage() {
                         <button
                           onClick={() => handleDelete(method.id)}
                           className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Supprimer"
+                          title={t.profile.payment.delete}
                         >
                           <Trash2 className="h-5 w-5" />
                         </button>
@@ -199,7 +201,7 @@ export default function PaymentPage() {
             className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg hover:shadow-xl"
           >
             <Plus className="h-5 w-5" />
-            Ajouter une méthode de paiement
+            {t.profile.payment.addMethod}
           </motion.button>
 
           {/* Info Card */}
@@ -212,11 +214,11 @@ export default function PaymentPage() {
             <div className="flex items-start gap-3">
               <div className="text-blue-600">ℹ️</div>
               <div className="text-sm text-blue-900">
-                <p className="font-semibold mb-1">Méthodes de paiement acceptées :</p>
+                <p className="font-semibold mb-1">{t.profile.payment.acceptedMethods}</p>
                 <ul className="list-disc list-inside space-y-1 text-blue-800">
-                  <li>Moncash - Paiement mobile en Haïti</li>
-                  <li>Natcash - Paiement mobile en Haïti</li>
-                  <li>Carte bancaire - Visa, Mastercard</li>
+                  <li>{t.profile.payment.moncashDesc}</li>
+                  <li>{t.profile.payment.natcashDesc}</li>
+                  <li>{t.profile.payment.cardDesc}</li>
                 </ul>
               </div>
             </div>
@@ -234,13 +236,13 @@ export default function PaymentPage() {
             className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
           >
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Ajouter une méthode de paiement
+              {t.profile.payment.addMethod}
             </h2>
 
             {/* Payment Type Selection */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Type de paiement
+                {t.profile.payment.paymentType}
               </label>
               <div className="grid grid-cols-3 gap-3">
                 <button
@@ -293,7 +295,7 @@ export default function PaymentPage() {
                   <span className={`text-sm font-medium ${
                     selectedType === 'card' ? 'text-purple-900' : 'text-gray-600'
                   }`}>
-                    Carte
+                    {t.profile.payment.card}
                   </span>
                 </button>
               </div>
@@ -303,8 +305,8 @@ export default function PaymentPage() {
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {selectedType === 'card'
-                  ? 'Numéro de carte'
-                  : 'Numéro de téléphone'}
+                  ? t.profile.payment.cardNumber
+                  : t.profile.payment.phoneNumber}
               </label>
               <input
                 type="text"
@@ -328,14 +330,14 @@ export default function PaymentPage() {
                 }}
                 className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
               >
-                Annuler
+                {t.profile.payment.cancel}
               </button>
               <button
                 onClick={handleAddMethod}
                 disabled={!newMethodDetails.trim()}
                 className="flex-1 px-4 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Ajouter
+                {t.profile.payment.add}
               </button>
             </div>
           </motion.div>

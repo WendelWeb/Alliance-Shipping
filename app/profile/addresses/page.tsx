@@ -16,6 +16,7 @@ import {
   Star,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface Address {
   id: string;
@@ -30,6 +31,7 @@ interface Address {
 
 export default function AddressesPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [addresses, setAddresses] = useState<Address[]>([
     {
       id: '1',
@@ -126,12 +128,12 @@ export default function AddressesPage() {
               className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
-              Retour au profil
+              {t.profile.backToProfile}
             </Link>
 
-            <h1 className="text-3xl font-bold text-gray-900">Mes Adresses</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t.profile.addresses.title}</h1>
             <p className="text-gray-600 mt-2">
-              Gérez vos adresses de livraison en Haïti
+              {t.profile.addresses.subtitle}
             </p>
           </div>
 
@@ -145,10 +147,10 @@ export default function AddressesPage() {
               >
                 <Home className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  Aucune adresse enregistrée
+                  {t.profile.addresses.empty}
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  Ajoutez votre première adresse pour faciliter vos livraisons
+                  {t.profile.addresses.emptyDesc}
                 </p>
               </motion.div>
             ) : (
@@ -173,7 +175,7 @@ export default function AddressesPage() {
                           {address.isDefault && (
                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
                               <Star className="h-3 w-3 fill-current" />
-                              Par défaut
+                              {t.profile.addresses.defaultBadge}
                             </span>
                           )}
                         </div>
@@ -191,7 +193,7 @@ export default function AddressesPage() {
                         <button
                           onClick={() => handleSetDefault(address.id)}
                           className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                          title="Définir par défaut"
+                          title={t.profile.addresses.setDefault}
                         >
                           <Star className="h-5 w-5" />
                         </button>
@@ -199,14 +201,14 @@ export default function AddressesPage() {
                       <button
                         onClick={() => handleEdit(address)}
                         className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Modifier"
+                        title={t.profile.addresses.edit}
                       >
                         <Edit className="h-5 w-5" />
                       </button>
                       <button
                         onClick={() => handleDelete(address.id)}
                         className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Supprimer"
+                        title={t.profile.addresses.delete}
                       >
                         <Trash2 className="h-5 w-5" />
                       </button>
@@ -228,7 +230,7 @@ export default function AddressesPage() {
             className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg hover:shadow-xl"
           >
             <Plus className="h-5 w-5" />
-            Ajouter une adresse
+            {t.profile.addresses.addAddress}
           </motion.button>
         </Container>
       </main>
@@ -243,20 +245,20 @@ export default function AddressesPage() {
             className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 my-8"
           >
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              {editingAddress ? 'Modifier l&apos;adresse' : 'Ajouter une adresse'}
+              {editingAddress ? t.profile.addresses.editAddress : t.profile.addresses.addAddress}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Label */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nom de l&apos;adresse
+                  {t.profile.addresses.addressLabel}
                 </label>
                 <input
                   type="text"
                   value={formData.label}
                   onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-                  placeholder="Ex: Domicile, Bureau"
+                  placeholder={t.profile.addresses.addressLabelPlaceholder}
                   required
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
@@ -265,7 +267,7 @@ export default function AddressesPage() {
               {/* Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nom complet du destinataire
+                  {t.profile.addresses.recipientName}
                 </label>
                 <input
                   type="text"
@@ -280,13 +282,13 @@ export default function AddressesPage() {
               {/* Street */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rue et numéro
+                  {t.profile.addresses.street}
                 </label>
                 <input
                   type="text"
                   value={formData.street}
                   onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                  placeholder="Rue de la Paix 123"
+                  placeholder={t.profile.addresses.streetPlaceholder}
                   required
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
@@ -295,7 +297,7 @@ export default function AddressesPage() {
               {/* City */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ville
+                  {t.profile.addresses.city}
                 </label>
                 <select
                   value={formData.city}
@@ -311,7 +313,7 @@ export default function AddressesPage() {
               {/* Phone */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Numéro de téléphone
+                  {t.profile.addresses.phone}
                 </label>
                 <input
                   type="tel"
@@ -341,13 +343,13 @@ export default function AddressesPage() {
                   }}
                   className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
                 >
-                  Annuler
+                  {t.profile.addresses.cancel}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all"
                 >
-                  {editingAddress ? 'Modifier' : 'Ajouter'}
+                  {editingAddress ? t.profile.addresses.modify : t.profile.addresses.add}
                 </button>
               </div>
             </form>

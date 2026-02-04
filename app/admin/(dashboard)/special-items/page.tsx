@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useCachedFetch } from '@/hooks/useAdminCache';
 import { motion } from 'framer-motion';
 import {
   Smartphone,
@@ -13,81 +14,12 @@ import {
   CheckCircle,
   X,
   Save,
+  RefreshCw,
 } from 'lucide-react';
 import { LoadingSpinner, SkeletonLoader, CardSkeleton } from '@/components/admin/LoadingSpinner';
 
-// Mock data - Special items with fixed fees
-const mockSpecialItems = [
-  {
-    id: 1,
-    category: 'phone',
-    brand: 'Apple',
-    itemName: 'iPhone',
-    minModel: '7',
-    maxModel: '11',
-    fixedFee: 15.00,
-    isActive: true,
-    createdAt: '2026-01-01',
-  },
-  {
-    id: 2,
-    category: 'phone',
-    brand: 'Apple',
-    itemName: 'iPhone',
-    minModel: '12',
-    maxModel: '14',
-    fixedFee: 20.00,
-    isActive: true,
-    createdAt: '2026-01-01',
-  },
-  {
-    id: 3,
-    category: 'phone',
-    brand: 'Apple',
-    itemName: 'iPhone',
-    minModel: '15',
-    maxModel: '17',
-    fixedFee: 25.00,
-    isActive: true,
-    createdAt: '2026-01-01',
-  },
-  {
-    id: 4,
-    category: 'phone',
-    brand: 'Samsung',
-    itemName: 'Galaxy S',
-    minModel: 'S6',
-    maxModel: 'S10',
-    fixedFee: 15.00,
-    isActive: true,
-    createdAt: '2026-01-01',
-  },
-  {
-    id: 5,
-    category: 'phone',
-    brand: 'Samsung',
-    itemName: 'Galaxy S',
-    minModel: 'S20',
-    maxModel: 'S24',
-    fixedFee: 20.00,
-    isActive: true,
-    createdAt: '2026-01-01',
-  },
-  {
-    id: 6,
-    category: 'satellite',
-    brand: 'SpaceX',
-    itemName: 'Starlink',
-    minModel: 'Standard',
-    maxModel: 'Standard',
-    fixedFee: 50.00,
-    isActive: true,
-    createdAt: '2026-01-01',
-  },
-];
-
 interface SpecialItem {
-  id?: number;
+  id: number;
   category: string;
   brand: string;
   itemName: string;
@@ -98,13 +30,21 @@ interface SpecialItem {
   createdAt?: string;
 }
 
+interface SpecialItemForm {
+  category: string;
+  brand: string;
+  itemName: string;
+  minModel: string;
+  maxModel: string;
+  fixedFee: number;
+  isActive: boolean;
+}
+
 export default function SpecialItemsPage() {
-  const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState(mockSpecialItems);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [formData, setFormData] = useState<SpecialItem>({
+  const [formData, setFormData] = useState<SpecialItemForm>({
     category: 'phone',
     brand: '',
     itemName: '',
@@ -114,25 +54,19 @@ export default function SpecialItemsPage() {
     isActive: true,
   });
 
-  useEffect(() => {
-    const loadSpecialItems = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch('/api/admin/special-items');
-        if (!response.ok) {
-          throw new Error('Failed to load special items');
-        }
-        const data = await response.json();
-        setItems(data.items);
-      } catch (error) {
-        console.error('Error loading special items:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadSpecialItems();
+  const fetchSpecialItems = useCallback(async () => {
+    const response = await fetch('/api/admin/special-items');
+    if (!response.ok) throw new Error('Failed to load special items');
+    const data = await response.json();
+    return data.items as SpecialItem[];
   }, []);
+
+  const { data, loading, refreshing, refresh } = useCachedFetch<SpecialItem[]>(
+    'admin-special-items',
+    fetchSpecialItems,
+  );
+
+  const items = data || [];
 
   const filteredItems = items.filter(
     (item) =>
@@ -152,9 +86,8 @@ export default function SpecialItemsPage() {
         throw new Error('Failed to create special item');
       }
 
-      const data = await response.json();
-      setItems([data.item, ...items]);
       setIsAddingNew(false);
+      refresh();
       setFormData({
         category: 'phone',
         brand: '',
@@ -170,9 +103,10 @@ export default function SpecialItemsPage() {
     }
   };
 
-  const handleEdit = (item: typeof mockSpecialItems[0]) => {
+  const handleEdit = (item: SpecialItem) => {
     setEditingId(item.id);
-    setFormData(item);
+    const { id, createdAt, ...formFields } = item;
+    setFormData(formFields);
   };
 
   const handleUpdate = async () => {
@@ -187,9 +121,8 @@ export default function SpecialItemsPage() {
         throw new Error('Failed to update special item');
       }
 
-      const data = await response.json();
-      setItems(items.map(item => item.id === editingId ? data.item : item));
       setEditingId(null);
+      refresh();
       setFormData({
         category: 'phone',
         brand: '',
@@ -216,7 +149,7 @@ export default function SpecialItemsPage() {
           throw new Error('Failed to delete special item');
         }
 
-        setItems(items.filter(item => item.id !== id));
+        refresh();
       } catch (error) {
         console.error('Error deleting special item:', error);
         alert('Failed to delete special item. Please try again.');
@@ -278,13 +211,23 @@ export default function SpecialItemsPage() {
             Manage items with fixed shipping fees (iPhones, Samsung, Starlink, etc.)
           </p>
         </div>
-        <button
-          onClick={() => setIsAddingNew(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          <Plus className="h-5 w-5" />
-          Add Special Item
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <button
+            onClick={() => setIsAddingNew(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            <Plus className="h-5 w-5" />
+            Add Special Item
+          </button>
+        </div>
       </div>
 
       {/* Search */}

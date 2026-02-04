@@ -17,6 +17,7 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface FAQ {
   id: string;
@@ -29,38 +30,15 @@ export default function SupportPage() {
   const [messageSubject, setMessageSubject] = useState('');
   const [messageContent, setMessageContent] = useState('');
   const [messageSent, setMessageSent] = useState(false);
+  const { t } = useTranslation();
 
   const faqs: FAQ[] = [
-    {
-      id: '1',
-      question: 'Comment suivre mon colis ?',
-      answer: 'Vous pouvez suivre votre colis en temps réel depuis la page "Mes Colis". Chaque colis possède un numéro de suivi unique commençant par "AS-" que vous pouvez utiliser pour voir l\'état actuel et l\'historique de livraison.',
-    },
-    {
-      id: '2',
-      question: 'Quels sont les délais de livraison ?',
-      answer: 'Les délais de livraison varient selon la destination en Haïti : Port-au-Prince (3-5 jours), Cap-Haïtien (4-6 jours), Port-de-Paix (5-7 jours). Ces délais sont estimés à partir de la réception du colis à notre entrepôt de Miami.',
-    },
-    {
-      id: '3',
-      question: 'Comment calculer les frais d\'expédition ?',
-      answer: 'Les frais sont calculés selon le poids de votre colis : $4 par livre + $5 de frais de service. Vous pouvez utiliser notre calculateur pour obtenir une estimation avant d\'envoyer votre colis.',
-    },
-    {
-      id: '4',
-      question: 'Quelles méthodes de paiement acceptez-vous ?',
-      answer: 'Nous acceptons Moncash, Natcash et les cartes bancaires (Visa, Mastercard). Vous pouvez gérer vos méthodes de paiement depuis votre profil.',
-    },
-    {
-      id: '5',
-      question: 'Que faire si mon colis est endommagé ?',
-      answer: 'Si votre colis arrive endommagé, contactez-nous immédiatement avec des photos. Nous examinerons votre cas et vous proposerons une solution adaptée (remboursement, remplacement, etc.).',
-    },
-    {
-      id: '6',
-      question: 'Puis-je modifier l\'adresse de livraison ?',
-      answer: 'Oui, vous pouvez modifier l\'adresse de livraison tant que le colis n\'a pas encore été expédié vers Haïti. Contactez-nous dès que possible si vous devez changer l\'adresse.',
-    },
+    { id: '1', question: t.profile.support.faq1q, answer: t.profile.support.faq1a },
+    { id: '2', question: t.profile.support.faq2q, answer: t.profile.support.faq2a },
+    { id: '3', question: t.profile.support.faq3q, answer: t.profile.support.faq3a },
+    { id: '4', question: t.profile.support.faq4q, answer: t.profile.support.faq4a },
+    { id: '5', question: t.profile.support.faq5q, answer: t.profile.support.faq5a },
+    { id: '6', question: t.profile.support.faq6q, answer: t.profile.support.faq6a },
   ];
 
   const handleSubmitMessage = (e: React.FormEvent) => {
@@ -86,12 +64,12 @@ export default function SupportPage() {
               className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
-              Retour au profil
+              {t.profile.backToProfile}
             </Link>
 
-            <h1 className="text-3xl font-bold text-gray-900">Support & Aide</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t.profile.support.title}</h1>
             <p className="text-gray-600 mt-2">
-              Nous sommes là pour vous aider
+              {t.profile.support.subtitle}
             </p>
           </div>
 
@@ -106,9 +84,9 @@ export default function SupportPage() {
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Phone className="h-6 w-6 text-white" />
               </div>
-              <h3 className="font-bold text-gray-900 mb-1">Téléphone</h3>
+              <h3 className="font-bold text-gray-900 mb-1">{t.profile.support.phone}</h3>
               <p className="text-sm text-gray-600">+1 (555) 555-1234</p>
-              <p className="text-xs text-gray-500 mt-2">Lun-Ven: 9h-18h</p>
+              <p className="text-xs text-gray-500 mt-2">{t.profile.support.phoneHours}</p>
             </motion.a>
 
             <motion.a
@@ -121,9 +99,9 @@ export default function SupportPage() {
               <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Mail className="h-6 w-6 text-white" />
               </div>
-              <h3 className="font-bold text-gray-900 mb-1">Email</h3>
+              <h3 className="font-bold text-gray-900 mb-1">{t.profile.support.email}</h3>
               <p className="text-sm text-gray-600 break-all">support@allianceshipping.com</p>
-              <p className="text-xs text-gray-500 mt-2">Réponse sous 24h</p>
+              <p className="text-xs text-gray-500 mt-2">{t.profile.support.emailResponse}</p>
             </motion.a>
 
             <motion.a
@@ -138,9 +116,9 @@ export default function SupportPage() {
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-3">
                 <MessageSquare className="h-6 w-6 text-white" />
               </div>
-              <h3 className="font-bold text-gray-900 mb-1">WhatsApp</h3>
+              <h3 className="font-bold text-gray-900 mb-1">{t.profile.support.whatsApp}</h3>
               <p className="text-sm text-gray-600">+1 (555) 555-1234</p>
-              <p className="text-xs text-gray-500 mt-2">Chat en direct</p>
+              <p className="text-xs text-gray-500 mt-2">{t.profile.support.liveChat}</p>
             </motion.a>
           </div>
 
@@ -153,7 +131,7 @@ export default function SupportPage() {
           >
             <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
               <HelpCircle className="h-6 w-6 text-primary-600" />
-              Questions Fréquentes
+              {t.profile.support.faqTitle}
             </h2>
 
             <div className="space-y-3">
@@ -198,45 +176,45 @@ export default function SupportPage() {
           >
             <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
               <MessageSquare className="h-6 w-6 text-primary-600" />
-              Envoyer un message
+              {t.profile.support.sendMessage}
             </h2>
 
             {messageSent ? (
               <div className="bg-green-50 border-2 border-green-200 rounded-xl p-6 text-center">
                 <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
                 <h3 className="text-lg font-bold text-green-900 mb-2">
-                  Message envoyé !
+                  {t.profile.support.messageSent}
                 </h3>
                 <p className="text-green-700">
-                  Nous vous répondrons dans les 24 heures
+                  {t.profile.support.messageResponse}
                 </p>
               </div>
             ) : (
               <form onSubmit={handleSubmitMessage} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Sujet
+                    {t.profile.support.subject}
                   </label>
                   <input
                     type="text"
                     value={messageSubject}
                     onChange={(e) => setMessageSubject(e.target.value)}
                     required
-                    placeholder="De quoi s'agit-il ?"
+                    placeholder={t.profile.support.subjectPlaceholder}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Message
+                    {t.profile.support.message}
                   </label>
                   <textarea
                     value={messageContent}
                     onChange={(e) => setMessageContent(e.target.value)}
                     required
                     rows={5}
-                    placeholder="Décrivez votre problème ou votre question..."
+                    placeholder={t.profile.support.messagePlaceholder}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
                   />
                 </div>
@@ -246,7 +224,7 @@ export default function SupportPage() {
                   className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg hover:shadow-xl"
                 >
                   <Send className="h-5 w-5" />
-                  Envoyer le message
+                  {t.profile.support.sendButton}
                 </button>
               </form>
             )}

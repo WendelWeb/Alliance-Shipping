@@ -15,6 +15,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface HistoryItem {
   id: string;
@@ -28,12 +29,15 @@ interface HistoryItem {
 }
 
 export default function HistoryPage() {
+  const { t, locale } = useTranslation();
+  const localeMap: Record<string, string> = { fr: 'fr-FR', en: 'en-US', ht: 'fr-FR', es: 'es-ES' };
+
   const historyItems: HistoryItem[] = [
     {
       id: '1',
       type: 'package',
-      title: 'Colis livré',
-      description: 'Vêtements et accessoires',
+      title: t.profile.history.packageDelivered,
+      description: t.profile.history.clothingAccessories,
       amount: 37.00,
       status: 'completed',
       date: '2026-01-10',
@@ -42,7 +46,7 @@ export default function HistoryPage() {
     {
       id: '2',
       type: 'payment',
-      title: 'Paiement effectué',
+      title: t.profile.history.paymentCompleted,
       description: 'Moncash - AS-2026-00123',
       amount: 37.00,
       status: 'completed',
@@ -51,8 +55,8 @@ export default function HistoryPage() {
     {
       id: '3',
       type: 'package',
-      title: 'Colis en transit',
-      description: 'Électronique',
+      title: t.profile.history.packageInTransit,
+      description: t.profile.history.electronics,
       amount: 52.00,
       status: 'in-progress',
       date: '2026-01-08',
@@ -61,8 +65,8 @@ export default function HistoryPage() {
     {
       id: '4',
       type: 'package',
-      title: 'Demande annulée',
-      description: 'Documents',
+      title: t.profile.history.requestCancelled,
+      description: t.profile.history.documents,
       status: 'cancelled',
       date: '2026-01-05',
     },
@@ -97,19 +101,19 @@ export default function HistoryPage() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'Terminé';
+        return t.profile.history.completed;
       case 'cancelled':
-        return 'Annulé';
+        return t.profile.history.cancelled;
       case 'in-progress':
-        return 'En cours';
+        return t.profile.history.inProgress;
       default:
-        return 'En attente';
+        return t.profile.history.pending;
     }
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
+    return date.toLocaleDateString(localeMap[locale] || 'fr-FR', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -128,12 +132,12 @@ export default function HistoryPage() {
               className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
-              Retour au profil
+              {t.profile.backToProfile}
             </Link>
 
-            <h1 className="text-3xl font-bold text-gray-900">Historique</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t.profile.history.title}</h1>
             <p className="text-gray-600 mt-2">
-              Consultez l&apos;historique de vos colis et paiements
+              {t.profile.history.subtitle}
             </p>
           </div>
 
@@ -147,10 +151,10 @@ export default function HistoryPage() {
               >
                 <Clock className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  Aucun historique
+                  {t.profile.history.empty}
                 </h3>
                 <p className="text-gray-600">
-                  Votre historique de transactions apparaîtra ici
+                  {t.profile.history.emptyDesc}
                 </p>
               </motion.div>
             ) : (
@@ -226,22 +230,22 @@ export default function HistoryPage() {
             transition={{ delay: 0.3 }}
             className="mt-6 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl shadow-lg p-6 text-white"
           >
-            <h3 className="text-xl font-bold mb-4">Résumé</h3>
+            <h3 className="text-xl font-bold mb-4">{t.profile.history.summary}</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-white/80 text-sm mb-1">Total dépensé</p>
+                <p className="text-white/80 text-sm mb-1">{t.profile.history.totalSpent}</p>
                 <p className="text-2xl font-bold">$126.00</p>
               </div>
               <div>
-                <p className="text-white/80 text-sm mb-1">Colis livrés</p>
+                <p className="text-white/80 text-sm mb-1">{t.profile.history.packagesDelivered}</p>
                 <p className="text-2xl font-bold">1</p>
               </div>
               <div>
-                <p className="text-white/80 text-sm mb-1">En cours</p>
+                <p className="text-white/80 text-sm mb-1">{t.profile.history.inProgress}</p>
                 <p className="text-2xl font-bold">1</p>
               </div>
               <div>
-                <p className="text-white/80 text-sm mb-1">Total colis</p>
+                <p className="text-white/80 text-sm mb-1">{t.profile.history.totalPackages}</p>
                 <p className="text-2xl font-bold">3</p>
               </div>
             </div>

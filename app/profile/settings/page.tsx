@@ -20,12 +20,14 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import PhoneInput from 'react-phone-number-input';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 import 'react-phone-number-input/style.css';
 
 export default function SettingsPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -63,13 +65,13 @@ export default function SettingsPage() {
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError('La taille de l&apos;image doit être inférieure à 5MB');
+      setError(t.profile.settings.imageSizeError);
       return;
     }
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      setError('Veuillez sélectionner un fichier image valide');
+      setError(t.profile.settings.invalidImageError);
       return;
     }
 
@@ -82,7 +84,7 @@ export default function SettingsPage() {
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
       console.error('Error uploading image:', err);
-      setError(err.errors?.[0]?.message || err.message || 'Échec du téléchargement de l&apos;image');
+      setError(err.errors?.[0]?.message || err.message || t.profile.settings.imageUploadFailed);
     } finally {
       setUploadingImage(false);
     }
@@ -107,7 +109,7 @@ export default function SettingsPage() {
           updateSuccess = true;
         } catch (nameError: any) {
           console.error('Name update error:', nameError);
-          throw new Error(nameError.errors?.[0]?.message || nameError.message || 'Échec de la mise à jour du nom');
+          throw new Error(nameError.errors?.[0]?.message || nameError.message || t.profile.settings.nameUpdateFailed);
         }
       }
 
@@ -132,9 +134,9 @@ export default function SettingsPage() {
           console.error('Phone update error:', phoneError);
           // Don't fail completely if only phone failed
           if (!updateSuccess) {
-            throw new Error('Échec de la mise à jour du numéro de téléphone: ' + (phoneError.errors?.[0]?.message || phoneError.message));
+            throw new Error(t.profile.settings.phoneUpdateFailed + (phoneError.errors?.[0]?.message || phoneError.message));
           } else {
-            setError('Nom mis à jour mais le numéro de téléphone n&apos;a pas pu être changé');
+            setError(t.profile.settings.phonePartialError);
           }
         }
       }
@@ -147,7 +149,7 @@ export default function SettingsPage() {
       }
     } catch (err: any) {
       console.error('Error updating profile:', err);
-      setError(err.message || 'Échec de la mise à jour du profil');
+      setError(err.message || t.profile.settings.profileUpdateFailed);
     } finally {
       setLoading(false);
     }
@@ -165,12 +167,12 @@ export default function SettingsPage() {
               className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
-              Retour au profil
+              {t.profile.backToProfile}
             </Link>
 
-            <h1 className="text-3xl font-bold text-gray-900">Paramètres du Profil</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t.profile.settings.title}</h1>
             <p className="text-gray-600 mt-2">
-              Modifiez vos informations personnelles
+              {t.profile.settings.subtitle}
             </p>
           </div>
 
@@ -186,8 +188,8 @@ export default function SettingsPage() {
                   <Check className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-green-900">Profil mis à jour!</h3>
-                  <p className="text-sm text-green-700">Vos informations ont été enregistrées avec succès</p>
+                  <h3 className="font-semibold text-green-900">{t.profile.settings.successTitle}</h3>
+                  <p className="text-sm text-green-700">{t.profile.settings.successMessage}</p>
                 </div>
               </div>
             </motion.div>
@@ -203,7 +205,7 @@ export default function SettingsPage() {
               <div className="flex items-start gap-3">
                 <div className="text-red-600">⚠️</div>
                 <div>
-                  <h3 className="font-semibold text-red-900">Erreur</h3>
+                  <h3 className="font-semibold text-red-900">{t.profile.settings.error}</h3>
                   <p className="text-sm text-red-700">{error}</p>
                 </div>
               </div>
@@ -219,7 +221,7 @@ export default function SettingsPage() {
             >
               <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Camera className="h-6 w-6 text-primary-600" />
-                Photo de Profil
+                {t.profile.settings.profilePhoto}
               </h2>
 
               <div className="flex items-center gap-6">
@@ -261,10 +263,10 @@ export default function SettingsPage() {
                     className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Camera className="h-4 w-4" />
-                    {uploadingImage ? 'Téléchargement...' : 'Changer la photo'}
+                    {uploadingImage ? t.profile.settings.uploading : t.profile.settings.changePhoto}
                   </button>
                   <p className="text-xs text-gray-500 mt-2">
-                    JPG, PNG ou GIF. Max 5MB.
+                    {t.profile.settings.photoNote}
                   </p>
                 </div>
               </div>
@@ -279,14 +281,14 @@ export default function SettingsPage() {
             >
               <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <User className="h-6 w-6 text-primary-600" />
-                Informations Personnelles
+                {t.profile.settings.personalInfo}
               </h2>
 
               <div className="space-y-4">
                 {/* First Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Prénom <span className="text-red-600">*</span>
+                    {t.profile.settings.firstName} <span className="text-red-600">*</span>
                   </label>
                   <input
                     type="text"
@@ -294,14 +296,14 @@ export default function SettingsPage() {
                     onChange={(e) => setFirstName(e.target.value)}
                     required
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Votre prénom"
+                    placeholder={t.profile.settings.firstNamePlaceholder}
                   />
                 </div>
 
                 {/* Last Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom <span className="text-red-600">*</span>
+                    {t.profile.settings.lastName} <span className="text-red-600">*</span>
                   </label>
                   <input
                     type="text"
@@ -309,7 +311,7 @@ export default function SettingsPage() {
                     onChange={(e) => setLastName(e.target.value)}
                     required
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="Votre nom"
+                    placeholder={t.profile.settings.lastNamePlaceholder}
                   />
                 </div>
 
@@ -326,7 +328,7 @@ export default function SettingsPage() {
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    L&apos;email ne peut pas être modifié ici
+                    {t.profile.settings.emailNote}
                   </p>
                 </div>
 
@@ -334,7 +336,7 @@ export default function SettingsPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Phone className="h-4 w-4 inline mr-1" />
-                    Numéro de Téléphone
+                    {t.profile.settings.phone}
                   </label>
                   <PhoneInput
                     international
@@ -342,10 +344,10 @@ export default function SettingsPage() {
                     value={phoneNumber}
                     onChange={(value) => setPhoneNumber(value || '')}
                     className="w-full phone-input-custom"
-                    placeholder="Entrez votre numéro"
+                    placeholder={t.profile.settings.phonePlaceholder}
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Sélectionnez votre pays et entrez votre numéro
+                    {t.profile.settings.phoneNote}
                   </p>
                 </div>
               </div>
@@ -362,7 +364,7 @@ export default function SettingsPage() {
                 href="/profile"
                 className="flex-1 px-6 py-4 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-center"
               >
-                Annuler
+                {t.profile.settings.cancel}
               </Link>
 
               <button
@@ -373,12 +375,12 @@ export default function SettingsPage() {
                 {loading ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
-                    Enregistrement...
+                    {t.profile.settings.saving}
                   </>
                 ) : (
                   <>
                     <Save className="h-5 w-5" />
-                    Enregistrer les modifications
+                    {t.profile.settings.save}
                   </>
                 )}
               </button>

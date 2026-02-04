@@ -63,6 +63,7 @@ export async function GET(request: NextRequest) {
           email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
+          preferredLanguage: users.preferredLanguage,
         },
       })
       .from(packages)
@@ -91,6 +92,7 @@ export async function GET(request: NextRequest) {
           email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
+          preferredLanguage: users.preferredLanguage,
         },
       })
       .from(packageRequests)

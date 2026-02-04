@@ -16,6 +16,7 @@ import {
   Check,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface Notification {
   id: string;
@@ -27,44 +28,47 @@ interface Notification {
 }
 
 export default function NotificationsPage() {
+  const { t, locale } = useTranslation();
+  const localeMap: Record<string, string> = { fr: 'fr-FR', en: 'en-US', ht: 'fr-FR', es: 'es-ES' };
+
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: '1',
       type: 'package',
-      title: 'Colis livré',
-      message: 'Votre colis AS-2026-00123 a été livré avec succès à Port-au-Prince.',
+      title: t.profile.notifications.packageDelivered,
+      message: t.profile.notifications.packageDeliveredMsg,
       date: '2026-01-10T15:30:00',
       read: false,
     },
     {
       id: '2',
       type: 'payment',
-      title: 'Paiement confirmé',
-      message: 'Votre paiement de $37.00 via Moncash a été confirmé.',
+      title: t.profile.notifications.paymentConfirmed,
+      message: t.profile.notifications.paymentConfirmedMsg,
       date: '2026-01-09T10:15:00',
       read: true,
     },
     {
       id: '3',
       type: 'package',
-      title: 'Colis en transit',
-      message: 'Votre colis AS-2026-00124 est en route vers Haïti. Livraison estimée: 2-3 jours.',
+      title: t.profile.notifications.packageInTransit,
+      message: t.profile.notifications.packageInTransitMsg,
       date: '2026-01-08T09:00:00',
       read: true,
     },
     {
       id: '4',
       type: 'message',
-      title: 'Nouveau message',
-      message: 'Vous avez reçu un message de l\'équipe support concernant votre demande.',
+      title: t.profile.notifications.newMessage,
+      message: t.profile.notifications.newMessageMsg,
       date: '2026-01-07T14:20:00',
       read: false,
     },
     {
       id: '5',
       type: 'general',
-      title: 'Promotion spéciale',
-      message: 'Profitez de 10% de réduction sur votre prochain envoi avec le code WELCOME10',
+      title: t.profile.notifications.specialPromotion,
+      message: t.profile.notifications.specialPromotionMsg,
       date: '2026-01-05T08:00:00',
       read: true,
     },
@@ -127,13 +131,13 @@ export default function NotificationsPage() {
     const diffDays = Math.floor(diffMs / 86400000);
 
     if (diffMins < 60) {
-      return `Il y a ${diffMins} min`;
+      return `${diffMins} ${t.profile.notifications.minutesAgo}`;
     } else if (diffHours < 24) {
-      return `Il y a ${diffHours}h`;
+      return `${diffHours}${t.profile.notifications.hoursAgo}`;
     } else if (diffDays < 7) {
-      return `Il y a ${diffDays}j`;
+      return `${diffDays}${t.profile.notifications.daysAgo}`;
     } else {
-      return date.toLocaleDateString('fr-FR', {
+      return date.toLocaleDateString(localeMap[locale] || 'fr-FR', {
         day: 'numeric',
         month: 'short',
       });
@@ -154,14 +158,14 @@ export default function NotificationsPage() {
               className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
-              Retour au profil
+              {t.profile.backToProfile}
             </Link>
 
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
+                <h1 className="text-3xl font-bold text-gray-900">{t.profile.notifications.title}</h1>
                 <p className="text-gray-600 mt-2">
-                  {unreadCount > 0 ? `${unreadCount} notification${unreadCount > 1 ? 's' : ''} non lue${unreadCount > 1 ? 's' : ''}` : 'Toutes les notifications sont lues'}
+                  {unreadCount > 0 ? `${unreadCount} ${unreadCount > 1 ? t.profile.notifications.unreadPlural : t.profile.notifications.unread}` : t.profile.notifications.allRead}
                 </p>
               </div>
 
@@ -171,7 +175,7 @@ export default function NotificationsPage() {
                   className="inline-flex items-center gap-2 px-4 py-2 text-sm text-primary-600 hover:text-primary-700 font-semibold"
                 >
                   <Check className="h-4 w-4" />
-                  Tout marquer comme lu
+                  {t.profile.notifications.markAllRead}
                 </button>
               )}
             </div>
@@ -187,10 +191,10 @@ export default function NotificationsPage() {
               >
                 <Bell className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  Aucune notification
+                  {t.profile.notifications.empty}
                 </h3>
                 <p className="text-gray-600">
-                  Vous n&apos;avez pas encore de notifications
+                  {t.profile.notifications.emptyDesc}
                 </p>
               </motion.div>
             ) : (
@@ -237,13 +241,13 @@ export default function NotificationsPage() {
                                 onClick={() => handleMarkAsRead(notification.id)}
                                 className="text-xs text-primary-600 hover:text-primary-700 font-semibold"
                               >
-                                Marquer comme lu
+                                {t.profile.notifications.markAsRead}
                               </button>
                             )}
                             <button
                               onClick={() => handleDelete(notification.id)}
                               className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                              title="Supprimer"
+                              title={t.profile.notifications.delete}
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -270,7 +274,7 @@ export default function NotificationsPage() {
                 className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 border-2 border-red-300 text-red-600 font-semibold rounded-xl hover:bg-red-50 transition-colors"
               >
                 <Trash2 className="h-5 w-5" />
-                Effacer toutes les notifications
+                {t.profile.notifications.clearAll}
               </button>
             </motion.div>
           )}

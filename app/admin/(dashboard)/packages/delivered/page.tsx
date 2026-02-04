@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useCachedFetch } from '@/hooks/useAdminCache';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -16,65 +17,27 @@ import {
   Archive,
   Eye,
   Filter,
+  RefreshCw,
 } from 'lucide-react';
 
-// Mock data - Delivered packages
-const mockDeliveredPackages = [
-  {
-    id: 4,
-    trackingNumber: 'AS-2026-00126',
-    userId: 1,
-    userName: 'John Doe',
-    userEmail: 'john@example.com',
-    destination: 'Port-au-Prince',
-    weight: 8.0,
-    totalFee: 37.00,
-    deliveredAt: '2026-01-05T15:30:00',
-    deliveredBy: 'Admin User',
-    recipientName: 'John Doe',
-    recipientSignature: 'signature1.jpg',
-    deliveryPhoto: 'delivery1.jpg',
-    paymentMethod: 'cash',
-    notes: 'Delivered in perfect condition',
-    status: 'delivered',
-  },
-  {
-    id: 10,
-    trackingNumber: 'AS-2026-00136',
-    userId: 2,
-    userName: 'Jane Smith',
-    userEmail: 'jane@example.com',
-    destination: 'Cap-Haïtien',
-    weight: 4.5,
-    totalFee: 23.00,
-    deliveredAt: '2026-01-04T11:20:00',
-    deliveredBy: 'Admin User',
-    recipientName: 'Marie Smith (Sister)',
-    recipientSignature: 'signature2.jpg',
-    deliveryPhoto: 'delivery2.jpg',
-    paymentMethod: 'card',
-    notes: 'Picked up by family member',
-    status: 'delivered',
-  },
-  {
-    id: 11,
-    trackingNumber: 'AS-2026-00137',
-    userId: 3,
-    userName: 'Bob Johnson',
-    userEmail: 'bob@example.com',
-    destination: 'Port-au-Prince',
-    weight: 2.3,
-    totalFee: 14.20,
-    deliveredAt: '2026-01-03T09:45:00',
-    deliveredBy: 'Admin User',
-    recipientName: 'Bob Johnson',
-    recipientSignature: 'signature3.jpg',
-    deliveryPhoto: null,
-    paymentMethod: 'mobile',
-    notes: '',
-    status: 'delivered',
-  },
-];
+interface DeliveredPackage {
+  id: number;
+  trackingNumber: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  destination: string;
+  weight: number;
+  totalFee: number;
+  deliveredAt: string;
+  deliveredBy: string;
+  recipientName: string;
+  recipientSignature: string | null;
+  deliveryPhoto: string | null;
+  paymentMethod: string;
+  notes: string;
+  status: string;
+}
 
 const paymentMethodLabels = {
   cash: 'Cash',
@@ -92,56 +55,44 @@ export default function DeliveredPackagesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPackages, setSelectedPackages] = useState<number[]>([]);
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
-  const [packages, setPackages] = useState(mockDeliveredPackages);
-  const [loading, setLoading] = useState(true);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
 
-  useEffect(() => {
-    const loadPackages = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch('/api/admin/packages?status=delivered');
+  const fetchDeliveredPackages = useCallback(async () => {
+    const response = await fetch('/api/admin/packages?status=delivered');
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch packages');
-        }
+    if (!response.ok) {
+      throw new Error('Failed to fetch packages');
+    }
 
-        const data = await response.json();
+    const data = await response.json();
 
-        // Transform API data to match UI format
-        const transformedPackages = data.packages.map((pkg: any) => ({
-          id: pkg.id,
-          trackingNumber: pkg.trackingNumber,
-          userId: pkg.userId,
-          userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
-          userEmail: pkg.user?.email || 'N/A',
-          destination: pkg.recipientCity,
-          weight: parseFloat(pkg.weight) || 0,
-          totalFee: parseFloat(pkg.totalCost) || 0,
-          deliveredAt: pkg.actualDelivery || pkg.updatedAt,
-          deliveredBy: 'Admin User',
-          recipientName: pkg.recipientName,
-          recipientSignature: null,
-          deliveryPhoto: null,
-          paymentMethod: 'cash',
-          notes: '',
-          status: pkg.status,
-        }));
+    // Transform API data to match UI format
+    const transformedPackages = data.packages.map((pkg: any) => ({
+      id: pkg.id,
+      trackingNumber: pkg.trackingNumber,
+      userId: pkg.userId,
+      userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
+      userEmail: pkg.user?.email || 'N/A',
+      destination: pkg.recipientCity,
+      weight: parseFloat(pkg.weight) || 0,
+      totalFee: parseFloat(pkg.totalCost) || 0,
+      deliveredAt: pkg.actualDelivery || pkg.updatedAt,
+      deliveredBy: 'Admin User',
+      recipientName: pkg.recipientName,
+      recipientSignature: null,
+      deliveryPhoto: null,
+      paymentMethod: 'cash',
+      notes: '',
+      status: pkg.status,
+    }));
 
-        setPackages(transformedPackages);
-      } catch (error) {
-        console.error('Error loading packages:', error);
-        // Fallback to mock data if API fails
-        setPackages(mockDeliveredPackages);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadPackages();
+    return transformedPackages;
   }, []);
+
+  const { data, loading, refreshing, refresh } = useCachedFetch<DeliveredPackage[]>('admin-packages-delivered', fetchDeliveredPackages);
+  const packages = data || [];
 
   const filteredPackages = packages.filter((pkg) => {
     const matchesSearch =
@@ -161,19 +112,19 @@ export default function DeliveredPackagesPage() {
     );
   };
 
-  const handleViewProof = (pkg: typeof mockDeliveredPackages[0]) => {
+  const handleViewProof = (pkg: DeliveredPackage) => {
     console.log('Viewing delivery proof for:', pkg.trackingNumber);
     // TODO: Open modal with signature and photo
     alert(`Viewing delivery proof for ${pkg.trackingNumber}\n\nRecipient: ${pkg.recipientName}\nSignature: ${pkg.recipientSignature ? 'Available' : 'Not available'}\nPhoto: ${pkg.deliveryPhoto ? 'Available' : 'Not available'}`);
   };
 
-  const handleExportReceipt = (pkg: typeof mockDeliveredPackages[0]) => {
+  const handleExportReceipt = (pkg: DeliveredPackage) => {
     console.log('Exporting receipt for:', pkg.trackingNumber);
     // TODO: Generate PDF receipt
     alert(`Exporting receipt for ${pkg.trackingNumber}\n\nThis will generate a PDF receipt (feature to be implemented)`);
   };
 
-  const handleArchive = (pkg: typeof mockDeliveredPackages[0]) => {
+  const handleArchive = (pkg: DeliveredPackage) => {
     if (!confirm(`Archive package ${pkg.trackingNumber}?`)) return;
     console.log('Archiving package:', pkg.trackingNumber);
     // TODO: API call to archive
@@ -196,10 +147,8 @@ export default function DeliveredPackagesPage() {
 
       if (!response.ok) throw new Error('Failed to update packages');
 
-      // Remove updated packages from list if status changed
-      if (newStatus !== 'delivered') {
-        setPackages(prev => prev.filter(p => !selectedPackages.includes(p.id)));
-      }
+      // Refresh the list to reflect changes
+      await refresh();
 
       setSelectedPackages([]);
       setShowStatusModal(false);
@@ -236,6 +185,14 @@ export default function DeliveredPackagesPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
           <button className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
             <Download className="h-5 w-5" />
             Export Report
