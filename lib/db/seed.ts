@@ -10,6 +10,14 @@ import {
   announcements,
   revenueRecords,
   trackingHistory,
+  cityPricing,
+  adminActivityLogs,
+  notifications,
+  loyaltyCredits,
+  referrals,
+  referralCodes,
+  deliveryProof,
+  warehouses,
 } from './schema';
 // Note: All tables imported for clearing; only admin, fees, and special items are seeded
 import bcrypt from 'bcryptjs';
@@ -20,13 +28,21 @@ async function seed() {
   try {
     // 0. Clear existing data
     console.log('Clearing existing data...');
+    await db.delete(deliveryProof);
     await db.delete(trackingHistory);
     await db.delete(revenueRecords);
+    await db.delete(notifications);
+    await db.delete(loyaltyCredits);
+    await db.delete(referrals);
+    await db.delete(referralCodes);
     await db.delete(announcements);
     await db.delete(packageRequests);
     await db.delete(packages);
     await db.delete(specialItemFees);
     await db.delete(serviceFees);
+    await db.delete(cityPricing);
+    await db.delete(warehouses);
+    await db.delete(adminActivityLogs);
     await db.delete(admins);
     await db.delete(users);
     console.log('✅ Database cleared');
@@ -156,11 +172,133 @@ async function seed() {
 
     console.log('✅ Special items created (6 items)');
 
+    // 6. Create City Pricing
+    console.log('Creating city pricing...');
+    const cities = [
+      {
+        city: 'Port-au-Prince',
+        serviceFee: '5.00',
+        pricePerLb: '4.00',
+      },
+      {
+        city: 'Cap-Haïtien',
+        serviceFee: '6.00',
+        pricePerLb: '4.50',
+      },
+      {
+        city: 'Port-de-Paix',
+        serviceFee: '7.00',
+        pricePerLb: '5.00',
+      },
+    ];
+
+    for (const city of cities) {
+      await db.insert(cityPricing).values({
+        ...city,
+        isActive: true,
+      });
+    }
+
+    console.log('✅ City pricing created (3 cities)');
+
+    // 7. Create Mock Warehouses
+    console.log('Creating mock warehouses...');
+    const mockWarehouses = [
+      // Port-au-Prince Warehouses
+      {
+        name: 'Alliance Shipping - Centre-Ville',
+        city: 'Port-au-Prince',
+        address: 'Rue des Miracles, Centre-Ville, Port-au-Prince, Haiti',
+        latitude: '18.5944',
+        longitude: '-72.3074',
+        phone: '+509 3700-1234',
+        email: 'pap-centre@allianceshipping.com',
+        openingHours: 'Lun-Ven: 8h00-17h00, Sam: 9h00-13h00',
+        isActive: true,
+      },
+      {
+        name: 'Alliance Shipping - Delmas',
+        city: 'Port-au-Prince',
+        address: 'Delmas 33, Port-au-Prince, Haiti',
+        latitude: '18.5615',
+        longitude: '-72.3020',
+        phone: '+509 3700-5678',
+        email: 'pap-delmas@allianceshipping.com',
+        openingHours: 'Lun-Ven: 8h00-18h00, Sam: 8h00-14h00',
+        isActive: true,
+      },
+      {
+        name: 'Alliance Shipping - Pétion-Ville',
+        city: 'Port-au-Prince',
+        address: 'Rue Grégoire, Pétion-Ville, Haiti',
+        latitude: '18.5125',
+        longitude: '-72.2850',
+        phone: '+509 3700-9012',
+        email: 'pap-petionville@allianceshipping.com',
+        openingHours: 'Lun-Sam: 8h00-17h00',
+        isActive: true,
+      },
+      // Cap-Haïtien Warehouses
+      {
+        name: 'Alliance Shipping - Cap-Haïtien Centre',
+        city: 'Cap-Haïtien',
+        address: 'Boulevard du Cap, Centre-Ville, Cap-Haïtien, Haiti',
+        latitude: '19.7585',
+        longitude: '-72.2015',
+        phone: '+509 3701-2345',
+        email: 'cap-centre@allianceshipping.com',
+        openingHours: 'Lun-Ven: 8h00-17h00, Sam: 9h00-12h00',
+        isActive: true,
+      },
+      {
+        name: 'Alliance Shipping - Vertières',
+        city: 'Cap-Haïtien',
+        address: 'Route Vertières, Cap-Haïtien, Haiti',
+        latitude: '19.7850',
+        longitude: '-72.2250',
+        phone: '+509 3701-6789',
+        email: 'cap-vertieres@allianceshipping.com',
+        openingHours: 'Lun-Ven: 8h30-16h30, Sam: 9h00-13h00',
+        isActive: true,
+      },
+      // Port-de-Paix Warehouses
+      {
+        name: 'Alliance Shipping - Port-de-Paix',
+        city: 'Port-de-Paix',
+        address: 'Rue du Commerce, Port-de-Paix, Haiti',
+        latitude: '19.9389',
+        longitude: '-72.8303',
+        phone: '+509 3702-3456',
+        email: 'pdp-centre@allianceshipping.com',
+        openingHours: 'Lun-Ven: 8h00-16h00, Sam: 9h00-12h00',
+        isActive: true,
+      },
+      {
+        name: 'Alliance Shipping - Port-de-Paix Baie',
+        city: 'Port-de-Paix',
+        address: 'Avenue de la Baie, Port-de-Paix, Haiti',
+        latitude: '19.9510',
+        longitude: '-72.8420',
+        phone: '+509 3702-7890',
+        email: 'pdp-baie@allianceshipping.com',
+        openingHours: 'Lun-Sam: 8h00-15h00',
+        isActive: true,
+      },
+    ];
+
+    for (const warehouse of mockWarehouses) {
+      await db.insert(warehouses).values(warehouse);
+    }
+
+    console.log('✅ Mock warehouses created (7 warehouses)');
+
     console.log('\n🎉 Database seed completed successfully!\n');
     console.log('📋 Summary:');
     console.log('  - 1 Super Admin');
     console.log('  - 1 Service Fee Configuration');
     console.log('  - 6 Special Item Fees');
+    console.log('  - 3 City Pricing Configurations');
+    console.log('  - 7 Mock Warehouses (3x Port-au-Prince, 2x Cap-Haïtien, 2x Port-de-Paix)');
     console.log('\n✅ Ready to use!');
     console.log('\n🔐 Admin Login:');
     console.log('   Email: stanleywendeljoseph@gmail.com');

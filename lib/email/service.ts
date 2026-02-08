@@ -960,3 +960,6 @@ export const sendPackageDeliveredEmail = async (
 
   return sendEmail({ to: userEmail, subject: s.subject, html });
 };
+
+// Re-export warehouse change email
+export { sendWarehouseChangeEmail } from './warehouse-change';
