@@ -62,14 +62,20 @@ export default function PackagesPage() {
   const translateText = (text: string): string => {
     if (!text) return text;
 
-    if (text.startsWith('packages.')) {
+    // Check if it looks like a translation key (contains dots)
+    if (text.includes('.')) {
       const keys = text.split('.');
       let value: any = t;
       for (const key of keys) {
-        value = value?.[key];
-        if (value === undefined) return text;
+        if (value && typeof value === 'object' && key in value) {
+          value = value[key];
+        } else {
+          // Key not found, return original text
+          return text;
+        }
       }
-      return value;
+      // Return the translated value if it's a string
+      return typeof value === 'string' ? value : text;
     }
 
     return text;
