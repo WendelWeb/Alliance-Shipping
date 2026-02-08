@@ -137,8 +137,8 @@ export function PhoneNumberModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl max-h-[95vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-br from-blue-600 to-blue-700 px-6 py-5 text-white flex-shrink-0">
           <div className="flex items-start justify-between">
