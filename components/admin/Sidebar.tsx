@@ -20,6 +20,7 @@ import {
   User,
   MapPin,
   Building2,
+  PhoneCall,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
@@ -45,6 +46,7 @@ const navigation = [
   { name: 'Loyalty Program', href: '/admin/loyalty', icon: Gift },
   { name: 'Special Items', href: '/admin/special-items', icon: Smartphone },
   { name: 'Announcements', href: '/admin/announcements', icon: Megaphone },
+  { name: 'Force Phone Modal', href: '/admin/force-phone', icon: PhoneCall },
   { name: 'Admin Management', href: '/admin/admins', icon: ShieldCheck },
 ];
 
