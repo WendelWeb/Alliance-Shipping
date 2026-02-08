@@ -19,6 +19,7 @@ import {
   ChevronRight,
   User,
   MapPin,
+  Building2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
@@ -40,6 +41,7 @@ const navigation = [
   { name: 'Analytics', href: '/admin/analytics', icon: TrendingUp },
   { name: 'Fees Management', href: '/admin/fees', icon: DollarSign },
   { name: 'City Pricing', href: '/admin/city-pricing', icon: MapPin },
+  { name: 'Cities & Warehouses', href: '/admin/cities-warehouses', icon: Building2 },
   { name: 'Loyalty Program', href: '/admin/loyalty', icon: Gift },
   { name: 'Special Items', href: '/admin/special-items', icon: Smartphone },
   { name: 'Announcements', href: '/admin/announcements', icon: Megaphone },
