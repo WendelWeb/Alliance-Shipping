@@ -49,7 +49,8 @@
       "Bash(npx expo install:*)",
       "Bash(npx expo export:*)",
       "Bash(ipconfig:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(git remote add:*)"
     ]
   }
 }

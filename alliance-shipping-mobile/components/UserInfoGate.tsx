@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import { PhoneNumberModal } from './PhoneNumberModal';
 import { api } from '@/lib/api';
+import { useTheme } from '@/lib/themes/ThemeProvider';
 
 export function UserInfoGate({ children }: { children: React.ReactNode }) {
   const { isLoaded, isSignedIn } = useAuth();
-  const [showModal, setShowModal] = useState(false);
+  const { colors, fonts } = useTheme();
+  const [isBlocked, setIsBlocked] = useState(false);
   const [missingPhone, setMissingPhone] = useState(false);
   const [missingCity, setMissingCity] = useState(false);
   const [missingWarehouse, setMissingWarehouse] = useState(false);
@@ -20,20 +23,23 @@ export function UserInfoGate({ children }: { children: React.ReactNode }) {
 
       try {
         const response = await api.get<{ success: boolean; user: any }>('/api/user/profile');
-        const hasPhone = !!response.user?.phone;
+        // Check if phone exists AND is properly formatted (with country code)
+        const phoneValue = response.user?.phone;
+        const hasValidPhone = !!(phoneValue && phoneValue.startsWith('+'));
         const hasCity = !!response.user?.city;
         const hasWarehouse = !!response.user?.warehouseId;
 
-        setMissingPhone(!hasPhone);
+        setMissingPhone(!hasValidPhone);
         setMissingCity(!hasCity);
         setMissingWarehouse(!hasWarehouse);
 
-        // Show modal if any is missing
-        if (!hasPhone || !hasCity || !hasWarehouse) {
-          console.log('🔔 UserInfoGate (Mobile): Missing info detected - Phone:', !hasPhone, 'City:', !hasCity, 'Warehouse:', !hasWarehouse);
-          setShowModal(true);
+        // BLOCK app if any is missing
+        if (!hasValidPhone || !hasCity || !hasWarehouse) {
+          console.log('🚫 UserInfoGate (Mobile): BLOCKING APP - Phone:', !hasValidPhone, 'City:', !hasCity, 'Warehouse:', !hasWarehouse);
+          setIsBlocked(true);
         } else {
           console.log('✅ UserInfoGate (Mobile): User has all required info');
+          setIsBlocked(false);
         }
       } catch (error) {
         console.error('❌ Error checking user info:', error);
@@ -45,28 +51,69 @@ export function UserInfoGate({ children }: { children: React.ReactNode }) {
     checkUserInfo();
   }, [isLoaded, isSignedIn]);
 
-  const handleSuccess = () => {
-    setShowModal(false);
-    setMissingPhone(false);
-    setMissingCity(false);
-    setMissingWarehouse(false);
+  const handleSuccess = async () => {
+    // Re-check user info after saving
+    setIsChecking(true);
+    try {
+      const response = await api.get<{ success: boolean; user: any }>('/api/user/profile');
+      const phoneValue = response.user?.phone;
+      const hasValidPhone = !!(phoneValue && phoneValue.startsWith('+'));
+      const hasCity = !!response.user?.city;
+      const hasWarehouse = !!response.user?.warehouseId;
+
+      if (hasValidPhone && hasCity && hasWarehouse) {
+        console.log('✅ All info completed! Unblocking app...');
+        setIsBlocked(false);
+        setMissingPhone(false);
+        setMissingCity(false);
+        setMissingWarehouse(false);
+      } else {
+        console.log('⚠️ Info still incomplete, keeping blocked');
+      }
+    } catch (error) {
+      console.error('❌ Error re-checking user info:', error);
+    } finally {
+      setIsChecking(false);
+    }
   };
 
-  // Don't render modal until we've checked
+  // Show loading while checking
   if (isChecking) {
-    return <>{children}</>;
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary[500]} />
+        <Text style={[styles.loadingText, { fontFamily: fonts.medium, color: colors.gray[600] }]}>
+          Chargement...
+        </Text>
+      </View>
+    );
   }
 
-  return (
-    <>
-      {children}
+  // If blocked, show ONLY the modal (hide app completely)
+  if (isBlocked) {
+    return (
       <PhoneNumberModal
-        visible={showModal}
+        visible={true}
         onSuccess={handleSuccess}
         missingPhone={missingPhone}
         missingCity={missingCity}
         missingWarehouse={missingWarehouse}
       />
-    </>
-  );
+    );
+  }
+
+  // Otherwise, render app normally
+  return <>{children}</>;
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 15,
+  },
+});
