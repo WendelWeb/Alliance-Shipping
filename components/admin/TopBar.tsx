@@ -7,7 +7,7 @@ export default function AdminTopBar() {
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
-    <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+    <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-theme-surface-solid px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
       {/* Search */}
       <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
         <form className="relative flex flex-1" action="#" method="GET">
@@ -20,7 +20,7 @@ export default function AdminTopBar() {
           />
           <input
             id="search-field"
-            className="block h-full w-full border-0 py-0 pl-11 pr-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm"
+            className="block h-full w-full border-0 py-0 pl-11 pr-0 bg-transparent text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm"
             placeholder="Search packages, users..."
             type="search"
             name="search"

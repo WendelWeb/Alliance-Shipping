@@ -1,6 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useUser } from '@clerk/nextjs';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Container } from '@/components/Container';
@@ -17,9 +19,19 @@ import {
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
+interface PackageData {
+  id: number;
+  trackingNumber: string;
+  description: string;
+  totalCost: string;
+  status: string;
+  createdAt: string;
+  actualDelivery?: string | null;
+}
+
 interface HistoryItem {
   id: string;
-  type: 'package' | 'payment';
+  type: 'package';
   title: string;
   description: string;
   amount?: number;
@@ -29,48 +41,66 @@ interface HistoryItem {
 }
 
 export default function HistoryPage() {
+  const { user, isLoaded } = useUser();
   const { t, locale } = useTranslation();
   const localeMap: Record<string, string> = { fr: 'fr-FR', en: 'en-US', ht: 'fr-FR', es: 'es-ES' };
+  const [historyItems, setHistoryItems] = useState<HistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [totalSpent, setTotalSpent] = useState('0.00');
+  const [packagesDelivered, setPackagesDelivered] = useState(0);
+  const [totalPackages, setTotalPackages] = useState(0);
 
-  const historyItems: HistoryItem[] = [
-    {
-      id: '1',
-      type: 'package',
-      title: t.profile.history.packageDelivered,
-      description: t.profile.history.clothingAccessories,
-      amount: 37.00,
-      status: 'completed',
-      date: '2026-01-10',
-      trackingNumber: 'AS-2026-00123',
-    },
-    {
-      id: '2',
-      type: 'payment',
-      title: t.profile.history.paymentCompleted,
-      description: 'Moncash - AS-2026-00123',
-      amount: 37.00,
-      status: 'completed',
-      date: '2026-01-09',
-    },
-    {
-      id: '3',
-      type: 'package',
-      title: t.profile.history.packageInTransit,
-      description: t.profile.history.electronics,
-      amount: 52.00,
-      status: 'in-progress',
-      date: '2026-01-08',
-      trackingNumber: 'AS-2026-00124',
-    },
-    {
-      id: '4',
-      type: 'package',
-      title: t.profile.history.requestCancelled,
-      description: t.profile.history.documents,
-      status: 'cancelled',
-      date: '2026-01-05',
-    },
-  ];
+  useEffect(() => {
+    if (!isLoaded || !user) return;
+
+    const fetchHistory = async () => {
+      try {
+        const response = await fetch('/api/user/packages');
+        const data = await response.json();
+        const packages: PackageData[] = data.packages || [];
+
+        // Filter only delivered and rejected packages
+        const historyPackages = packages.filter(
+          (pkg) => pkg.status === 'delivered' || pkg.status === 'rejected'
+        );
+
+        // Transform to history items
+        const items: HistoryItem[] = historyPackages.map((pkg) => ({
+          id: pkg.id.toString(),
+          type: 'package',
+          title:
+            pkg.status === 'delivered'
+              ? t.profile.history.packageDelivered
+              : t.profile.history.requestCancelled,
+          description: pkg.description,
+          amount: parseFloat(pkg.totalCost),
+          status:
+            pkg.status === 'delivered' ? 'completed' : 'cancelled',
+          date: pkg.actualDelivery || pkg.createdAt,
+          trackingNumber: pkg.trackingNumber,
+        }));
+
+        setHistoryItems(items);
+
+        // Calculate stats
+        const delivered = historyPackages.filter((pkg) => pkg.status === 'delivered').length;
+        const total = historyPackages.length;
+        const spent = historyPackages
+          .filter((pkg) => pkg.status === 'delivered')
+          .reduce((sum, pkg) => sum + parseFloat(pkg.totalCost || '0'), 0);
+
+        setPackagesDelivered(delivered);
+        setTotalPackages(total);
+        setTotalSpent(spent.toFixed(2));
+      } catch (error) {
+        console.error('Error fetching history:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [isLoaded, user, t]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -123,7 +153,7 @@ export default function HistoryPage() {
   return (
     <div className="overflow-x-hidden">
       <Header />
-      <main className="min-h-screen pb-32 pt-2 md:pt-4 bg-gradient-to-br from-gray-50 via-white to-primary-50">
+      <main className="min-h-screen pb-32 pt-2 md:pt-4">
         <Container>
           {/* Header */}
           <div className="mb-6">
@@ -141,13 +171,33 @@ export default function HistoryPage() {
             </p>
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="theme-card rounded-2xl p-6 animate-pulse">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-gray-200 rounded-xl" />
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
+                      <div className="h-3 bg-gray-100 rounded w-2/3 mb-2" />
+                      <div className="h-3 bg-gray-100 rounded w-1/4" />
+                    </div>
+                    <div className="h-6 bg-gray-200 rounded w-16" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* History List */}
-          <div className="space-y-4">
-            {historyItems.length === 0 ? (
+          {!loading && (
+            <div className="space-y-4">
+              {historyItems.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl shadow-sm border-2 border-gray-100 p-8 text-center"
+                className="theme-card rounded-2xl shadow-sm p-8 text-center"
               >
                 <Clock className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
@@ -164,7 +214,7 @@ export default function HistoryPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="bg-white rounded-2xl shadow-sm border-2 border-gray-100 p-6 hover:shadow-md transition-all"
+                  className="theme-card rounded-2xl shadow-sm p-6 hover:shadow-md transition-all"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4 flex-1">
@@ -221,7 +271,8 @@ export default function HistoryPage() {
                 </motion.div>
               ))
             )}
-          </div>
+            </div>
+          )}
 
           {/* Summary Card */}
           <motion.div
@@ -234,19 +285,19 @@ export default function HistoryPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-white/80 text-sm mb-1">{t.profile.history.totalSpent}</p>
-                <p className="text-2xl font-bold">$126.00</p>
+                <p className="text-2xl font-bold">${totalSpent}</p>
               </div>
               <div>
                 <p className="text-white/80 text-sm mb-1">{t.profile.history.packagesDelivered}</p>
-                <p className="text-2xl font-bold">1</p>
+                <p className="text-2xl font-bold">{packagesDelivered}</p>
               </div>
               <div>
-                <p className="text-white/80 text-sm mb-1">{t.profile.history.inProgress}</p>
-                <p className="text-2xl font-bold">1</p>
+                <p className="text-white/80 text-sm mb-1">{t.profile.history.cancelled}</p>
+                <p className="text-2xl font-bold">{totalPackages - packagesDelivered}</p>
               </div>
               <div>
                 <p className="text-white/80 text-sm mb-1">{t.profile.history.totalPackages}</p>
-                <p className="text-2xl font-bold">3</p>
+                <p className="text-2xl font-bold">{totalPackages}</p>
               </div>
             </div>
           </motion.div>

@@ -14,7 +14,7 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="section-padding bg-white">
+    <section id="faq" className="section-padding bg-theme-surface-solid">
       <Container size="lg">
         <SectionTitle
           title={t.faq.title}
@@ -33,7 +33,7 @@ export function FAQ() {
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full px-6 py-5 flex items-center justify-between text-left bg-white hover:bg-gray-50 transition-colors"
+                className="w-full px-6 py-5 flex items-center justify-between text-left bg-theme-surface-solid hover:bg-gray-50 transition-colors"
               >
                 <span className="font-semibold text-gray-900 pr-4">
                   {item.question}
@@ -68,7 +68,7 @@ export function FAQ() {
           transition={{ duration: 0.6 }}
           className="mt-12"
         >
-          <div className="relative w-full h-64 md:h-80 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-50 to-white">
+          <div className="relative w-full h-64 md:h-80 rounded-2xl overflow-hidden bg-theme-bg">
             <ImageGallery
               section="faq"
               className="w-full h-full"

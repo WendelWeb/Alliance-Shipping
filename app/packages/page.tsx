@@ -138,7 +138,7 @@ export default function PackagesPage() {
   return (
     <div className="overflow-x-hidden">
       <Header />
-      <main className="min-h-screen pb-32 pt-2 md:pt-4 bg-gradient-to-br from-gray-50 via-white to-primary-50">
+      <main className="min-h-screen pb-32 pt-2 md:pt-4">
         <Container>
           {/* Header */}
           <motion.div
@@ -179,7 +179,7 @@ export default function PackagesPage() {
                 placeholder={t.packages.search}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm transition-all outline-none"
+                className="w-full pl-12 pr-4 py-3.5 bg-theme-surface-solid border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm transition-all outline-none"
               />
             </div>
           </motion.div>
@@ -204,7 +204,7 @@ export default function PackagesPage() {
                         ? btn.key === 'all'
                           ? 'bg-gray-900 text-white shadow-lg'
                           : `${config?.bg} ${config?.color} ${config?.border} border shadow-sm`
-                        : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+                        : 'bg-theme-surface-solid text-gray-600 hover:bg-gray-50 border border-gray-200'
                     }`}
                   >
                     {config && isActive && <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />}
@@ -222,7 +222,7 @@ export default function PackagesPage() {
           {loading && (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse">
+                <div key={i} className="theme-card rounded-2xl p-5 animate-pulse">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-gray-200 rounded-xl" />
@@ -308,7 +308,7 @@ export default function PackagesPage() {
                   className="col-span-1"
                 >
                   <Card
-                    className={`overflow-hidden bg-white border transition-all ${
+                    className={`overflow-hidden bg-theme-surface-solid border transition-all ${
                       isExpanded ? `${statusInfo.border} shadow-lg` : 'border-gray-100 shadow-sm hover:shadow-md'
                     }`}
                   >

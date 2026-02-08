@@ -8,31 +8,23 @@ export const revalidate = 300;
 
 /**
  * GET /api/announcements/public
- * Fetch published announcements for the homepage
+ * Fetch published announcements for homepage and news page
  *
  * Query params:
- * - lang: Filter by language (en, fr, ht, es) or 'all' for all languages
- * - limit: Maximum number of announcements to return (default: 6)
+ * - lang: User's preferred language (en, fr, ht, es) - used to return translated content
+ * - limit: Maximum number of announcements to return (default: 20)
  */
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const lang = searchParams.get('lang') || 'all';
-    const limit = parseInt(searchParams.get('limit') || '6');
+    const lang = searchParams.get('lang') || 'fr';
+    const limit = parseInt(searchParams.get('limit') || '20');
 
     const now = new Date();
 
-    // Query published announcements that should be shown on homepage
+    // Query published announcements
     const publishedAnnouncements = await db
-      .select({
-        id: announcements.id,
-        title: announcements.title,
-        content: announcements.content,
-        type: announcements.type,
-        publishDate: announcements.publishDate,
-        isPinned: announcements.isPinned,
-        createdAt: announcements.createdAt,
-      })
+      .select()
       .from(announcements)
       .where(
         and(
@@ -48,29 +40,35 @@ export async function GET(request: NextRequest) {
         desc(announcements.isPinned),
         desc(announcements.publishDate)
       )
-      .limit(limit * 4); // Fetch more to allow for language filtering
+      .limit(limit);
 
-    // Filter by language if specified (not 'all')
-    let filteredAnnouncements = publishedAnnouncements;
+    // Map announcements with translated content based on user's language
+    const mapped = publishedAnnouncements.map((a) => {
+      const translations = a.translations as Record<string, { title: string; content: string }> | null;
+      const translated = translations?.[lang];
 
-    if (lang !== 'all') {
-      const langTag = `[${lang.toUpperCase()}]`;
-      filteredAnnouncements = publishedAnnouncements.filter((announcement) =>
-        announcement.title.includes(langTag)
-      );
-    }
-
-    // Apply limit after language filtering
-    const finalAnnouncements = filteredAnnouncements.slice(0, limit);
+      return {
+        id: a.id,
+        title: translated?.title || a.title,
+        content: translated?.content || a.content,
+        type: a.type,
+        category: a.type,
+        priority: a.type === 'alert' ? 'urgent' : a.type === 'maintenance' ? 'important' : 'info',
+        publishDate: a.publishDate,
+        isPinned: a.isPinned,
+        imageUrl: a.imageUrl,
+        createdAt: a.createdAt,
+      };
+    });
 
     return NextResponse.json({
-      announcements: finalAnnouncements,
-      total: finalAnnouncements.length,
+      announcements: mapped,
+      total: mapped.length,
     });
   } catch (error) {
     console.error('Error fetching public announcements:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch announcements', announcements: [] },
+      { error: 'Failed to fetch announcements', announcements: [], total: 0 },
       { status: 500 }
     );
   }

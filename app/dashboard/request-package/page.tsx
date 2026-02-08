@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -19,6 +19,7 @@ import {
   FileText,
   Box,
   Tag,
+  DollarSign,
 } from 'lucide-react';
 
 export default function RequestPackagePage() {
@@ -27,6 +28,7 @@ export default function RequestPackagePage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [cityPricing, setCityPricing] = useState<{ serviceFee: number; pricePerLb: number } | null>(null);
   const [formData, setFormData] = useState({
     externalTrackingNumber: '',
     recipientCity: '',
@@ -35,6 +37,23 @@ export default function RequestPackagePage() {
     category: '',
     otherCategoryDescription: '', // Pour la catégorie "Autre"
   });
+
+  // Fetch city-specific pricing when city is selected
+  useEffect(() => {
+    if (formData.recipientCity) {
+      fetch(`/api/city-pricing/${formData.recipientCity}`)
+        .then(res => res.json())
+        .then(data => {
+          setCityPricing({
+            serviceFee: data.serviceFee,
+            pricePerLb: data.pricePerLb,
+          });
+        })
+        .catch(err => {
+          console.error('Error fetching city pricing:', err);
+        });
+    }
+  }, [formData.recipientCity]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -139,11 +158,11 @@ export default function RequestPackagePage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center"
+          className="theme-card rounded-3xl shadow-2xl p-8 max-w-md w-full text-center"
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -176,7 +195,7 @@ export default function RequestPackagePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-4 md:py-8 px-4">
+    <div className="min-h-screen py-4 md:py-8 px-4">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <motion.div
@@ -192,7 +211,7 @@ export default function RequestPackagePage() {
             {t.requestPackage.backButton}
           </button>
 
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+          <div className="theme-card rounded-2xl shadow-lg p-6 mb-6">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               {t.requestPackage.title}
             </h1>
@@ -225,7 +244,7 @@ export default function RequestPackagePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white rounded-2xl shadow-lg p-6"
+            className="theme-card rounded-2xl shadow-lg p-6"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 bg-red-50 rounded-lg">
@@ -274,7 +293,7 @@ export default function RequestPackagePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white rounded-2xl shadow-lg p-6"
+            className="theme-card rounded-2xl shadow-lg p-6"
           >
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-green-50 rounded-lg">
@@ -421,16 +440,34 @@ export default function RequestPackagePage() {
               </motion.p>
             )}
 
-            {formData.recipientCity && (
+            {formData.recipientCity && cityPricing && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200"
+                className="mt-4 space-y-2"
               >
-                <p className="text-sm text-blue-800 flex items-center gap-2">
-                  <Package className="h-4 w-4" />
-                  {t.requestPackage.fields.destinationCity.confirmation} <strong>{formData.recipientCity}</strong>
-                </p>
+                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-sm text-blue-800 flex items-center gap-2">
+                    <Package className="h-4 w-4" />
+                    {t.requestPackage.fields.destinationCity.confirmation} <strong>{formData.recipientCity}</strong>
+                  </p>
+                </div>
+                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                  <p className="text-sm text-green-800 font-semibold mb-2 flex items-center gap-2">
+                    <DollarSign className="h-4 w-4" />
+                    Pricing for {formData.recipientCity}:
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-green-600">Service Fee:</span>
+                      <span className="ml-2 font-bold text-green-900">${cityPricing.serviceFee.toFixed(2)}</span>
+                    </div>
+                    <div>
+                      <span className="text-green-600">Per Pound:</span>
+                      <span className="ml-2 font-bold text-green-900">${cityPricing.pricePerLb.toFixed(2)}/lb</span>
+                    </div>
+                  </div>
+                </div>
               </motion.div>
             )}
           </motion.div>
@@ -440,7 +477,7 @@ export default function RequestPackagePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white rounded-2xl shadow-lg p-6"
+            className="theme-card rounded-2xl shadow-lg p-6"
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 bg-purple-50 rounded-lg">

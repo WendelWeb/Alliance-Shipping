@@ -26,6 +26,14 @@ interface FeeConfig {
   effectiveDate: string;
 }
 
+interface CityPricing {
+  id: number;
+  city: string;
+  serviceFee: string;
+  pricePerLb: string;
+  isActive: boolean;
+}
+
 const initialFees: FeeConfig = {
   serviceFee: 0,
   shippingFeePerLb: 0,
@@ -42,6 +50,10 @@ export default function FeesPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [feeHistory, setFeeHistory] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [cityPricingData, setCityPricingData] = useState<CityPricing[]>([]);
+  const [loadingCities, setLoadingCities] = useState(false);
+  const [editingCity, setEditingCity] = useState<string | null>(null);
+  const [cityEditValues, setCityEditValues] = useState<{[key: string]: {serviceFee: string, pricePerLb: string}}>({});
 
   const fetchFees = useCallback(async () => {
     const response = await fetch('/api/admin/fees');
@@ -66,6 +78,26 @@ export default function FeesPage() {
   );
 
   const currentFees = data || initialFees;
+
+  // Load city pricing on mount
+  const loadCityPricing = async () => {
+    setLoadingCities(true);
+    try {
+      const response = await fetch('/api/admin/city-pricing');
+      if (!response.ok) throw new Error('Failed to fetch city pricing');
+      const data = await response.json();
+      setCityPricingData(data.cities || []);
+    } catch (error) {
+      console.error('Error loading city pricing:', error);
+    } finally {
+      setLoadingCities(false);
+    }
+  };
+
+  // Load city pricing on mount
+  if (cityPricingData.length === 0 && !loadingCities) {
+    loadCityPricing();
+  }
 
   // Sync local edit state when data loads
   if (data && serviceFee === 0 && shippingFeePerLb === 0 && data.serviceFee > 0) {
@@ -177,6 +209,44 @@ export default function FeesPage() {
     });
   };
 
+  const handleEditCity = (city: string, serviceFee: string, pricePerLb: string) => {
+    setEditingCity(city);
+    setCityEditValues({
+      ...cityEditValues,
+      [city]: { serviceFee, pricePerLb },
+    });
+  };
+
+  const handleSaveCityPricing = async (city: string) => {
+    const values = cityEditValues[city];
+    if (!values) return;
+
+    try {
+      const response = await fetch('/api/admin/city-pricing', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          city,
+          serviceFee: parseFloat(values.serviceFee),
+          pricePerLb: parseFloat(values.pricePerLb),
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update city pricing');
+
+      await loadCityPricing();
+      setEditingCity(null);
+      alert('City pricing updated successfully!');
+    } catch (error) {
+      console.error('Error saving city pricing:', error);
+      alert('Failed to update city pricing');
+    }
+  };
+
+  const handleCancelCityEdit = () => {
+    setEditingCity(null);
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -252,7 +322,7 @@ export default function FeesPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* Service Fee */}
-          <div className="bg-white rounded-xl p-6 border border-gray-100">
+          <div className="theme-card rounded-xl p-6 border border-gray-100">
             <div className="flex items-center justify-between mb-4">
               <label className="text-sm font-semibold text-gray-700">
                 Service Fee (Fixed)
@@ -287,7 +357,7 @@ export default function FeesPage() {
           </div>
 
           {/* Shipping Fee Per Lb */}
-          <div className="bg-white rounded-xl p-6 border border-gray-100">
+          <div className="theme-card rounded-xl p-6 border border-gray-100">
             <div className="flex items-center justify-between mb-4">
               <label className="text-sm font-semibold text-gray-700">
                 Shipping Fee (Per Lb)
@@ -375,7 +445,7 @@ export default function FeesPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+        className="theme-card rounded-2xl p-6 shadow-sm border border-gray-100"
       >
         <h3 className="text-lg font-bold text-gray-900 mb-4">Fee Calculator Examples</h3>
         <div className="overflow-x-auto">
@@ -429,13 +499,152 @@ export default function FeesPage() {
         </div>
       </motion.div>
 
+      {/* City-Specific Pricing */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="theme-card rounded-2xl p-6 shadow-sm border border-gray-100"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">City-Specific Pricing</h3>
+            <p className="text-sm text-gray-600 mt-1">Different rates for each destination city in Haiti</p>
+          </div>
+        </div>
+
+        {loadingCities ? (
+          <div className="text-center py-8">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary-600 border-r-transparent"></div>
+            <p className="mt-2 text-sm text-gray-600">Loading city pricing...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {cityPricingData.map((cityData) => {
+              const isEditing = editingCity === cityData.city;
+              const editValues = cityEditValues[cityData.city] || {
+                serviceFee: cityData.serviceFee,
+                pricePerLb: cityData.pricePerLb,
+              };
+
+              return (
+                <div
+                  key={cityData.id}
+                  className="border-2 border-gray-200 rounded-xl p-5 hover:border-primary-300 transition-colors"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-bold text-gray-900">{cityData.city}</h4>
+                    {!isEditing && (
+                      <button
+                        onClick={() => handleEditCity(cityData.city, cityData.serviceFee, cityData.pricePerLb)}
+                        className="text-primary-600 hover:text-primary-700 transition-colors"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    {/* Service Fee */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase block mb-1">
+                        Service Fee
+                      </label>
+                      {isEditing ? (
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-400">$</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={editValues.serviceFee}
+                            onChange={(e) =>
+                              setCityEditValues({
+                                ...cityEditValues,
+                                [cityData.city]: {
+                                  ...editValues,
+                                  serviceFee: e.target.value,
+                                },
+                              })
+                            }
+                            className="flex-1 px-2 py-1 text-lg font-bold border-2 border-primary-500 rounded focus:outline-none focus:ring-2 focus:ring-primary-200"
+                          />
+                        </div>
+                      ) : (
+                        <p className="text-2xl font-bold text-primary-600">
+                          ${parseFloat(cityData.serviceFee).toFixed(2)}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Price Per Lb */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase block mb-1">
+                        Per Pound
+                      </label>
+                      {isEditing ? (
+                        <div className="flex items-center gap-1">
+                          <span className="text-gray-400">$</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={editValues.pricePerLb}
+                            onChange={(e) =>
+                              setCityEditValues({
+                                ...cityEditValues,
+                                [cityData.city]: {
+                                  ...editValues,
+                                  pricePerLb: e.target.value,
+                                },
+                              })
+                            }
+                            className="flex-1 px-2 py-1 text-lg font-bold border-2 border-primary-500 rounded focus:outline-none focus:ring-2 focus:ring-primary-200"
+                          />
+                          <span className="text-gray-500">/ lb</span>
+                        </div>
+                      ) : (
+                        <p className="text-2xl font-bold text-primary-600">
+                          ${parseFloat(cityData.pricePerLb).toFixed(2)}
+                          <span className="text-sm text-gray-500"> / lb</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Edit Actions */}
+                  {isEditing && (
+                    <div className="flex gap-2 mt-4">
+                      <button
+                        onClick={() => handleSaveCityPricing(cityData.city)}
+                        className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        <Save className="h-4 w-4" />
+                        Save
+                      </button>
+                      <button
+                        onClick={handleCancelCityEdit}
+                        className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-2 border border-gray-300 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <X className="h-4 w-4" />
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </motion.div>
+
       {/* Fee History */}
       {showHistory && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          className="theme-card rounded-2xl p-6 shadow-sm border border-gray-100"
         >
           <div className="flex items-center gap-2 mb-4">
             <History className="h-5 w-5 text-gray-400" />

@@ -56,7 +56,7 @@ export function Contact() {
   };
 
   return (
-    <section id="contact" className="section-padding bg-white">
+    <section id="contact" className="section-padding bg-theme-surface-solid">
       <Container>
         <SectionTitle
           title={t.contact.title}

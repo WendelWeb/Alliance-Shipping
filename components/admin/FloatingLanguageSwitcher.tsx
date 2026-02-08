@@ -20,7 +20,7 @@ export function FloatingLanguageSwitcher() {
       <div className="fixed top-14 right-3 z-30 block xs:hidden">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white rounded-lg shadow-lg border border-gray-200 hover:shadow-xl transition-all"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-theme-surface-solid rounded-lg shadow-lg border border-gray-200 hover:shadow-xl transition-all"
         >
           <Globe className="w-3.5 h-3.5 text-primary-600" />
           <span className="text-xs font-semibold text-gray-700">
@@ -41,7 +41,7 @@ export function FloatingLanguageSwitcher() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="absolute right-0 mt-2 w-36 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden"
+              className="absolute right-0 mt-2 w-36 bg-theme-surface-solid rounded-lg shadow-xl border border-gray-200 overflow-hidden"
             >
               {languages.map((lang) => (
                 <button

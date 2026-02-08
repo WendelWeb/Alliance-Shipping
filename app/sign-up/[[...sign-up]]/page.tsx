@@ -182,7 +182,7 @@ export default function SignUpPage() {
 
           {/* Clerk sign-up component wrapper - Optimized for mobile */}
           <div className="auth-card-wrapper w-full max-w-md px-1 xs:px-0">
-            <div className="auth-card relative bg-white rounded-xl xs:rounded-2xl md:rounded-3xl p-3 xs:p-6 md:p-8 shadow-xl border border-gray-100">
+            <div className="auth-card relative bg-theme-surface-solid rounded-xl xs:rounded-2xl md:rounded-3xl p-3 xs:p-6 md:p-8 shadow-xl border border-gray-100">
               <div className="w-full">
               <SignUp
                 appearance={{

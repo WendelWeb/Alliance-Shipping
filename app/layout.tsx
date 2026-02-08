@@ -3,6 +3,8 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { Inter, Poppins } from 'next/font/google';
 import './globals.css';
 import { LanguageProvider } from '@/lib/i18n/useTranslation';
+import { ThemeProvider } from '@/lib/themes/ThemeProvider';
+import { UserInfoGate } from '@/components/UserInfoGate';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -89,7 +91,11 @@ export default function RootLayout({
     >
       <html lang="en" className="scroll-smooth overflow-x-hidden">
         <body className={`${inter.variable} ${poppins.variable} antialiased overflow-x-hidden`}>
-          <LanguageProvider>{children}</LanguageProvider>
+          <ThemeProvider>
+            <LanguageProvider>
+              <UserInfoGate>{children}</UserInfoGate>
+            </LanguageProvider>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

@@ -43,7 +43,7 @@ export function Trust() {
   ];
 
   return (
-    <section className="section-padding bg-gradient-to-br from-gray-50 via-white to-primary-50">
+    <section className="section-padding bg-theme-bg">
       <Container>
         <SectionTitle
           title={t.trust.title}

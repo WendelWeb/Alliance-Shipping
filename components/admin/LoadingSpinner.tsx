@@ -100,7 +100,7 @@ export function LoadingSpinner({
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-theme-surface-solid/80 backdrop-blur-sm">
         {content}
       </div>
     );
@@ -114,7 +114,7 @@ export function SkeletonLoader({ rows = 5 }: { rows?: number }) {
   return (
     <div className="space-y-4 animate-pulse">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 p-4 bg-white rounded-lg border border-gray-200">
+        <div key={i} className="flex items-center gap-4 p-4 theme-card rounded-lg">
           <div className="w-12 h-12 bg-gray-200 rounded-lg" />
           <div className="flex-1 space-y-2">
             <div className="h-4 bg-gray-200 rounded w-1/4" />
@@ -132,7 +132,7 @@ export function CardSkeleton({ count = 4 }: { count?: number }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="p-6 bg-white rounded-xl border border-gray-200 animate-pulse">
+        <div key={i} className="p-6 theme-card rounded-xl animate-pulse">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 bg-gray-200 rounded-xl" />
             <div className="flex-1 space-y-2">

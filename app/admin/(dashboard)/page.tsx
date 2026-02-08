@@ -138,7 +138,7 @@ export default function AdminDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+            className="relative overflow-hidden rounded-2xl theme-card p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
           >
             <div className="flex items-center justify-between">
               <div className={`${stat.bgColor} p-3 rounded-xl`}>
@@ -178,7 +178,7 @@ export default function AdminDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100"
+        className="rounded-2xl theme-card p-6 shadow-sm border border-gray-100"
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900">Recent Packages</h2>

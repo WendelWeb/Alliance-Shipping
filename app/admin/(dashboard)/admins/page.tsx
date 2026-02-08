@@ -333,14 +333,14 @@ export default function AdminManagementPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="bg-white rounded-2xl p-8 text-center text-gray-500">
+        <div className="theme-card rounded-2xl p-8 text-center text-gray-500">
           Loading...
         </div>
       ) : (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+          className="theme-card rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
         >
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -446,7 +446,7 @@ export default function AdminManagementPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4"
+            className="theme-card rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4"
           >
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-xl font-bold text-gray-900">Add New Admin</h2>
@@ -615,7 +615,7 @@ export default function AdminManagementPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4"
+            className="theme-card rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4"
           >
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="text-xl font-bold text-gray-900">

@@ -176,7 +176,7 @@ export default function UsersPage() {
         <div className="h-12 max-w-md bg-gray-200 rounded-xl animate-pulse" />
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 animate-pulse">
+            <div key={i} className="theme-card rounded-2xl border border-gray-100 p-6 animate-pulse">
               <div className="flex items-center gap-4 mb-5">
                 <div className="h-14 w-14 rounded-full bg-gray-200" />
                 <div className="flex-1 space-y-2">
@@ -233,7 +233,7 @@ export default function UsersPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm"
+          className="theme-card rounded-xl border border-gray-100 p-5 shadow-sm"
         >
           <div className="flex items-center gap-4">
             <div className="p-3 bg-blue-50 rounded-xl">
@@ -249,7 +249,7 @@ export default function UsersPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm"
+          className="theme-card rounded-xl border border-gray-100 p-5 shadow-sm"
         >
           <div className="flex items-center gap-4">
             <div className="p-3 bg-green-50 rounded-xl">
@@ -265,7 +265,7 @@ export default function UsersPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm"
+          className="theme-card rounded-xl border border-gray-100 p-5 shadow-sm"
         >
           <div className="flex items-center gap-4">
             <div className="p-3 bg-red-50 rounded-xl">
@@ -300,7 +300,7 @@ export default function UsersPage() {
 
       {/* User Cards Grid */}
       {users.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+        <div className="theme-card rounded-2xl border border-gray-100 p-12 text-center">
           <Users className="h-16 w-16 text-gray-200 mx-auto mb-4" />
           <p className="text-gray-500 font-medium text-lg">No users found</p>
           <p className="text-sm text-gray-400 mt-1">
@@ -316,7 +316,7 @@ export default function UsersPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.03 }}
               onClick={() => setSelectedUser(user)}
-              className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary-200 transition-all duration-200 cursor-pointer overflow-hidden"
+              className="group theme-card rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary-200 transition-all duration-200 cursor-pointer overflow-hidden"
             >
               {/* Card Header with gradient accent */}
               <div className="relative h-20 bg-gradient-to-r from-primary-500 to-primary-600">
@@ -424,7 +424,7 @@ export default function UsersPage() {
 
       {/* Pagination */}
       {pagination.totalPages > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 px-5 py-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="theme-card rounded-xl border border-gray-100 px-5 py-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="text-sm text-gray-600">
             Showing{' '}
             <span className="font-medium">{startIndex}-{endIndex}</span>{' '}
@@ -493,7 +493,7 @@ export default function UsersPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
+              className="theme-card rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
             >
               {/* Modal Header */}
               <div className="relative bg-gradient-to-br from-primary-600 via-primary-600 to-primary-700 px-6 py-10">

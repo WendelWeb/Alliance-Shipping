@@ -23,6 +23,9 @@ import {
   Clock,
   Home,
   Globe,
+  Gift,
+  Palette,
+  ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -30,13 +33,17 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 import { localeNames, localeFlags } from '@/lib/i18n/config';
 import { Locale } from '@/types';
 import { useState, useEffect } from 'react';
+import { useTheme } from '@/lib/themes/ThemeProvider';
+import { ThemePicker } from '@/components/ThemePicker';
 
 export default function ProfilePage() {
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();
   const { t, locale, setLocale } = useTranslation();
+  const { theme } = useTheme();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [themePickerOpen, setThemePickerOpen] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -49,11 +56,36 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user) return;
+
+    // Fetch admin status
     fetch('/api/admin/elevate')
       .then((res) => res.json())
       .then((data) => setIsAdmin(data.isAdmin === true))
       .catch(() => setIsAdmin(false));
-  }, [user]);
+
+    // Fetch user packages and calculate stats
+    fetch('/api/user/packages')
+      .then((res) => res.json())
+      .then((data) => {
+        const packages = data.packages || [];
+        const totalPackages = packages.length;
+        const inTransit = packages.filter((pkg: any) =>
+          pkg.status === 'in-transit' || pkg.status === 'customs'
+        ).length;
+        const delivered = packages.filter((pkg: any) =>
+          pkg.status === 'delivered'
+        ).length;
+
+        setStats([
+          { label: t.profile.stats.totalPackages, value: totalPackages.toString(), icon: Package },
+          { label: t.profile.stats.inTransit, value: inTransit.toString(), icon: MapPin },
+          { label: t.profile.stats.delivered, value: delivered.toString(), icon: Package },
+        ]);
+      })
+      .catch((err) => {
+        console.error('Error fetching package stats:', err);
+      });
+  }, [user, t]);
 
   const handleAdminAccess = async () => {
     try {
@@ -78,9 +110,9 @@ export default function ProfilePage() {
     return (
       <div className="overflow-x-hidden">
         <Header />
-        <main className="min-h-screen pb-32 pt-2 md:pt-4 bg-gradient-to-br from-gray-50 via-white to-primary-50 flex items-center justify-center">
+        <main className="min-h-screen pb-32 pt-2 md:pt-4 flex items-center justify-center">
           <Container>
-            <Card className="max-w-md mx-auto p-8 text-center backdrop-blur-xl bg-white/90">
+            <Card className="max-w-md mx-auto p-8 text-center backdrop-blur-xl theme-surface">
               <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-gray-900 mb-2">{t.profile.notConnected}</h2>
               <p className="text-gray-600 mb-6">
@@ -99,15 +131,16 @@ export default function ProfilePage() {
     );
   }
 
-  const stats = [
-    { label: t.profile.stats.totalPackages, value: '12', icon: Package },
-    { label: t.profile.stats.inTransit, value: '2', icon: MapPin },
-    { label: t.profile.stats.delivered, value: '10', icon: Package },
-  ];
+  const [stats, setStats] = useState([
+    { label: t.profile.stats.totalPackages, value: '0', icon: Package },
+    { label: t.profile.stats.inTransit, value: '0', icon: MapPin },
+    { label: t.profile.stats.delivered, value: '0', icon: Package },
+  ]);
 
   const menuItems = [
     { label: t.profile.menuItems.myPackages, icon: Package, href: '/packages' },
     { label: t.profile.menuItems.requestPackage, icon: MapPin, href: '/dashboard/request-package' },
+    { label: 'Rewards & Referrals', icon: Gift, href: '/profile/rewards' },
     { label: t.profile.menuItems.priceCalculator, icon: CreditCard, href: '/calculator' },
     { label: t.profile.menuItems.paymentMethods, icon: Wallet, href: '/profile/payment' },
     { label: t.profile.menuItems.myAddresses, icon: Home, href: '/profile/addresses' },
@@ -120,7 +153,7 @@ export default function ProfilePage() {
   return (
     <div className="overflow-x-hidden">
       <Header />
-      <main className="min-h-screen pb-32 pt-2 md:pt-4 bg-gradient-to-br from-gray-50 via-white to-primary-50">
+      <main className="min-h-screen pb-32 pt-2 md:pt-4">
         <Container>
           {/* Profile Header */}
           <motion.div
@@ -181,7 +214,7 @@ export default function ProfilePage() {
             transition={{ delay: 0.05 }}
             className="mb-6 md:mb-8"
           >
-            <Card className="p-4 sm:p-5 backdrop-blur-xl bg-white/80">
+            <Card className="p-4 sm:p-5 backdrop-blur-xl theme-surface">
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-2 bg-primary-100 rounded-xl">
                   <Globe className="w-5 h-5 text-primary-600" />
@@ -207,6 +240,40 @@ export default function ProfilePage() {
             </Card>
           </motion.div>
 
+          {/* Theme Picker Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+            className="mb-6 md:mb-8"
+          >
+            <Card className="p-4 sm:p-5">
+              <button
+                onClick={() => setThemePickerOpen(true)}
+                className="w-full flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary-100 rounded-xl">
+                    <Palette className="w-5 h-5 text-primary-600" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-semibold text-gray-900">Theme</h3>
+                    <p className="text-sm text-gray-500">{theme.name}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-6 h-6 rounded-full border-2 border-gray-200"
+                    style={{ backgroundColor: theme.preview.accent }}
+                  />
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                </div>
+              </button>
+            </Card>
+          </motion.div>
+
+          <ThemePicker isOpen={themePickerOpen} onClose={() => setThemePickerOpen(false)} />
+
           {/* Stats */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -219,7 +286,7 @@ export default function ProfilePage() {
               return (
                 <Card
                   key={index}
-                  className="p-3 sm:p-4 md:p-6 text-center backdrop-blur-xl bg-white/80 hover:bg-white/90 transition-all"
+                  className="p-3 sm:p-4 md:p-6 text-center backdrop-blur-xl theme-surface transition-all"
                 >
                   <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
                     <Icon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-primary-600" />
@@ -251,7 +318,7 @@ export default function ProfilePage() {
                     <Link href={item.href}>
                       <Card
                         hover
-                        className="p-4 backdrop-blur-xl bg-white/80 cursor-pointer group"
+                        className="p-4 backdrop-blur-xl theme-surface cursor-pointer group"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">

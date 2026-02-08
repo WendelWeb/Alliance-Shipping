@@ -17,7 +17,7 @@ export default function DashboardLayout({
   return (
     <AdminCacheProvider>
     <ToastProvider>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-theme-bg">
         {/* Sidebar (includes mobile header) */}
         <AdminSidebar />
 

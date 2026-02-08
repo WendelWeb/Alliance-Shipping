@@ -83,12 +83,12 @@ export function News() {
 
   if (loading) {
     return (
-      <section id="news" className="section-padding bg-gray-50">
+      <section id="news" className="section-padding bg-theme-bg">
         <Container>
           <SectionTitle title={t.news.title} subtitle={t.news.subtitle} />
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 animate-pulse">
+              <div key={i} className="bg-theme-surface-solid rounded-2xl p-6 animate-pulse">
                 <div className="h-6 bg-gray-200 rounded w-3/4 mb-4" />
                 <div className="h-4 bg-gray-200 rounded w-full mb-2" />
                 <div className="h-4 bg-gray-200 rounded w-5/6" />
@@ -102,7 +102,7 @@ export function News() {
 
   if (announcements.length === 0) {
     return (
-      <section id="news" className="section-padding bg-gray-50">
+      <section id="news" className="section-padding bg-theme-bg">
         <Container>
           <SectionTitle title={t.news.title} subtitle={t.news.subtitle} />
           <div className="text-center py-12">
@@ -115,7 +115,7 @@ export function News() {
   }
 
   return (
-    <section id="news" className="section-padding bg-gradient-to-br from-gray-50 to-white">
+    <section id="news" className="section-padding bg-theme-bg">
       <Container>
         <SectionTitle title={t.news.title} subtitle={t.news.subtitle} />
 

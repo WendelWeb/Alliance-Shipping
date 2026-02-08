@@ -11,12 +11,14 @@ import {
   FileText,
   TrendingUp,
   DollarSign,
+  Gift,
   Smartphone,
   Megaphone,
   ShieldCheck,
   LogOut,
   ChevronRight,
   User,
+  MapPin,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
@@ -37,6 +39,8 @@ const navigation = [
   },
   { name: 'Analytics', href: '/admin/analytics', icon: TrendingUp },
   { name: 'Fees Management', href: '/admin/fees', icon: DollarSign },
+  { name: 'City Pricing', href: '/admin/city-pricing', icon: MapPin },
+  { name: 'Loyalty Program', href: '/admin/loyalty', icon: Gift },
   { name: 'Special Items', href: '/admin/special-items', icon: Smartphone },
   { name: 'Announcements', href: '/admin/announcements', icon: Megaphone },
   { name: 'Admin Management', href: '/admin/admins', icon: ShieldCheck },
@@ -49,7 +53,7 @@ export default function AdminSidebar() {
     <>
       {/* Sidebar for desktop */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 pb-4">
+        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 theme-surface-solid px-6 pb-4">
           {/* Logo */}
           <Link href="/admin" className="flex h-16 shrink-0 items-center gap-2 group">
             <div className="relative h-10 w-24 flex-shrink-0 rounded-lg overflow-hidden ring-2 ring-primary-100 group-hover:ring-primary-300 transition-all">
@@ -143,7 +147,7 @@ export default function AdminSidebar() {
       </div>
 
       {/* Mobile header */}
-      <div className="fixed top-0 left-0 right-0 z-40 flex items-center gap-x-4 bg-white px-3 py-2.5 shadow-sm lg:hidden border-b border-gray-200">
+      <div className="fixed top-0 left-0 right-0 z-40 flex items-center gap-x-4 theme-surface-solid px-3 py-2.5 shadow-sm lg:hidden border-b border-gray-200">
         <Link href="/admin" className="flex items-center gap-1.5 flex-shrink-0 group min-w-0">
           <div className="relative h-7 w-16 flex-shrink-0 rounded-md overflow-hidden ring-1 ring-primary-100 group-hover:ring-primary-300 transition-all">
             <Image

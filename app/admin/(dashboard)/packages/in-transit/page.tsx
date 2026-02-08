@@ -228,7 +228,7 @@ export default function InTransitPackagesPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
+              className="theme-card rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
             >
               <div className="p-6">
                 {/* Header */}
@@ -437,7 +437,7 @@ export default function InTransitPackagesPage() {
 
       {/* Empty State */}
       {filteredPackages.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
+        <div className="text-center py-12 theme-card rounded-2xl border border-gray-100">
           <Plane className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">No packages in transit</h3>
           <p className="mt-1 text-sm text-gray-500">
@@ -490,7 +490,7 @@ export default function InTransitPackagesPage() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              className="theme-card rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             >
               {/* Header */}
               <div className="sticky top-0 bg-gradient-to-r from-primary-600 to-primary-700 text-white px-6 py-4 rounded-t-2xl">
@@ -542,7 +542,7 @@ export default function InTransitPackagesPage() {
                             ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
                             : newStatus === status.value
                             ? `border-${status.color}-500 bg-${status.color}-50`
-                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                            : 'border-gray-200 hover:border-gray-300 bg-theme-surface-solid'
                         }`}
                       >
                         <div className="flex items-start gap-3">

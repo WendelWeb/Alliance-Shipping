@@ -1,0 +1,27 @@
+
+> alliance-shipping-web@1.0.0 dev
+> next dev
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\stanl\Desktop\Alliance Shipping - Claude\package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * C:\Users\stanl\Desktop\Alliance Shipping - Claude\alliance-shipping-web\package-lock.json
+
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3000
+   - Network:      http://10.5.0.2:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 4.1s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 782ms (220 modules)
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 10.6s (947 modules)
+ POST /api/package-requests 404 in 12312ms
+ ✓ Compiled in 2.5s (351 modules)
+ ✓ Compiled in 1525ms (347 modules)
+ ✓ Compiled in 491ms (333 modules)
+[?25h

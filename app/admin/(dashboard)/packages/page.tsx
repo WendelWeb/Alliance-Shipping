@@ -24,6 +24,10 @@ import {
   Scale,
   Truck,
   RefreshCw,
+  Mail,
+  TrendingUp,
+  Gift,
+  CheckCircle,
 } from 'lucide-react';
 import { LoadingSpinner, SkeletonLoader, CardSkeleton } from '@/components/admin/LoadingSpinner';
 
@@ -159,6 +163,8 @@ export default function AllPackagesPage() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [trackingHistory, setTrackingHistory] = useState<any[]>([]);
   const [notifyingId, setNotifyingId] = useState<number | null>(null);
+  const [showActionsSummary, setShowActionsSummary] = useState(false);
+  const [actionsSummary, setActionsSummary] = useState<any>(null);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
 
@@ -230,6 +236,14 @@ export default function AllPackagesPage() {
         body: JSON.stringify({ packageIds: selectedPackages, status: newStatus }),
       });
       if (!response.ok) throw new Error('Failed to update packages');
+      const result = await response.json();
+
+      // Show actions summary modal if status was changed to delivered
+      if (newStatus === 'delivered' && result.actionsSummary) {
+        setActionsSummary(result.actionsSummary);
+        setShowActionsSummary(true);
+      }
+
       refresh();
       setSelectedPackages([]);
       setShowStatusModal(false);
@@ -374,7 +388,7 @@ export default function AllPackagesPage() {
                 className={`relative overflow-hidden rounded-xl border cursor-pointer transition-shadow hover:shadow-md ${
                   isActive
                     ? `${style.activeBg} ${style.activeBorder} shadow-md`
-                    : 'bg-white border-gray-100 shadow-sm'
+                    : 'theme-card border-gray-100 shadow-sm'
                 }`}
               >
                 <div className="flex">
@@ -469,7 +483,7 @@ export default function AllPackagesPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.03 }}
-                  className={`bg-white rounded-xl border overflow-hidden hover:shadow-md transition-all ${
+                  className={`theme-card rounded-xl border overflow-hidden hover:shadow-md transition-all ${
                     isSelected ? 'border-primary-400 ring-2 ring-primary-100' : 'border-gray-100 shadow-sm'
                   }`}
                 >
@@ -656,7 +670,7 @@ export default function AllPackagesPage() {
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden"
+              className="theme-card rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden"
             >
               <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-8 py-6">
                 <h3 className="text-2xl font-bold text-white flex items-center gap-3">
@@ -702,7 +716,7 @@ export default function AllPackagesPage() {
                             ? 'border-gray-200 bg-gray-100 opacity-50 cursor-not-allowed'
                             : isSelected
                             ? `${styles.border} ${styles.bg} shadow-md`
-                            : 'border-gray-200 hover:border-gray-300 bg-white hover:shadow-md'
+                            : 'border-gray-200 hover:border-gray-300 theme-card hover:shadow-md'
                         }`}
                       >
                         <div className="flex items-start gap-3">
@@ -768,7 +782,7 @@ export default function AllPackagesPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+            className="theme-card rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
           >
             <div className="p-8 text-center">
               <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-red-100 flex items-center justify-center">
@@ -813,7 +827,7 @@ export default function AllPackagesPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full my-8"
+            className="theme-card rounded-2xl shadow-2xl max-w-5xl w-full my-8"
           >
             {/* Header */}
             <div className="sticky top-0 bg-gradient-to-r from-primary-600 to-primary-700 text-white px-6 py-5 rounded-t-2xl">
@@ -874,7 +888,7 @@ export default function AllPackagesPage() {
                 {/* Left Column */}
                 <div className="lg:col-span-2 space-y-6">
                   {/* Customer Information */}
-                  <div className="rounded-xl p-6 border border-gray-200 bg-white">
+                  <div className="rounded-xl p-6 border border-gray-200 theme-card">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="h-9 w-9 rounded-lg bg-gray-100 flex items-center justify-center">
                         <User className="h-5 w-5 text-gray-600" />
@@ -912,7 +926,7 @@ export default function AllPackagesPage() {
                   </div>
 
                   {/* Package Details */}
-                  <div className="rounded-xl p-6 border border-gray-200 bg-white">
+                  <div className="rounded-xl p-6 border border-gray-200 theme-card">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="h-9 w-9 rounded-lg bg-gray-100 flex items-center justify-center">
                         <Package className="h-5 w-5 text-gray-600" />
@@ -950,7 +964,7 @@ export default function AllPackagesPage() {
                   </div>
 
                   {/* Tracking History */}
-                  <div className="rounded-xl p-6 border border-gray-200 bg-white">
+                  <div className="rounded-xl p-6 border border-gray-200 theme-card">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="h-9 w-9 rounded-lg bg-gray-100 flex items-center justify-center">
                         <Calendar className="h-5 w-5 text-gray-600" />
@@ -989,7 +1003,7 @@ export default function AllPackagesPage() {
                 {/* Right Column */}
                 <div className="space-y-6">
                   {/* Quick Actions */}
-                  <div className="rounded-xl p-6 border border-gray-200 bg-white">
+                  <div className="rounded-xl p-6 border border-gray-200 theme-card">
                     <h3 className="text-base font-semibold text-gray-900 mb-4">Actions rapides</h3>
                     <div className="space-y-2">
                       <button
@@ -1030,7 +1044,7 @@ export default function AllPackagesPage() {
                   </div>
 
                   {/* Meta */}
-                  <div className="rounded-xl p-6 border border-gray-200 bg-white">
+                  <div className="rounded-xl p-6 border border-gray-200 theme-card">
                     <h3 className="text-base font-semibold text-gray-900 mb-4">Informations</h3>
                     <div className="space-y-3">
                       <div>
@@ -1054,6 +1068,167 @@ export default function AllPackagesPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* ── Actions Summary Modal (Delivery) ─────────────────────── */}
+      {showActionsSummary && actionsSummary && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="theme-card rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden"
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-green-600 to-emerald-700 px-8 py-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="h-14 w-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <CheckCircle className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">Livraison Complétée!</h3>
+                    <p className="text-green-100 mt-1">
+                      {actionsSummary.packagesUpdated} colis {actionsSummary.packagesUpdated > 1 ? 'ont été marqués' : 'a été marqué'} comme livré{actionsSummary.packagesUpdated > 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowActionsSummary(false);
+                    setActionsSummary(null);
+                  }}
+                  className="h-10 w-10 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                >
+                  <X className="h-5 w-5 text-white" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-8">
+              {/* Summary Stats */}
+              <div className="grid grid-cols-3 gap-4 mb-8">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="h-10 w-10 rounded-lg bg-blue-500 flex items-center justify-center">
+                      <Mail className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-blue-900">{actionsSummary.emailsSent}</p>
+                      <p className="text-xs text-blue-700 font-medium">Email{actionsSummary.emailsSent > 1 ? 's' : ''} envoyé{actionsSummary.emailsSent > 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="h-10 w-10 rounded-lg bg-purple-500 flex items-center justify-center">
+                      <TrendingUp className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-purple-900">{actionsSummary.pointsAwarded.toLocaleString()}</p>
+                      <p className="text-xs text-purple-700 font-medium">Points attribués</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="h-10 w-10 rounded-lg bg-amber-500 flex items-center justify-center">
+                      <Gift className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-amber-900">${actionsSummary.creditsAwarded.toFixed(2)}</p>
+                      <p className="text-xs text-amber-700 font-medium">Crédits attribués</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Package Details */}
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Package className="h-5 w-5 text-gray-600" />
+                  Détails par colis
+                </h4>
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                  {actionsSummary.details?.map((detail: any, index: number) => (
+                    <div
+                      key={index}
+                      className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-gray-300 transition-colors"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-mono text-sm font-bold text-gray-900">
+                              {detail.trackingNumber}
+                            </span>
+                            {detail.email && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
+                                <Mail className="h-3 w-3" />
+                                Envoyé
+                              </span>
+                            )}
+                          </div>
+                          {detail.email && (
+                            <p className="text-xs text-gray-500 mb-2">{detail.email}</p>
+                          )}
+                          <div className="flex items-center gap-4 text-sm">
+                            {detail.pointsEarned > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <TrendingUp className="h-4 w-4 text-purple-600" />
+                                <span className="font-semibold text-purple-900">
+                                  +{detail.pointsEarned.toLocaleString()} pts
+                                </span>
+                              </div>
+                            )}
+                            {detail.creditsEarned > 0 && (
+                              <div className="flex items-center gap-1.5">
+                                <Gift className="h-4 w-4 text-amber-600" />
+                                <span className="font-semibold text-amber-900">
+                                  +${detail.creditsEarned.toFixed(2)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-1" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Footer Note */}
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex gap-3">
+                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-green-900">
+                      Toutes les actions ont été effectuées avec succès
+                    </p>
+                    <p className="text-xs text-green-700 mt-1">
+                      Les clients ont reçu leurs notifications par email et leurs récompenses ont été automatiquement créditées.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Close Button */}
+              <div className="mt-6">
+                <button
+                  onClick={() => {
+                    setShowActionsSummary(false);
+                    setActionsSummary(null);
+                  }}
+                  className="w-full bg-gradient-to-r from-green-600 to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold hover:from-green-700 hover:to-emerald-800 transition-all shadow-lg hover:shadow-xl"
+                >
+                  Parfait, Merci!
+                </button>
               </div>
             </div>
           </motion.div>

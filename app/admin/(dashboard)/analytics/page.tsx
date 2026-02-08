@@ -127,7 +127,7 @@ export default function AnalyticsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg p-1">
+          <div className="flex items-center gap-2 theme-card border border-gray-300 rounded-lg p-1">
             <button
               onClick={() => setTimeRange('week')}
               className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
@@ -182,7 +182,7 @@ export default function AnalyticsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+            className="relative overflow-hidden rounded-2xl theme-card p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
           >
             <div className="flex items-center justify-between">
               <div className={`${stat.bgColor} p-3 rounded-xl`}>
@@ -216,7 +216,7 @@ export default function AnalyticsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          className="theme-card rounded-2xl p-6 shadow-sm border border-gray-100"
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-gray-900">Monthly Revenue</h2>
@@ -259,7 +259,7 @@ export default function AnalyticsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          className="theme-card rounded-2xl p-6 shadow-sm border border-gray-100"
         >
           <h2 className="text-lg font-bold text-gray-900 mb-6">Revenue by Destination</h2>
 
@@ -304,7 +304,7 @@ export default function AnalyticsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          className="theme-card rounded-2xl p-6 shadow-sm border border-gray-100"
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-900">Top Customers</h2>
@@ -379,7 +379,7 @@ export default function AnalyticsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          className="theme-card rounded-2xl p-6 shadow-sm border border-gray-100"
         >
           <h2 className="text-lg font-bold text-gray-900 mb-4">Payment Methods</h2>
 

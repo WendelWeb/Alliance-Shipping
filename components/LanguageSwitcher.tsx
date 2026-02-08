@@ -29,7 +29,7 @@ export function LanguageSwitcher() {
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+          <div className="absolute right-0 mt-2 w-48 bg-theme-surface-solid rounded-lg shadow-lg border border-gray-200 py-1 z-20">
             {locales.map((loc) => (
               <button
                 key={loc}

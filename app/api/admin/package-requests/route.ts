@@ -4,6 +4,7 @@ import { packageRequests, users, packages, trackingHistory, adminActivityLogs } 
 import { getAdminSession } from '@/lib/auth/admin';
 import { eq, desc, sql } from 'drizzle-orm';
 import { sendPackageApprovedEmail, sendPackageRejectedEmail } from '@/lib/email/service';
+import { sendPushNotification } from '@/lib/notifications/push';
 
 // GET - List all package requests
 export async function GET(request: NextRequest) {
@@ -226,9 +227,16 @@ export async function PATCH(request: NextRequest) {
           totalFee
         ).catch(error => {
           console.error('Failed to send approval email:', error);
-          // Don't fail the request if email fails
         });
       }
+
+      // Send push notification for approval
+      sendPushNotification({
+        userId: packageRequest.userId,
+        templateKey: 'request_approved',
+        variables: { tracking: asTrackingNumber },
+        packageId: newPackage.id,
+      }).catch(() => {});
 
       return NextResponse.json({
         success: true,
@@ -276,9 +284,15 @@ export async function PATCH(request: NextRequest) {
           packageRequest.adminNotes || undefined
         ).catch(error => {
           console.error('Failed to send rejection email:', error);
-          // Don't fail the request if email fails
         });
       }
+
+      // Send push notification for rejection
+      sendPushNotification({
+        userId: packageRequest.userId,
+        templateKey: 'request_rejected',
+        variables: { tracking: packageRequest.externalTrackingNumber },
+      }).catch(() => {});
 
       return NextResponse.json({ success: true });
     }

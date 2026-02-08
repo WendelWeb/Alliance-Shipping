@@ -39,7 +39,7 @@ export function HowItWorks() {
   ];
 
   return (
-    <section id="services" className="section-padding bg-white">
+    <section id="services" className="section-padding bg-theme-surface-solid">
       <Container>
         <SectionTitle
           title={t.howItWorks.title}
@@ -107,7 +107,7 @@ export function HowItWorks() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="mt-16"
         >
-          <div className="relative w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-xl bg-gradient-to-br from-gray-50 to-white">
+          <div className="relative w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-xl bg-theme-bg">
             <ImageGallery
               section="howItWorks"
               className="w-full h-full"

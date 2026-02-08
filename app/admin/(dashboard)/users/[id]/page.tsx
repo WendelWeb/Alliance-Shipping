@@ -293,7 +293,7 @@ export default function UserDetailPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+        className="theme-card rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
       >
         <div className="relative h-32 bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
@@ -397,7 +397,7 @@ export default function UserDetailPage() {
         </div>
 
         {filteredPackages.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+          <div className="theme-card rounded-2xl border border-gray-100 p-12 text-center">
             <PackageIcon className="h-14 w-14 text-gray-200 mx-auto mb-3" />
             <p className="text-gray-500 font-medium">No packages found</p>
             <p className="text-sm text-gray-400 mt-1">
@@ -417,7 +417,7 @@ export default function UserDetailPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.03 }}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+                  className="theme-card rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
                 >
                   {/* Package Card Header */}
                   <div
@@ -620,7 +620,7 @@ export default function UserDetailPage() {
       {userNotifications.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <h2 className="text-xl font-bold text-gray-900 mb-4">Notifications Sent ({userNotifications.length})</h2>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+          <div className="theme-card rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
             {userNotifications.map((notif) => (
               <div key={notif.id} className="p-4 flex items-start gap-3">
                 <div className={`p-2 rounded-lg flex-shrink-0 ${notif.isRead ? 'bg-gray-100' : 'bg-primary-50'}`}>
@@ -659,7 +659,7 @@ export default function UserDetailPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              className="theme-card rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
             >
               <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-3">

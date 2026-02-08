@@ -19,7 +19,7 @@ export function Pricing() {
   const calculatedPrice = pricing.serviceFee + weight * pricing.pricePerLb;
 
   return (
-    <section id="pricing" className="section-padding bg-gradient-to-br from-gray-50 to-white">
+    <section id="pricing" className="section-padding bg-theme-bg">
       <Container>
         <SectionTitle
           title={t.pricing.title}
@@ -106,7 +106,7 @@ export function Pricing() {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
-                  className="flex items-start gap-3 p-4 bg-white rounded-lg border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all"
+                  className="flex items-start gap-3 p-4 theme-card hover:border-primary-300 hover:shadow-md transition-all"
                 >
                   <div className="flex-shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
                     <Check className="w-4 h-4 text-green-600" />

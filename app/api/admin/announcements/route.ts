@@ -47,7 +47,14 @@ export async function GET(request: NextRequest) {
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(announcements.createdAt));
 
-    return NextResponse.json({ announcements: allAnnouncements });
+    // Map DB field names to what the frontend expects
+    const mapped = allAnnouncements.map(a => ({
+      ...a,
+      category: a.type,
+      publishedAt: a.publishDate,
+    }));
+
+    return NextResponse.json({ announcements: mapped });
   } catch (error) {
     console.error('Error fetching announcements:', error);
     return NextResponse.json(
@@ -92,7 +99,7 @@ export async function POST(request: NextRequest) {
         isPublished: isPublished || false,
         publishDate: isPublished ? new Date() : null,
         imageUrl: imageUrl || null,
-        createdBy: session.userId,
+        createdBy: session.adminId,
       })
       .returning();
 

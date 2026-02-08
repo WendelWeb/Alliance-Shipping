@@ -8,6 +8,7 @@ import {
   shouldCreateAnnouncement,
   SUPPORTED_LANGUAGES,
 } from '@/lib/announcements/fee-change-templates';
+import { sendPushToAllUsers } from '@/lib/notifications/push';
 
 // GET - Get current and historical fees
 export async function GET(request: NextRequest) {
@@ -205,6 +206,13 @@ export async function POST(request: NextRequest) {
 
         announcementsCreated++;
       }
+    }
+
+    // Send push notification for price change if effective now
+    if (shouldCreateAnnouncement(feeChange) && effective <= new Date()) {
+      sendPushToAllUsers({
+        templateKey: 'price_change',
+      }).catch(() => {});
     }
 
     return NextResponse.json({

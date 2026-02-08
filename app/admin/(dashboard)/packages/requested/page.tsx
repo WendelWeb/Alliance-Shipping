@@ -350,7 +350,7 @@ export default function RequestedPackagesPage() {
       {loading ? (
         <SkeletonLoader rows={3} />
       ) : filteredRequests.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
+        <div className="text-center py-12 theme-card rounded-xl border border-gray-100">
           <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <h3 className="text-lg font-medium text-gray-900">Aucune demande en attente</h3>
           <p className="mt-1 text-sm text-gray-500">
@@ -371,7 +371,7 @@ export default function RequestedPackagesPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all"
+                className="theme-card rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all"
               >
                 <div className="p-6">
                   {/* Header Info */}
@@ -399,7 +399,7 @@ export default function RequestedPackagesPage() {
                     {/* Left Column - Request Info */}
                     <div className="space-y-4">
                       {/* External Tracking */}
-                      <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <div className="bg-theme-surface-solid rounded-lg p-4 border border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
                           <Hash className="h-5 w-5 text-gray-500" />
                           <span className="text-xs uppercase tracking-wide text-gray-500">Tracking Transporteur</span>
@@ -408,7 +408,7 @@ export default function RequestedPackagesPage() {
                       </div>
 
                       {/* Receipt Location */}
-                      <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <div className="bg-theme-surface-solid rounded-lg p-4 border border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
                           <MapPin className="h-5 w-5 text-gray-500" />
                           <span className="text-xs uppercase tracking-wide text-gray-500">Lieu de Réception</span>
@@ -417,7 +417,7 @@ export default function RequestedPackagesPage() {
                       </div>
 
                       {/* Description */}
-                      <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <div className="bg-theme-surface-solid rounded-lg p-4 border border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
                           <Package className="h-5 w-5 text-gray-500" />
                           <span className="text-xs uppercase tracking-wide text-gray-500">Description</span>
@@ -427,7 +427,7 @@ export default function RequestedPackagesPage() {
 
                       {/* Customer Notes */}
                       {request.customerNotes && (
-                        <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="bg-theme-surface-solid rounded-lg p-4 border border-gray-200">
                           <div className="flex items-center gap-2 mb-2">
                             <MessageSquare className="h-5 w-5 text-gray-500" />
                             <span className="text-xs uppercase tracking-wide text-gray-500">Notes Client</span>
@@ -437,7 +437,7 @@ export default function RequestedPackagesPage() {
                       )}
 
                       {/* Recipient */}
-                      <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <div className="bg-theme-surface-solid rounded-lg p-4 border border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
                           <User className="h-5 w-5 text-gray-500" />
                           <span className="text-xs uppercase tracking-wide text-gray-500">Destinataire</span>

@@ -23,7 +23,7 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 w-full">
+    <header className="sticky top-0 z-50 theme-surface-solid backdrop-blur-sm border-b border-gray-200 w-full">
       <Container>
         <nav className="flex items-center justify-between h-16 lg:h-20 w-full">
           {/* Logo */}

@@ -102,7 +102,7 @@ export default function PaymentPage() {
   return (
     <div className="overflow-x-hidden">
       <Header />
-      <main className="min-h-screen pb-32 pt-2 md:pt-4 bg-gradient-to-br from-gray-50 via-white to-primary-50">
+      <main className="min-h-screen pb-32 pt-2 md:pt-4">
         <Container>
           {/* Header */}
           <div className="mb-6">
@@ -126,7 +126,7 @@ export default function PaymentPage() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl shadow-sm border-2 border-gray-100 p-8 text-center"
+                className="theme-card rounded-2xl shadow-sm p-8 text-center"
               >
                 <Wallet className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
@@ -143,7 +143,7 @@ export default function PaymentPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="bg-white rounded-2xl shadow-sm border-2 border-gray-100 overflow-hidden hover:shadow-md transition-all"
+                  className="theme-card rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-all"
                 >
                   <div className={`h-2 bg-gradient-to-r ${getMethodColor(method.type)}`} />
                   <div className="p-6">
@@ -233,7 +233,7 @@ export default function PaymentPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+            className="theme-card rounded-2xl shadow-2xl max-w-md w-full p-6"
           >
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
               {t.profile.payment.addMethod}

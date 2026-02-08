@@ -55,7 +55,7 @@ export default function SupportPage() {
   return (
     <div className="overflow-x-hidden">
       <Header />
-      <main className="min-h-screen pb-32 pt-2 md:pt-4 bg-gradient-to-br from-gray-50 via-white to-primary-50">
+      <main className="min-h-screen pb-32 pt-2 md:pt-4">
         <Container>
           {/* Header */}
           <div className="mb-6">
@@ -79,7 +79,7 @@ export default function SupportPage() {
               href="tel:+15555551234"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-xl shadow-sm border-2 border-gray-100 p-6 hover:shadow-md transition-all text-center"
+              className="theme-card rounded-xl shadow-sm p-6 hover:shadow-md transition-all text-center"
             >
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Phone className="h-6 w-6 text-white" />
@@ -94,7 +94,7 @@ export default function SupportPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="bg-white rounded-xl shadow-sm border-2 border-gray-100 p-6 hover:shadow-md transition-all text-center"
+              className="theme-card rounded-xl shadow-sm p-6 hover:shadow-md transition-all text-center"
             >
               <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Mail className="h-6 w-6 text-white" />
@@ -111,7 +111,7 @@ export default function SupportPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white rounded-xl shadow-sm border-2 border-gray-100 p-6 hover:shadow-md transition-all text-center"
+              className="theme-card rounded-xl shadow-sm p-6 hover:shadow-md transition-all text-center"
             >
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-3">
                 <MessageSquare className="h-6 w-6 text-white" />
@@ -138,7 +138,7 @@ export default function SupportPage() {
               {faqs.map((faq) => (
                 <div
                   key={faq.id}
-                  className="bg-white rounded-xl shadow-sm border-2 border-gray-100 overflow-hidden"
+                  className="theme-card rounded-xl shadow-sm overflow-hidden"
                 >
                   <button
                     onClick={() => setExpandedFAQ(expandedFAQ === faq.id ? null : faq.id)}
@@ -172,7 +172,7 @@ export default function SupportPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white rounded-2xl shadow-sm border-2 border-gray-100 p-6"
+            className="theme-card rounded-2xl shadow-sm p-6"
           >
             <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
               <MessageSquare className="h-6 w-6 text-primary-600" />

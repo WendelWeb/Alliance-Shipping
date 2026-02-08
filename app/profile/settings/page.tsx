@@ -16,6 +16,7 @@ import {
   Check,
   Phone,
   Mail,
+  MapPin,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -32,19 +33,80 @@ export default function SettingsPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState<string>('');
+  const [city, setCity] = useState('');
+  const [warehouseId, setWarehouseId] = useState<number | null>(null);
+  const [warehouses, setWarehouses] = useState<any[]>([]);
+  const [loadingWarehouses, setLoadingWarehouses] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
+  const HAITI_CITIES = [
+    'Port-au-Prince',
+    'Cap-Haïtien',
+    'Port-de-Paix',
+    'Gonaïves',
+    'Saint-Marc',
+    'Les Cayes',
+    'Pétion-Ville',
+    'Delmas',
+    'Carrefour',
+    'Jacmel',
+  ];
+
   // Initialize form with user data
   useEffect(() => {
-    if (user) {
-      setFirstName(user.firstName || '');
-      setLastName(user.lastName || '');
-      setPhoneNumber(user.primaryPhoneNumber?.phoneNumber || '');
-    }
+    const loadUserData = async () => {
+      if (user) {
+        setFirstName(user.firstName || '');
+        setLastName(user.lastName || '');
+        setPhoneNumber(user.primaryPhoneNumber?.phoneNumber || '');
+
+        // Load city and warehouse from API
+        try {
+          const response = await fetch('/api/user/profile');
+          if (response.ok) {
+            const data = await response.json();
+            if (data.user?.city) {
+              setCity(data.user.city);
+            }
+            if (data.user?.warehouseId) {
+              setWarehouseId(data.user.warehouseId);
+            }
+          }
+        } catch (error) {
+          console.error('Error loading user data:', error);
+        }
+      }
+    };
+    loadUserData();
   }, [user]);
+
+  // Load warehouses when city changes
+  useEffect(() => {
+    const loadWarehouses = async () => {
+      if (!city) {
+        setWarehouses([]);
+        return;
+      }
+
+      setLoadingWarehouses(true);
+      try {
+        const response = await fetch(`/api/warehouses?city=${encodeURIComponent(city)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setWarehouses(data.warehouses || []);
+        }
+      } catch (error) {
+        console.error('Error loading warehouses:', error);
+      } finally {
+        setLoadingWarehouses(false);
+      }
+    };
+
+    loadWarehouses();
+  }, [city]);
 
   if (!isLoaded) {
     return (
@@ -141,6 +203,20 @@ export default function SettingsPage() {
         }
       }
 
+      // Update city and warehouse in our database
+      if (city || warehouseId) {
+        try {
+          await fetch('/api/user/profile', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ city, warehouseId }),
+          });
+          updateSuccess = true;
+        } catch (updateError: any) {
+          console.error('Profile update error:', updateError);
+        }
+      }
+
       if (updateSuccess || (firstName.trim() === user.firstName && lastName.trim() === user.lastName && phoneNumber === currentPhone)) {
         setSuccess(true);
         setTimeout(() => {
@@ -158,7 +234,7 @@ export default function SettingsPage() {
   return (
     <div className="overflow-x-hidden">
       <Header />
-      <main className="min-h-screen pb-32 pt-2 md:pt-4 bg-gradient-to-br from-gray-50 via-white to-primary-50">
+      <main className="min-h-screen pb-32 pt-2 md:pt-4">
         <Container>
           {/* Header */}
           <div className="mb-6">
@@ -217,7 +293,7 @@ export default function SettingsPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-sm border-2 border-gray-100 p-6"
+              className="theme-card rounded-2xl shadow-sm p-6"
             >
               <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Camera className="h-6 w-6 text-primary-600" />
@@ -277,7 +353,7 @@ export default function SettingsPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl shadow-sm border-2 border-gray-100 p-6"
+              className="theme-card rounded-2xl shadow-sm p-6"
             >
               <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <User className="h-6 w-6 text-primary-600" />
@@ -348,6 +424,99 @@ export default function SettingsPage() {
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     {t.profile.settings.phoneNote}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <MapPin className="h-4 w-4 inline mr-1" />
+                    Ville en Haïti
+                  </label>
+                  <select
+                    value={city}
+                    onChange={(e) => {
+                      setCity(e.target.value);
+                      setWarehouseId(null); // Reset warehouse when city changes
+                    }}
+                    className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-100 transition-all"
+                  >
+                    <option value="">Sélectionnez votre ville</option>
+                    {HAITI_CITIES.map((cityName) => (
+                      <option key={cityName} value={cityName}>
+                        {cityName}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Votre ville de livraison en Haïti
+                  </p>
+                </div>
+
+                {/* Warehouse Selector */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    📦 Dépôt de Réception
+                  </label>
+                  {loadingWarehouses ? (
+                    <div className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl flex items-center justify-center">
+                      <Loader2 className="h-4 w-4 animate-spin text-gray-400 mr-2" />
+                      <span className="text-sm text-gray-500">Chargement des dépôts...</span>
+                    </div>
+                  ) : city && warehouses.length > 0 ? (
+                    <>
+                      <select
+                        value={warehouseId || ''}
+                        onChange={(e) => setWarehouseId(e.target.value ? Number(e.target.value) : null)}
+                        className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-100 transition-all"
+                      >
+                        <option value="">Sélectionnez votre dépôt</option>
+                        {warehouses.map((warehouse) => (
+                          <option key={warehouse.id} value={warehouse.id}>
+                            {warehouse.name} - {warehouse.address}
+                          </option>
+                        ))}
+                      </select>
+                      {warehouseId && warehouses.find(w => w.id === warehouseId) && (
+                        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-xs text-blue-900 font-medium mb-1">Informations du dépôt :</p>
+                          {(() => {
+                            const selectedWarehouse = warehouses.find(w => w.id === warehouseId);
+                            return selectedWarehouse ? (
+                              <>
+                                <p className="text-xs text-blue-800">📍 {selectedWarehouse.address}</p>
+                                {selectedWarehouse.phone && (
+                                  <p className="text-xs text-blue-800">📞 {selectedWarehouse.phone}</p>
+                                )}
+                                {selectedWarehouse.openingHours && (
+                                  <p className="text-xs text-blue-800">🕐 {selectedWarehouse.openingHours}</p>
+                                )}
+                                {selectedWarehouse.latitude && selectedWarehouse.longitude && (
+                                  <a
+                                    href={`https://maps.google.com/?q=${selectedWarehouse.latitude},${selectedWarehouse.longitude}&entry=gps&g_st=awb`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-primary-600 hover:text-primary-700 font-medium inline-flex items-center gap-1 mt-1"
+                                  >
+                                    🗺️ Voir sur Google Maps
+                                  </a>
+                                )}
+                              </>
+                            ) : null;
+                          })()}
+                        </div>
+                      )}
+                    </>
+                  ) : city && !loadingWarehouses ? (
+                    <div className="w-full px-4 py-3 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
+                      <p className="text-sm text-yellow-800">Aucun dépôt disponible dans cette ville</p>
+                    </div>
+                  ) : (
+                    <div className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl">
+                      <p className="text-sm text-gray-500">Veuillez d'abord sélectionner une ville</p>
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    Le dépôt où vous récupérerez vos colis
                   </p>
                 </div>
               </div>

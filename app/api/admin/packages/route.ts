@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { packages, users, trackingHistory, packageRequests, adminActivityLogs, serviceFees, specialItemFees } from '@/lib/db/schema';
+import { packages, users, trackingHistory, packageRequests, adminActivityLogs, serviceFees, specialItemFees, loyaltyConfig, loyaltyCredits } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
 import { eq, and, like, or, desc, sql, lte } from 'drizzle-orm';
+import { sendPushNotification } from '@/lib/notifications/push';
 
 // GET - List all packages with filters
 export async function GET(request: NextRequest) {
@@ -308,6 +309,8 @@ export async function POST(request: NextRequest) {
       userAgent: request.headers.get('user-agent') || 'unknown',
     });
 
+    // Points are now awarded on delivery, not creation (prevents fraud)
+
     return NextResponse.json({ package: newPackage }, { status: 201 });
   } catch (error) {
     console.error('Error creating package:', error);
@@ -387,6 +390,90 @@ export async function PATCH(request: NextRequest) {
       ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
       userAgent: request.headers.get('user-agent') || 'unknown',
     });
+
+    // Send push notification for status changes
+    if (status) {
+      const pushMap: Record<string, string> = {
+        'received': 'package_received',
+        'in-transit': 'package_in_transit',
+        'available': 'package_available',
+        'delivered': 'package_delivered',
+      };
+      const pushTemplate = pushMap[status];
+      if (pushTemplate) {
+        sendPushNotification({
+          userId: updatedPackage.userId,
+          templateKey: pushTemplate,
+          variables: { tracking: updatedPackage.trackingNumber },
+          packageId: updatedPackage.id,
+        }).catch(() => {});
+      }
+    }
+
+    // Award loyalty credits and points when package is delivered
+    if (status === 'delivered') {
+      try {
+        // Look up loyalty config values
+        const [shipmentCreditConfig] = await db
+          .select()
+          .from(loyaltyConfig)
+          .where(eq(loyaltyConfig.key, 'credit_per_shipment'));
+        const [weightCreditConfig] = await db
+          .select()
+          .from(loyaltyConfig)
+          .where(eq(loyaltyConfig.key, 'credit_per_lb'));
+        const [pointsConfig] = await db
+          .select()
+          .from(loyaltyConfig)
+          .where(eq(loyaltyConfig.key, 'points_per_dollar_spent'));
+
+        const creditPerShipment = shipmentCreditConfig ? parseFloat(String(shipmentCreditConfig.value)) : 1.00;
+        const creditPerLb = weightCreditConfig ? parseFloat(String(weightCreditConfig.value)) : 0.10;
+        const pointsPerDollar = pointsConfig ? parseFloat(pointsConfig.value) : 50;
+
+        const packageWeight = parseFloat(String(updatedPackage.weight)) || 0;
+        const totalCost = parseFloat(String(updatedPackage.totalCost)) || 0;
+        const pointsEarned = Math.floor(totalCost * pointsPerDollar);
+
+        // Insert shipment credit
+        await db.insert(loyaltyCredits).values({
+          userId: updatedPackage.userId,
+          amount: creditPerShipment.toFixed(2),
+          points: 0,
+          type: 'shipment',
+          description: `Shipment credit for package ${updatedPackage.trackingNumber}`,
+          referenceId: updatedPackage.id,
+        });
+
+        // Insert weight credit
+        if (packageWeight > 0) {
+          const weightCredit = creditPerLb * packageWeight;
+          await db.insert(loyaltyCredits).values({
+            userId: updatedPackage.userId,
+            amount: weightCredit.toFixed(2),
+            points: 0,
+            type: 'weight',
+            description: `Weight credit (${packageWeight} lbs) for package ${updatedPackage.trackingNumber}`,
+            referenceId: updatedPackage.id,
+          });
+        }
+
+        // Award points for spending
+        if (pointsEarned > 0) {
+          await db.insert(loyaltyCredits).values({
+            userId: updatedPackage.userId,
+            amount: '0.00',
+            points: pointsEarned,
+            type: 'spending',
+            description: `Earned ${pointsEarned} points for $${totalCost.toFixed(2)} spent on package ${updatedPackage.trackingNumber}`,
+            referenceId: updatedPackage.id,
+          });
+        }
+      } catch (loyaltyError) {
+        console.error('Error awarding loyalty credits:', loyaltyError);
+        // Don't fail the main request if loyalty credits fail
+      }
+    }
 
     return NextResponse.json({ package: updatedPackage });
   } catch (error) {

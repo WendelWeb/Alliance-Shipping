@@ -19,7 +19,7 @@ export function Hero() {
   return (
     <section className="relative pt-2 pb-16 md:pt-6 md:pb-24 overflow-hidden">
       {/* Background with gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-secondary-50 -z-10" />
+      <div className="absolute inset-0 bg-theme-bg -z-10" />
 
       {/* Decorative elements */}
       <div className="absolute top-20 -right-20 md:right-10 w-72 h-72 bg-primary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
@@ -34,7 +34,7 @@ export function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm border border-gray-200 mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-theme-surface-solid rounded-full shadow-sm border border-gray-200 mb-6">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                 <span className="text-sm font-medium text-gray-700">
                   {t.hero.trustBadge}
@@ -106,7 +106,7 @@ export function Hero() {
               <motion.div
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity }}
-                className="absolute top-4 right-4 md:top-8 md:right-8 bg-white p-3 md:p-4 rounded-xl shadow-lg"
+                className="absolute top-4 right-4 md:top-8 md:right-8 bg-theme-surface-solid p-3 md:p-4 rounded-xl shadow-lg"
               >
                 <div className="text-xs md:text-sm font-semibold text-gray-900">Miami → Cap-Haïtien</div>
                 <div className="text-[10px] md:text-xs text-gray-500">3-6 days</div>
@@ -115,7 +115,7 @@ export function Hero() {
               <motion.div
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-                className="absolute bottom-4 left-4 md:bottom-8 md:left-8 bg-white p-3 md:p-4 rounded-xl shadow-lg"
+                className="absolute bottom-4 left-4 md:bottom-8 md:left-8 bg-theme-surface-solid p-3 md:p-4 rounded-xl shadow-lg"
               >
                 <div className="text-xs md:text-sm font-semibold text-gray-900">$4/lb</div>
                 <div className="text-[10px] md:text-xs text-gray-500">+ $5 service fee</div>

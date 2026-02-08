@@ -129,7 +129,7 @@ export default function NewPackagePage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6"
+              className="theme-card rounded-2xl p-6"
             >
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-blue-50 rounded-lg">
@@ -206,7 +206,7 @@ export default function NewPackagePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6"
+              className="theme-card rounded-2xl p-6"
             >
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-green-50 rounded-lg">
@@ -284,7 +284,7 @@ export default function NewPackagePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6"
+              className="theme-card rounded-2xl p-6"
             >
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-purple-50 rounded-lg">
@@ -387,7 +387,7 @@ export default function NewPackagePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-6"
+              className="theme-card rounded-2xl p-6 sticky top-6"
             >
               <h3 className="text-lg font-bold text-gray-900 mb-4">Fee Summary</h3>
 

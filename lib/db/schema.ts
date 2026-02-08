@@ -9,7 +9,11 @@ export const users = pgTable('users', {
   firstName: varchar('first_name', { length: 255 }),
   lastName: varchar('last_name', { length: 255 }),
   phone: varchar('phone', { length: 50 }),
+  countryCode: varchar('country_code', { length: 10 }).default('+509'), // Haiti by default
+  city: varchar('city', { length: 100 }), // User's city (Port-au-Prince, Cap-Haïtien, Port-de-Paix)
+  warehouseId: integer('warehouse_id'), // Dépôt de réception choisi par l'utilisateur
   preferredLanguage: varchar('preferred_language', { length: 10 }).default('fr').notNull(),
+  expoPushToken: varchar('expo_push_token', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -244,6 +248,13 @@ export const announcements = pgTable('announcements', {
   isPinned: boolean('is_pinned').default(false).notNull(),
   imageUrl: varchar('image_url', { length: 500 }),
 
+  // Multilingual translations { ht: {title, content}, fr: {title, content}, en: {title, content}, es: {title, content} }
+  translations: json('translations').$type<Record<string, { title: string; content: string }>>(),
+
+  // Email broadcast tracking
+  emailSentAt: timestamp('email_sent_at'),
+  emailSentCount: integer('email_sent_count').default(0),
+
   // Metadata
   createdBy: integer('created_by').references(() => admins.id).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -277,6 +288,33 @@ export const revenueRecords = pgTable('revenue_records', {
   notes: text('notes'),
   recordedBy: integer('recorded_by').references(() => admins.id).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// City Pricing - Different fees per city
+export const cityPricing = pgTable('city_pricing', {
+  id: serial('id').primaryKey(),
+  city: varchar('city', { length: 100 }).notNull().unique(), // Port-au-Prince, Cap-Haïtien, Port-de-Paix
+  serviceFee: decimal('service_fee', { precision: 10, scale: 2 }).notNull().default('5.00'),
+  pricePerLb: decimal('price_per_lb', { precision: 10, scale: 2 }).notNull().default('4.00'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Warehouses / Dépôts de livraison
+export const warehouses = pgTable('warehouses', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(), // Nom du dépôt
+  city: varchar('city', { length: 100 }).notNull(), // Ville (Port-au-Prince, Cap-Haïtien, etc.)
+  address: text('address').notNull(), // Adresse complète
+  latitude: decimal('latitude', { precision: 10, scale: 7 }).notNull(), // 19.708485
+  longitude: decimal('longitude', { precision: 10, scale: 7 }).notNull(), // -72.261024
+  phone: varchar('phone', { length: 50 }), // Numéro de téléphone du dépôt
+  email: varchar('email', { length: 255 }), // Email du dépôt
+  openingHours: text('opening_hours'), // Horaires d'ouverture
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Admin Activity Logs
@@ -369,6 +407,63 @@ export const adminActivityLogsRelations = relations(adminActivityLogs, ({ one })
   }),
 }));
 
+// ==================== REFERRAL & LOYALTY SYSTEM ====================
+
+// Loyalty Configuration (admin-configurable rates)
+export const loyaltyConfig = pgTable('loyalty_config', {
+  id: serial('id').primaryKey(),
+  key: varchar('key', { length: 100 }).notNull().unique(),
+  value: decimal('value', { precision: 10, scale: 2 }).notNull(),
+  description: text('description'),
+  updatedBy: integer('updated_by').references(() => admins.id),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Referral Codes (one per user)
+export const referralCodes = pgTable('referral_codes', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull().unique(),
+  code: varchar('code', { length: 20 }).notNull().unique(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Referrals (who referred whom)
+export const referrals = pgTable('referrals', {
+  id: serial('id').primaryKey(),
+  referrerId: integer('referrer_id').references(() => users.id).notNull(),
+  referredId: integer('referred_id').references(() => users.id).notNull().unique(),
+  referralCode: varchar('referral_code', { length: 20 }).notNull(),
+  creditAwarded: boolean('credit_awarded').default(false).notNull(),
+  creditAmount: decimal('credit_amount', { precision: 10, scale: 2 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Loyalty Credits (transaction ledger)
+export const loyaltyCredits = pgTable('loyalty_credits', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(), // positive = earn, negative = redeem (in dollars)
+  points: integer('points').default(0).notNull(), // points earned/spent
+  type: varchar('type', { length: 50 }).notNull(), // referral, shipment, weight, redemption, admin_adjustment, spending
+  description: text('description'),
+  referenceId: integer('reference_id'), // packageId or referralId
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Loyalty Relations
+export const referralCodesRelations = relations(referralCodes, ({ one }) => ({
+  user: one(users, { fields: [referralCodes.userId], references: [users.id] }),
+}));
+
+export const referralsRelations = relations(referrals, ({ one }) => ({
+  referrer: one(users, { fields: [referrals.referrerId], references: [users.id] }),
+  referred: one(users, { fields: [referrals.referredId], references: [users.id] }),
+}));
+
+export const loyaltyCreditsRelations = relations(loyaltyCredits, ({ one }) => ({
+  user: one(users, { fields: [loyaltyCredits.userId], references: [users.id] }),
+}));
+
 // Types - Users & Packages
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -406,3 +501,9 @@ export type NewRevenueRecord = typeof revenueRecords.$inferInsert;
 
 export type AdminActivityLog = typeof adminActivityLogs.$inferSelect;
 export type NewAdminActivityLog = typeof adminActivityLogs.$inferInsert;
+
+// Types - Referral & Loyalty
+export type LoyaltyConfig = typeof loyaltyConfig.$inferSelect;
+export type ReferralCode = typeof referralCodes.$inferSelect;
+export type Referral = typeof referrals.$inferSelect;
+export type LoyaltyCredit = typeof loyaltyCredits.$inferSelect;

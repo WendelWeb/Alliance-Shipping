@@ -30,7 +30,7 @@ export function Tracking() {
   ];
 
   return (
-    <section id="tracking" className="section-padding bg-gradient-to-br from-primary-50 to-white">
+    <section id="tracking" className="section-padding bg-theme-bg">
       <Container size="lg">
         <SectionTitle
           title={t.tracking.title}

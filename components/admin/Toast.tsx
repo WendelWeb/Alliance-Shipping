@@ -159,7 +159,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 80, scale: 0.95 }}
                 transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                className={`pointer-events-auto bg-white rounded-xl shadow-lg border ${style.border} overflow-hidden`}
+                className={`pointer-events-auto bg-theme-surface-solid rounded-xl shadow-lg border ${style.border} overflow-hidden`}
               >
                 <div className="flex items-start gap-3 p-4">
                   <div className={`shrink-0 h-9 w-9 rounded-lg ${style.bg} flex items-center justify-center`}>
@@ -216,7 +216,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden"
+              className="relative bg-theme-surface-solid rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden"
             >
               <div className="p-6 text-center">
                 <div className={`mx-auto mb-4 h-14 w-14 rounded-full flex items-center justify-center ${

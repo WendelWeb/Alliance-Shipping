@@ -247,7 +247,7 @@ export default function SpecialItemsPage() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border-2 border-primary-200"
+          className="theme-card rounded-2xl p-6 shadow-sm border-2 border-primary-200"
         >
           <h3 className="text-lg font-bold text-gray-900 mb-4">
             {isAddingNew ? 'Add New Special Item' : 'Edit Special Item'}
@@ -381,7 +381,7 @@ export default function SpecialItemsPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+              className="theme-card rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
             >
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
@@ -443,7 +443,7 @@ export default function SpecialItemsPage() {
 
       {/* Empty State */}
       {filteredItems.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-2xl border border-gray-100">
+        <div className="text-center py-12 theme-card rounded-2xl border border-gray-100">
           <Smartphone className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">No special items found</h3>
           <p className="mt-1 text-sm text-gray-500">

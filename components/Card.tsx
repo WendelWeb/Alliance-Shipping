@@ -12,9 +12,9 @@ export function Card({ children, className, hover = false, padding = 'md' }: Car
   return (
     <div
       className={cn(
-        'bg-white rounded-xl border border-gray-200 shadow-sm',
+        'theme-card rounded-xl',
         {
-          'hover:shadow-lg transition-shadow duration-300': hover,
+          'theme-card-hover transition-shadow duration-300': hover,
         },
         {
           'p-0': padding === 'none',

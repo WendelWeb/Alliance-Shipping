@@ -149,7 +149,7 @@ export default function NotificationsPage() {
   return (
     <div className="overflow-x-hidden">
       <Header />
-      <main className="min-h-screen pb-32 pt-2 md:pt-4 bg-gradient-to-br from-gray-50 via-white to-primary-50">
+      <main className="min-h-screen pb-32 pt-2 md:pt-4">
         <Container>
           {/* Header */}
           <div className="mb-6">
@@ -187,7 +187,7 @@ export default function NotificationsPage() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl shadow-sm border-2 border-gray-100 p-8 text-center"
+                className="theme-card rounded-2xl shadow-sm p-8 text-center"
               >
                 <Bell className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
@@ -204,9 +204,9 @@ export default function NotificationsPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.03 }}
-                  className={`bg-white rounded-xl shadow-sm border-2 transition-all ${
+                  className={`theme-card rounded-xl shadow-sm transition-all ${
                     notification.read
-                      ? 'border-gray-100'
+                      ? ''
                       : 'border-primary-200 bg-primary-50/30'
                   } hover:shadow-md`}
                 >

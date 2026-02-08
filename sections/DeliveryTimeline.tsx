@@ -13,7 +13,7 @@ export function DeliveryTimeline() {
   const { t } = useTranslation();
 
   return (
-    <section id="locations" className="section-padding bg-white">
+    <section id="locations" className="section-padding bg-theme-surface-solid">
       <Container>
         <SectionTitle
           title={t.delivery.title}
@@ -36,7 +36,7 @@ export function DeliveryTimeline() {
             transition={{ duration: 0.5 }}
             className="max-w-2xl mx-auto"
           >
-            <Card hover padding="lg" className="text-center border-2 border-primary-200 bg-gradient-to-br from-primary-50 to-white">
+            <Card hover padding="lg" className="text-center border-2 border-primary-200 bg-theme-bg">
               <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Plane className="w-10 h-10 text-white" />
               </div>

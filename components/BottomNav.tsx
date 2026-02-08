@@ -44,7 +44,7 @@ export function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:left-1/2 md:-translate-x-1/2 md:max-w-2xl md:bottom-6">
       {/* Glassmorphism Container */}
-      <div className="relative bg-white/90 backdrop-blur-xl border-t border-gray-200/50 md:border md:rounded-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] md:shadow-2xl">
+      <div className="relative theme-surface-solid backdrop-blur-xl border-t border-gray-200/50 md:border md:rounded-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.08)] md:shadow-2xl">
         {/* Subtle gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary-500/3 via-transparent to-secondary-500/3 pointer-events-none md:rounded-3xl" />
 
