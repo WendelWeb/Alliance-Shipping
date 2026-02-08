@@ -73,6 +73,28 @@ function getStatusLabel(status: string, statusTranslations: Record<string, strin
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+// Helper to translate nested keys like "packages.timeline.online"
+function translateKey(key: string, translations: any): string {
+  if (!key) return key;
+
+  // If it doesn't look like a translation key, return as-is
+  if (!key.includes('.')) return key;
+
+  const parts = key.split('.');
+  let value = translations;
+
+  for (const part of parts) {
+    if (value && typeof value === 'object' && part in value) {
+      value = value[part];
+    } else {
+      // Key not found, return original
+      return key;
+    }
+  }
+
+  return typeof value === 'string' ? value : key;
+}
+
 export function PackageCard({ item, index }: PackageCardProps) {
   const { t } = useTranslation();
   const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
@@ -360,12 +382,12 @@ export function PackageCard({ item, index }: PackageCardProps) {
                   {/* Event content */}
                   <View style={styles.timelineContent}>
                     <Text style={[styles.timelineEventStatus, { color: colors.gray[800] }]}>
-                      {getStatusLabel(event.status, t.packages.status as unknown as Record<string, string>)}
+                      {translateKey(event.status, t)}
                     </Text>
                     <View style={styles.timelineEventMeta}>
                       <MapPin size={11} color={colors.gray[400]} />
                       <Text style={[styles.timelineEventLocation, { color: colors.gray[500] }]}>
-                        {event.location}
+                        {translateKey(event.location, t)}
                       </Text>
                       <Text style={[styles.timelineEventDate, { color: colors.gray[400] }]}>
                         {formatDate(event.date)}
