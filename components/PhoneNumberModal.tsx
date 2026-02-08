@@ -223,12 +223,12 @@ export function PhoneNumberModal({
 
       {/* Modal */}
       <div
-        className="relative w-full max-w-md mx-auto"
+        className="relative w-full max-w-md mx-auto max-h-[90vh] flex flex-col"
         style={{ pointerEvents: 'auto' }}
       >
-        <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden" style={{ pointerEvents: 'auto' }}>
+        <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col max-h-full" style={{ pointerEvents: 'auto' }}>
               {/* Header */}
-              <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-white">
+              <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-white flex-shrink-0">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
                     {getHeaderIcon()}
@@ -250,7 +250,7 @@ export function PhoneNumberModal({
               </div>
 
               {/* Content */}
-              <div className="p-6 space-y-5">
+              <div className="p-6 space-y-5 overflow-y-auto flex-1">
                 {/* Country Selector - only show if phone is missing */}
                 {missingPhone && (
                 <div>
@@ -292,7 +292,7 @@ export function PhoneNumberModal({
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-20 max-h-64 overflow-y-auto"
+                            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-20 max-h-96 overflow-y-auto"
                           >
                             {COUNTRIES.map((country, index) => (
                               <button
@@ -408,7 +408,7 @@ export function PhoneNumberModal({
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-20 max-h-64 overflow-y-auto"
+                            className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-20 max-h-96 overflow-y-auto"
                           >
                             {HAITI_CITIES.map((city, index) => (
                               <button
@@ -494,7 +494,7 @@ export function PhoneNumberModal({
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -10 }}
                               transition={{ duration: 0.15 }}
-                              className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-20 max-h-80 overflow-y-auto"
+                              className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 z-20 max-h-96 overflow-y-auto"
                             >
                               {warehouses.map((warehouse) => (
                                 <button
@@ -557,8 +557,10 @@ export function PhoneNumberModal({
                     <p className="text-sm text-red-600 font-medium">{error}</p>
                   </motion.div>
                 )}
+              </div>
 
-                {/* Submit Button */}
+              {/* Submit Button - Fixed at bottom */}
+              <div className="p-6 pt-4 border-t border-gray-100 flex-shrink-0 bg-white">
                 <Button
                   onClick={handleSubmit}
                   disabled={
@@ -570,7 +572,6 @@ export function PhoneNumberModal({
                   }
                   fullWidth
                   size="lg"
-                  className="mt-6"
                 >
                   {isLoading ? (
                     <div className="flex items-center gap-2">
