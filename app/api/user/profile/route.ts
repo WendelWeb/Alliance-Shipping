@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
           email: userEmail || '',
           firstName: clerkUser.firstName || '',
           lastName: clerkUser.lastName || '',
-          phone: clerkUser.phoneNumbers?.[0]?.phoneNumber || null,
+          phone: null, // Force user to enter phone through PhoneNumberModal
         })
         .returning();
 

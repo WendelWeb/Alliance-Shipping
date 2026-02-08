@@ -136,9 +136,22 @@ export function PhoneNumberModal({
 
   if (!isOpen) return null;
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    // Prevent closing when clicking outside
+    e.stopPropagation();
+    // Show alert that info is required
+    alert(t.phoneModal.requiredInfo || 'Veuillez compléter toutes les informations requises avant de continuer.');
+  };
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden">
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={handleBackdropClick}
+    >
+      <div
+        className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="bg-gradient-to-br from-blue-600 to-blue-700 px-6 py-5 text-white flex-shrink-0">
           <div className="flex items-start justify-between">

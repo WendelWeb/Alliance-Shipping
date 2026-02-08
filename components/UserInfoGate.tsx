@@ -6,7 +6,7 @@ import { PhoneNumberModal } from './PhoneNumberModal';
 
 export function UserInfoGate({ children }: { children: React.ReactNode }) {
   const { user, isLoaded } = useUser();
-  const [showModal, setShowModal] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
   const [missingPhone, setMissingPhone] = useState(false);
   const [missingCity, setMissingCity] = useState(false);
   const [missingWarehouse, setMissingWarehouse] = useState(false);
@@ -23,20 +23,23 @@ export function UserInfoGate({ children }: { children: React.ReactNode }) {
         const response = await fetch('/api/user/profile');
         if (response.ok) {
           const data = await response.json();
-          const hasPhone = !!data.user?.phone;
+          // Check if phone exists AND is properly formatted (with country code)
+          const phoneValue = data.user?.phone;
+          const hasValidPhone = !!(phoneValue && phoneValue.startsWith('+'));
           const hasCity = !!data.user?.city;
           const hasWarehouse = !!data.user?.warehouseId;
 
-          setMissingPhone(!hasPhone);
+          setMissingPhone(!hasValidPhone);
           setMissingCity(!hasCity);
           setMissingWarehouse(!hasWarehouse);
 
-          // Show modal if any is missing
-          if (!hasPhone || !hasCity || !hasWarehouse) {
-            console.log('🔔 UserInfoGate: Missing info detected - Phone:', !hasPhone, 'City:', !hasCity, 'Warehouse:', !hasWarehouse);
-            setShowModal(true);
+          // BLOCK app if any is missing
+          if (!hasValidPhone || !hasCity || !hasWarehouse) {
+            console.log('🚫 UserInfoGate: BLOCKING APP - Phone:', !hasValidPhone, 'City:', !hasCity, 'Warehouse:', !hasWarehouse);
+            setIsBlocked(true);
           } else {
             console.log('✅ UserInfoGate: User has all required info');
+            setIsBlocked(false);
           }
         }
       } catch (error) {
@@ -49,28 +52,60 @@ export function UserInfoGate({ children }: { children: React.ReactNode }) {
     checkUserInfo();
   }, [isLoaded, user]);
 
-  const handleSuccess = () => {
-    setShowModal(false);
-    setMissingPhone(false);
-    setMissingCity(false);
-    setMissingWarehouse(false);
+  const handleSuccess = async () => {
+    // Re-check user info after saving
+    setIsChecking(true);
+    try {
+      const response = await fetch('/api/user/profile');
+      if (response.ok) {
+        const data = await response.json();
+        const phoneValue = data.user?.phone;
+        const hasValidPhone = !!(phoneValue && phoneValue.startsWith('+'));
+        const hasCity = !!data.user?.city;
+        const hasWarehouse = !!data.user?.warehouseId;
+
+        if (hasValidPhone && hasCity && hasWarehouse) {
+          console.log('✅ All info completed! Unblocking app...');
+          setIsBlocked(false);
+          setMissingPhone(false);
+          setMissingCity(false);
+          setMissingWarehouse(false);
+        } else {
+          console.log('⚠️ Info still incomplete, keeping blocked');
+        }
+      }
+    } catch (error) {
+      console.error('Error re-checking user info:', error);
+    } finally {
+      setIsChecking(false);
+    }
   };
 
-  // Don't render anything until we've checked
+  // Show loading while checking
   if (isChecking) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    );
   }
 
-  return (
-    <>
-      {children}
+  // If blocked, show ONLY the modal (hide app completely)
+  if (isBlocked) {
+    return (
       <PhoneNumberModal
-        isOpen={showModal}
+        isOpen={true}
         onSuccess={handleSuccess}
         missingPhone={missingPhone}
         missingCity={missingCity}
         missingWarehouse={missingWarehouse}
       />
-    </>
-  );
+    );
+  }
+
+  // Otherwise, render app normally
+  return <>{children}</>;
 }
