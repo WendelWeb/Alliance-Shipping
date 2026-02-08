@@ -1,27 +1,21 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  StyleSheet,
+  Modal,
   View,
   Text,
-  Modal,
   TextInput,
-  Pressable,
+  TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Alert,
   Linking,
+  StyleSheet,
 } from 'react-native';
-import Animated, {
-  FadeIn,
-  FadeOut,
-  SlideInDown,
-  SlideOutDown,
-} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/lib/themes/ThemeProvider';
-import { COUNTRIES, getCountryName, Country } from '@/lib/countries';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { Button } from '@/components/ui/Button';
+import { COUNTRIES, getCountryName, Country } from '@/lib/countries';
 import { api } from '@/lib/api';
 
 interface PhoneNumberModalProps {
@@ -40,7 +34,6 @@ interface Warehouse {
   latitude: string;
   longitude: string;
   phone?: string;
-  email?: string;
   openingHours?: string;
 }
 
@@ -57,55 +50,37 @@ const HAITI_CITIES = [
   'Jacmel',
 ];
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
 export function PhoneNumberModal({
   visible,
   onSuccess,
   missingPhone = true,
   missingCity = true,
-  missingWarehouse = true
+  missingWarehouse = true,
 }: PhoneNumberModalProps) {
-  const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { colors, fonts, spacing, borderRadius } = useTheme();
   const { t, locale } = useTranslation();
+
   const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState<number | null>(null);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
-  const [isWarehouseDropdownOpen, setIsWarehouseDropdownOpen] = useState(false);
+
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [showCityPicker, setShowCityPicker] = useState(false);
+  const [showWarehousePicker, setShowWarehousePicker] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingWarehouses, setIsLoadingWarehouses] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Calculate current step
-  const getCurrentStep = () => {
-    if (missingPhone) return 1;
-    if (missingCity) return 2;
-    if (missingWarehouse) return 3;
-    return 1;
-  };
-
-  const getTotalSteps = () => {
-    let total = 0;
-    if (missingPhone) total++;
-    if (missingCity) total++;
-    if (missingWarehouse) total++;
-    return total;
-  };
-
-  const currentStep = getCurrentStep();
-  const totalSteps = getTotalSteps();
-
-  // Load warehouses when city is selected
+  // Load warehouses when city changes
   useEffect(() => {
     const loadWarehouses = async () => {
       if (!selectedCity || !missingWarehouse) return;
 
       setIsLoadingWarehouses(true);
-      setError(null);
+      setSelectedWarehouse(null);
 
       try {
         const response = await api.get<{ success: boolean; warehouses: Warehouse[] }>(
@@ -113,962 +88,518 @@ export function PhoneNumberModal({
         );
         setWarehouses(response.warehouses || []);
 
-        // Auto-select if only one warehouse
+        // Auto-select if only one
         if (response.warehouses?.length === 1) {
           setSelectedWarehouse(response.warehouses[0].id);
         }
-      } catch (err) {
-        setError(t.phoneModal.failedToLoadWarehouses);
-        console.error('Error loading warehouses:', err);
+      } catch (error) {
+        console.error('Error loading warehouses:', error);
+        setWarehouses([]);
       } finally {
         setIsLoadingWarehouses(false);
       }
     };
 
     loadWarehouses();
-  }, [selectedCity, missingWarehouse, t.phoneModal.failedToLoadWarehouses]);
-
-  const handlePhoneChange = (value: string) => {
-    const numbersOnly = value.replace(/\D/g, '');
-    setPhoneNumber(numbersOnly);
-    if (error) setError(null);
-  };
-
-  const handleCountrySelect = useCallback(
-    (country: Country) => {
-      Haptics.selectionAsync();
-      setSelectedCountry(country);
-      setIsDropdownOpen(false);
-    },
-    []
-  );
-
-  const toggleDropdown = useCallback(() => {
-    Haptics.selectionAsync();
-    setIsDropdownOpen((prev) => !prev);
-  }, []);
+  }, [selectedCity, missingWarehouse]);
 
   const handleSubmit = async () => {
-    if (missingPhone && (!phoneNumber || phoneNumber.length < 6)) {
-      setError(t.phoneModal.pleaseEnterPhone);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      return;
-    }
-
-    if (missingCity && !selectedCity) {
-      setError(t.phoneModal.pleaseSelectCity);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      return;
-    }
-
-    if (missingWarehouse && !selectedWarehouse) {
-      setError(t.phoneModal.pleaseSelectWarehouse);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      return;
-    }
-
     setIsLoading(true);
-    setError(null);
 
     try {
-      await api.patch('/api/user/profile', {
-        phone: missingPhone ? phoneNumber : undefined,
-        countryCode: missingPhone ? selectedCountry.dial : undefined,
-        city: missingCity ? selectedCity : undefined,
-        warehouseId: missingWarehouse ? selectedWarehouse : undefined,
-      });
+      const updateData: any = {};
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (missingPhone && phoneNumber) {
+        updateData.phone = phoneNumber.replace(/\D/g, '');
+        updateData.countryCode = selectedCountry.code;
+      }
+
+      if (missingCity && selectedCity) {
+        updateData.city = selectedCity;
+      }
+
+      if (missingWarehouse && selectedWarehouse) {
+        updateData.warehouseId = selectedWarehouse;
+      }
+
+      await api.patch('/api/user/profile', updateData);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onSuccess();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t.phoneModal.failedToSave);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Erreur', 'Impossible de sauvegarder les informations');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getModalTitle = () => {
-    if (missingPhone && missingCity && missingWarehouse) {
-      return t.phoneModal.title;
-    }
-    if (missingPhone && !missingCity && !missingWarehouse) {
-      return t.phoneModal.titlePhoneOnly;
-    }
-    if (!missingPhone && missingCity && !missingWarehouse) {
-      return t.phoneModal.titleCityOnly;
-    }
-    if (!missingPhone && !missingCity && missingWarehouse) {
-      return t.phoneModal.titleWarehouseOnly;
-    }
-    return t.phoneModal.title;
-  };
+  const isSubmitDisabled =
+    isLoading ||
+    isLoadingWarehouses ||
+    (missingPhone && !phoneNumber) ||
+    (missingCity && !selectedCity) ||
+    (missingWarehouse && !selectedWarehouse);
 
-  const getModalDescription = () => {
-    if (missingPhone && missingCity && missingWarehouse) {
-      return t.phoneModal.descriptionAll;
-    }
-    if (missingPhone && !missingCity && !missingWarehouse) {
-      return t.phoneModal.descriptionPhoneOnly;
-    }
-    if (!missingPhone && missingCity && !missingWarehouse) {
-      return t.phoneModal.descriptionCityOnly;
-    }
-    if (!missingPhone && !missingCity && missingWarehouse) {
-      return t.phoneModal.descriptionWarehouseOnly;
-    }
-    return t.phoneModal.descriptionAll;
-  };
-
-  const getHeaderIcon = () => {
-    if (missingPhone) return 'call';
-    if (missingCity) return 'location';
-    if (missingWarehouse) return 'business';
-    return 'call';
-  };
-
-  const openMaps = (warehouse: Warehouse) => {
-    const url = `https://www.google.com/maps?q=${warehouse.latitude},${warehouse.longitude}`;
-    Linking.openURL(url);
-  };
+  const selectedWarehouseData = warehouses.find(w => w.id === selectedWarehouse);
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      statusBarTranslucent
-    >
-      <View style={styles.modalContainer}>
-        {/* Backdrop */}
-        <Animated.View
-          entering={FadeIn}
-          exiting={FadeOut}
-          style={[styles.backdrop, { backgroundColor: 'rgba(0,0,0,0.7)' }]}
-        />
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
+        {/* Header */}
+        <View style={[styles.header, { backgroundColor: colors.primary[600], paddingHorizontal: spacing.lg, paddingVertical: spacing.lg }]}>
+          <Text style={[styles.title, { fontFamily: fonts.headingBold, color: colors.white }]}>
+            {t.phoneModal.title}
+          </Text>
+          <Text style={[styles.subtitle, { fontFamily: fonts.regular, color: colors.primary[100] }]}>
+            {t.phoneModal.descriptionAll}
+          </Text>
+        </View>
 
-        {/* Modal Content */}
-        <Animated.View
-          entering={SlideInDown.springify().damping(20)}
-          exiting={SlideOutDown}
-          style={[
-            styles.modalContent,
-            {
-              backgroundColor: colors.white,
-              borderRadius: borderRadius.xl,
-              ...shadows.xl,
-            },
-          ]}
+        {/* Content */}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[styles.content, { paddingHorizontal: spacing.lg, paddingVertical: spacing.xl }]}
+          showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
-          <View
-            style={[
-              styles.header,
-              {
-                backgroundColor: colors.primary[600],
-                borderTopLeftRadius: borderRadius.xl,
-                borderTopRightRadius: borderRadius.xl,
-                padding: spacing.xl,
-              },
-            ]}
-          >
-            <View style={styles.headerIcon}>
-              <View
-                style={[
-                  styles.iconCircle,
-                  {
-                    backgroundColor: 'rgba(255,255,255,0.2)',
-                    borderRadius: borderRadius.full,
-                  },
-                ]}
+          {/* Phone Number Section */}
+          {missingPhone && (
+            <View style={[styles.section, { marginBottom: spacing.xl }]}>
+              <Text style={[styles.label, { fontFamily: fonts.semiBold, color: colors.gray[700], marginBottom: spacing.sm }]}>
+                📞 {t.phoneModal.phoneNumber} <Text style={{ color: colors.red[500] }}>*</Text>
+              </Text>
+
+              {/* Country Picker */}
+              <TouchableOpacity
+                onPress={() => {
+                  setShowCountryPicker(true);
+                  Haptics.selectionAsync();
+                }}
+                style={[styles.picker, {
+                  backgroundColor: colors.gray[50],
+                  borderColor: colors.gray[200],
+                  borderRadius: borderRadius.lg,
+                  paddingHorizontal: spacing.lg,
+                  paddingVertical: spacing.md + 2,
+                  marginBottom: spacing.sm,
+                }]}
               >
-                <Ionicons
-                  name={getHeaderIcon() as any}
-                  size={28}
-                  color={colors.white}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={[
-                    styles.headerTitle,
-                    { fontFamily: fonts.bold, color: colors.white },
-                  ]}
-                >
-                  {getModalTitle()}
+                <Text style={{ fontFamily: fonts.medium, color: colors.gray[900], fontSize: 15 }}>
+                  {selectedCountry.flag} {getCountryName(selectedCountry, locale)} ({selectedCountry.dial})
                 </Text>
-                {totalSteps > 1 && (
-                  <Text
-                    style={[
-                      styles.stepIndicator,
-                      { fontFamily: fonts.regular, color: 'rgba(255,255,255,0.8)' },
-                    ]}
-                  >
-                    {t.phoneModal.step} {currentStep} {t.phoneModal.of} {totalSteps}
-                  </Text>
-                )}
-              </View>
-            </View>
-            <Text
-              style={[
-                styles.headerSubtitle,
-                { fontFamily: fonts.regular, color: 'rgba(255,255,255,0.9)' },
-              ]}
-            >
-              {getModalDescription()}
-            </Text>
-          </View>
+              </TouchableOpacity>
 
-          {/* Form */}
-          <ScrollView
-            style={[styles.form, { padding: spacing.xl }]}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Country Selector - only show if phone is missing */}
-            {missingPhone && (
-            <View style={{ marginBottom: spacing.lg }}>
-              <Text
-                style={[
-                  styles.label,
-                  {
-                    fontFamily: fonts.semiBold,
-                    color: colors.gray[700],
-                    marginBottom: spacing.sm,
-                  },
-                ]}
-              >
-                {t.phoneModal.country}
-              </Text>
-              <Pressable
-                onPress={toggleDropdown}
-                style={[
-                  styles.countryButton,
-                  {
-                    backgroundColor: colors.white,
-                    borderColor: isDropdownOpen ? colors.primary[500] : colors.gray[200],
-                    borderRadius: borderRadius.lg,
-                    borderWidth: 2,
-                    padding: spacing.md,
-                  },
-                ]}
-              >
-                <View style={styles.countryButtonContent}>
-                  <Text style={styles.flagEmoji}>{selectedCountry.flag}</Text>
-                  <Text
-                    style={[
-                      styles.dialCode,
-                      { fontFamily: fonts.semiBold, color: colors.gray[700] },
-                    ]}
-                  >
-                    {selectedCountry.dial}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.countryName,
-                      { fontFamily: fonts.regular, color: colors.gray[600] },
-                    ]}
-                  >
-                    {getCountryName(selectedCountry, locale)}
-                  </Text>
-                </View>
-                <Ionicons
-                  name={isDropdownOpen ? 'chevron-up' : 'chevron-down'}
-                  size={20}
-                  color={colors.gray[400]}
-                />
-              </Pressable>
-
-              {/* Country Dropdown */}
-              {isDropdownOpen && (
-                <Animated.View
-                  entering={FadeIn.duration(150)}
-                  exiting={FadeOut.duration(150)}
-                  style={[
-                    styles.dropdown,
-                    {
-                      backgroundColor: colors.white,
-                      borderColor: colors.gray[200],
-                      borderRadius: borderRadius.lg,
-                      marginTop: spacing.sm,
-                      ...shadows.lg,
-                    },
-                  ]}
-                >
-                  <ScrollView
-                    style={{ maxHeight: 400 }}
-                    showsVerticalScrollIndicator={true}
-                  >
-                    {COUNTRIES.map((country, index) => {
-                      const isSelected =
-                        selectedCountry.dial === country.dial &&
-                        selectedCountry.code === country.code;
-                      return (
-                        <Pressable
-                          key={`${country.code}-${country.dial}-${index}`}
-                          onPress={() => handleCountrySelect(country)}
-                          style={[
-                            styles.dropdownItem,
-                            {
-                              backgroundColor: isSelected
-                                ? colors.primary[100]
-                                : 'transparent',
-                              padding: spacing.md,
-                            },
-                          ]}
-                        >
-                          <Text style={styles.flagEmoji}>{country.flag}</Text>
-                          <Text
-                            style={[
-                              styles.dropdownDialCode,
-                              {
-                                fontFamily: fonts.semiBold,
-                                color: colors.gray[700],
-                              },
-                            ]}
-                          >
-                            {country.dial}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.dropdownCountryName,
-                              {
-                                fontFamily: fonts.regular,
-                                color: colors.gray[600],
-                              },
-                            ]}
-                          >
-                            {getCountryName(country, locale)}
-                          </Text>
-                          {isSelected && (
-                            <Ionicons
-                              name="checkmark"
-                              size={20}
-                              color={colors.primary[600]}
-                            />
-                          )}
-                        </Pressable>
-                      );
-                    })}
-                  </ScrollView>
-                </Animated.View>
-              )}
-            </View>
-            )}
-
-            {/* Phone Input - only show if phone is missing */}
-            {missingPhone && (
-            <View style={{ marginBottom: spacing.lg }}>
-              <Text
-                style={[
-                  styles.label,
-                  {
-                    fontFamily: fonts.semiBold,
-                    color: colors.gray[700],
-                    marginBottom: spacing.sm,
-                  },
-                ]}
-              >
-                {t.phoneModal.phoneNumber}
-              </Text>
-              <View
-                style={[
-                  styles.phoneInputContainer,
-                  {
-                    backgroundColor: colors.white,
-                    borderColor: error ? colors.red[500] : colors.gray[200],
-                    borderRadius: borderRadius.lg,
-                    borderWidth: 2,
-                  },
-                ]}
-              >
-                <View style={[styles.phonePrefix, { paddingLeft: spacing.md }]}>
-                  <Text style={styles.flagEmojiSmall}>{selectedCountry.flag}</Text>
-                  <Text
-                    style={[
-                      styles.prefixText,
-                      { fontFamily: fonts.semiBold, color: colors.gray[500] },
-                    ]}
-                  >
+              {/* Phone Input */}
+              <View style={styles.phoneInputRow}>
+                <View style={[styles.dialCode, {
+                  backgroundColor: colors.gray[100],
+                  borderColor: colors.gray[200],
+                  borderRadius: borderRadius.lg,
+                  paddingHorizontal: spacing.md,
+                  paddingVertical: spacing.md + 2,
+                }]}>
+                  <Text style={{ fontFamily: fonts.semiBold, color: colors.gray[700], fontSize: 15 }}>
                     {selectedCountry.dial}
                   </Text>
                 </View>
                 <TextInput
                   value={phoneNumber}
-                  onChangeText={handlePhoneChange}
-                  placeholder="1234567890"
+                  onChangeText={setPhoneNumber}
+                  placeholder={t.phoneModal.enterPhone}
                   placeholderTextColor={colors.gray[400]}
                   keyboardType="phone-pad"
-                  editable={!isLoading}
-                  style={[
-                    styles.phoneInput,
-                    {
-                      fontFamily: fonts.medium,
-                      color: colors.gray[900],
-                      paddingVertical: spacing.md,
-                      paddingRight: spacing.md,
-                    },
-                  ]}
+                  style={[styles.phoneInput, {
+                    backgroundColor: colors.gray[50],
+                    borderColor: colors.gray[200],
+                    borderRadius: borderRadius.lg,
+                    paddingHorizontal: spacing.lg,
+                    paddingVertical: spacing.md + 2,
+                    fontFamily: fonts.regular,
+                    color: colors.gray[900],
+                    fontSize: 15,
+                  }]}
                 />
               </View>
             </View>
-            )}
+          )}
 
-            {/* City Selector - only show if city is missing */}
-            {missingCity && (
-            <View style={{ marginBottom: spacing.lg }}>
-              <Text
-                style={[
-                  styles.label,
-                  {
-                    fontFamily: fonts.semiBold,
-                    color: colors.gray[700],
-                    marginBottom: spacing.sm,
-                  },
-                ]}
-              >
-                {t.phoneModal.city}
+          {/* City Section */}
+          {missingCity && (
+            <View style={[styles.section, { marginBottom: spacing.xl }]}>
+              <Text style={[styles.label, { fontFamily: fonts.semiBold, color: colors.gray[700], marginBottom: spacing.sm }]}>
+                📍 {t.phoneModal.city} <Text style={{ color: colors.red[500] }}>*</Text>
               </Text>
-              <Pressable
+
+              <TouchableOpacity
                 onPress={() => {
+                  setShowCityPicker(true);
                   Haptics.selectionAsync();
-                  setIsCityDropdownOpen(!isCityDropdownOpen);
                 }}
-                style={[
-                  styles.countryButton,
-                  {
-                    backgroundColor: colors.white,
-                    borderColor: isCityDropdownOpen ? colors.primary[500] : colors.gray[200],
-                    borderRadius: borderRadius.lg,
-                    borderWidth: 2,
-                    padding: spacing.md,
-                  },
-                ]}
+                style={[styles.picker, {
+                  backgroundColor: colors.gray[50],
+                  borderColor: colors.gray[200],
+                  borderRadius: borderRadius.lg,
+                  paddingHorizontal: spacing.lg,
+                  paddingVertical: spacing.md + 2,
+                }]}
               >
-                <View style={styles.countryButtonContent}>
-                  <Ionicons name="location" size={20} color={colors.gray[400]} />
-                  <Text
-                    style={[
-                      styles.countryName,
-                      {
-                        fontFamily: selectedCity ? fonts.medium : fonts.regular,
-                        color: selectedCity ? colors.gray[700] : colors.gray[400],
-                      },
-                    ]}
-                  >
-                    {selectedCity || t.phoneModal.selectCity}
-                  </Text>
-                </View>
-                <Ionicons
-                  name={isCityDropdownOpen ? 'chevron-up' : 'chevron-down'}
-                  size={20}
-                  color={colors.gray[400]}
-                />
-              </Pressable>
-
-              {/* City Dropdown */}
-              {isCityDropdownOpen && (
-                <Animated.View
-                  entering={FadeIn.duration(150)}
-                  exiting={FadeOut.duration(150)}
-                  style={[
-                    styles.dropdown,
-                    {
-                      backgroundColor: colors.white,
-                      borderColor: colors.gray[200],
-                      borderRadius: borderRadius.lg,
-                      marginTop: spacing.sm,
-                      ...shadows.lg,
-                    },
-                  ]}
-                >
-                  <ScrollView
-                    style={{ maxHeight: 400 }}
-                    showsVerticalScrollIndicator={true}
-                  >
-                    {HAITI_CITIES.map((city, index) => {
-                      const isSelected = selectedCity === city;
-                      return (
-                        <Pressable
-                          key={index}
-                          onPress={() => {
-                            Haptics.selectionAsync();
-                            setSelectedCity(city);
-                            setIsCityDropdownOpen(false);
-                            if (error) setError(null);
-                          }}
-                          style={[
-                            styles.dropdownItem,
-                            {
-                              backgroundColor: isSelected
-                                ? colors.primary[100]
-                                : 'transparent',
-                              padding: spacing.md,
-                            },
-                          ]}
-                        >
-                          <Ionicons
-                            name="location"
-                            size={20}
-                            color={colors.gray[400]}
-                          />
-                          <Text
-                            style={[
-                              styles.dropdownCountryName,
-                              {
-                                fontFamily: fonts.regular,
-                                color: colors.gray[700],
-                              },
-                            ]}
-                          >
-                            {city}
-                          </Text>
-                          {isSelected && (
-                            <Ionicons
-                              name="checkmark"
-                              size={20}
-                              color={colors.primary[600]}
-                            />
-                          )}
-                        </Pressable>
-                      );
-                    })}
-                  </ScrollView>
-                </Animated.View>
-              )}
+                <Text style={{ fontFamily: fonts.medium, color: selectedCity ? colors.gray[900] : colors.gray[400], fontSize: 15 }}>
+                  {selectedCity || t.phoneModal.selectCity}
+                </Text>
+              </TouchableOpacity>
             </View>
-            )}
+          )}
 
-            {/* Warehouse Selector - only show if warehouse is missing and city is selected */}
-            {missingWarehouse && selectedCity && (
-            <View style={{ marginBottom: spacing.lg }}>
-              <Text
-                style={[
-                  styles.label,
-                  {
-                    fontFamily: fonts.semiBold,
-                    color: colors.gray[700],
-                    marginBottom: spacing.sm,
-                  },
-                ]}
-              >
-                {t.phoneModal.warehouse}
+          {/* Warehouse Section */}
+          {missingWarehouse && selectedCity && (
+            <View style={[styles.section, { marginBottom: spacing.xl }]}>
+              <Text style={[styles.label, { fontFamily: fonts.semiBold, color: colors.gray[700], marginBottom: spacing.sm }]}>
+                🏢 {t.phoneModal.warehouse} <Text style={{ color: colors.red[500] }}>*</Text>
               </Text>
 
               {isLoadingWarehouses ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="large" color={colors.primary[500]} />
-                  <Text
-                    style={[
-                      styles.loadingText,
-                      { fontFamily: fonts.regular, color: colors.gray[600] },
-                    ]}
-                  >
+                <View style={[styles.loadingContainer, { paddingVertical: spacing.xl }]}>
+                  <ActivityIndicator size="large" color={colors.primary[600]} />
+                  <Text style={{ fontFamily: fonts.regular, color: colors.gray[600], marginTop: spacing.sm, fontSize: 14 }}>
                     {t.phoneModal.loadingWarehouses}
                   </Text>
                 </View>
               ) : warehouses.length === 0 ? (
-                <View
-                  style={[
-                    styles.noWarehousesContainer,
-                    {
-                      backgroundColor: colors.yellow[50],
-                      borderColor: colors.yellow[200],
-                      borderRadius: borderRadius.lg,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.noWarehousesText,
-                      { fontFamily: fonts.regular, color: colors.yellow[800] },
-                    ]}
-                  >
+                <View style={[styles.emptyContainer, {
+                  backgroundColor: colors.yellow[50],
+                  borderColor: colors.yellow[200],
+                  borderRadius: borderRadius.lg,
+                  padding: spacing.lg,
+                }]}>
+                  <Text style={{ fontFamily: fonts.medium, color: colors.yellow[800], textAlign: 'center', fontSize: 14 }}>
                     {t.phoneModal.noWarehousesAvailable}
                   </Text>
                 </View>
               ) : (
                 <>
-                  <Pressable
+                  <TouchableOpacity
                     onPress={() => {
+                      setShowWarehousePicker(true);
                       Haptics.selectionAsync();
-                      setIsWarehouseDropdownOpen(!isWarehouseDropdownOpen);
                     }}
-                    style={[
-                      styles.countryButton,
-                      {
-                        backgroundColor: colors.white,
-                        borderColor: isWarehouseDropdownOpen ? colors.primary[500] : colors.gray[200],
-                        borderRadius: borderRadius.lg,
-                        borderWidth: 2,
-                        padding: spacing.md,
-                      },
-                    ]}
+                    style={[styles.picker, {
+                      backgroundColor: colors.gray[50],
+                      borderColor: colors.gray[200],
+                      borderRadius: borderRadius.lg,
+                      paddingHorizontal: spacing.lg,
+                      paddingVertical: spacing.md + 2,
+                    }]}
                   >
-                    <View style={styles.countryButtonContent}>
-                      <Ionicons name="business" size={20} color={colors.gray[400]} />
-                      <Text
-                        style={[
-                          styles.countryName,
-                          {
-                            fontFamily: selectedWarehouse ? fonts.medium : fonts.regular,
-                            color: selectedWarehouse ? colors.gray[700] : colors.gray[400],
-                          },
-                        ]}
-                      >
-                        {selectedWarehouse
-                          ? warehouses.find(w => w.id === selectedWarehouse)?.name
-                          : t.phoneModal.selectWarehouse}
-                      </Text>
-                    </View>
-                    <Ionicons
-                      name={isWarehouseDropdownOpen ? 'chevron-up' : 'chevron-down'}
-                      size={20}
-                      color={colors.gray[400]}
-                    />
-                  </Pressable>
+                    <Text style={{ fontFamily: fonts.medium, color: selectedWarehouse ? colors.gray[900] : colors.gray[400], fontSize: 15 }}>
+                      {selectedWarehouseData ? selectedWarehouseData.name : t.phoneModal.selectWarehouse}
+                    </Text>
+                  </TouchableOpacity>
 
-                  {/* Warehouse Dropdown */}
-                  {isWarehouseDropdownOpen && (
-                    <Animated.View
-                      entering={FadeIn.duration(150)}
-                      exiting={FadeOut.duration(150)}
-                      style={[
-                        styles.dropdown,
-                        {
-                          backgroundColor: colors.white,
-                          borderColor: colors.gray[200],
-                          borderRadius: borderRadius.lg,
-                          marginTop: spacing.sm,
-                          ...shadows.lg,
-                        },
-                      ]}
-                    >
-                      <ScrollView
-                        style={{ maxHeight: 450 }}
-                        showsVerticalScrollIndicator={true}
+                  {/* Warehouse Details */}
+                  {selectedWarehouseData && (
+                    <View style={[styles.warehouseDetails, {
+                      backgroundColor: colors.primary[50],
+                      borderColor: colors.primary[200],
+                      borderRadius: borderRadius.lg,
+                      padding: spacing.md,
+                      marginTop: spacing.sm,
+                    }]}>
+                      <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[900], fontSize: 14, marginBottom: spacing.xs }}>
+                        📍 {selectedWarehouseData.name}
+                      </Text>
+                      <Text style={{ fontFamily: fonts.regular, color: colors.primary[800], fontSize: 13 }}>
+                        {selectedWarehouseData.address}
+                      </Text>
+                      {selectedWarehouseData.phone && (
+                        <Text style={{ fontFamily: fonts.regular, color: colors.primary[800], fontSize: 13, marginTop: 2 }}>
+                          📞 {selectedWarehouseData.phone}
+                        </Text>
+                      )}
+                      {selectedWarehouseData.openingHours && (
+                        <Text style={{ fontFamily: fonts.regular, color: colors.primary[800], fontSize: 13, marginTop: 2 }}>
+                          🕐 {selectedWarehouseData.openingHours}
+                        </Text>
+                      )}
+                      <TouchableOpacity
+                        onPress={() => {
+                          const url = `https://maps.google.com/?q=${selectedWarehouseData.latitude},${selectedWarehouseData.longitude}&entry=gps&g_st=awb`;
+                          Linking.openURL(url);
+                        }}
+                        style={{ marginTop: spacing.sm }}
                       >
-                        {warehouses.map((warehouse) => {
-                          const isSelected = selectedWarehouse === warehouse.id;
-                          return (
-                            <Pressable
-                              key={warehouse.id}
-                              onPress={() => {
-                                Haptics.selectionAsync();
-                                setSelectedWarehouse(warehouse.id);
-                                setIsWarehouseDropdownOpen(false);
-                                if (error) setError(null);
-                              }}
-                              style={[
-                                styles.warehouseItem,
-                                {
-                                  backgroundColor: isSelected
-                                    ? colors.primary[100]
-                                    : 'transparent',
-                                  padding: spacing.md,
-                                },
-                              ]}
-                            >
-                              <View style={styles.warehouseContent}>
-                                <Ionicons
-                                  name="business"
-                                  size={20}
-                                  color={colors.gray[400]}
-                                  style={styles.warehouseIcon}
-                                />
-                                <View style={styles.warehouseInfo}>
-                                  <View style={styles.warehouseHeader}>
-                                    <Text
-                                      style={[
-                                        styles.warehouseName,
-                                        { fontFamily: fonts.semiBold, color: colors.gray[900] },
-                                      ]}
-                                    >
-                                      {warehouse.name}
-                                    </Text>
-                                    {isSelected && (
-                                      <Ionicons
-                                        name="checkmark"
-                                        size={20}
-                                        color={colors.primary[600]}
-                                      />
-                                    )}
-                                  </View>
-                                  <Text
-                                    style={[
-                                      styles.warehouseAddress,
-                                      { fontFamily: fonts.regular, color: colors.gray[600] },
-                                    ]}
-                                  >
-                                    {warehouse.address}
-                                  </Text>
-                                  {warehouse.phone && (
-                                    <Text
-                                      style={[
-                                        styles.warehousePhone,
-                                        { fontFamily: fonts.regular, color: colors.gray[500] },
-                                      ]}
-                                    >
-                                      {warehouse.phone}
-                                    </Text>
-                                  )}
-                                  {warehouse.latitude && warehouse.longitude && (
-                                    <Pressable
-                                      onPress={() => openMaps(warehouse)}
-                                      style={styles.mapsLink}
-                                    >
-                                      <Ionicons
-                                        name="map-outline"
-                                        size={12}
-                                        color={colors.primary[600]}
-                                      />
-                                      <Text
-                                        style={[
-                                          styles.mapsLinkText,
-                                          { fontFamily: fonts.medium, color: colors.primary[600] },
-                                        ]}
-                                      >
-                                        {t.phoneModal.viewOnMaps}
-                                      </Text>
-                                    </Pressable>
-                                  )}
-                                </View>
-                              </View>
-                            </Pressable>
-                          );
-                        })}
-                      </ScrollView>
-                    </Animated.View>
+                        <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[600], fontSize: 13 }}>
+                          🗺️ {t.phoneModal.viewOnMaps}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   )}
                 </>
               )}
             </View>
-            )}
+          )}
+        </ScrollView>
 
-            {/* Error Message */}
-            {error && (
-              <Animated.View
-                entering={FadeIn}
-                style={[
-                  styles.errorContainer,
-                  {
-                    backgroundColor: colors.red[50],
-                    borderColor: colors.red[200],
-                    borderRadius: borderRadius.lg,
-                    marginBottom: spacing.md,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.errorText,
-                    {
-                      fontFamily: fonts.medium,
-                      color: colors.red[600],
-                    },
-                  ]}
-                >
-                  {error}
+        {/* Footer */}
+        <View style={[styles.footer, {
+          paddingHorizontal: spacing.lg,
+          paddingVertical: spacing.lg,
+          paddingBottom: spacing.lg + insets.bottom,
+          backgroundColor: colors.white,
+          borderTopWidth: 1,
+          borderTopColor: colors.gray[200],
+        }]}>
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={isSubmitDisabled}
+            style={[styles.submitButton, {
+              backgroundColor: colors.primary[600],
+              borderRadius: borderRadius.lg,
+              paddingVertical: spacing.lg,
+              opacity: isSubmitDisabled ? 0.5 : 1,
+            }]}
+            activeOpacity={0.8}
+          >
+            {isLoading ? (
+              <View style={styles.loadingButton}>
+                <ActivityIndicator size="small" color={colors.white} />
+                <Text style={[styles.submitButtonText, { fontFamily: fonts.semiBold, color: colors.white, marginLeft: spacing.sm }]}>
+                  {t.phoneModal.saving}
                 </Text>
-              </Animated.View>
+              </View>
+            ) : (
+              <Text style={[styles.submitButtonText, { fontFamily: fonts.semiBold, color: colors.white }]}>
+                {t.phoneModal.saveInformation}
+              </Text>
             )}
+          </TouchableOpacity>
+        </View>
 
-            {/* Submit Button */}
-            <Button
-              title={isLoading ? t.phoneModal.saving : t.phoneModal.saveInformation}
-              onPress={handleSubmit}
-              disabled={
-                isLoading ||
-                isLoadingWarehouses ||
-                (missingPhone && !phoneNumber) ||
-                (missingCity && !selectedCity) ||
-                (missingWarehouse && !selectedWarehouse)
-              }
-              loading={isLoading}
-              variant="primary"
-              size="lg"
-              fullWidth
-              style={{ marginTop: spacing.md }}
-            />
-          </ScrollView>
-        </Animated.View>
+        {/* Country Picker Modal */}
+        <Modal visible={showCountryPicker} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.pickerModal, {
+              backgroundColor: colors.white,
+              borderTopLeftRadius: borderRadius.xl,
+              borderTopRightRadius: borderRadius.xl,
+              paddingBottom: insets.bottom,
+            }]}>
+              <View style={[styles.pickerHeader, { paddingHorizontal: spacing.lg, paddingVertical: spacing.lg, borderBottomWidth: 1, borderBottomColor: colors.gray[200] }]}>
+                <Text style={[styles.pickerTitle, { fontFamily: fonts.semiBold, color: colors.gray[900] }]}>
+                  {t.phoneModal.country}
+                </Text>
+                <TouchableOpacity onPress={() => setShowCountryPicker(false)}>
+                  <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[600] }}>
+                    {t.phoneModal.close || 'Fermer'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={{ maxHeight: 500 }}>
+                {COUNTRIES.map((country, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => {
+                      setSelectedCountry(country);
+                      setShowCountryPicker(false);
+                      Haptics.selectionAsync();
+                    }}
+                    style={[styles.pickerItem, {
+                      paddingHorizontal: spacing.lg,
+                      paddingVertical: spacing.md,
+                      backgroundColor: selectedCountry.code === country.code ? colors.primary[50] : 'transparent',
+                    }]}
+                  >
+                    <Text style={{ fontFamily: fonts.medium, color: colors.gray[900], fontSize: 15 }}>
+                      {country.flag} {getCountryName(country, locale)} ({country.dial})
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+
+        {/* City Picker Modal */}
+        <Modal visible={showCityPicker} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.pickerModal, {
+              backgroundColor: colors.white,
+              borderTopLeftRadius: borderRadius.xl,
+              borderTopRightRadius: borderRadius.xl,
+              paddingBottom: insets.bottom,
+            }]}>
+              <View style={[styles.pickerHeader, { paddingHorizontal: spacing.lg, paddingVertical: spacing.lg, borderBottomWidth: 1, borderBottomColor: colors.gray[200] }]}>
+                <Text style={[styles.pickerTitle, { fontFamily: fonts.semiBold, color: colors.gray[900] }]}>
+                  {t.phoneModal.selectCity}
+                </Text>
+                <TouchableOpacity onPress={() => setShowCityPicker(false)}>
+                  <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[600] }}>
+                    {t.phoneModal.close || 'Fermer'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={{ maxHeight: 500 }}>
+                {HAITI_CITIES.map((city) => (
+                  <TouchableOpacity
+                    key={city}
+                    onPress={() => {
+                      setSelectedCity(city);
+                      setShowCityPicker(false);
+                      Haptics.selectionAsync();
+                    }}
+                    style={[styles.pickerItem, {
+                      paddingHorizontal: spacing.lg,
+                      paddingVertical: spacing.md,
+                      backgroundColor: selectedCity === city ? colors.primary[50] : 'transparent',
+                    }]}
+                  >
+                    <Text style={{ fontFamily: fonts.medium, color: colors.gray[900], fontSize: 15 }}>
+                      {city}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Warehouse Picker Modal */}
+        <Modal visible={showWarehousePicker} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.pickerModal, {
+              backgroundColor: colors.white,
+              borderTopLeftRadius: borderRadius.xl,
+              borderTopRightRadius: borderRadius.xl,
+              paddingBottom: insets.bottom,
+            }]}>
+              <View style={[styles.pickerHeader, { paddingHorizontal: spacing.lg, paddingVertical: spacing.lg, borderBottomWidth: 1, borderBottomColor: colors.gray[200] }]}>
+                <Text style={[styles.pickerTitle, { fontFamily: fonts.semiBold, color: colors.gray[900] }]}>
+                  {t.phoneModal.selectWarehouse}
+                </Text>
+                <TouchableOpacity onPress={() => setShowWarehousePicker(false)}>
+                  <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[600] }}>
+                    {t.phoneModal.close || 'Fermer'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={{ maxHeight: 500 }}>
+                {warehouses.map((warehouse) => (
+                  <TouchableOpacity
+                    key={warehouse.id}
+                    onPress={() => {
+                      setSelectedWarehouse(warehouse.id);
+                      setShowWarehousePicker(false);
+                      Haptics.selectionAsync();
+                    }}
+                    style={[styles.warehouseItem, {
+                      paddingHorizontal: spacing.lg,
+                      paddingVertical: spacing.md,
+                      backgroundColor: selectedWarehouse === warehouse.id ? colors.primary[50] : 'transparent',
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.gray[100],
+                    }]}
+                  >
+                    <Text style={{ fontFamily: fonts.semiBold, color: colors.gray[900], fontSize: 15, marginBottom: 4 }}>
+                      📦 {warehouse.name}
+                    </Text>
+                    <Text style={{ fontFamily: fonts.regular, color: colors.gray[600], fontSize: 13 }}>
+                      📍 {warehouse.address}
+                    </Text>
+                    {warehouse.phone && (
+                      <Text style={{ fontFamily: fonts.regular, color: colors.gray[600], fontSize: 13 }}>
+                        📞 {warehouse.phone}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalContainer: {
+  container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  modalContent: {
-    width: '100%',
-    maxWidth: 480,
-    maxHeight: '90%',
-    overflow: 'hidden',
   },
   header: {
-    alignItems: 'flex-start',
+    paddingBottom: 16,
   },
-  headerIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 8,
+  title: {
+    fontSize: 24,
+    marginBottom: 4,
   },
-  iconCircle: {
-    width: 56,
-    height: 56,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 22,
-    letterSpacing: 0.2,
-  },
-  stepIndicator: {
-    fontSize: 12,
-    marginTop: 4,
-  },
-  headerSubtitle: {
+  subtitle: {
     fontSize: 14,
-    lineHeight: 20,
   },
-  form: {
+  scrollView: {
     flex: 1,
+  },
+  content: {
+    flexGrow: 1,
+  },
+  section: {
+    marginBottom: 24,
   },
   label: {
     fontSize: 14,
-    letterSpacing: 0.1,
+    marginBottom: 8,
   },
-  countryButton: {
+  picker: {
+    borderWidth: 2,
+  },
+  phoneInputRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  countryButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
-  flagEmoji: {
-    fontSize: 28,
-  },
-  flagEmojiSmall: {
-    fontSize: 20,
-  },
-  dialCode: {
-    fontSize: 15,
-  },
-  countryName: {
-    fontSize: 15,
-    flex: 1,
-  },
-  dropdown: {
-    borderWidth: 1,
-  },
-  dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  dropdownDialCode: {
-    fontSize: 15,
-    minWidth: 60,
-  },
-  dropdownCountryName: {
-    fontSize: 15,
-    flex: 1,
-  },
-  phoneInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  phonePrefix: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
   },
-  prefixText: {
-    fontSize: 15,
+  dialCode: {
+    borderWidth: 2,
+    justifyContent: 'center',
   },
   phoneInput: {
     flex: 1,
-    fontSize: 15,
+    borderWidth: 2,
   },
   loadingContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 32,
   },
-  loadingText: {
-    fontSize: 14,
-    marginLeft: 12,
+  emptyContainer: {
+    borderWidth: 2,
   },
-  noWarehousesContainer: {
-    padding: 16,
-    borderWidth: 1,
+  warehouseDetails: {
+    borderWidth: 2,
   },
-  noWarehousesText: {
-    fontSize: 14,
+  footer: {},
+  submitButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  warehouseItem: {
+  submitButtonText: {
+    fontSize: 16,
+  },
+  loadingButton: {
     flexDirection: 'row',
+    alignItems: 'center',
   },
-  warehouseContent: {
-    flexDirection: 'row',
-    gap: 12,
+  modalOverlay: {
     flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  warehouseIcon: {
-    marginTop: 2,
+  pickerModal: {
+    maxHeight: '70%',
   },
-  warehouseInfo: {
-    flex: 1,
-  },
-  warehouseHeader: {
+  pickerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
   },
-  warehouseName: {
-    fontSize: 15,
-    flex: 1,
+  pickerTitle: {
+    fontSize: 18,
   },
-  warehouseAddress: {
-    fontSize: 13,
-    marginTop: 4,
-  },
-  warehousePhone: {
-    fontSize: 12,
-    marginTop: 4,
-  },
-  mapsLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 8,
-  },
-  mapsLinkText: {
-    fontSize: 12,
-  },
-  errorContainer: {
-    padding: 12,
-    borderWidth: 1,
-  },
-  errorText: {
-    fontSize: 12,
-  },
+  pickerItem: {},
+  warehouseItem: {},
 });
