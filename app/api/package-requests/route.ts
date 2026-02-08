@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
         address: '',
         city: recipientCity.trim(),
         country: 'Haiti',
-        phone: clerkUser.phoneNumbers?.[0]?.phoneNumber || '',
+        phone: dbUser.phone || clerkUser.phoneNumbers?.[0]?.phoneNumber || '',
       },
       status: 'pending',
     }).returning();
@@ -107,7 +107,9 @@ export async function POST(request: NextRequest) {
     // Send confirmation email in user's language
     let emailResult: any = null;
     const userEmail = clerkUser.emailAddresses[0]?.emailAddress;
-    console.log('[PACKAGE-REQUEST] User:', userEmail, '| Name:', userName, '| Tracking:', packageRequest.externalTrackingNumber, '| Locale:', locale || 'ht');
+    // Use locale from request, fallback to user's preferred language, then default to 'fr'
+    const emailLocale = locale || dbUser.preferredLanguage || 'fr';
+    console.log('[PACKAGE-REQUEST] User:', userEmail, '| Name:', userName, '| Tracking:', packageRequest.externalTrackingNumber, '| Locale:', emailLocale);
     if (userEmail) {
       try {
         console.log('[PACKAGE-REQUEST] Sending email to:', userEmail);
@@ -115,7 +117,7 @@ export async function POST(request: NextRequest) {
           userEmail,
           userName,
           packageRequest.externalTrackingNumber,
-          locale || 'ht'
+          emailLocale
         );
         console.log('[PACKAGE-REQUEST] Email result:', JSON.stringify(emailResult));
       } catch (error: any) {
