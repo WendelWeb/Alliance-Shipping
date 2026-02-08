@@ -144,7 +144,7 @@ export function PhoneNumberModal({
   const selectedWarehouseData = warehouses.find(w => w.id === selectedWarehouse);
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+    <Modal visible={visible} animationType="slide" presentationStyle="formSheet">
       <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
         {/* Header */}
         <View style={[styles.header, { backgroundColor: colors.primary[600], paddingHorizontal: spacing.lg, paddingVertical: spacing.lg }]}>
