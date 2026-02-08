@@ -111,7 +111,7 @@ export default function PackagesScreen() {
   const insets = useSafeAreaInsets();
   const { isSignedIn, user } = useUser();
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
 
   const [packages, setPackages] = useState<PackageItem[]>([]);
@@ -138,17 +138,21 @@ export default function PackagesScreen() {
 
   const fetchPackages = useCallback(async () => {
     setFetchError('');
+    console.log('[PACKAGES] Fetching packages...');
     try {
       const response = await api.get<PackagesResponse>('/api/user/packages');
+      console.log('[PACKAGES] Response received:', { success: response?.success, count: response?.packages?.length });
       // API returns { success, packages: [...] }
       const items = response?.packages ?? response;
       if (Array.isArray(items)) {
+        console.log('[PACKAGES] Setting', items.length, 'packages');
         setPackages(items);
       } else {
+        console.warn('[PACKAGES] Response is not an array:', typeof items);
         setPackages([]);
       }
     } catch (err: any) {
-      console.warn('fetchPackages error:', err?.message);
+      console.error('[PACKAGES] Fetch error:', err?.message);
       setFetchError(err?.message || t.common.error);
       setPackages([]);
     } finally {
@@ -271,16 +275,20 @@ export default function PackagesScreen() {
 
     setRequestLoading(true);
     try {
+      console.log('[PACKAGE-REQUEST] Submitting with locale:', locale);
       await api.post('/api/package-requests', {
         externalTrackingNumber: trackingNumber.trim(),
         recipientCity: selectedCity,
         description: description.trim(),
         category,
         customerNotes: customerNotes.trim() || undefined,
+        locale: locale,
       });
+      console.log('[PACKAGE-REQUEST] Success!');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setRequestSuccess(true);
     } catch (err: any) {
+      console.error('[PACKAGE-REQUEST] Error:', err);
       const raw = err?.message || t.common.error;
       if (raw.includes('Network') || raw.includes('fetch')) {
         setRequestError('\uD83D\uDCE1 ' + t.packages.networkError);
@@ -290,7 +298,7 @@ export default function PackagesScreen() {
     } finally {
       setRequestLoading(false);
     }
-  }, [trackingNumber, selectedCity, description, category, customerNotes, t]);
+  }, [trackingNumber, selectedCity, description, category, customerNotes, locale, t]);
 
   const categoryLabel = useCallback(
     (cat: string): string => {
