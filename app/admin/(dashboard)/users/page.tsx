@@ -24,8 +24,23 @@ import {
   DollarSign,
   ExternalLink,
   Eye,
+  Star,
+  Gift,
+  TrendingUp,
+  ArrowUpRight,
+  ArrowDownRight,
+  Share2,
 } from 'lucide-react';
 import { CardSkeleton } from '@/components/admin/LoadingSpinner';
+
+interface LoyaltyTransaction {
+  id: number;
+  amount: number;
+  points: number;
+  type: string;
+  description: string | null;
+  createdAt: string;
+}
 
 interface UserData {
   id: string;
@@ -42,6 +57,17 @@ interface UserData {
   createdAt: number;
   lastSignInAt: number | null;
   joinedAt: string;
+  // Loyalty data
+  creditBalance: number;
+  totalCreditsEarned: number;
+  totalCreditsRedeemed: number;
+  pointsBalance: number;
+  totalPointsEarned: number;
+  totalPointsUsed: number;
+  transactionCount: number;
+  totalReferrals: number;
+  referralCode: string;
+  recentTransactions: LoyaltyTransaction[];
 }
 
 interface PaginationInfo {
@@ -388,22 +414,54 @@ export default function UsersPage() {
                 </div>
 
                 {/* Stats Row */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-primary-50 rounded-xl p-3 text-center">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-primary-50 rounded-xl p-2.5 text-center">
                     <div className="flex items-center justify-center gap-1.5 mb-0.5">
-                      <PackageIcon className="h-4 w-4 text-primary-500" />
-                      <span className="text-lg font-bold text-primary-700">{user.totalPackages}</span>
+                      <PackageIcon className="h-3.5 w-3.5 text-primary-500" />
+                      <span className="text-base font-bold text-primary-700">{user.totalPackages}</span>
                     </div>
-                    <p className="text-[11px] font-medium text-primary-400 uppercase tracking-wider">Packages</p>
+                    <p className="text-[10px] font-medium text-primary-400 uppercase tracking-wider">Packages</p>
                   </div>
-                  <div className="bg-green-50 rounded-xl p-3 text-center">
+                  <div className="bg-green-50 rounded-xl p-2.5 text-center">
                     <div className="flex items-center justify-center gap-1 mb-0.5">
-                      <DollarSign className="h-4 w-4 text-green-500" />
-                      <span className="text-lg font-bold text-green-700">{user.totalSpent.replace('$', '')}</span>
+                      <DollarSign className="h-3.5 w-3.5 text-green-500" />
+                      <span className="text-base font-bold text-green-700">{user.totalSpent.replace('$', '')}</span>
                     </div>
-                    <p className="text-[11px] font-medium text-green-400 uppercase tracking-wider">Spent</p>
+                    <p className="text-[10px] font-medium text-green-400 uppercase tracking-wider">Spent</p>
+                  </div>
+                  <div className="bg-yellow-50 rounded-xl p-2.5 text-center">
+                    <div className="flex items-center justify-center gap-1 mb-0.5">
+                      <Star className="h-3.5 w-3.5 text-yellow-500" />
+                      <span className="text-base font-bold text-yellow-700">{user.pointsBalance.toLocaleString()}</span>
+                    </div>
+                    <p className="text-[10px] font-medium text-yellow-500 uppercase tracking-wider">Points</p>
+                  </div>
+                  <div className="bg-purple-50 rounded-xl p-2.5 text-center">
+                    <div className="flex items-center justify-center gap-1 mb-0.5">
+                      <Gift className="h-3.5 w-3.5 text-purple-500" />
+                      <span className="text-base font-bold text-purple-700">${user.creditBalance.toFixed(2)}</span>
+                    </div>
+                    <p className="text-[10px] font-medium text-purple-400 uppercase tracking-wider">Credits</p>
                   </div>
                 </div>
+
+                {/* Referral & Transactions mini info */}
+                {(user.totalReferrals > 0 || user.transactionCount > 0) && (
+                  <div className="flex items-center gap-3 mt-2 text-[11px] text-gray-400">
+                    {user.totalReferrals > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Share2 className="h-3 w-3" />
+                        {user.totalReferrals} referral{user.totalReferrals !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                    {user.transactionCount > 0 && (
+                      <span className="flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3" />
+                        {user.transactionCount} transaction{user.transactionCount !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 {/* View Packages Button */}
                 <button
@@ -535,22 +593,139 @@ export default function UsersPage() {
               </div>
 
               {/* Modal Body */}
-              <div className="p-6 space-y-5">
-                {/* Stats */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-primary-50 rounded-xl p-4 text-center">
-                    <PackageIcon className="h-6 w-6 text-primary-500 mx-auto mb-1" />
-                    <p className="text-2xl font-bold text-gray-900">{selectedUser.totalPackages}</p>
-                    <p className="text-xs font-medium text-primary-400 uppercase tracking-wider">Packages</p>
+              <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto">
+                {/* Main Stats */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-primary-50 rounded-xl p-3 text-center">
+                    <PackageIcon className="h-5 w-5 text-primary-500 mx-auto mb-1" />
+                    <p className="text-xl font-bold text-gray-900">{selectedUser.totalPackages}</p>
+                    <p className="text-[10px] font-medium text-primary-400 uppercase tracking-wider">Packages</p>
                   </div>
-                  <div className="bg-green-50 rounded-xl p-4 text-center">
-                    <DollarSign className="h-6 w-6 text-green-500 mx-auto mb-1" />
-                    <p className="text-2xl font-bold text-gray-900">{selectedUser.totalSpent}</p>
-                    <p className="text-xs font-medium text-green-400 uppercase tracking-wider">Total Spent</p>
+                  <div className="bg-green-50 rounded-xl p-3 text-center">
+                    <DollarSign className="h-5 w-5 text-green-500 mx-auto mb-1" />
+                    <p className="text-xl font-bold text-gray-900">{selectedUser.totalSpent}</p>
+                    <p className="text-[10px] font-medium text-green-400 uppercase tracking-wider">Total Spent</p>
                   </div>
                 </div>
 
-                {/* Details */}
+                {/* Loyalty Section */}
+                <div className="border border-gray-100 rounded-xl overflow-hidden">
+                  <div className="bg-gradient-to-r from-purple-50 to-yellow-50 px-4 py-3 border-b border-gray-100">
+                    <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                      <Gift className="h-4 w-4 text-purple-500" />
+                      Loyalty & Points
+                    </h3>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    {/* Points Summary */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-yellow-50 rounded-lg p-3 text-center">
+                        <p className="text-lg font-bold text-yellow-700">{selectedUser.pointsBalance.toLocaleString()}</p>
+                        <p className="text-[10px] font-medium text-yellow-500 uppercase">Balance</p>
+                      </div>
+                      <div className="bg-green-50 rounded-lg p-3 text-center">
+                        <div className="flex items-center justify-center gap-0.5">
+                          <ArrowUpRight className="h-3 w-3 text-green-500" />
+                          <p className="text-lg font-bold text-green-700">{selectedUser.totalPointsEarned.toLocaleString()}</p>
+                        </div>
+                        <p className="text-[10px] font-medium text-green-500 uppercase">Earned</p>
+                      </div>
+                      <div className="bg-red-50 rounded-lg p-3 text-center">
+                        <div className="flex items-center justify-center gap-0.5">
+                          <ArrowDownRight className="h-3 w-3 text-red-500" />
+                          <p className="text-lg font-bold text-red-600">{selectedUser.totalPointsUsed.toLocaleString()}</p>
+                        </div>
+                        <p className="text-[10px] font-medium text-red-400 uppercase">Used</p>
+                      </div>
+                    </div>
+
+                    {/* Credits Summary */}
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Credits ($)</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="bg-purple-50 rounded-lg p-3 text-center">
+                          <p className="text-lg font-bold text-purple-700">${selectedUser.creditBalance.toFixed(2)}</p>
+                          <p className="text-[10px] font-medium text-purple-400 uppercase">Balance</p>
+                        </div>
+                        <div className="bg-green-50 rounded-lg p-3 text-center">
+                          <p className="text-lg font-bold text-green-700">${selectedUser.totalCreditsEarned.toFixed(2)}</p>
+                          <p className="text-[10px] font-medium text-green-500 uppercase">Earned</p>
+                        </div>
+                        <div className="bg-orange-50 rounded-lg p-3 text-center">
+                          <p className="text-lg font-bold text-orange-600">${selectedUser.totalCreditsRedeemed.toFixed(2)}</p>
+                          <p className="text-[10px] font-medium text-orange-400 uppercase">Redeemed</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Referral Info */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 bg-blue-50 rounded-lg px-3 py-2">
+                        <Share2 className="h-4 w-4 text-blue-500" />
+                        <div>
+                          <p className="text-xs font-bold text-blue-700">{selectedUser.totalReferrals} Referral{selectedUser.totalReferrals !== 1 ? 's' : ''}</p>
+                        </div>
+                      </div>
+                      {selectedUser.referralCode && (
+                        <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                          <span className="text-xs text-gray-500">Code:</span>
+                          <span className="text-xs font-bold font-mono text-gray-800">{selectedUser.referralCode}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Recent Transactions */}
+                    {selectedUser.recentTransactions && selectedUser.recentTransactions.length > 0 && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                          Recent Transactions ({selectedUser.transactionCount} total)
+                        </p>
+                        <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                          {selectedUser.recentTransactions.map((tx) => (
+                            <div key={tx.id} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className={`p-1.5 rounded-md ${
+                                  tx.type === 'referral' ? 'bg-blue-100' :
+                                  tx.type === 'shipment' ? 'bg-green-100' :
+                                  tx.type === 'weight' ? 'bg-yellow-100' :
+                                  tx.type === 'redemption' ? 'bg-red-100' :
+                                  tx.type === 'conversion' ? 'bg-purple-100' :
+                                  tx.type === 'spending' ? 'bg-indigo-100' :
+                                  'bg-gray-100'
+                                }`}>
+                                  {tx.type === 'referral' ? <Share2 className="h-3 w-3 text-blue-600" /> :
+                                   tx.type === 'shipment' ? <PackageIcon className="h-3 w-3 text-green-600" /> :
+                                   tx.type === 'redemption' ? <ArrowDownRight className="h-3 w-3 text-red-600" /> :
+                                   tx.type === 'conversion' ? <TrendingUp className="h-3 w-3 text-purple-600" /> :
+                                   tx.type === 'spending' ? <Star className="h-3 w-3 text-indigo-600" /> :
+                                   <DollarSign className="h-3 w-3 text-gray-600" />}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-medium text-gray-800 capitalize">{tx.type.replace('_', ' ')}</p>
+                                  <p className="text-[10px] text-gray-400 truncate">{tx.description || new Date(tx.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                                </div>
+                              </div>
+                              <div className="text-right flex-shrink-0 ml-2">
+                                {Math.abs(tx.amount) > 0 && (
+                                  <p className={`text-xs font-bold ${tx.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                    {tx.amount > 0 ? '+' : ''}${Math.abs(tx.amount).toFixed(2)}
+                                  </p>
+                                )}
+                                {Math.abs(tx.points) > 0 && (
+                                  <p className={`text-[10px] font-medium ${tx.points > 0 ? 'text-blue-600' : 'text-gray-500'}`}>
+                                    {tx.points > 0 ? '+' : ''}{tx.points} pts
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Contact Details */}
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                     <div className="p-2 bg-white rounded-lg shadow-sm">

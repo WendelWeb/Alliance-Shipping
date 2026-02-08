@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useTheme } from '@/lib/themes/ThemeProvider';
 
 interface PackageData {
   id: number;
@@ -52,6 +53,8 @@ interface PackageData {
 export default function PackagesPage() {
   const { user, isLoaded } = useUser();
   const { t } = useTranslation();
+  const { theme, isDark } = useTheme();
+  const colors = theme.colors;
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [packages, setPackages] = useState<PackageData[]>([]);
@@ -105,14 +108,25 @@ export default function PackagesPage() {
     fetchPackages();
   }, [user, isLoaded]);
 
+  // Define status colors that work in both light and dark modes
+  const statusColors = {
+    pending: { text: '#d97706', bg: isDark ? '#78350f' : '#fef3c7', border: isDark ? '#92400e' : '#fde68a', dot: '#eab308' },
+    rejected: { text: '#dc2626', bg: isDark ? '#7f1d1d' : '#fee2e2', border: isDark ? '#991b1b' : '#fecaca', dot: '#ef4444' },
+    received: { text: '#2563eb', bg: isDark ? '#1e3a8a' : '#dbeafe', border: isDark ? '#1e40af' : '#bfdbfe', dot: '#3b82f6' },
+    'in-transit': { text: '#9333ea', bg: isDark ? '#581c87' : '#f3e8ff', border: isDark ? '#6b21a8' : '#e9d5ff', dot: '#a855f7' },
+    customs: { text: '#ea580c', bg: isDark ? '#7c2d12' : '#fed7aa', border: isDark ? '#9a3412' : '#fdba74', dot: '#f97316' },
+    available: { text: '#16a34a', bg: isDark ? '#14532d' : '#dcfce7', border: isDark ? '#166534' : '#bbf7d0', dot: '#22c55e' },
+    delivered: { text: '#059669', bg: isDark ? '#064e3b' : '#d1fae5', border: isDark ? '#065f46' : '#a7f3d0', dot: '#10b981' },
+  };
+
   const statusConfig: Record<string, any> = {
-    pending: { label: t.packages.status.pending, color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200', icon: Clock, dot: 'bg-yellow-500' },
-    rejected: { label: t.packages.status.rejected, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', icon: AlertCircle, dot: 'bg-red-500' },
-    received: { label: t.packages.status.received, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', icon: Package, dot: 'bg-blue-500' },
-    'in-transit': { label: t.packages.status['in-transit'], color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-200', icon: Plane, dot: 'bg-purple-500' },
-    customs: { label: t.packages.status.customs, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', icon: AlertCircle, dot: 'bg-orange-500' },
-    available: { label: t.packages.status.available, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', icon: Package, dot: 'bg-green-500' },
-    delivered: { label: t.packages.status.delivered, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', icon: CheckCircle, dot: 'bg-emerald-500' },
+    pending: { label: t.packages.status.pending, ...statusColors.pending, icon: Clock },
+    rejected: { label: t.packages.status.rejected, ...statusColors.rejected, icon: AlertCircle },
+    received: { label: t.packages.status.received, ...statusColors.received, icon: Package },
+    'in-transit': { label: t.packages.status['in-transit'], ...statusColors['in-transit'], icon: Plane },
+    customs: { label: t.packages.status.customs, ...statusColors.customs, icon: AlertCircle },
+    available: { label: t.packages.status.available, ...statusColors.available, icon: Package },
+    delivered: { label: t.packages.status.delivered, ...statusColors.delivered, icon: CheckCircle },
   };
 
   const filterButtons = [
@@ -154,10 +168,10 @@ export default function PackagesPage() {
           >
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2 font-display">
+                <h1 className="text-3xl sm:text-4xl font-bold mb-2 font-display" style={{ color: colors.gray[900] }}>
                   {t.packages.title}
                 </h1>
-                <p className="text-sm sm:text-base text-gray-600">
+                <p className="text-sm sm:text-base" style={{ color: colors.gray[600] }}>
                   {t.packages.subtitle}
                 </p>
               </div>
@@ -179,13 +193,17 @@ export default function PackagesPage() {
             className="mb-4"
           >
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: colors.gray[400] }} />
               <input
                 type="text"
                 placeholder={t.packages.search}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 bg-theme-surface-solid border border-gray-200 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm transition-all outline-none"
+                className="w-full pl-12 pr-4 py-3.5 bg-theme-surface-solid border rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm transition-all outline-none"
+                style={{
+                  borderColor: colors.gray[200],
+                  color: colors.gray[900],
+                }}
               />
             </div>
           </motion.div>
@@ -205,17 +223,29 @@ export default function PackagesPage() {
                   <button
                     key={btn.key}
                     onClick={() => setStatusFilter(btn.key)}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-medium text-sm whitespace-nowrap transition-all shrink-0 ${
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-medium text-sm whitespace-nowrap transition-all shrink-0"
+                    style={
                       isActive
                         ? btn.key === 'all'
-                          ? 'bg-gray-900 text-white shadow-lg'
-                          : `${config?.bg} ${config?.color} ${config?.border} border shadow-sm`
-                        : 'bg-theme-surface-solid text-gray-600 hover:bg-gray-50 border border-gray-200'
-                    }`}
+                          ? { backgroundColor: colors.gray[900], color: '#ffffff', boxShadow: theme.shadow.lg }
+                          : {
+                              backgroundColor: config?.bg,
+                              color: config?.text,
+                              borderWidth: '1px',
+                              borderColor: config?.border,
+                              boxShadow: theme.shadow.sm
+                            }
+                        : {
+                            backgroundColor: theme.colors.surfaceSolid,
+                            color: colors.gray[600],
+                            borderWidth: '1px',
+                            borderColor: colors.gray[200]
+                          }
+                    }
                   >
-                    {config && isActive && <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />}
+                    {config && isActive && <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: config.dot }} />}
                     {btn.label}
-                    <span className={`text-xs ${isActive ? 'opacity-80' : 'text-gray-400'}`}>
+                    <span className="text-xs" style={{ opacity: isActive ? 0.8 : 1, color: isActive ? 'inherit' : colors.gray[400] }}>
                       {btn.count}
                     </span>
                   </button>
@@ -231,19 +261,19 @@ export default function PackagesPage() {
                 <div key={i} className="theme-card rounded-2xl p-5 animate-pulse">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gray-200 rounded-xl" />
+                      <div className="w-12 h-12 rounded-xl" style={{ backgroundColor: colors.gray[200] }} />
                       <div>
-                        <div className="h-4 w-32 bg-gray-200 rounded mb-2" />
-                        <div className="h-3 w-48 bg-gray-100 rounded" />
+                        <div className="h-4 w-32 rounded mb-2" style={{ backgroundColor: colors.gray[200] }} />
+                        <div className="h-3 w-48 rounded" style={{ backgroundColor: colors.gray[100] }} />
                       </div>
                     </div>
-                    <div className="h-7 w-24 bg-gray-200 rounded-full" />
+                    <div className="h-7 w-24 rounded-full" style={{ backgroundColor: colors.gray[200] }} />
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {[1, 2, 3, 4].map((j) => (
                       <div key={j}>
-                        <div className="h-3 w-16 bg-gray-100 rounded mb-1.5" />
-                        <div className="h-4 w-20 bg-gray-200 rounded" />
+                        <div className="h-3 w-16 rounded mb-1.5" style={{ backgroundColor: colors.gray[100] }} />
+                        <div className="h-4 w-20 rounded" style={{ backgroundColor: colors.gray[200] }} />
                       </div>
                     ))}
                   </div>
@@ -259,13 +289,13 @@ export default function PackagesPage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center py-16"
             >
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-4">
-                <Package className="w-10 h-10 text-gray-400" />
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4" style={{ backgroundColor: colors.gray[100] }}>
+                <Package className="w-10 h-10" style={{ color: colors.gray[400] }} />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-semibold mb-2" style={{ color: colors.gray[900] }}>
                 {t.packages.noPackages}
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="mb-6" style={{ color: colors.gray[600] }}>
                 {t.packages.noPackagesDescription}
               </p>
               <Link href="/dashboard/request-package">
@@ -284,13 +314,13 @@ export default function PackagesPage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center py-16"
             >
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-                <Search className="w-8 h-8 text-gray-400" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ backgroundColor: colors.gray[100] }}>
+                <Search className="w-8 h-8" style={{ color: colors.gray[400] }} />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold mb-2" style={{ color: colors.gray[900] }}>
                 {t.packages.noResults}
               </h3>
-              <p className="text-gray-600">
+              <p style={{ color: colors.gray[600] }}>
                 {t.packages.noResultsDescription}
               </p>
             </motion.div>
@@ -314,67 +344,75 @@ export default function PackagesPage() {
                   className="col-span-1"
                 >
                   <Card
-                    className={`overflow-hidden bg-theme-surface-solid border transition-all ${
-                      isExpanded ? `${statusInfo.border} shadow-lg` : 'border-gray-100 shadow-sm hover:shadow-md'
-                    }`}
+                    className="overflow-hidden bg-theme-surface-solid border transition-all"
+                    style={{
+                      borderColor: isExpanded ? statusInfo.border : colors.gray[100],
+                      boxShadow: isExpanded ? theme.shadow.lg : theme.shadow.sm
+                    }}
                   >
                     {/* Status bar at top */}
-                    <div className={`h-1 ${statusInfo.dot}`} />
+                    <div className="h-1" style={{ backgroundColor: statusInfo.dot }} />
 
                     <div className="p-4 sm:p-5">
                       {/* Header: Status badge + tracking */}
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 ${statusInfo.bg} ${statusInfo.border} border rounded-full mb-2`}>
-                            <StatusIcon className={`w-3.5 h-3.5 ${statusInfo.color}`} />
-                            <span className={`text-xs font-semibold ${statusInfo.color}`}>
+                          <span
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 border rounded-full mb-2"
+                            style={{
+                              backgroundColor: statusInfo.bg,
+                              borderColor: statusInfo.border,
+                            }}
+                          >
+                            <StatusIcon className="w-3.5 h-3.5" style={{ color: statusInfo.text }} />
+                            <span className="text-xs font-semibold" style={{ color: statusInfo.text }}>
                               {statusInfo.label}
                             </span>
                           </span>
-                          <p className="font-mono text-sm font-bold text-gray-900 tracking-wide">
+                          <p className="font-mono text-sm font-bold tracking-wide" style={{ color: colors.gray[900] }}>
                             {pkg.trackingNumber}
                           </p>
                         </div>
-                        <p className="text-lg font-bold text-gray-900">
+                        <p className="text-lg font-bold" style={{ color: colors.gray[900] }}>
                           ${parseFloat(pkg.totalCost).toFixed(2)}
                         </p>
                       </div>
 
                       {/* Description */}
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-1">
+                      <p className="text-sm mb-3 line-clamp-1" style={{ color: colors.gray[600] }}>
                         {pkg.description}
                       </p>
 
                       {/* Info Grid */}
                       <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 mb-3">
                         <div className="flex items-center gap-2">
-                          <Scale className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                          <Scale className="w-3.5 h-3.5 shrink-0" style={{ color: colors.gray[400] }} />
                           <div>
-                            <p className="text-[10px] uppercase tracking-wide text-gray-400">{t.packages.details.weight}</p>
-                            <p className="text-sm font-semibold text-gray-900">{parseFloat(pkg.weight).toFixed(1)} lbs</p>
+                            <p className="text-[10px] uppercase tracking-wide" style={{ color: colors.gray[400] }}>{t.packages.details.weight}</p>
+                            <p className="text-sm font-semibold" style={{ color: colors.gray[900] }}>{parseFloat(pkg.weight).toFixed(1)} lbs</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                          <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: colors.gray[400] }} />
                           <div>
-                            <p className="text-[10px] uppercase tracking-wide text-gray-400">{t.packages.details.recipient}</p>
-                            <p className="text-sm font-semibold text-gray-900 truncate">{pkg.recipientCity}</p>
+                            <p className="text-[10px] uppercase tracking-wide" style={{ color: colors.gray[400] }}>{t.packages.details.recipient}</p>
+                            <p className="text-sm font-semibold truncate" style={{ color: colors.gray[900] }}>{pkg.recipientCity}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <DollarSign className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                          <DollarSign className="w-3.5 h-3.5 shrink-0" style={{ color: colors.gray[400] }} />
                           <div>
-                            <p className="text-[10px] uppercase tracking-wide text-gray-400">{t.pricing.serviceFee}</p>
-                            <p className="text-sm font-semibold text-gray-900">
+                            <p className="text-[10px] uppercase tracking-wide" style={{ color: colors.gray[400] }}>{t.pricing.serviceFee}</p>
+                            <p className="text-sm font-semibold" style={{ color: colors.gray[900] }}>
                               ${serviceFee.toFixed(2)} + ${weightCost.toFixed(2)}
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                          <Clock className="w-3.5 h-3.5 shrink-0" style={{ color: colors.gray[400] }} />
                           <div>
-                            <p className="text-[10px] uppercase tracking-wide text-gray-400">{t.packages.details.estimatedDelivery}</p>
-                            <p className="text-sm font-semibold text-gray-900">
+                            <p className="text-[10px] uppercase tracking-wide" style={{ color: colors.gray[400] }}>{t.packages.details.estimatedDelivery}</p>
+                            <p className="text-sm font-semibold" style={{ color: colors.gray[900] }}>
                               {pkg.estimatedDelivery
                                 ? new Date(pkg.estimatedDelivery).toLocaleDateString('fr-FR')
                                 : t.packages.messages.toBeDelivered}
@@ -384,15 +422,16 @@ export default function PackagesPage() {
                       </div>
 
                       {/* Current Location */}
-                      <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg p-2.5 mb-2">
-                        <MapPin className="w-3.5 h-3.5 text-primary-600 shrink-0" />
+                      <div className="flex items-center gap-2 text-sm rounded-lg p-2.5 mb-2" style={{ color: colors.gray[600], backgroundColor: colors.gray[50] }}>
+                        <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: colors.primary[600] }} />
                         <span className="truncate">{translateText(pkg.currentLocation)}</span>
                       </div>
 
                       {/* Expand button */}
                       <button
                         onClick={() => setExpandedId(isExpanded ? null : pkg.id)}
-                        className="w-full flex items-center justify-center gap-1 pt-2 text-xs text-gray-500 hover:text-primary-600 transition-colors"
+                        className="w-full flex items-center justify-center gap-1 pt-2 text-xs transition-colors"
+                        style={{ color: colors.gray[500] }}
                       >
                         {isExpanded ? (
                           <>
@@ -417,8 +456,8 @@ export default function PackagesPage() {
                             transition={{ duration: 0.2 }}
                             className="overflow-hidden"
                           >
-                            <div className="mt-4 pt-4 border-t border-gray-100">
-                              <h4 className="font-semibold text-gray-900 mb-4 text-sm">{t.packages.details.timeline}</h4>
+                            <div className="mt-4 pt-4 border-t" style={{ borderColor: colors.gray[100] }}>
+                              <h4 className="font-semibold mb-4 text-sm" style={{ color: colors.gray[900] }}>{t.packages.details.timeline}</h4>
                               <div className="space-y-0">
                                 {pkg.timeline.map((event, idx) => {
                                   const eventStatusInfo = statusConfig[event.status?.toLowerCase()] || statusConfig.pending;
@@ -426,23 +465,25 @@ export default function PackagesPage() {
                                     <div key={idx} className="flex gap-3">
                                       <div className="relative flex flex-col items-center">
                                         <div
-                                          className={`w-2.5 h-2.5 rounded-full ${
-                                            event.pending ? 'bg-gray-300' : eventStatusInfo.dot
-                                          } ring-4 ring-white z-10`}
+                                          className="w-2.5 h-2.5 rounded-full ring-4 z-10"
+                                          style={{
+                                            backgroundColor: event.pending ? colors.gray[300] : eventStatusInfo.dot,
+                                            ringColor: isDark ? colors.gray[50] : '#ffffff'
+                                          }}
                                         />
                                         {idx < pkg.timeline.length - 1 && (
-                                          <div className="w-px flex-1 bg-gray-200 min-h-[24px]" />
+                                          <div className="w-px flex-1 min-h-[24px]" style={{ backgroundColor: colors.gray[200] }} />
                                         )}
                                       </div>
                                       <div className="flex-1 pb-4">
-                                        <div className={`font-medium text-sm ${event.pending ? 'text-gray-400' : 'text-gray-900'}`}>
+                                        <div className="font-medium text-sm" style={{ color: event.pending ? colors.gray[400] : colors.gray[900] }}>
                                           {translateText(event.status)}
                                         </div>
-                                        <div className="text-xs text-gray-500">{translateText(event.location)}</div>
+                                        <div className="text-xs" style={{ color: colors.gray[500] }}>{translateText(event.location)}</div>
                                         {event.description && (
-                                          <div className="text-xs text-gray-400 mt-0.5">{translateText(event.description)}</div>
+                                          <div className="text-xs mt-0.5" style={{ color: colors.gray[400] }}>{translateText(event.description)}</div>
                                         )}
-                                        <div className="text-[10px] text-gray-400 mt-0.5">
+                                        <div className="text-[10px] mt-0.5" style={{ color: colors.gray[400] }}>
                                           {new Date(event.date).toLocaleString()}
                                         </div>
                                       </div>

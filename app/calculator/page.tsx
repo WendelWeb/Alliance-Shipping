@@ -10,6 +10,7 @@ import { Button } from '@/components/Button';
 import { Calculator as CalcIcon, Package, DollarSign, Clock, MapPin } from 'lucide-react';
 import { usePricing } from '@/hooks/usePricing';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useTheme } from '@/lib/themes/ThemeProvider';
 
 const CITIES = [
   { id: 'Port-au-Prince', label: 'Port-au-Prince', description: 'Capitale' },
@@ -20,6 +21,8 @@ const CITIES = [
 export default function CalculatorPage() {
   const { t } = useTranslation();
   const { pricing } = usePricing();
+  const { theme, isDark } = useTheme();
+  const colors = theme.colors;
   const [selectedCity, setSelectedCity] = useState('');
   const [cityPricing, setCityPricing] = useState<{ serviceFee: number; pricePerLb: number } | null>(null);
   const [weight, setWeight] = useState('');
@@ -92,10 +95,10 @@ export default function CalculatorPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8 md:mb-12"
           >
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-3 md:mb-4 font-display">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 md:mb-4 font-display" style={{ color: colors.gray[900] }}>
               {t.calculator.title}
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl max-w-2xl mx-auto" style={{ color: colors.gray[600] }}>
               {t.calculator.subtitle}
             </p>
           </motion.div>
@@ -112,7 +115,7 @@ export default function CalculatorPage() {
                   <div className="p-3 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl shadow-lg shadow-primary-500/30">
                     <MapPin className="w-6 h-6 text-white" />
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-900">Select Destination City</h2>
+                  <h2 className="text-2xl font-bold" style={{ color: colors.gray[900] }}>Select Destination City</h2>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -120,18 +123,22 @@ export default function CalculatorPage() {
                     <button
                       key={city.id}
                       onClick={() => setSelectedCity(city.id)}
-                      className={`p-6 rounded-xl border-2 transition-all ${
-                        selectedCity === city.id
-                          ? 'border-primary-500 bg-primary-50 shadow-lg'
-                          : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50'
-                      }`}
+                      className={`p-6 rounded-xl border-2 transition-all`}
+                      style={{
+                        borderColor: selectedCity === city.id ? colors.primary[500] : colors.gray[200],
+                        backgroundColor: selectedCity === city.id
+                          ? (isDark ? colors.primary[900] : colors.primary[50])
+                          : (isDark ? 'transparent' : colors.gray[50]),
+                        boxShadow: selectedCity === city.id ? theme.shadow.lg : 'none'
+                      }}
                     >
                       <div className="text-center">
-                        <MapPin className={`h-8 w-8 mx-auto mb-2 ${
-                          selectedCity === city.id ? 'text-primary-600' : 'text-gray-400'
-                        }`} />
-                        <h3 className="font-bold text-lg text-gray-900">{city.label}</h3>
-                        <p className="text-sm text-gray-500">{city.description}</p>
+                        <MapPin
+                          className="h-8 w-8 mx-auto mb-2"
+                          style={{ color: selectedCity === city.id ? colors.primary[600] : colors.gray[400] }}
+                        />
+                        <h3 className="font-bold text-lg" style={{ color: colors.gray[900] }}>{city.label}</h3>
+                        <p className="text-sm" style={{ color: colors.gray[500] }}>{city.description}</p>
                       </div>
                     </button>
                   ))}
@@ -151,23 +158,28 @@ export default function CalculatorPage() {
                     <div className="p-3 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl shadow-lg shadow-primary-500/30">
                       <CalcIcon className="w-6 h-6 text-white" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900">{t.calculator.title}</h2>
+                    <h2 className="text-2xl font-bold" style={{ color: colors.gray[900] }}>{t.calculator.title}</h2>
                   </div>
 
                   <div className="space-y-6">
                     {/* Weight Input */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium mb-2" style={{ color: colors.gray[700] }}>
                         {t.calculator.weightLabel}
                       </label>
                       <div className="relative">
-                        <Package className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Package className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: colors.gray[400] }} />
                         <input
                           type="number"
                           value={weight}
                           onChange={(e) => setWeight(e.target.value)}
                           placeholder={t.calculator.weightPlaceholder}
-                          className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all outline-none text-lg font-semibold"
+                          className="w-full pl-12 pr-4 py-4 border-2 rounded-xl focus:ring-4 transition-all outline-none text-lg font-semibold"
+                          style={{
+                            borderColor: colors.gray[200],
+                            backgroundColor: colors.gray[50],
+                            color: colors.gray[900],
+                          }}
                           min="0"
                           step="0.1"
                           disabled={!selectedCity}
@@ -269,22 +281,22 @@ export default function CalculatorPage() {
             className="mt-12 max-w-4xl mx-auto"
           >
             <Card className="p-8 backdrop-blur-xl theme-surface">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">{t.calculator.pricing.title}</h3>
-              <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
+              <h3 className="text-xl font-bold mb-4" style={{ color: colors.gray[900] }}>{t.calculator.pricing.title}</h3>
+              <div className="grid md:grid-cols-2 gap-4 text-sm" style={{ color: colors.gray[600] }}>
                 <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-primary-600 rounded-full mt-2" />
+                  <div className="w-2 h-2 rounded-full mt-2" style={{ backgroundColor: colors.primary[600] }} />
                   <div>
                     {t.calculator.pricing.serviceFee}
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-primary-600 rounded-full mt-2" />
+                  <div className="w-2 h-2 rounded-full mt-2" style={{ backgroundColor: colors.primary[600] }} />
                   <div>
                     {t.calculator.pricing.perPound}
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-primary-600 rounded-full mt-2" />
+                  <div className="w-2 h-2 rounded-full mt-2" style={{ backgroundColor: colors.primary[600] }} />
                   <div>
                     {t.calculator.pricing.example}
                   </div>

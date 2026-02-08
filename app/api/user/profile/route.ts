@@ -119,10 +119,10 @@ export async function PATCH(request: NextRequest) {
     };
 
     if (phone !== undefined) {
-      // Validate phone number (basic validation)
-      if (phone && !/^\d{6,15}$/.test(phone)) {
+      // Validate phone number (must start with + and have digits)
+      if (phone && !/^\+\d{6,15}$/.test(phone)) {
         return NextResponse.json(
-          { error: 'Invalid phone number format' },
+          { error: 'Invalid phone number format. Must start with + and country code (e.g., +50912345678)' },
           { status: 400 }
         );
       }

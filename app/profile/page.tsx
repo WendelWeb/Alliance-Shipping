@@ -41,7 +41,8 @@ export default function ProfilePage() {
   const { signOut } = useClerk();
   const router = useRouter();
   const { t, locale, setLocale } = useTranslation();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
+  const colors = theme.colors;
   const [isAdmin, setIsAdmin] = useState(false);
   const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [dbPhone, setDbPhone] = useState<string | null>(null);
@@ -124,9 +125,9 @@ export default function ProfilePage() {
         <main className="min-h-screen pb-32 pt-2 md:pt-4 flex items-center justify-center">
           <Container>
             <Card className="max-w-md mx-auto p-8 text-center backdrop-blur-xl theme-surface">
-              <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">{t.profile.notConnected}</h2>
-              <p className="text-gray-600 mb-6">
+              <User className="w-16 h-16 mx-auto mb-4" style={{ color: colors.gray[300] }} />
+              <h2 className="text-2xl font-bold mb-2" style={{ color: colors.gray[900] }}>{t.profile.notConnected}</h2>
+              <p className="mb-6" style={{ color: colors.gray[600] }}>
                 {t.profile.subtitle}
               </p>
               <Link href="/sign-in">
@@ -185,7 +186,7 @@ export default function ProfilePage() {
                       }}
                     />
                   </div>
-                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-white shadow-lg" />
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full border-4 shadow-lg" style={{ backgroundColor: '#22c55e', borderColor: isDark ? colors.gray[50] : '#ffffff' }} />
                 </div>
 
                 {/* User Info */}
@@ -236,21 +237,31 @@ export default function ProfilePage() {
           >
             <Card className="p-4 sm:p-5 backdrop-blur-xl theme-surface">
               <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-primary-100 rounded-xl">
-                  <Globe className="w-5 h-5 text-primary-600" />
+                <div className="p-2 rounded-xl" style={{ backgroundColor: isDark ? colors.primary[900] : colors.primary[100] }}>
+                  <Globe className="w-5 h-5" style={{ color: colors.primary[600] }} />
                 </div>
-                <h3 className="font-semibold text-gray-900">{t.profile.language}</h3>
+                <h3 className="font-semibold" style={{ color: colors.gray[900] }}>{t.profile.language}</h3>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {(['ht', 'fr', 'en', 'es'] as Locale[]).map((lang) => (
                   <button
                     key={lang}
                     onClick={() => setLocale(lang)}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl font-medium text-sm transition-all ${
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl font-medium text-sm transition-all"
+                    style={
                       locale === lang
-                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30'
-                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200'
-                    }`}
+                        ? {
+                            backgroundColor: colors.primary[600],
+                            color: '#ffffff',
+                            boxShadow: `0 4px 14px ${colors.primary[500]}30`
+                          }
+                        : {
+                            backgroundColor: colors.gray[50],
+                            color: colors.gray[700],
+                            borderWidth: '1px',
+                            borderColor: colors.gray[200]
+                          }
+                    }
                   >
                     <span className="text-lg">{localeFlags[lang]}</span>
                     <span>{localeNames[lang]}</span>
@@ -273,20 +284,20 @@ export default function ProfilePage() {
                 className="w-full flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary-100 rounded-xl">
-                    <Palette className="w-5 h-5 text-primary-600" />
+                  <div className="p-2 rounded-xl" style={{ backgroundColor: isDark ? colors.primary[900] : colors.primary[100] }}>
+                    <Palette className="w-5 h-5" style={{ color: colors.primary[600] }} />
                   </div>
                   <div className="text-left">
-                    <h3 className="font-semibold text-gray-900">Theme</h3>
-                    <p className="text-sm text-gray-500">{theme.name}</p>
+                    <h3 className="font-semibold" style={{ color: colors.gray[900] }}>Theme</h3>
+                    <p className="text-sm" style={{ color: colors.gray[500] }}>{theme.name}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <div
-                    className="w-6 h-6 rounded-full border-2 border-gray-200"
-                    style={{ backgroundColor: theme.preview.accent }}
+                    className="w-6 h-6 rounded-full border-2"
+                    style={{ backgroundColor: theme.preview.accent, borderColor: colors.gray[200] }}
                   />
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                  <ChevronRight className="w-5 h-5" style={{ color: colors.gray[400] }} />
                 </div>
               </button>
             </Card>
@@ -308,11 +319,11 @@ export default function ProfilePage() {
                   key={index}
                   className="p-3 sm:p-4 md:p-6 text-center backdrop-blur-xl theme-surface transition-all"
                 >
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
-                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-primary-600" />
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3" style={{ backgroundColor: isDark ? colors.primary[900] : colors.primary[100] }}>
+                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" style={{ color: colors.primary[600] }} />
                   </div>
-                  <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-1">{stat.value}</div>
-                  <div className="text-[10px] sm:text-xs md:text-sm text-gray-600 leading-tight">{stat.label}</div>
+                  <div className="text-lg sm:text-xl md:text-2xl font-bold mb-1" style={{ color: colors.gray[900] }}>{stat.value}</div>
+                  <div className="text-[10px] sm:text-xs md:text-sm leading-tight" style={{ color: colors.gray[600] }}>{stat.label}</div>
                 </Card>
               );
             })}
@@ -324,7 +335,7 @@ export default function ProfilePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">{t.profile.title}</h2>
+            <h2 className="text-xl sm:text-2xl font-bold mb-4" style={{ color: colors.gray[900] }}>{t.profile.title}</h2>
             <div className="space-y-3">
               {menuItems.map((item, index) => {
                 const Icon = item.icon;
@@ -342,13 +353,14 @@ export default function ProfilePage() {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
-                            <div className="p-3 bg-gray-100 rounded-xl group-hover:bg-primary-100 transition-colors">
-                              <Icon className="w-5 h-5 text-gray-600 group-hover:text-primary-600 transition-colors" />
+                            <div className="p-3 rounded-xl transition-colors" style={{ backgroundColor: colors.gray[100] }}>
+                              <Icon className="w-5 h-5 transition-colors" style={{ color: colors.gray[600] }} />
                             </div>
-                            <span className="font-medium text-gray-900">{item.label}</span>
+                            <span className="font-medium" style={{ color: colors.gray[900] }}>{item.label}</span>
                           </div>
                           <svg
-                            className="w-5 h-5 text-gray-400 group-hover:text-primary-600 group-hover:translate-x-1 transition-all"
+                            className="w-5 h-5 group-hover:translate-x-1 transition-all"
+                            style={{ color: colors.gray[400] }}
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"

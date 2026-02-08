@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useTheme } from '@/lib/themes/ThemeProvider';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Container } from '@/components/Container';
@@ -31,6 +32,8 @@ interface PaymentMethod {
 export default function PaymentPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { theme, isDark } = useTheme();
+  const colors = theme.colors;
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
     {
       id: '1',
@@ -108,14 +111,15 @@ export default function PaymentPage() {
           <div className="mb-6">
             <Link
               href="/profile"
-              className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+              className="inline-flex items-center gap-2 mb-4 transition-colors"
+              style={{ color: colors.gray[600] }}
             >
               <ArrowLeft className="h-5 w-5" />
               {t.profile.backToProfile}
             </Link>
 
-            <h1 className="text-3xl font-bold text-gray-900">{t.profile.payment.title}</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 className="text-3xl font-bold" style={{ color: colors.gray[900] }}>{t.profile.payment.title}</h1>
+            <p className="mt-2" style={{ color: colors.gray[600] }}>
               {t.profile.payment.subtitle}
             </p>
           </div>
@@ -128,11 +132,11 @@ export default function PaymentPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="theme-card rounded-2xl shadow-sm p-8 text-center"
               >
-                <Wallet className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                <Wallet className="h-16 w-16 mx-auto mb-4" style={{ color: colors.gray[400] }} />
+                <h3 className="text-xl font-bold mb-2" style={{ color: colors.gray[900] }}>
                   {t.profile.payment.empty}
                 </h3>
-                <p className="text-gray-600 mb-6">
+                <p className="mb-6" style={{ color: colors.gray[600] }}>
                   {t.profile.payment.emptyDesc}
                 </p>
               </motion.div>
@@ -154,17 +158,23 @@ export default function PaymentPage() {
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-lg font-bold text-gray-900">
+                            <h3 className="text-lg font-bold" style={{ color: colors.gray[900] }}>
                               {method.label}
                             </h3>
                             {method.isDefault && (
-                              <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                              <span
+                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full"
+                                style={{
+                                  backgroundColor: isDark ? '#14532d' : '#dcfce7',
+                                  color: isDark ? '#bbf7d0' : '#166534'
+                                }}
+                              >
                                 <Star className="h-3 w-3 fill-current" />
                                 {t.profile.payment.defaultBadge}
                               </span>
                             )}
                           </div>
-                          <p className="text-gray-600 font-mono">{method.details}</p>
+                          <p className="font-mono" style={{ color: colors.gray[600] }}>{method.details}</p>
                         </div>
                       </div>
 
@@ -172,7 +182,8 @@ export default function PaymentPage() {
                         {!method.isDefault && (
                           <button
                             onClick={() => handleSetDefault(method.id)}
-                            className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                            className="p-2 rounded-lg transition-colors"
+                            style={{ color: colors.gray[600] }}
                             title={t.profile.payment.setDefault}
                           >
                             <Star className="h-5 w-5" />
@@ -180,7 +191,8 @@ export default function PaymentPage() {
                         )}
                         <button
                           onClick={() => handleDelete(method.id)}
-                          className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 rounded-lg transition-colors"
+                          style={{ color: colors.gray[600] }}
                           title={t.profile.payment.delete}
                         >
                           <Trash2 className="h-5 w-5" />
@@ -209,13 +221,17 @@ export default function PaymentPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="mt-6 bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg"
+            className="mt-6 border-l-4 p-4 rounded-lg"
+            style={{
+              backgroundColor: isDark ? '#1e3a8a' : '#dbeafe',
+              borderColor: isDark ? '#3b82f6' : '#2563eb'
+            }}
           >
             <div className="flex items-start gap-3">
-              <div className="text-blue-600">ℹ️</div>
-              <div className="text-sm text-blue-900">
+              <div style={{ color: isDark ? '#93c5fd' : '#2563eb' }}>ℹ️</div>
+              <div className="text-sm" style={{ color: isDark ? '#dbeafe' : '#1e3a8a' }}>
                 <p className="font-semibold mb-1">{t.profile.payment.acceptedMethods}</p>
-                <ul className="list-disc list-inside space-y-1 text-blue-800">
+                <ul className="list-disc list-inside space-y-1" style={{ color: isDark ? '#bfdbfe' : '#1e40af' }}>
                   <li>{t.profile.payment.moncashDesc}</li>
                   <li>{t.profile.payment.natcashDesc}</li>
                   <li>{t.profile.payment.cardDesc}</li>
@@ -235,66 +251,87 @@ export default function PaymentPage() {
             animate={{ opacity: 1, scale: 1 }}
             className="theme-card rounded-2xl shadow-2xl max-w-md w-full p-6"
           >
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-2xl font-bold mb-4" style={{ color: colors.gray[900] }}>
               {t.profile.payment.addMethod}
             </h2>
 
             {/* Payment Type Selection */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium mb-3" style={{ color: colors.gray[700] }}>
                 {t.profile.payment.paymentType}
               </label>
               <div className="grid grid-cols-3 gap-3">
                 <button
                   onClick={() => setSelectedType('moncash')}
-                  className={`p-4 rounded-xl border-2 transition-all ${
-                    selectedType === 'moncash'
-                      ? 'border-red-500 bg-red-50'
-                      : 'border-gray-200 hover:border-red-300'
-                  }`}
+                  className="p-4 rounded-xl border-2 transition-all"
+                  style={{
+                    borderColor: selectedType === 'moncash' ? '#ef4444' : colors.gray[200],
+                    backgroundColor: selectedType === 'moncash'
+                      ? (isDark ? '#7f1d1d' : '#fee2e2')
+                      : 'transparent'
+                  }}
                 >
-                  <Smartphone className={`h-6 w-6 mx-auto mb-2 ${
-                    selectedType === 'moncash' ? 'text-red-600' : 'text-gray-400'
-                  }`} />
-                  <span className={`text-sm font-medium ${
-                    selectedType === 'moncash' ? 'text-red-900' : 'text-gray-600'
-                  }`}>
+                  <Smartphone
+                    className="h-6 w-6 mx-auto mb-2"
+                    style={{ color: selectedType === 'moncash' ? '#dc2626' : colors.gray[400] }}
+                  />
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: selectedType === 'moncash'
+                      ? (isDark ? '#fecaca' : '#7f1d1d')
+                      : colors.gray[600]
+                    }}
+                  >
                     Moncash
                   </span>
                 </button>
 
                 <button
                   onClick={() => setSelectedType('natcash')}
-                  className={`p-4 rounded-xl border-2 transition-all ${
-                    selectedType === 'natcash'
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-blue-300'
-                  }`}
+                  className="p-4 rounded-xl border-2 transition-all"
+                  style={{
+                    borderColor: selectedType === 'natcash' ? '#3b82f6' : colors.gray[200],
+                    backgroundColor: selectedType === 'natcash'
+                      ? (isDark ? '#1e3a8a' : '#dbeafe')
+                      : 'transparent'
+                  }}
                 >
-                  <Smartphone className={`h-6 w-6 mx-auto mb-2 ${
-                    selectedType === 'natcash' ? 'text-blue-600' : 'text-gray-400'
-                  }`} />
-                  <span className={`text-sm font-medium ${
-                    selectedType === 'natcash' ? 'text-blue-900' : 'text-gray-600'
-                  }`}>
+                  <Smartphone
+                    className="h-6 w-6 mx-auto mb-2"
+                    style={{ color: selectedType === 'natcash' ? '#2563eb' : colors.gray[400] }}
+                  />
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: selectedType === 'natcash'
+                      ? (isDark ? '#bfdbfe' : '#1e3a8a')
+                      : colors.gray[600]
+                    }}
+                  >
                     Natcash
                   </span>
                 </button>
 
                 <button
                   onClick={() => setSelectedType('card')}
-                  className={`p-4 rounded-xl border-2 transition-all ${
-                    selectedType === 'card'
-                      ? 'border-purple-500 bg-purple-50'
-                      : 'border-gray-200 hover:border-purple-300'
-                  }`}
+                  className="p-4 rounded-xl border-2 transition-all"
+                  style={{
+                    borderColor: selectedType === 'card' ? '#a855f7' : colors.gray[200],
+                    backgroundColor: selectedType === 'card'
+                      ? (isDark ? '#581c87' : '#f3e8ff')
+                      : 'transparent'
+                  }}
                 >
-                  <CreditCard className={`h-6 w-6 mx-auto mb-2 ${
-                    selectedType === 'card' ? 'text-purple-600' : 'text-gray-400'
-                  }`} />
-                  <span className={`text-sm font-medium ${
-                    selectedType === 'card' ? 'text-purple-900' : 'text-gray-600'
-                  }`}>
+                  <CreditCard
+                    className="h-6 w-6 mx-auto mb-2"
+                    style={{ color: selectedType === 'card' ? '#9333ea' : colors.gray[400] }}
+                  />
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: selectedType === 'card'
+                      ? (isDark ? '#e9d5ff' : '#581c87')
+                      : colors.gray[600]
+                    }}
+                  >
                     {t.profile.payment.card}
                   </span>
                 </button>
@@ -303,7 +340,7 @@ export default function PaymentPage() {
 
             {/* Details Input */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium mb-2" style={{ color: colors.gray[700] }}>
                 {selectedType === 'card'
                   ? t.profile.payment.cardNumber
                   : t.profile.payment.phoneNumber}
@@ -317,7 +354,12 @@ export default function PaymentPage() {
                     ? '1234 5678 9012 3456'
                     : '+509 1234 5678'
                 }
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                style={{
+                  borderColor: colors.gray[300],
+                  backgroundColor: colors.gray[50],
+                  color: colors.gray[900]
+                }}
               />
             </div>
 
@@ -328,7 +370,12 @@ export default function PaymentPage() {
                   setShowAddModal(false);
                   setNewMethodDetails('');
                 }}
-                className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-3 border-2 font-semibold rounded-xl transition-colors"
+                style={{
+                  borderColor: colors.gray[300],
+                  color: colors.gray[700],
+                  backgroundColor: 'transparent'
+                }}
               >
                 {t.profile.payment.cancel}
               </button>
