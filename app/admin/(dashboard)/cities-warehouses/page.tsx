@@ -9,13 +9,13 @@ import {
   Trash2,
   Save,
   X,
-  Phone,
   Mail,
   Clock,
   Navigation,
   ExternalLink,
   Building2,
 } from 'lucide-react';
+import { PhoneInput } from '@/components/PhoneInput';
 
 interface CityPricing {
   id: number;
@@ -592,19 +592,12 @@ export default function CitiesWarehousesPage() {
                 )}
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      <Phone className="inline h-4 w-4 mr-1" />
-                      Téléphone
-                    </label>
-                    <input
-                      type="tel"
-                      value={warehouseForm.phone}
-                      onChange={(e) => setWarehouseForm({ ...warehouseForm, phone: e.target.value })}
-                      placeholder="+509 1234 5678"
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary-500"
-                    />
-                  </div>
+                  <PhoneInput
+                    label="Téléphone WhatsApp"
+                    value={warehouseForm.phone}
+                    onChange={(value) => setWarehouseForm({ ...warehouseForm, phone: value })}
+                    placeholder="+509 1234 5678"
+                  />
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
