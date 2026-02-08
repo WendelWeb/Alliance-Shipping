@@ -110,7 +110,9 @@ export function PhoneNumberModal({
       const updateData: any = {};
 
       if (missingPhone && phoneNumber) {
-        updateData.phone = phoneNumber.replace(/\D/g, '');
+        // Save phone WITH country code prefix (e.g., +50912345678)
+        const digitsOnly = phoneNumber.replace(/\D/g, '');
+        updateData.phone = selectedCountry.dial + digitsOnly;
         updateData.countryCode = selectedCountry.code;
       }
 
