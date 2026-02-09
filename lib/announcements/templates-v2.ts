@@ -194,7 +194,7 @@ export const TEMPLATES_V2: TemplateV2[] = [
   },
   {
     id: 'new_city',
-    category: 'pricing',
+    category: 'operations',
     name: { en: 'New City', fr: 'Nouvelle Ville', ht: 'Nouvo Vil', es: 'Nueva Ciudad' },
     description: {
       en: 'Add a new city to the pricing list',
@@ -209,7 +209,7 @@ export const TEMPLATES_V2: TemplateV2[] = [
   },
   {
     id: 'remove_city',
-    category: 'pricing',
+    category: 'operations',
     name: { en: 'Remove City', fr: 'Supprimer Ville', ht: 'Retire Vil', es: 'Eliminar Ciudad' },
     description: {
       en: 'Deactivate a city from the pricing list',

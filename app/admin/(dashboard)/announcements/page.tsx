@@ -204,7 +204,7 @@ export default function AnnouncementsPage() {
   const fetchFormData = useCallback(async (templateId: string) => {
     setLoadingFormData(true);
     try {
-      if (['city_fee_change', 'delivery_time_change'].includes(templateId)) {
+      if (['city_fee_change', 'delivery_time_change', 'new_city', 'remove_city'].includes(templateId)) {
         const res = await fetch('/api/pricing/all');
         const data = await res.json();
         setCityData(data.cities || []);
@@ -214,7 +214,7 @@ export default function AnnouncementsPage() {
         const data = await res.json();
         setSpecialItems(data.items || []);
       }
-      if (['new_warehouse', 'modify_warehouse', 'close_warehouse'].includes(templateId)) {
+      if (['new_warehouse', 'modify_warehouse', 'close_warehouse', 'remove_warehouse'].includes(templateId)) {
         const res = await fetch('/api/admin/warehouses');
         const data = await res.json();
         setWarehouseData(data.warehouses || []);
@@ -381,6 +381,27 @@ export default function AnnouncementsPage() {
         const wh = warehouseData.find((w) => w.id === selectedWarehouseId);
         if (!wh) return null;
         return { warehouseId: wh.id, name: wh.name, city: wh.city, reason: warehouseCloseReason || undefined };
+      }
+      case 'remove_warehouse': {
+        const wh = warehouseData.find((w) => w.id === selectedWarehouseId);
+        if (!wh) return null;
+        return { warehouseId: wh.id, name: wh.name, city: wh.city, reason: warehouseCloseReason || undefined };
+      }
+      case 'new_city': {
+        if (!warehouseForm.city || !warehouseForm.latitude || !warehouseForm.longitude) return null;
+        return {
+          city: warehouseForm.city,
+          serviceFee: parseFloat(cityFeeChanges[warehouseForm.city]?.newServiceFee || '5.00'),
+          pricePerLb: parseFloat(cityFeeChanges[warehouseForm.city]?.newPricePerLb || '4.00'),
+          deliveryDaysMin: parseInt(deliveryTimeForm.newDeliveryDaysMin) || 3,
+          deliveryDaysMax: parseInt(deliveryTimeForm.newDeliveryDaysMax) || 6,
+          perfumeDaysMin: parseInt(deliveryTimeForm.newPerfumeDaysMin) || 8,
+          perfumeDaysMax: parseInt(deliveryTimeForm.newPerfumeDaysMax) || 11,
+        };
+      }
+      case 'remove_city': {
+        if (!selectedCity) return null;
+        return { city: selectedCity, reason: warehouseCloseReason || undefined };
       }
       default:
         return null;
@@ -1630,6 +1651,275 @@ export default function AnnouncementsPage() {
                           type="text"
                           value={warehouseCloseReason}
                           placeholder="Relocation, renovation, etc."
+                          onChange={(e) => setWarehouseCloseReason(e.target.value)}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        />
+                      </motion.div>
+                    )}
+                  </div>
+                )}
+
+                {/* Remove Warehouse */}
+                {selectedTemplate.id === 'remove_warehouse' && (
+                  <div className="space-y-4">
+                    <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                      <XCircle className="h-5 w-5 text-red-600" />
+                      Select Warehouse to Delete Permanently
+                    </h3>
+                    <div className="p-3 bg-red-50 border-2 border-red-300 rounded-lg">
+                      <p className="text-sm text-red-700 font-medium">
+                        ⚠️ Warning: This will permanently DELETE the warehouse from the database. Use "Close Warehouse" if you want to deactivate instead.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {warehouseData.map((wh) => (
+                        <motion.button
+                          key={wh.id}
+                          type="button"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setSelectedWarehouseId(wh.id)}
+                          className={`p-4 rounded-xl border-2 text-left transition-all ${
+                            selectedWarehouseId === wh.id
+                              ? 'border-red-600 bg-red-100 shadow-md'
+                              : 'border-gray-200 bg-white hover:border-red-400 hover:shadow-sm'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3 mb-2">
+                            <div className="p-2 bg-red-200 rounded-lg">
+                              <Wrench className="h-5 w-5 text-red-700" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-bold text-gray-900 mb-1">{wh.name}</div>
+                              <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                                <Globe className="h-3 w-3" />
+                                {wh.city}
+                              </div>
+                              <div className="text-xs text-gray-400 line-clamp-1">{wh.address}</div>
+                              <div className="text-xs mt-1">
+                                {wh.isActive ? (
+                                  <span className="text-green-600 font-medium">Active</span>
+                                ) : (
+                                  <span className="text-gray-500">Inactive</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </div>
+                    {selectedWarehouseId && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border-2 border-red-300"
+                      >
+                        <label className="flex items-center gap-1 text-sm font-semibold text-gray-700 mb-2">
+                          <AlertCircle className="h-4 w-4 text-red-600" />
+                          Reason for Deletion (optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={warehouseCloseReason}
+                          placeholder="Permanent closure, no longer needed, etc."
+                          onChange={(e) => setWarehouseCloseReason(e.target.value)}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        />
+                      </motion.div>
+                    )}
+                  </div>
+                )}
+
+                {/* New City */}
+                {selectedTemplate.id === 'new_city' && (
+                  <div className="space-y-4">
+                    <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                      <Plus className="h-5 w-5 text-green-600" />
+                      Add New City
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border-2 border-green-200">
+                      <div className="sm:col-span-2">
+                        <label className="flex items-center gap-1 text-sm font-semibold text-gray-700 mb-2">
+                          <Globe className="h-4 w-4 text-green-600" />
+                          City Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={warehouseForm.city}
+                          placeholder="Jacmel, Hinche, Jérémie..."
+                          onChange={(e) => setWarehouseForm((prev) => ({ ...prev, city: e.target.value }))}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center gap-1 text-sm font-semibold text-gray-700 mb-2">
+                          <DollarSign className="h-4 w-4 text-green-600" />
+                          Service Fee ($) *
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={cityFeeChanges[warehouseForm.city]?.newServiceFee || ''}
+                          placeholder="5.00"
+                          onChange={(e) => setCityFeeChanges((prev) => ({
+                            ...prev,
+                            [warehouseForm.city]: { ...prev[warehouseForm.city], newServiceFee: e.target.value }
+                          }))}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center gap-1 text-sm font-semibold text-gray-700 mb-2">
+                          <DollarSign className="h-4 w-4 text-green-600" />
+                          Price per Lb ($) *
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={cityFeeChanges[warehouseForm.city]?.newPricePerLb || ''}
+                          placeholder="4.00"
+                          onChange={(e) => setCityFeeChanges((prev) => ({
+                            ...prev,
+                            [warehouseForm.city]: { ...prev[warehouseForm.city], newPricePerLb: e.target.value }
+                          }))}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center gap-1 text-sm font-semibold text-gray-700 mb-2">
+                          <Clock className="h-4 w-4 text-green-600" />
+                          Delivery Days (Min)
+                        </label>
+                        <input
+                          type="number"
+                          value={deliveryTimeForm.newDeliveryDaysMin}
+                          placeholder="3"
+                          onChange={(e) => setDeliveryTimeForm((prev) => ({ ...prev, newDeliveryDaysMin: e.target.value }))}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center gap-1 text-sm font-semibold text-gray-700 mb-2">
+                          <Clock className="h-4 w-4 text-green-600" />
+                          Delivery Days (Max)
+                        </label>
+                        <input
+                          type="number"
+                          value={deliveryTimeForm.newDeliveryDaysMax}
+                          placeholder="6"
+                          onChange={(e) => setDeliveryTimeForm((prev) => ({ ...prev, newDeliveryDaysMax: e.target.value }))}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center gap-1 text-sm font-semibold text-gray-700 mb-2">
+                          <Sparkles className="h-4 w-4 text-green-600" />
+                          Perfume Days (Min)
+                        </label>
+                        <input
+                          type="number"
+                          value={deliveryTimeForm.newPerfumeDaysMin}
+                          placeholder="8"
+                          onChange={(e) => setDeliveryTimeForm((prev) => ({ ...prev, newPerfumeDaysMin: e.target.value }))}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center gap-1 text-sm font-semibold text-gray-700 mb-2">
+                          <Sparkles className="h-4 w-4 text-green-600" />
+                          Perfume Days (Max)
+                        </label>
+                        <input
+                          type="number"
+                          value={deliveryTimeForm.newPerfumeDaysMax}
+                          placeholder="11"
+                          onChange={(e) => setDeliveryTimeForm((prev) => ({ ...prev, newPerfumeDaysMax: e.target.value }))}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center gap-1 text-sm font-semibold text-gray-700 mb-2">
+                          <MapPin className="h-4 w-4 text-green-600" />
+                          Latitude * (GPS)
+                        </label>
+                        <input
+                          type="text"
+                          value={warehouseForm.latitude}
+                          placeholder="18.2000"
+                          onChange={(e) => setWarehouseForm((prev) => ({ ...prev, latitude: e.target.value }))}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center gap-1 text-sm font-semibold text-gray-700 mb-2">
+                          <MapPin className="h-4 w-4 text-green-600" />
+                          Longitude * (GPS)
+                        </label>
+                        <input
+                          type="text"
+                          value={warehouseForm.longitude}
+                          placeholder="-73.7500"
+                          onChange={(e) => setWarehouseForm((prev) => ({ ...prev, longitude: e.target.value }))}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Remove City */}
+                {selectedTemplate.id === 'remove_city' && (
+                  <div className="space-y-4">
+                    <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                      <XCircle className="h-5 w-5 text-red-600" />
+                      Select City to Deactivate
+                    </h3>
+                    <div className="p-3 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+                      <p className="text-sm text-yellow-700 font-medium">
+                        ℹ️ Note: This will deactivate the city (isActive = false). It will no longer appear in dropdowns.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {cityData.filter((c) => c.isActive).map((city) => (
+                        <motion.button
+                          key={city.id}
+                          type="button"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setSelectedCity(city.city)}
+                          className={`p-4 rounded-xl border-2 text-left transition-all ${
+                            selectedCity === city.city
+                              ? 'border-red-500 bg-red-50 shadow-md'
+                              : 'border-gray-200 bg-white hover:border-red-300 hover:shadow-sm'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="p-2 bg-red-100 rounded-lg">
+                              <MapPin className="h-4 w-4 text-red-600" />
+                            </div>
+                            <div className="font-bold text-gray-900">{city.city}</div>
+                          </div>
+                          <div className="text-xs text-gray-500 space-y-1">
+                            <div>Service: ${city.serviceFee}</div>
+                            <div>Per Lb: ${city.pricePerLb}</div>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </div>
+                    {selectedCity && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-4 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl border-2 border-red-200"
+                      >
+                        <label className="flex items-center gap-1 text-sm font-semibold text-gray-700 mb-2">
+                          <AlertCircle className="h-4 w-4 text-red-600" />
+                          Reason for Deactivation (optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={warehouseCloseReason}
+                          placeholder="No longer served, relocated, etc."
                           onChange={(e) => setWarehouseCloseReason(e.target.value)}
                           className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-red-500"
                         />
