@@ -173,12 +173,12 @@ export function PhoneNumberModal({
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen">
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        {/* Elegant Header with Gradient */}
+        {/* Compact Elegant Header with Gradient */}
         <LinearGradient
           colors={[colors.primary[600], colors.primary[700], colors.primary[800]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={[styles.header, { paddingTop: insets.top + spacing.xl, paddingHorizontal: spacing.xl, paddingBottom: spacing.xl * 1.5 }]}
+          style={[styles.header, { paddingTop: insets.top + spacing.md, paddingHorizontal: spacing.xl, paddingBottom: spacing.lg }]}
         >
           <View style={styles.headerContent}>
             <View style={styles.iconContainer}>
@@ -186,11 +186,8 @@ export function PhoneNumberModal({
                 <Text style={styles.iconEmoji}>✨</Text>
               </View>
             </View>
-            <Text style={[styles.title, { fontFamily: fonts.headingBold, color: colors.white, marginTop: spacing.md }]}>
+            <Text style={[styles.title, { fontFamily: fonts.headingBold, color: colors.white, marginTop: spacing.sm }]}>
               {t.phoneModal.title}
-            </Text>
-            <Text style={[styles.subtitle, { fontFamily: fonts.regular, color: 'rgba(255, 255, 255, 0.9)', marginTop: spacing.xs }]}>
-              {t.phoneModal.descriptionAll}
             </Text>
           </View>
         </LinearGradient>
@@ -223,7 +220,7 @@ export function PhoneNumberModal({
                     {t.phoneModal.phoneNumber}
                   </Text>
                   <Text style={[styles.cardSubtitle, { fontFamily: fonts.regular, color: colors.gray[500], fontSize: 13, marginTop: 2 }]}>
-                    Sélectionnez votre pays et entrez votre numéro
+                    {t.phoneModal.phoneSubtitle}
                   </Text>
                 </View>
               </View>
@@ -306,7 +303,7 @@ export function PhoneNumberModal({
                     {t.phoneModal.city}
                   </Text>
                   <Text style={[styles.cardSubtitle, { fontFamily: fonts.regular, color: colors.gray[500], fontSize: 13, marginTop: 2 }]}>
-                    Choisissez votre ville de destination
+                    {t.phoneModal.citySubtitle}
                   </Text>
                 </View>
               </View>
@@ -355,7 +352,7 @@ export function PhoneNumberModal({
                     {t.phoneModal.warehouse}
                   </Text>
                   <Text style={[styles.cardSubtitle, { fontFamily: fonts.regular, color: colors.gray[500], fontSize: 13, marginTop: 2 }]}>
-                    Sélectionnez votre dépôt de retrait
+                    {t.phoneModal.warehouseSubtitle}
                   </Text>
                 </View>
               </View>
@@ -677,17 +674,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconEmoji: {
-    fontSize: 36,
+    fontSize: 28,
   },
   title: {
-    fontSize: 28,
+    fontSize: 22,
     textAlign: 'center',
     letterSpacing: 0.3,
   },
