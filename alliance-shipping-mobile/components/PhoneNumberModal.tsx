@@ -37,19 +37,6 @@ interface Warehouse {
   openingHours?: string;
 }
 
-const HAITI_CITIES = [
-  'Port-au-Prince',
-  'Cap-Haïtien',
-  'Port-de-Paix',
-  'Gonaïves',
-  'Saint-Marc',
-  'Les Cayes',
-  'Pétion-Ville',
-  'Delmas',
-  'Carrefour',
-  'Jacmel',
-];
-
 export function PhoneNumberModal({
   visible,
   onSuccess,
@@ -66,6 +53,7 @@ export function PhoneNumberModal({
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState<number | null>(null);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
 
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [showCityPicker, setShowCityPicker] = useState(false);
@@ -73,6 +61,25 @@ export function PhoneNumberModal({
 
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingWarehouses, setIsLoadingWarehouses] = useState(false);
+  const [isLoadingCities, setIsLoadingCities] = useState(true);
+
+  // Load available cities from API
+  useEffect(() => {
+    const loadCities = async () => {
+      try {
+        const response = await api.get<{ cities: { city: string }[] }>('/api/pricing/all');
+        const cityNames = response.cities.map((c) => c.city);
+        setCities(cityNames);
+      } catch (error) {
+        console.error('Error loading cities:', error);
+        setCities([]);
+      } finally {
+        setIsLoadingCities(false);
+      }
+    };
+
+    loadCities();
+  }, []);
 
   // Load warehouses when city changes
   useEffect(() => {
@@ -442,25 +449,42 @@ export function PhoneNumberModal({
                 </TouchableOpacity>
               </View>
               <ScrollView style={{ maxHeight: 500, backgroundColor: colors.surfaceSolid }}>
-                {HAITI_CITIES.map((city) => (
-                  <TouchableOpacity
-                    key={city}
-                    onPress={() => {
-                      setSelectedCity(city);
-                      setShowCityPicker(false);
-                      Haptics.selectionAsync();
-                    }}
-                    style={[styles.pickerItem, {
-                      paddingHorizontal: spacing.lg,
-                      paddingVertical: spacing.md,
-                      backgroundColor: selectedCity === city ? (isDark ? colors.primary[900] : colors.primary[50]) : 'transparent',
-                    }]}
-                  >
-                    <Text style={{ fontFamily: fonts.medium, color: selectedCity === city ? (isDark ? colors.primary[100] : colors.primary[900]) : colors.gray[900], fontSize: 15 }}>
-                      {city}
+                {isLoadingCities ? (
+                  <View style={{ padding: spacing.xl, alignItems: 'center' }}>
+                    <ActivityIndicator size="small" color={colors.primary[500]} />
+                    <Text style={{ fontFamily: fonts.regular, color: colors.gray[500], marginTop: spacing.sm }}>
+                      Chargement des villes...
                     </Text>
-                  </TouchableOpacity>
-                ))}
+                  </View>
+                ) : cities.length === 0 ? (
+                  <View style={{ padding: spacing.xl, alignItems: 'center' }}>
+                    <Text style={{ fontFamily: fonts.regular, color: colors.gray[500] }}>
+                      Aucune ville disponible
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    {cities.map((city) => (
+                      <TouchableOpacity
+                        key={city}
+                        onPress={() => {
+                          setSelectedCity(city);
+                          setShowCityPicker(false);
+                          Haptics.selectionAsync();
+                        }}
+                        style={[styles.pickerItem, {
+                          paddingHorizontal: spacing.lg,
+                          paddingVertical: spacing.md,
+                          backgroundColor: selectedCity === city ? (isDark ? colors.primary[900] : colors.primary[50]) : 'transparent',
+                        }]}
+                      >
+                        <Text style={{ fontFamily: fonts.medium, color: selectedCity === city ? (isDark ? colors.primary[100] : colors.primary[900]) : colors.gray[900], fontSize: 15 }}>
+                          {city}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </>
+                )}
               </ScrollView>
             </View>
           </View>

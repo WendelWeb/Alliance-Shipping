@@ -88,10 +88,10 @@ export function UserInfoGate({ children }: { children: React.ReactNode }) {
     };
   }, [isLoaded, isSignedIn]);
 
-  // Re-check when navigating away from settings page
+  // Re-check on every navigation (to catch immediate deletions)
   useEffect(() => {
-    if (lastPathname.current === '/(tabs)/profile/settings' && pathname !== '/(tabs)/profile/settings') {
-      console.log('🔄 Navigated away from settings, re-checking user info...');
+    if (lastPathname.current !== pathname && isLoaded && isSignedIn) {
+      console.log('🔄 Navigation detected, re-checking user info...');
       checkUserInfo();
     }
     lastPathname.current = pathname;
