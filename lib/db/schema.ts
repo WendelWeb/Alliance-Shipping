@@ -8,8 +8,10 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull(),
   firstName: varchar('first_name', { length: 255 }),
   lastName: varchar('last_name', { length: 255 }),
-  phone: varchar('phone', { length: 50 }),
+  phone: varchar('phone', { length: 50 }), // Numéro principal/direct
   countryCode: varchar('country_code', { length: 10 }).default('+509'), // Haiti by default
+  whatsappPhone: varchar('whatsapp_phone', { length: 50 }), // Numéro WhatsApp
+  whatsappCountryCode: varchar('whatsapp_country_code', { length: 10 }).default('+509'),
   city: varchar('city', { length: 100 }), // User's city (Port-au-Prince, Cap-Haïtien, Port-de-Paix)
   warehouseId: integer('warehouse_id'), // Dépôt de réception choisi par l'utilisateur
   preferredLanguage: varchar('preferred_language', { length: 10 }).default('fr').notNull(),
