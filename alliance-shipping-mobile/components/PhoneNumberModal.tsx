@@ -173,20 +173,16 @@ export function PhoneNumberModal({
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen">
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        {/* Compact Elegant Header with Gradient */}
+        {/* Ultra Compact Header with Gradient */}
         <LinearGradient
           colors={[colors.primary[600], colors.primary[700], colors.primary[800]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={[styles.header, { paddingTop: insets.top + spacing.md, paddingHorizontal: spacing.xl, paddingBottom: spacing.lg }]}
+          style={[styles.header, { paddingTop: insets.top + spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.md }]}
         >
-          <View style={styles.headerContent}>
-            <View style={styles.iconContainer}>
-              <View style={[styles.iconCircle, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
-                <Text style={styles.iconEmoji}>✨</Text>
-              </View>
-            </View>
-            <Text style={[styles.title, { fontFamily: fonts.headingBold, color: colors.white, marginTop: spacing.sm }]}>
+          <View style={[styles.headerContent, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
+            <Text style={styles.iconEmoji}>✨</Text>
+            <Text style={[styles.title, { fontFamily: fonts.bold, color: colors.white, marginLeft: spacing.sm }]}>
               {t.phoneModal.title}
             </Text>
           </View>
@@ -498,26 +494,45 @@ export function PhoneNumberModal({
           </TouchableOpacity>
         </View>
 
-        {/* Country Picker Modal */}
+        {/* Country Picker Modal - Improved UI */}
         <Modal visible={showCountryPicker} animationType="slide" transparent>
-          <View style={styles.modalOverlay}>
-            <View style={[styles.pickerModal, {
-              backgroundColor: colors.surfaceSolid,
-              borderTopLeftRadius: borderRadius.xl,
-              borderTopRightRadius: borderRadius.xl,
-              paddingBottom: insets.bottom,
-            }]}>
-              <View style={[styles.pickerHeader, { paddingHorizontal: spacing.lg, paddingVertical: spacing.lg, borderBottomWidth: 1, borderBottomColor: colors.gray[200] }]}>
-                <Text style={[styles.pickerTitle, { fontFamily: fonts.semiBold, color: colors.gray[900] }]}>
-                  {t.phoneModal.country}
-                </Text>
-                <TouchableOpacity onPress={() => setShowCountryPicker(false)}>
-                  <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[600] }}>
-                    {t.phoneModal.close || 'Fermer'}
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowCountryPicker(false)}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+              style={[styles.pickerModal, {
+                backgroundColor: colors.white,
+                borderTopLeftRadius: borderRadius.xl * 1.5,
+                borderTopRightRadius: borderRadius.xl * 1.5,
+                paddingBottom: insets.bottom,
+              }]}
+            >
+              <View style={[styles.pickerHeader, { paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderBottomWidth: 0 }]}>
+                <View style={{ alignItems: 'center', paddingVertical: spacing.xs }}>
+                  <View style={{ width: 40, height: 4, backgroundColor: colors.gray[300], borderRadius: 2 }} />
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xs }}>
+                  <Text style={[styles.pickerTitle, { fontFamily: fonts.bold, color: colors.gray[900], fontSize: 18 }]}>
+                    {t.phoneModal.country}
                   </Text>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setShowCountryPicker(false)}
+                    style={{ padding: spacing.xs }}
+                  >
+                    <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[600], fontSize: 16 }}>
+                      {t.phoneModal.close || 'Fermer'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-              <ScrollView style={{ maxHeight: 500, backgroundColor: colors.surfaceSolid }}>
+              <ScrollView
+                style={{ maxHeight: 500, backgroundColor: colors.white }}
+                contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: spacing.lg }}
+              >
                 {COUNTRIES.map((country, index) => (
                   <TouchableOpacity
                     key={index}
@@ -526,52 +541,78 @@ export function PhoneNumberModal({
                       setShowCountryPicker(false);
                       Haptics.selectionAsync();
                     }}
-                    style={[styles.pickerItem, {
+                    style={[styles.pickerItemCard, {
+                      backgroundColor: selectedCountry.code === country.code ? colors.primary[50] : colors.gray[50],
+                      borderRadius: borderRadius.lg,
                       paddingHorizontal: spacing.lg,
                       paddingVertical: spacing.md,
-                      backgroundColor: selectedCountry.code === country.code ? (isDark ? colors.primary[900] : colors.primary[50]) : 'transparent',
+                      marginVertical: spacing.xs,
+                      borderWidth: selectedCountry.code === country.code ? 2 : 0,
+                      borderColor: colors.primary[600],
                     }]}
                   >
-                    <Text style={{ fontFamily: fonts.medium, color: selectedCountry.code === country.code ? (isDark ? colors.primary[100] : colors.primary[900]) : colors.gray[900], fontSize: 15 }}>
-                      {country.flag} {getCountryName(country, locale)} ({country.dial})
+                    <Text style={{ fontFamily: fonts.semiBold, color: selectedCountry.code === country.code ? colors.primary[900] : colors.gray[900], fontSize: 16 }}>
+                      {country.flag}  {getCountryName(country, locale)}
+                    </Text>
+                    <Text style={{ fontFamily: fonts.regular, color: selectedCountry.code === country.code ? colors.primary[700] : colors.gray[600], fontSize: 14, marginTop: 2 }}>
+                      {country.dial}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-            </View>
-          </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
         </Modal>
 
-        {/* City Picker Modal */}
+        {/* City Picker Modal - Improved UI */}
         <Modal visible={showCityPicker} animationType="slide" transparent>
-          <View style={styles.modalOverlay}>
-            <View style={[styles.pickerModal, {
-              backgroundColor: colors.surfaceSolid,
-              borderTopLeftRadius: borderRadius.xl,
-              borderTopRightRadius: borderRadius.xl,
-              paddingBottom: insets.bottom,
-            }]}>
-              <View style={[styles.pickerHeader, { paddingHorizontal: spacing.lg, paddingVertical: spacing.lg, borderBottomWidth: 1, borderBottomColor: colors.gray[200] }]}>
-                <Text style={[styles.pickerTitle, { fontFamily: fonts.semiBold, color: colors.gray[900] }]}>
-                  {t.phoneModal.selectCity}
-                </Text>
-                <TouchableOpacity onPress={() => setShowCityPicker(false)}>
-                  <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[600] }}>
-                    {t.phoneModal.close || 'Fermer'}
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowCityPicker(false)}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+              style={[styles.pickerModal, {
+                backgroundColor: colors.white,
+                borderTopLeftRadius: borderRadius.xl * 1.5,
+                borderTopRightRadius: borderRadius.xl * 1.5,
+                paddingBottom: insets.bottom,
+              }]}
+            >
+              <View style={[styles.pickerHeader, { paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderBottomWidth: 0 }]}>
+                <View style={{ alignItems: 'center', paddingVertical: spacing.xs }}>
+                  <View style={{ width: 40, height: 4, backgroundColor: colors.gray[300], borderRadius: 2 }} />
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xs }}>
+                  <Text style={[styles.pickerTitle, { fontFamily: fonts.bold, color: colors.gray[900], fontSize: 18 }]}>
+                    {t.phoneModal.selectCity}
                   </Text>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setShowCityPicker(false)}
+                    style={{ padding: spacing.xs }}
+                  >
+                    <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[600], fontSize: 16 }}>
+                      {t.phoneModal.close || 'Fermer'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-              <ScrollView style={{ maxHeight: 500, backgroundColor: colors.surfaceSolid }}>
+              <ScrollView
+                style={{ maxHeight: 500, backgroundColor: colors.white }}
+                contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: spacing.lg }}
+              >
                 {isLoadingCities ? (
                   <View style={{ padding: spacing.xl, alignItems: 'center' }}>
-                    <ActivityIndicator size="small" color={colors.primary[500]} />
-                    <Text style={{ fontFamily: fonts.regular, color: colors.gray[500], marginTop: spacing.sm }}>
+                    <ActivityIndicator size="large" color={colors.primary[600]} />
+                    <Text style={{ fontFamily: fonts.medium, color: colors.gray[600], marginTop: spacing.md, fontSize: 15 }}>
                       Chargement des villes...
                     </Text>
                   </View>
                 ) : cities.length === 0 ? (
                   <View style={{ padding: spacing.xl, alignItems: 'center' }}>
-                    <Text style={{ fontFamily: fonts.regular, color: colors.gray[500] }}>
+                    <Text style={{ fontFamily: fonts.medium, color: colors.gray[500], fontSize: 15 }}>
                       Aucune ville disponible
                     </Text>
                   </View>
@@ -585,44 +626,73 @@ export function PhoneNumberModal({
                           setShowCityPicker(false);
                           Haptics.selectionAsync();
                         }}
-                        style={[styles.pickerItem, {
+                        style={[styles.pickerItemCard, {
+                          backgroundColor: selectedCity === city ? colors.emerald[50] : colors.gray[50],
+                          borderRadius: borderRadius.lg,
                           paddingHorizontal: spacing.lg,
-                          paddingVertical: spacing.md,
-                          backgroundColor: selectedCity === city ? (isDark ? colors.primary[900] : colors.primary[50]) : 'transparent',
+                          paddingVertical: spacing.md + 2,
+                          marginVertical: spacing.xs,
+                          borderWidth: selectedCity === city ? 2 : 0,
+                          borderColor: colors.emerald[600],
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
                         }]}
                       >
-                        <Text style={{ fontFamily: fonts.medium, color: selectedCity === city ? (isDark ? colors.primary[100] : colors.primary[900]) : colors.gray[900], fontSize: 15 }}>
-                          {city}
+                        <Text style={{ fontFamily: fonts.semiBold, color: selectedCity === city ? colors.emerald[900] : colors.gray[900], fontSize: 16 }}>
+                          📍 {city}
                         </Text>
+                        {selectedCity === city && (
+                          <Text style={{ fontSize: 20, color: colors.emerald[600] }}>✓</Text>
+                        )}
                       </TouchableOpacity>
                     ))}
                   </>
                 )}
               </ScrollView>
-            </View>
-          </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
         </Modal>
 
-        {/* Warehouse Picker Modal */}
+        {/* Warehouse Picker Modal - Improved UI */}
         <Modal visible={showWarehousePicker} animationType="slide" transparent>
-          <View style={styles.modalOverlay}>
-            <View style={[styles.pickerModal, {
-              backgroundColor: colors.surfaceSolid,
-              borderTopLeftRadius: borderRadius.xl,
-              borderTopRightRadius: borderRadius.xl,
-              paddingBottom: insets.bottom,
-            }]}>
-              <View style={[styles.pickerHeader, { paddingHorizontal: spacing.lg, paddingVertical: spacing.lg, borderBottomWidth: 1, borderBottomColor: colors.gray[200] }]}>
-                <Text style={[styles.pickerTitle, { fontFamily: fonts.semiBold, color: colors.gray[900] }]}>
-                  {t.phoneModal.selectWarehouse}
-                </Text>
-                <TouchableOpacity onPress={() => setShowWarehousePicker(false)}>
-                  <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[600] }}>
-                    {t.phoneModal.close || 'Fermer'}
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowWarehousePicker(false)}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+              style={[styles.pickerModal, {
+                backgroundColor: colors.white,
+                borderTopLeftRadius: borderRadius.xl * 1.5,
+                borderTopRightRadius: borderRadius.xl * 1.5,
+                paddingBottom: insets.bottom,
+              }]}
+            >
+              <View style={[styles.pickerHeader, { paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderBottomWidth: 0 }]}>
+                <View style={{ alignItems: 'center', paddingVertical: spacing.xs }}>
+                  <View style={{ width: 40, height: 4, backgroundColor: colors.gray[300], borderRadius: 2 }} />
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xs }}>
+                  <Text style={[styles.pickerTitle, { fontFamily: fonts.bold, color: colors.gray[900], fontSize: 18 }]}>
+                    {t.phoneModal.selectWarehouse}
                   </Text>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setShowWarehousePicker(false)}
+                    style={{ padding: spacing.xs }}
+                  >
+                    <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[600], fontSize: 16 }}>
+                      {t.phoneModal.close || 'Fermer'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-              <ScrollView style={{ maxHeight: 500, backgroundColor: colors.surfaceSolid }}>
+              <ScrollView
+                style={{ maxHeight: 500, backgroundColor: colors.white }}
+                contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: spacing.lg }}
+              >
                 {warehouses.map((warehouse) => (
                   <TouchableOpacity
                     key={warehouse.id}
@@ -631,30 +701,38 @@ export function PhoneNumberModal({
                       setShowWarehousePicker(false);
                       Haptics.selectionAsync();
                     }}
-                    style={[styles.warehouseItem, {
-                      paddingHorizontal: spacing.lg,
-                      paddingVertical: spacing.md,
-                      backgroundColor: selectedWarehouse === warehouse.id ? (isDark ? colors.primary[900] : colors.primary[50]) : 'transparent',
-                      borderBottomWidth: 1,
-                      borderBottomColor: colors.gray[100],
+                    style={[styles.pickerItemCard, {
+                      backgroundColor: selectedWarehouse === warehouse.id ? colors.orange[50] : colors.gray[50],
+                      borderRadius: borderRadius.lg,
+                      padding: spacing.md,
+                      marginVertical: spacing.xs,
+                      borderWidth: selectedWarehouse === warehouse.id ? 2 : 0,
+                      borderColor: colors.orange[600],
                     }]}
                   >
-                    <Text style={{ fontFamily: fonts.semiBold, color: selectedWarehouse === warehouse.id ? (isDark ? colors.primary[100] : colors.primary[900]) : colors.gray[900], fontSize: 15, marginBottom: 4 }}>
-                      📦 {warehouse.name}
-                    </Text>
-                    <Text style={{ fontFamily: fonts.regular, color: selectedWarehouse === warehouse.id ? (isDark ? colors.primary[200] : colors.primary[800]) : colors.gray[600], fontSize: 13 }}>
-                      📍 {warehouse.address}
-                    </Text>
-                    {warehouse.phone && (
-                      <Text style={{ fontFamily: fonts.regular, color: selectedWarehouse === warehouse.id ? (isDark ? colors.primary[200] : colors.primary[800]) : colors.gray[600], fontSize: 13 }}>
-                        📞 {warehouse.phone}
-                      </Text>
-                    )}
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: fonts.bold, color: selectedWarehouse === warehouse.id ? colors.orange[900] : colors.gray[900], fontSize: 16, marginBottom: spacing.xs }}>
+                          🏢 {warehouse.name}
+                        </Text>
+                        <Text style={{ fontFamily: fonts.regular, color: selectedWarehouse === warehouse.id ? colors.orange[800] : colors.gray[600], fontSize: 14, lineHeight: 20 }}>
+                          📍 {warehouse.address}
+                        </Text>
+                        {warehouse.phone && (
+                          <Text style={{ fontFamily: fonts.regular, color: selectedWarehouse === warehouse.id ? colors.orange[800] : colors.gray[600], fontSize: 14, marginTop: spacing.xs }}>
+                            📞 {warehouse.phone}
+                          </Text>
+                        )}
+                      </View>
+                      {selectedWarehouse === warehouse.id && (
+                        <Text style={{ fontSize: 22, color: colors.orange[600], marginLeft: spacing.sm }}>✓</Text>
+                      )}
+                    </View>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-            </View>
-          </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
         </Modal>
       </View>
     </Modal>
@@ -666,27 +744,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {},
-  headerContent: {
-    alignItems: 'center',
-  },
-  iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  headerContent: {},
+  iconContainer: {},
+  iconCircle: {},
   iconEmoji: {
-    fontSize: 28,
+    fontSize: 20,
   },
   title: {
-    fontSize: 22,
-    textAlign: 'center',
-    letterSpacing: 0.3,
+    fontSize: 18,
+    letterSpacing: 0.2,
   },
   subtitle: {
     fontSize: 15,
@@ -778,9 +844,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  pickerTitle: {
-    fontSize: 18,
-  },
+  pickerTitle: {},
   pickerItem: {},
+  pickerItemCard: {},
   warehouseItem: {},
 });
