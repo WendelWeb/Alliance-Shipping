@@ -340,7 +340,7 @@ export function PackageCard({ item, index }: PackageCardProps) {
             <View style={[styles.metaPill, { backgroundColor: colors.gray[100] }]}>
               {categoryIcon}
               <Text style={[styles.metaPillText, { color: colors.gray[600] }]}>
-                {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
+                {item.category ? item.category.charAt(0).toUpperCase() + item.category.slice(1) : 'General'}
               </Text>
             </View>
 
