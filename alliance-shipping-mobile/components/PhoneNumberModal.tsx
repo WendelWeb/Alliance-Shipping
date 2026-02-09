@@ -10,8 +10,10 @@ import {
   Alert,
   Linking,
   StyleSheet,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '@/lib/themes/ThemeProvider';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -155,17 +157,29 @@ export function PhoneNumberModal({
   const selectedWarehouseData = warehouses.find(w => w.id === selectedWarehouse);
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="formSheet">
-      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
-        {/* Header */}
-        <View style={[styles.header, { backgroundColor: colors.primary[600], paddingHorizontal: spacing.lg, paddingVertical: spacing.lg }]}>
-          <Text style={[styles.title, { fontFamily: fonts.headingBold, color: colors.white }]}>
-            {t.phoneModal.title}
-          </Text>
-          <Text style={[styles.subtitle, { fontFamily: fonts.regular, color: colors.primary[100] }]}>
-            {t.phoneModal.descriptionAll}
-          </Text>
-        </View>
+    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen">
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Elegant Header with Gradient */}
+        <LinearGradient
+          colors={[colors.primary[600], colors.primary[700], colors.primary[800]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.header, { paddingTop: insets.top + spacing.xl, paddingHorizontal: spacing.xl, paddingBottom: spacing.xl * 1.5 }]}
+        >
+          <View style={styles.headerContent}>
+            <View style={styles.iconContainer}>
+              <View style={[styles.iconCircle, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]}>
+                <Text style={styles.iconEmoji}>✨</Text>
+              </View>
+            </View>
+            <Text style={[styles.title, { fontFamily: fonts.headingBold, color: colors.white, marginTop: spacing.md }]}>
+              {t.phoneModal.title}
+            </Text>
+            <Text style={[styles.subtitle, { fontFamily: fonts.regular, color: 'rgba(255, 255, 255, 0.9)', marginTop: spacing.xs }]}>
+              {t.phoneModal.descriptionAll}
+            </Text>
+          </View>
+        </LinearGradient>
 
         {/* Content */}
         <ScrollView
@@ -175,10 +189,30 @@ export function PhoneNumberModal({
         >
           {/* Phone Number Section */}
           {missingPhone && (
-            <View style={[styles.section, { marginBottom: spacing.xl }]}>
-              <Text style={[styles.label, { fontFamily: fonts.semiBold, color: colors.gray[700], marginBottom: spacing.sm }]}>
-                📞 {t.phoneModal.phoneNumber} <Text style={{ color: colors.red[500] }}>*</Text>
-              </Text>
+            <View style={[styles.card, {
+              backgroundColor: colors.white,
+              borderRadius: borderRadius.xl,
+              padding: spacing.xl,
+              marginBottom: spacing.lg,
+              shadowColor: colors.black,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 12,
+              elevation: 3,
+            }]}>
+              <View style={styles.sectionHeader}>
+                <View style={[styles.labelIconContainer, { backgroundColor: colors.primary[50] }]}>
+                  <Text style={styles.labelIcon}>📞</Text>
+                </View>
+                <View style={{ flex: 1, marginLeft: spacing.md }}>
+                  <Text style={[styles.cardTitle, { fontFamily: fonts.semiBold, color: colors.gray[900], fontSize: 17 }]}>
+                    {t.phoneModal.phoneNumber}
+                  </Text>
+                  <Text style={[styles.cardSubtitle, { fontFamily: fonts.regular, color: colors.gray[500], fontSize: 13, marginTop: 2 }]}>
+                    Sélectionnez votre pays et entrez votre numéro
+                  </Text>
+                </View>
+              </View>
 
               {/* Country Picker */}
               <TouchableOpacity
@@ -186,30 +220,31 @@ export function PhoneNumberModal({
                   setShowCountryPicker(true);
                   Haptics.selectionAsync();
                 }}
-                style={[styles.picker, {
-                  backgroundColor: colors.gray[50],
-                  borderColor: colors.gray[200],
-                  borderRadius: borderRadius.lg,
+                style={[styles.modernInput, {
+                  backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+                  borderColor: isDark ? colors.gray[700] : colors.gray[200],
+                  borderRadius: borderRadius.xl,
                   paddingHorizontal: spacing.lg,
-                  paddingVertical: spacing.md + 2,
-                  marginBottom: spacing.sm,
+                  paddingVertical: spacing.lg,
+                  marginTop: spacing.lg,
+                  marginBottom: spacing.md,
                 }]}
               >
-                <Text style={{ fontFamily: fonts.medium, color: colors.gray[900], fontSize: 15 }}>
-                  {selectedCountry.flag} {getCountryName(selectedCountry, locale)} ({selectedCountry.dial})
+                <Text style={{ fontFamily: fonts.medium, color: colors.gray[900], fontSize: 16 }}>
+                  {selectedCountry.flag}  {getCountryName(selectedCountry, locale)} ({selectedCountry.dial})
                 </Text>
+                <Text style={{ fontFamily: fonts.regular, color: colors.gray[400], fontSize: 20 }}>›</Text>
               </TouchableOpacity>
 
               {/* Phone Input */}
-              <View style={styles.phoneInputRow}>
+              <View style={[styles.phoneInputRow, { gap: spacing.md }]}>
                 <View style={[styles.dialCode, {
-                  backgroundColor: colors.gray[100],
-                  borderColor: colors.gray[200],
-                  borderRadius: borderRadius.lg,
-                  paddingHorizontal: spacing.md,
-                  paddingVertical: spacing.md + 2,
+                  backgroundColor: isDark ? colors.gray[700] : colors.primary[50],
+                  borderRadius: borderRadius.xl,
+                  paddingHorizontal: spacing.lg,
+                  paddingVertical: spacing.lg,
                 }]}>
-                  <Text style={{ fontFamily: fonts.semiBold, color: colors.gray[700], fontSize: 15 }}>
+                  <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[700], fontSize: 16 }}>
                     {selectedCountry.dial}
                   </Text>
                 </View>
@@ -220,14 +255,15 @@ export function PhoneNumberModal({
                   placeholderTextColor={colors.gray[400]}
                   keyboardType="phone-pad"
                   style={[styles.phoneInput, {
-                    backgroundColor: colors.gray[50],
-                    borderColor: colors.gray[200],
-                    borderRadius: borderRadius.lg,
+                    backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+                    borderColor: isDark ? colors.gray[700] : colors.gray[200],
+                    borderRadius: borderRadius.xl,
+                    borderWidth: 1,
                     paddingHorizontal: spacing.lg,
-                    paddingVertical: spacing.md + 2,
-                    fontFamily: fonts.regular,
+                    paddingVertical: spacing.lg,
+                    fontFamily: fonts.medium,
                     color: colors.gray[900],
-                    fontSize: 15,
+                    fontSize: 16,
                   }]}
                 />
               </View>
@@ -236,40 +272,82 @@ export function PhoneNumberModal({
 
           {/* City Section */}
           {missingCity && (
-            <View style={[styles.section, { marginBottom: spacing.xl }]}>
-              <Text style={[styles.label, { fontFamily: fonts.semiBold, color: colors.gray[700], marginBottom: spacing.sm }]}>
-                📍 {t.phoneModal.city} <Text style={{ color: colors.red[500] }}>*</Text>
-              </Text>
+            <View style={[styles.card, {
+              backgroundColor: colors.white,
+              borderRadius: borderRadius.xl,
+              padding: spacing.xl,
+              marginBottom: spacing.lg,
+              shadowColor: colors.black,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 12,
+              elevation: 3,
+            }]}>
+              <View style={styles.sectionHeader}>
+                <View style={[styles.labelIconContainer, { backgroundColor: colors.emerald[50] }]}>
+                  <Text style={styles.labelIcon}>📍</Text>
+                </View>
+                <View style={{ flex: 1, marginLeft: spacing.md }}>
+                  <Text style={[styles.cardTitle, { fontFamily: fonts.semiBold, color: colors.gray[900], fontSize: 17 }]}>
+                    {t.phoneModal.city}
+                  </Text>
+                  <Text style={[styles.cardSubtitle, { fontFamily: fonts.regular, color: colors.gray[500], fontSize: 13, marginTop: 2 }]}>
+                    Choisissez votre ville de destination
+                  </Text>
+                </View>
+              </View>
 
               <TouchableOpacity
                 onPress={() => {
                   setShowCityPicker(true);
                   Haptics.selectionAsync();
                 }}
-                style={[styles.picker, {
-                  backgroundColor: colors.gray[50],
-                  borderColor: colors.gray[200],
-                  borderRadius: borderRadius.lg,
+                style={[styles.modernInput, {
+                  backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+                  borderColor: isDark ? colors.gray[700] : colors.gray[200],
+                  borderRadius: borderRadius.xl,
                   paddingHorizontal: spacing.lg,
-                  paddingVertical: spacing.md + 2,
+                  paddingVertical: spacing.lg,
+                  marginTop: spacing.lg,
                 }]}
               >
-                <Text style={{ fontFamily: fonts.medium, color: selectedCity ? colors.gray[900] : colors.gray[400], fontSize: 15 }}>
+                <Text style={{ fontFamily: fonts.medium, color: selectedCity ? colors.gray[900] : colors.gray[400], fontSize: 16, flex: 1 }}>
                   {selectedCity || t.phoneModal.selectCity}
                 </Text>
+                <Text style={{ fontFamily: fonts.regular, color: colors.gray[400], fontSize: 20 }}>›</Text>
               </TouchableOpacity>
             </View>
           )}
 
           {/* Warehouse Section */}
           {missingWarehouse && selectedCity && (
-            <View style={[styles.section, { marginBottom: spacing.xl }]}>
-              <Text style={[styles.label, { fontFamily: fonts.semiBold, color: colors.gray[700], marginBottom: spacing.sm }]}>
-                🏢 {t.phoneModal.warehouse} <Text style={{ color: colors.red[500] }}>*</Text>
-              </Text>
+            <View style={[styles.card, {
+              backgroundColor: colors.white,
+              borderRadius: borderRadius.xl,
+              padding: spacing.xl,
+              marginBottom: spacing.lg,
+              shadowColor: colors.black,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 12,
+              elevation: 3,
+            }]}>
+              <View style={styles.sectionHeader}>
+                <View style={[styles.labelIconContainer, { backgroundColor: colors.orange[50] }]}>
+                  <Text style={styles.labelIcon}>🏢</Text>
+                </View>
+                <View style={{ flex: 1, marginLeft: spacing.md }}>
+                  <Text style={[styles.cardTitle, { fontFamily: fonts.semiBold, color: colors.gray[900], fontSize: 17 }]}>
+                    {t.phoneModal.warehouse}
+                  </Text>
+                  <Text style={[styles.cardSubtitle, { fontFamily: fonts.regular, color: colors.gray[500], fontSize: 13, marginTop: 2 }]}>
+                    Sélectionnez votre dépôt de retrait
+                  </Text>
+                </View>
+              </View>
 
               {isLoadingWarehouses ? (
-                <View style={[styles.loadingContainer, { paddingVertical: spacing.xl }]}>
+                <View style={[styles.loadingContainer, { paddingVertical: spacing.xl, marginTop: spacing.lg }]}>
                   <ActivityIndicator size="large" color={colors.primary[600]} />
                   <Text style={{ fontFamily: fonts.regular, color: colors.gray[600], marginTop: spacing.sm, fontSize: 14 }}>
                     {t.phoneModal.loadingWarehouses}
@@ -278,9 +356,9 @@ export function PhoneNumberModal({
               ) : warehouses.length === 0 ? (
                 <View style={[styles.emptyContainer, {
                   backgroundColor: colors.yellow[50],
-                  borderColor: colors.yellow[200],
-                  borderRadius: borderRadius.lg,
+                  borderRadius: borderRadius.xl,
                   padding: spacing.lg,
+                  marginTop: spacing.lg,
                 }]}>
                   <Text style={{ fontFamily: fonts.medium, color: colors.yellow[800], textAlign: 'center', fontSize: 14 }}>
                     {t.phoneModal.noWarehousesAvailable}
@@ -293,41 +371,42 @@ export function PhoneNumberModal({
                       setShowWarehousePicker(true);
                       Haptics.selectionAsync();
                     }}
-                    style={[styles.picker, {
-                      backgroundColor: colors.gray[50],
-                      borderColor: colors.gray[200],
-                      borderRadius: borderRadius.lg,
+                    style={[styles.modernInput, {
+                      backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+                      borderColor: isDark ? colors.gray[700] : colors.gray[200],
+                      borderRadius: borderRadius.xl,
                       paddingHorizontal: spacing.lg,
-                      paddingVertical: spacing.md + 2,
+                      paddingVertical: spacing.lg,
+                      marginTop: spacing.lg,
                     }]}
                   >
-                    <Text style={{ fontFamily: fonts.medium, color: selectedWarehouse ? colors.gray[900] : colors.gray[400], fontSize: 15 }}>
+                    <Text style={{ fontFamily: fonts.medium, color: selectedWarehouse ? colors.gray[900] : colors.gray[400], fontSize: 16, flex: 1 }}>
                       {selectedWarehouseData ? selectedWarehouseData.name : t.phoneModal.selectWarehouse}
                     </Text>
+                    <Text style={{ fontFamily: fonts.regular, color: colors.gray[400], fontSize: 20 }}>›</Text>
                   </TouchableOpacity>
 
-                  {/* Warehouse Details */}
+                  {/* Warehouse Details Card */}
                   {selectedWarehouseData && (
-                    <View style={[styles.warehouseDetails, {
+                    <View style={[styles.warehouseDetailsCard, {
                       backgroundColor: colors.primary[50],
-                      borderColor: colors.primary[200],
-                      borderRadius: borderRadius.lg,
-                      padding: spacing.md,
-                      marginTop: spacing.sm,
+                      borderRadius: borderRadius.xl,
+                      padding: spacing.lg,
+                      marginTop: spacing.md,
                     }]}>
-                      <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[900], fontSize: 14, marginBottom: spacing.xs }}>
+                      <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[900], fontSize: 15, marginBottom: spacing.sm }}>
                         📍 {selectedWarehouseData.name}
                       </Text>
-                      <Text style={{ fontFamily: fonts.regular, color: colors.primary[800], fontSize: 13 }}>
+                      <Text style={{ fontFamily: fonts.regular, color: colors.primary[800], fontSize: 14, lineHeight: 20 }}>
                         {selectedWarehouseData.address}
                       </Text>
                       {selectedWarehouseData.phone && (
-                        <Text style={{ fontFamily: fonts.regular, color: colors.primary[800], fontSize: 13, marginTop: 2 }}>
+                        <Text style={{ fontFamily: fonts.regular, color: colors.primary[800], fontSize: 14, marginTop: spacing.xs }}>
                           📞 {selectedWarehouseData.phone}
                         </Text>
                       )}
                       {selectedWarehouseData.openingHours && (
-                        <Text style={{ fontFamily: fonts.regular, color: colors.primary[800], fontSize: 13, marginTop: 2 }}>
+                        <Text style={{ fontFamily: fonts.regular, color: colors.primary[800], fontSize: 14, marginTop: spacing.xs }}>
                           🕐 {selectedWarehouseData.openingHours}
                         </Text>
                       )}
@@ -336,9 +415,16 @@ export function PhoneNumberModal({
                           const url = `https://maps.google.com/?q=${selectedWarehouseData.latitude},${selectedWarehouseData.longitude}&entry=gps&g_st=awb`;
                           Linking.openURL(url);
                         }}
-                        style={{ marginTop: spacing.sm }}
+                        style={{
+                          marginTop: spacing.md,
+                          backgroundColor: colors.primary[600],
+                          borderRadius: borderRadius.lg,
+                          paddingVertical: spacing.sm,
+                          paddingHorizontal: spacing.md,
+                          alignSelf: 'flex-start',
+                        }}
                       >
-                        <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[600], fontSize: 13 }}>
+                        <Text style={{ fontFamily: fonts.semiBold, color: colors.white, fontSize: 14 }}>
                           🗺️ {t.phoneModal.viewOnMaps}
                         </Text>
                       </TouchableOpacity>
@@ -350,38 +436,54 @@ export function PhoneNumberModal({
           )}
         </ScrollView>
 
-        {/* Footer */}
+        {/* Elegant Footer with Gradient Button */}
         <View style={[styles.footer, {
-          paddingHorizontal: spacing.lg,
-          paddingVertical: spacing.lg,
+          paddingHorizontal: spacing.xl,
+          paddingTop: spacing.lg,
           paddingBottom: spacing.lg + insets.bottom,
-          backgroundColor: colors.surfaceSolid,
-          borderTopWidth: 1,
-          borderTopColor: colors.gray[200],
+          backgroundColor: colors.white,
+          borderTopWidth: 0,
+          shadowColor: colors.black,
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
+          elevation: 8,
         }]}>
           <TouchableOpacity
             onPress={handleSubmit}
             disabled={isSubmitDisabled}
-            style={[styles.submitButton, {
-              backgroundColor: colors.primary[600],
-              borderRadius: borderRadius.lg,
-              paddingVertical: spacing.lg,
-              opacity: isSubmitDisabled ? 0.5 : 1,
-            }]}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
-            {isLoading ? (
-              <View style={styles.loadingButton}>
-                <ActivityIndicator size="small" color={colors.white} />
-                <Text style={[styles.submitButtonText, { fontFamily: fonts.semiBold, color: colors.white, marginLeft: spacing.sm }]}>
-                  {t.phoneModal.saving}
+            <LinearGradient
+              colors={isSubmitDisabled
+                ? [colors.gray[300], colors.gray[400]]
+                : [colors.primary[600], colors.primary[700], colors.primary[800]]
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.submitButton, {
+                borderRadius: borderRadius.xl,
+                paddingVertical: spacing.lg + 2,
+                shadowColor: isSubmitDisabled ? 'transparent' : colors.primary[600],
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: isSubmitDisabled ? 0 : 6,
+              }]}
+            >
+              {isLoading ? (
+                <View style={styles.loadingButton}>
+                  <ActivityIndicator size="small" color={colors.white} />
+                  <Text style={[styles.submitButtonText, { fontFamily: fonts.bold, color: colors.white, marginLeft: spacing.sm, fontSize: 17 }]}>
+                    {t.phoneModal.saving}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={[styles.submitButtonText, { fontFamily: fonts.bold, color: colors.white, fontSize: 17 }]}>
+                  ✨ {t.phoneModal.saveInformation}
                 </Text>
-              </View>
-            ) : (
-              <Text style={[styles.submitButtonText, { fontFamily: fonts.semiBold, color: colors.white }]}>
-                {t.phoneModal.saveInformation}
-              </Text>
-            )}
+              )}
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
@@ -552,21 +654,62 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    paddingBottom: 16,
+  header: {},
+  headerContent: {
+    alignItems: 'center',
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconEmoji: {
+    fontSize: 36,
   },
   title: {
-    fontSize: 24,
-    marginBottom: 4,
+    fontSize: 28,
+    textAlign: 'center',
+    letterSpacing: 0.3,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 22,
   },
   scrollView: {
     flex: 1,
   },
   content: {
     flexGrow: 1,
+  },
+  card: {},
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  labelIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  labelIcon: {
+    fontSize: 24,
+  },
+  cardTitle: {},
+  cardSubtitle: {},
+  modernInput: {
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   section: {
     marginBottom: 24,
@@ -580,15 +723,13 @@ const styles = StyleSheet.create({
   },
   phoneInputRow: {
     flexDirection: 'row',
-    gap: 8,
   },
   dialCode: {
-    borderWidth: 2,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   phoneInput: {
     flex: 1,
-    borderWidth: 2,
   },
   loadingContainer: {
     alignItems: 'center',
@@ -600,6 +741,7 @@ const styles = StyleSheet.create({
   warehouseDetails: {
     borderWidth: 2,
   },
+  warehouseDetailsCard: {},
   footer: {},
   submitButton: {
     alignItems: 'center',
