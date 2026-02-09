@@ -63,7 +63,7 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { isSignedIn } = useAuth();
-  const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
+  const { colors, fonts, spacing, borderRadius, shadows, card } = useTheme();
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -189,7 +189,7 @@ export default function NotificationsScreen() {
     },
     allReadText: { fontFamily: fonts.medium, fontSize: 14, color: colors.green[600] },
     emptyCard: {
-      backgroundColor: colors.white,
+      backgroundColor: card.backgroundColor,
       borderRadius: borderRadius.xl,
       padding: spacing['3xl'],
       alignItems: 'center' as const,
@@ -207,7 +207,7 @@ export default function NotificationsScreen() {
     emptyTitle: { fontFamily: fonts.headingSemiBold, fontSize: 16, color: colors.gray[800], marginBottom: spacing.xs },
     emptyDesc: { fontFamily: fonts.regular, fontSize: 13, color: colors.gray[400], textAlign: 'center' as const },
     notificationCard: {
-      backgroundColor: colors.white,
+      backgroundColor: card.backgroundColor,
       borderRadius: borderRadius.xl,
       padding: spacing.lg,
       marginBottom: spacing.md,
@@ -231,7 +231,7 @@ export default function NotificationsScreen() {
     notificationActions: {
       flexDirection: 'row' as const,
       borderTopWidth: 1,
-      borderTopColor: colors.gray[100],
+      borderTopColor: card.borderColor,
       marginTop: spacing.md,
       paddingTop: spacing.md,
       gap: spacing.xl,
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   unreadRow: {
     flexDirection: 'row',

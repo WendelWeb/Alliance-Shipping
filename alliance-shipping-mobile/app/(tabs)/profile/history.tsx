@@ -41,7 +41,7 @@ export default function HistoryScreen() {
   const router = useRouter();
   const { user, isSignedIn } = useUser();
   const { t, locale } = useTranslation();
-  const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
+  const { colors, fonts, spacing, borderRadius, shadows, card } = useTheme();
   const [historyData, setHistoryData] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalSpent, setTotalSpent] = useState('$0.00');
@@ -151,7 +151,7 @@ export default function HistoryScreen() {
     headerTitle: { fontFamily: fonts.headingBold, fontSize: 18, color: colors.gray[900] },
     subtitle: { fontFamily: fonts.regular, fontSize: 14, color: colors.gray[500], marginBottom: spacing.xl },
     historyCard: {
-      backgroundColor: colors.white,
+      backgroundColor: card.backgroundColor,
       borderRadius: borderRadius.xl,
       padding: spacing.lg,
       marginBottom: spacing.md,
@@ -163,7 +163,7 @@ export default function HistoryScreen() {
     cardDate: { fontFamily: fonts.regular, fontSize: 12, color: colors.gray[400] },
     statusText: { fontFamily: fonts.semiBold, fontSize: 11 },
     summaryCard: {
-      backgroundColor: colors.white,
+      backgroundColor: card.backgroundColor,
       borderRadius: borderRadius.xl,
       padding: spacing.xl,
       marginTop: spacing.md,
@@ -172,7 +172,7 @@ export default function HistoryScreen() {
     summaryTitle: { fontFamily: fonts.headingSemiBold, fontSize: 16, color: colors.gray[900], marginBottom: spacing.xl, textAlign: 'center' as const },
     summaryValue: { fontFamily: fonts.headingBold, fontSize: 20, color: colors.gray[900], marginBottom: 2 },
     summaryLabel: { fontFamily: fonts.regular, fontSize: 11, color: colors.gray[500], textAlign: 'center' as const },
-    summaryDivider: { width: 1, height: 50, backgroundColor: colors.gray[200] },
+    summaryDivider: { width: 1, height: 50, backgroundColor: card.borderColor },
   }), [colors, fonts, spacing, borderRadius, shadows]);
 
   return (
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   cardRow: {
     flexDirection: 'row',

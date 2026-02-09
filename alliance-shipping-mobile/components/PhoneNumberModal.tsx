@@ -58,7 +58,7 @@ export function PhoneNumberModal({
   missingWarehouse = true,
 }: PhoneNumberModalProps) {
   const insets = useSafeAreaInsets();
-  const { colors, fonts, spacing, borderRadius } = useTheme();
+  const { colors, fonts, spacing, borderRadius, isDark } = useTheme();
   const { t, locale } = useTranslation();
 
   const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]);
@@ -111,8 +111,10 @@ export function PhoneNumberModal({
 
       if (missingPhone && phoneNumber) {
         // Save phone WITH country code prefix (e.g., +50912345678)
-        const digitsOnly = phoneNumber.replace(/\D/g, '');
-        updateData.phone = selectedCountry.dial + digitsOnly;
+        // Remove all non-digits from both dial code and phone number
+        const dialDigitsOnly = selectedCountry.dial.replace(/\D/g, '');
+        const phoneDigitsOnly = phoneNumber.replace(/\D/g, '');
+        updateData.phone = '+' + dialDigitsOnly + phoneDigitsOnly;
         updateData.countryCode = selectedCountry.code;
       }
 
@@ -346,7 +348,7 @@ export function PhoneNumberModal({
           paddingHorizontal: spacing.lg,
           paddingVertical: spacing.lg,
           paddingBottom: spacing.lg + insets.bottom,
-          backgroundColor: colors.white,
+          backgroundColor: colors.surfaceSolid,
           borderTopWidth: 1,
           borderTopColor: colors.gray[200],
         }]}>
@@ -380,7 +382,7 @@ export function PhoneNumberModal({
         <Modal visible={showCountryPicker} animationType="slide" transparent>
           <View style={styles.modalOverlay}>
             <View style={[styles.pickerModal, {
-              backgroundColor: colors.white,
+              backgroundColor: colors.surfaceSolid,
               borderTopLeftRadius: borderRadius.xl,
               borderTopRightRadius: borderRadius.xl,
               paddingBottom: insets.bottom,
@@ -395,7 +397,7 @@ export function PhoneNumberModal({
                   </Text>
                 </TouchableOpacity>
               </View>
-              <ScrollView style={{ maxHeight: 500 }}>
+              <ScrollView style={{ maxHeight: 500, backgroundColor: colors.surfaceSolid }}>
                 {COUNTRIES.map((country, index) => (
                   <TouchableOpacity
                     key={index}
@@ -407,10 +409,10 @@ export function PhoneNumberModal({
                     style={[styles.pickerItem, {
                       paddingHorizontal: spacing.lg,
                       paddingVertical: spacing.md,
-                      backgroundColor: selectedCountry.code === country.code ? colors.primary[50] : 'transparent',
+                      backgroundColor: selectedCountry.code === country.code ? (isDark ? colors.primary[900] : colors.primary[50]) : 'transparent',
                     }]}
                   >
-                    <Text style={{ fontFamily: fonts.medium, color: colors.gray[900], fontSize: 15 }}>
+                    <Text style={{ fontFamily: fonts.medium, color: selectedCountry.code === country.code ? (isDark ? colors.primary[100] : colors.primary[900]) : colors.gray[900], fontSize: 15 }}>
                       {country.flag} {getCountryName(country, locale)} ({country.dial})
                     </Text>
                   </TouchableOpacity>
@@ -424,7 +426,7 @@ export function PhoneNumberModal({
         <Modal visible={showCityPicker} animationType="slide" transparent>
           <View style={styles.modalOverlay}>
             <View style={[styles.pickerModal, {
-              backgroundColor: colors.white,
+              backgroundColor: colors.surfaceSolid,
               borderTopLeftRadius: borderRadius.xl,
               borderTopRightRadius: borderRadius.xl,
               paddingBottom: insets.bottom,
@@ -439,7 +441,7 @@ export function PhoneNumberModal({
                   </Text>
                 </TouchableOpacity>
               </View>
-              <ScrollView style={{ maxHeight: 500 }}>
+              <ScrollView style={{ maxHeight: 500, backgroundColor: colors.surfaceSolid }}>
                 {HAITI_CITIES.map((city) => (
                   <TouchableOpacity
                     key={city}
@@ -451,10 +453,10 @@ export function PhoneNumberModal({
                     style={[styles.pickerItem, {
                       paddingHorizontal: spacing.lg,
                       paddingVertical: spacing.md,
-                      backgroundColor: selectedCity === city ? colors.primary[50] : 'transparent',
+                      backgroundColor: selectedCity === city ? (isDark ? colors.primary[900] : colors.primary[50]) : 'transparent',
                     }]}
                   >
-                    <Text style={{ fontFamily: fonts.medium, color: colors.gray[900], fontSize: 15 }}>
+                    <Text style={{ fontFamily: fonts.medium, color: selectedCity === city ? (isDark ? colors.primary[100] : colors.primary[900]) : colors.gray[900], fontSize: 15 }}>
                       {city}
                     </Text>
                   </TouchableOpacity>
@@ -468,7 +470,7 @@ export function PhoneNumberModal({
         <Modal visible={showWarehousePicker} animationType="slide" transparent>
           <View style={styles.modalOverlay}>
             <View style={[styles.pickerModal, {
-              backgroundColor: colors.white,
+              backgroundColor: colors.surfaceSolid,
               borderTopLeftRadius: borderRadius.xl,
               borderTopRightRadius: borderRadius.xl,
               paddingBottom: insets.bottom,
@@ -483,7 +485,7 @@ export function PhoneNumberModal({
                   </Text>
                 </TouchableOpacity>
               </View>
-              <ScrollView style={{ maxHeight: 500 }}>
+              <ScrollView style={{ maxHeight: 500, backgroundColor: colors.surfaceSolid }}>
                 {warehouses.map((warehouse) => (
                   <TouchableOpacity
                     key={warehouse.id}
@@ -495,19 +497,19 @@ export function PhoneNumberModal({
                     style={[styles.warehouseItem, {
                       paddingHorizontal: spacing.lg,
                       paddingVertical: spacing.md,
-                      backgroundColor: selectedWarehouse === warehouse.id ? colors.primary[50] : 'transparent',
+                      backgroundColor: selectedWarehouse === warehouse.id ? (isDark ? colors.primary[900] : colors.primary[50]) : 'transparent',
                       borderBottomWidth: 1,
                       borderBottomColor: colors.gray[100],
                     }]}
                   >
-                    <Text style={{ fontFamily: fonts.semiBold, color: colors.gray[900], fontSize: 15, marginBottom: 4 }}>
+                    <Text style={{ fontFamily: fonts.semiBold, color: selectedWarehouse === warehouse.id ? (isDark ? colors.primary[100] : colors.primary[900]) : colors.gray[900], fontSize: 15, marginBottom: 4 }}>
                       📦 {warehouse.name}
                     </Text>
-                    <Text style={{ fontFamily: fonts.regular, color: colors.gray[600], fontSize: 13 }}>
+                    <Text style={{ fontFamily: fonts.regular, color: selectedWarehouse === warehouse.id ? (isDark ? colors.primary[200] : colors.primary[800]) : colors.gray[600], fontSize: 13 }}>
                       📍 {warehouse.address}
                     </Text>
                     {warehouse.phone && (
-                      <Text style={{ fontFamily: fonts.regular, color: colors.gray[600], fontSize: 13 }}>
+                      <Text style={{ fontFamily: fonts.regular, color: selectedWarehouse === warehouse.id ? (isDark ? colors.primary[200] : colors.primary[800]) : colors.gray[600], fontSize: 13 }}>
                         📞 {warehouse.phone}
                       </Text>
                     )}

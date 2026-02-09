@@ -50,7 +50,15 @@
       "Bash(npx expo export:*)",
       "Bash(ipconfig:*)",
       "Bash(findstr:*)",
-      "Bash(git remote add:*)"
+      "Bash(git remote add:*)",
+      "Bash(netstat:*)",
+      "Bash(npx expo start:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm start)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(npm info:*)",
+      "Bash(find:*)"
     ]
   }
 }

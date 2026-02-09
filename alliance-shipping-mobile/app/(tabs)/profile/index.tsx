@@ -287,7 +287,7 @@ export default function ProfileScreen() {
   const menuItems: MenuItem[] = [
     { icon: <Package size={20} color={colors.primary[600]} />, label: t.profile.menuItems.myPackages, route: '/(tabs)/packages' },
     { icon: <Send size={20} color={colors.purple[600]} />, label: t.profile.menuItems.requestPackage, onPress: handleRequestPackage },
-    { icon: <Gift size={20} color={colors.yellow[600]} />, label: 'Rewards & Referrals', route: '/(tabs)/profile/rewards' },
+    { icon: <Gift size={20} color={colors.yellow[600]} />, label: t.profile.menuItems.rewards, route: '/(tabs)/profile/rewards' },
     { icon: <Calculator size={20} color={colors.emerald[600]} />, label: t.profile.menuItems.priceCalculator, route: '/(tabs)/calculator' },
     { icon: <CreditCard size={20} color={colors.orange[600]} />, label: t.profile.menuItems.paymentMethods, route: '/(tabs)/profile/payment' },
     { icon: <MapPinned size={20} color={colors.primary[600]} />, label: t.profile.menuItems.myAddresses, route: '/(tabs)/profile/addresses' },
@@ -317,7 +317,7 @@ export default function ProfileScreen() {
       <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
         <View style={[styles.modalHeader, { borderBottomColor: colors.gray[200] }]}>
           <Text style={[styles.modalTitle, { fontFamily: fonts.headingBold, color: colors.gray[900] }]}>
-            Theme
+            {t.profile.theme}
           </Text>
           <TouchableOpacity
             onPress={() => setShowThemePicker(false)}
@@ -330,7 +330,7 @@ export default function ProfileScreen() {
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalScroll}>
           {/* Style Themes */}
           <Text style={[styles.themeSectionTitle, { fontFamily: fonts.headingSemiBold, color: colors.gray[900] }]}>
-            Styles
+            {t.profile.themeStyles}
           </Text>
           <View style={styles.themeGrid}>
             {styleThemes.map((theme) => (
@@ -345,7 +345,7 @@ export default function ProfileScreen() {
 
           {/* Color Themes */}
           <Text style={[styles.themeSectionTitle, { fontFamily: fonts.headingSemiBold, color: colors.gray[900] }]}>
-            Colors
+            {t.profile.themeColors}
           </Text>
           <View style={styles.themeGrid}>
             {colorThemes.map((theme) => (
@@ -360,7 +360,7 @@ export default function ProfileScreen() {
 
           {/* Custom Accent Color */}
           <Text style={[styles.themeSectionTitle, { fontFamily: fonts.headingSemiBold, color: colors.gray[900] }]}>
-            Accent Color
+            {t.profile.accentColor}
           </Text>
           <View style={[styles.accentCard, { backgroundColor: card.backgroundColor, borderColor: card.borderColor, borderWidth: card.borderWidth }]}>
             <TouchableOpacity
@@ -386,7 +386,7 @@ export default function ProfileScreen() {
                   },
                 ]}
               >
-                Default
+                {t.profile.default}
               </Text>
             </TouchableOpacity>
             <View style={styles.accentGrid}>
@@ -492,7 +492,7 @@ export default function ProfileScreen() {
                       {getBiometricLabel(biometricType)}
                     </Text>
                     <Text style={[styles.biometricStatus, { fontFamily: fonts.regular, color: colors.gray[500] }]}>
-                      {biometricOn ? 'Enabled' : 'Disabled'}
+                      {biometricOn ? t.profile.enabled : t.profile.disabled}
                     </Text>
                   </View>
                 </View>
@@ -579,7 +579,7 @@ export default function ProfileScreen() {
               <Palette size={20} color={colors.primary[600]} />
             </View>
             <View style={styles.themeButtonText}>
-              <Text style={[styles.themeButtonLabel, { fontFamily: fonts.semiBold, color: colors.gray[900] }]}>Theme</Text>
+              <Text style={[styles.themeButtonLabel, { fontFamily: fonts.semiBold, color: colors.gray[900] }]}>{t.profile.theme}</Text>
               <Text style={[styles.themeButtonValue, { fontFamily: fonts.regular, color: colors.gray[500] }]}>
                 {themes.find((th) => th.id === themeId)?.name || 'Light'}
               </Text>
@@ -605,7 +605,7 @@ export default function ProfileScreen() {
                     {getBiometricLabel(biometricType)}
                   </Text>
                   <Text style={[styles.biometricStatus, { fontFamily: fonts.regular, color: colors.gray[500] }]}>
-                    {biometricOn ? 'Enabled' : 'Disabled'}
+                    {biometricOn ? t.profile.enabled : t.profile.disabled}
                   </Text>
                 </View>
               </View>

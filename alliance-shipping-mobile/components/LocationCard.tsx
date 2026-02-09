@@ -20,6 +20,7 @@ interface LocationItem {
   phone: string;
   hours: string;
   isOpen: boolean;
+  distance?: number;
 }
 
 interface LocationCardProps {
@@ -30,6 +31,7 @@ interface LocationCardProps {
   hoursLabel: string;
   openLabel: string;
   closedLabel: string;
+  onDirections?: (item: LocationItem) => void;
 }
 
 export function LocationCard({
@@ -40,8 +42,9 @@ export function LocationCard({
   hoursLabel,
   openLabel,
   closedLabel,
+  onDirections,
 }: LocationCardProps) {
-  const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
+  const { colors, fonts, spacing, borderRadius, shadows, card, isDark } = useTheme();
 
   const handleCall = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -50,20 +53,24 @@ export function LocationCard({
   }, [item.phone]);
 
   const handleDirections = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const encodedAddress = encodeURIComponent(
-      `${item.name}, ${item.address}, ${item.city}`
-    );
-    const url =
-      Platform.OS === 'ios'
-        ? `maps:?q=${encodedAddress}`
-        : `geo:0,0?q=${encodedAddress}`;
-    Linking.openURL(url).catch(() => {
-      Linking.openURL(
-        `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`
+    if (onDirections) {
+      onDirections(item);
+    } else {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const encodedAddress = encodeURIComponent(
+        `${item.name}, ${item.address}, ${item.city}`
       );
-    });
-  }, [item.name, item.address, item.city]);
+      const url =
+        Platform.OS === 'ios'
+          ? `maps:?q=${encodedAddress}`
+          : `geo:0,0?q=${encodedAddress}`;
+      Linking.openURL(url).catch(() => {
+        Linking.openURL(
+          `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`
+        );
+      });
+    }
+  }, [item, onDirections]);
 
   return (
     <Animated.View
@@ -77,10 +84,11 @@ export function LocationCard({
         style={[
           styles.card,
           {
-            backgroundColor: colors.white,
+            backgroundColor: card.backgroundColor,
             borderRadius: borderRadius.xl,
             padding: spacing.lg,
-            borderColor: colors.gray[100],
+            borderColor: card.borderColor,
+            borderWidth: card.borderWidth,
           },
           shadows.md,
         ]}
@@ -102,6 +110,21 @@ export function LocationCard({
                 {item.name}
               </Text>
             </View>
+            {item.distance !== undefined && (
+              <Text
+                style={[
+                  styles.distance,
+                  {
+                    fontFamily: fonts.semiBold,
+                    color: colors.primary[600],
+                    marginLeft: 26,
+                    marginBottom: spacing.xs - 2,
+                  },
+                ]}
+              >
+                📍 {item.distance.toFixed(1)} km from you
+              </Text>
+            )}
             <Text
               style={[
                 styles.address,
@@ -134,8 +157,8 @@ export function LocationCard({
                 paddingVertical: spacing.xs,
                 borderRadius: borderRadius.full,
                 backgroundColor: item.isOpen
-                  ? colors.green[50]
-                  : colors.red[50],
+                  ? (isDark ? colors.green[900] : colors.green[50])
+                  : (isDark ? colors.red[900] : colors.red[50]),
               },
             ]}
           >
@@ -145,8 +168,8 @@ export function LocationCard({
                 {
                   marginRight: spacing.xs,
                   backgroundColor: item.isOpen
-                    ? colors.green[500]
-                    : colors.red[500],
+                    ? (isDark ? colors.green[400] : colors.green[500])
+                    : (isDark ? colors.red[400] : colors.red[500]),
                 },
               ]}
             />
@@ -156,8 +179,8 @@ export function LocationCard({
                 {
                   fontFamily: fonts.semiBold,
                   color: item.isOpen
-                    ? colors.green[600]
-                    : colors.red[600],
+                    ? (isDark ? colors.green[300] : colors.green[600])
+                    : (isDark ? colors.red[300] : colors.red[600]),
                 },
               ]}
             >
@@ -228,20 +251,20 @@ export function LocationCard({
                 paddingVertical: spacing.sm + 2,
                 borderRadius: borderRadius.md,
                 gap: spacing.sm,
-                backgroundColor: colors.primary[50],
+                backgroundColor: isDark ? colors.primary[900] : colors.primary[50],
                 borderWidth: 1,
-                borderColor: colors.primary[100],
+                borderColor: isDark ? colors.primary[800] : colors.primary[100],
               },
             ]}
             onPress={handleCall}
             activeOpacity={0.7}
           >
-            <Phone size={16} color={colors.primary[600]} />
+            <Phone size={16} color={isDark ? colors.primary[400] : colors.primary[600]} />
             <Text
               style={{
                 fontFamily: fonts.semiBold,
                 fontSize: 14,
-                color: colors.primary[600],
+                color: isDark ? colors.primary[200] : colors.primary[600],
                 letterSpacing: 0.1,
               }}
             >
@@ -300,6 +323,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 0.1,
     flex: 1,
+  },
+  distance: {
+    fontSize: 13,
+    letterSpacing: 0.1,
   },
   address: {
     fontSize: 14,

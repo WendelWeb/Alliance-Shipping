@@ -48,7 +48,7 @@ export default function ClaimPackageScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { t } = useTranslation();
-  const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
+  const { colors, fonts, spacing, borderRadius, shadows, card, isDark } = useTheme();
 
   const [requestLoading, setRequestLoading] = useState(false);
   const [requestSuccess, setRequestSuccess] = useState(false);
@@ -182,8 +182,8 @@ export default function ClaimPackageScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Animated.View entering={FadeInDown.duration(500)} style={styles.successContent}>
-            <View style={[styles.successIconCircle, { backgroundColor: colors.green[50] }]}>
-              <Check size={40} color={colors.green[500]} strokeWidth={3} />
+            <View style={[styles.successIconCircle, { backgroundColor: isDark ? colors.green[900] : colors.green[50] }]}>
+              <Check size={40} color={isDark ? colors.green[400] : colors.green[500]} strokeWidth={3} />
             </View>
             <Text style={[styles.successTitle, { fontFamily: fonts.headingBold, color: colors.gray[900] }]}>
               {'\u2705'} {t.requestPackage.success.title}
@@ -192,7 +192,7 @@ export default function ClaimPackageScreen() {
               {t.requestPackage.success.message}
             </Text>
 
-            <View style={[styles.successSteps, { backgroundColor: colors.white, borderRadius: borderRadius.lg, padding: spacing.lg, marginBottom: spacing.xl, ...shadows.sm }]}>
+            <View style={[styles.successSteps, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.lg, padding: spacing.lg, marginBottom: spacing.xl, ...shadows.sm }]}>
               {(t.requestPackage.success.steps as string[]).map((step, i) => (
                 <View key={i} style={[styles.successStep, { gap: spacing.sm }]}>
                   <Text style={[styles.successStepNum, { backgroundColor: colors.primary[100], color: colors.primary[700], fontFamily: fonts.bold }]}>
@@ -235,18 +235,18 @@ export default function ClaimPackageScreen() {
             {/* Explanation section */}
             <Animated.View
               entering={FadeInDown.delay(100).duration(400)}
-              style={[styles.explanationCard, { backgroundColor: colors.primary[50], borderRadius: borderRadius.lg, padding: spacing.lg, marginBottom: spacing.xl, borderWidth: 1, borderColor: colors.primary[100] }]}
+              style={[styles.explanationCard, { backgroundColor: isDark ? colors.primary[900] : colors.primary[50], borderRadius: borderRadius.lg, padding: spacing.lg, marginBottom: spacing.xl, borderWidth: 1, borderColor: isDark ? colors.primary[800] : colors.primary[100] }]}
             >
-              <View style={[styles.explanationIconCircle, { backgroundColor: colors.primary[100] }]}>
-                <Package size={24} color={colors.primary[600]} />
+              <View style={[styles.explanationIconCircle, { backgroundColor: isDark ? colors.primary[800] : colors.primary[100] }]}>
+                <Package size={24} color={isDark ? colors.primary[400] : colors.primary[600]} />
               </View>
-              <Text style={[styles.explanationQuestion, { fontFamily: fonts.headingSemiBold, color: colors.primary[900], marginBottom: spacing.sm }]}>
+              <Text style={[styles.explanationQuestion, { fontFamily: fonts.headingSemiBold, color: isDark ? colors.primary[200] : colors.primary[900], marginBottom: spacing.sm }]}>
                 {t.claimPackage.explanation.question}
               </Text>
-              <Text style={[styles.explanationText, { fontFamily: fonts.regular, color: colors.primary[700], marginBottom: spacing.xs }]}>
+              <Text style={[styles.explanationText, { fontFamily: fonts.regular, color: isDark ? colors.primary[300] : colors.primary[700], marginBottom: spacing.xs }]}>
                 {t.claimPackage.explanation.addToTracking}
               </Text>
-              <Text style={[styles.explanationText, { fontFamily: fonts.regular, color: colors.primary[700] }]}>
+              <Text style={[styles.explanationText, { fontFamily: fonts.regular, color: isDark ? colors.primary[300] : colors.primary[700] }]}>
                 {t.claimPackage.explanation.enterTracking}
               </Text>
             </Animated.View>
@@ -254,9 +254,9 @@ export default function ClaimPackageScreen() {
             {requestError ? (
               <Animated.View
                 entering={FadeInDown.duration(300)}
-                style={[styles.errorBox, { backgroundColor: colors.red[50], borderRadius: borderRadius.md, padding: spacing.md, marginBottom: spacing.lg, borderColor: colors.red[100] }]}
+                style={[styles.errorBox, { backgroundColor: isDark ? colors.red[900] : colors.red[50], borderRadius: borderRadius.md, padding: spacing.md, marginBottom: spacing.lg, borderColor: isDark ? colors.red[800] : colors.red[100] }]}
               >
-                <Text style={[styles.errorText, { color: colors.red[600], fontFamily: fonts.medium }]}>
+                <Text style={[styles.errorText, { color: isDark ? colors.red[300] : colors.red[600], fontFamily: fonts.medium }]}>
                   {requestError}
                 </Text>
               </Animated.View>
@@ -268,7 +268,7 @@ export default function ClaimPackageScreen() {
                 {'\uD83D\uDD22'} {t.requestPackage.fields.trackingNumber.label} *
               </Text>
               <TextInput
-                style={[styles.fieldInput, { backgroundColor: colors.white, borderRadius: borderRadius.lg, borderColor: colors.gray[200], paddingHorizontal: spacing.lg, paddingVertical: spacing.md + 2, fontFamily: fonts.regular, color: colors.gray[900] }]}
+                style={[styles.fieldInput, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.lg, borderColor: card.borderColor, paddingHorizontal: spacing.lg, paddingVertical: spacing.md + 2, fontFamily: fonts.regular, color: colors.gray[900] }]}
                 value={trackingNumber}
                 onChangeText={(v) => { setTrackingNumber(v); setRequestError(''); }}
                 placeholder={t.requestPackage.fields.trackingNumber.placeholder}
@@ -299,8 +299,8 @@ export default function ClaimPackageScreen() {
                           paddingVertical: spacing.md,
                           paddingHorizontal: spacing.sm,
                           borderRadius: borderRadius.lg,
-                          borderColor: isSelected ? colors.primary[500] : colors.gray[200],
-                          backgroundColor: isSelected ? colors.primary[500] : colors.white,
+                          borderColor: isSelected ? colors.primary[500] : card.borderColor,
+                          backgroundColor: isSelected ? colors.primary[500] : card.backgroundColor,
                         },
                       ]}
                       onPress={() => { setSelectedCity(city.id); setRequestError(''); }}
@@ -336,15 +336,15 @@ export default function ClaimPackageScreen() {
 
               {/* Show pricing for selected city */}
               {selectedCity && cityPricing && (
-                <View style={[styles.pricingBadge, { backgroundColor: colors.green[50], borderRadius: borderRadius.md, padding: spacing.md, marginTop: spacing.md, borderWidth: 1, borderColor: colors.green[100] }]}>
-                  <Text style={[styles.pricingLabel, { fontFamily: fonts.semiBold, color: colors.green[800], fontSize: 13, marginBottom: spacing.xs }]}>
+                <View style={[styles.pricingBadge, { backgroundColor: isDark ? colors.green[900] : colors.green[50], borderRadius: borderRadius.md, padding: spacing.md, marginTop: spacing.md, borderWidth: 1, borderColor: isDark ? colors.green[800] : colors.green[100] }]}>
+                  <Text style={[styles.pricingLabel, { fontFamily: fonts.semiBold, color: isDark ? colors.green[200] : colors.green[800], fontSize: 13, marginBottom: spacing.xs }]}>
                     💵 Pricing for {selectedCity}:
                   </Text>
                   <View style={{ flexDirection: 'row', gap: spacing.md }}>
-                    <Text style={[styles.pricingText, { fontFamily: fonts.medium, color: colors.green[700], fontSize: 12 }]}>
+                    <Text style={[styles.pricingText, { fontFamily: fonts.medium, color: isDark ? colors.green[300] : colors.green[700], fontSize: 12 }]}>
                       Service Fee: ${cityPricing.serviceFee.toFixed(2)}
                     </Text>
-                    <Text style={[styles.pricingText, { fontFamily: fonts.medium, color: colors.green[700], fontSize: 12 }]}>
+                    <Text style={[styles.pricingText, { fontFamily: fonts.medium, color: isDark ? colors.green[300] : colors.green[700], fontSize: 12 }]}>
                       Per lb: ${cityPricing.pricePerLb.toFixed(2)}
                     </Text>
                   </View>
@@ -358,7 +358,7 @@ export default function ClaimPackageScreen() {
                 {'\u270D\uFE0F'} {t.requestPackage.fields.description.label} *
               </Text>
               <TextInput
-                style={[styles.fieldInput, styles.fieldTextarea, { backgroundColor: colors.white, borderRadius: borderRadius.lg, borderColor: colors.gray[200], paddingHorizontal: spacing.lg, paddingVertical: spacing.md + 2, paddingTop: spacing.md, fontFamily: fonts.regular, color: colors.gray[900] }]}
+                style={[styles.fieldInput, styles.fieldTextarea, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.lg, borderColor: card.borderColor, paddingHorizontal: spacing.lg, paddingVertical: spacing.md + 2, paddingTop: spacing.md, fontFamily: fonts.regular, color: colors.gray[900] }]}
                 value={description}
                 onChangeText={(v) => { setDescription(v); setRequestError(''); }}
                 placeholder={t.requestPackage.fields.description.placeholder}
@@ -386,8 +386,8 @@ export default function ClaimPackageScreen() {
                           paddingHorizontal: spacing.md,
                           paddingVertical: spacing.sm + 2,
                           borderRadius: borderRadius.full,
-                          borderColor: isSelected ? colors.primary[500] : colors.gray[200],
-                          backgroundColor: isSelected ? colors.primary[500] : colors.white,
+                          borderColor: isSelected ? colors.primary[500] : card.borderColor,
+                          backgroundColor: isSelected ? colors.primary[500] : card.backgroundColor,
                         },
                       ]}
                       onPress={() => { setCategory(cat.id); setRequestError(''); }}
@@ -417,7 +417,7 @@ export default function ClaimPackageScreen() {
                 {'\uD83D\uDCDD'} {t.requestPackage.fields.description.sublabel}
               </Text>
               <TextInput
-                style={[styles.fieldInput, styles.fieldTextarea, { backgroundColor: colors.white, borderRadius: borderRadius.lg, borderColor: colors.gray[200], paddingHorizontal: spacing.lg, paddingVertical: spacing.md + 2, paddingTop: spacing.md, fontFamily: fonts.regular, color: colors.gray[900] }]}
+                style={[styles.fieldInput, styles.fieldTextarea, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.lg, borderColor: card.borderColor, paddingHorizontal: spacing.lg, paddingVertical: spacing.md + 2, paddingTop: spacing.md, fontFamily: fonts.regular, color: colors.gray[900] }]}
                 value={customerNotes}
                 onChangeText={setCustomerNotes}
                 placeholder="..."
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18 },
   headerSubtitle: { fontSize: 13, marginTop: 2 },
 
-  formScroll: { paddingBottom: 40 },
+  formScroll: { paddingBottom: 120 },
 
   explanationCard: { borderWidth: 1 },
   explanationIconCircle: {

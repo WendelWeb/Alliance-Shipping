@@ -112,7 +112,7 @@ export default function PackagesScreen() {
   const { isSignedIn, user } = useUser();
   const router = useRouter();
   const { t, locale } = useTranslation();
-  const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
+  const { colors, fonts, spacing, borderRadius, shadows, card, isDark } = useTheme();
 
   const [packages, setPackages] = useState<PackageItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -323,7 +323,7 @@ export default function PackagesScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
         <View style={styles.signInPrompt}>
-          <Animated.View entering={FadeInDown.duration(500)} style={[styles.signInCard, { backgroundColor: colors.white, borderRadius: borderRadius.xl, padding: spacing['3xl'], ...shadows.lg }]}>
+          <Animated.View entering={FadeInDown.duration(500)} style={[styles.signInCard, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.xl, padding: spacing['3xl'], ...shadows.lg }]}>
             <View style={[styles.signInIconCircle, { backgroundColor: colors.primary[50] }]}>
               <Package size={36} color={colors.primary[500]} />
             </View>
@@ -436,7 +436,7 @@ export default function PackagesScreen() {
 
       {/* Search bar */}
       <Animated.View entering={FadeInDown.delay(100).duration(400)} style={[styles.searchContainer, { paddingHorizontal: spacing.xl, paddingTop: spacing.sm, paddingBottom: spacing.sm }]}>
-        <View style={[styles.searchBar, { backgroundColor: colors.white, borderRadius: borderRadius.lg, borderColor: colors.gray[200], paddingHorizontal: spacing.md, ...shadows.sm }]}>
+        <View style={[styles.searchBar, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.lg, borderColor: card.borderColor, paddingHorizontal: spacing.md, ...shadows.sm }]}>
           <Search size={18} color={colors.gray[400]} />
           <TextInput
             style={[styles.searchInput, { fontFamily: fonts.regular, color: colors.gray[900], marginLeft: spacing.sm, marginRight: spacing.sm }]}
@@ -555,7 +555,7 @@ export default function PackagesScreen() {
                 <Text style={[styles.successTitle, { fontFamily: fonts.headingBold, color: colors.gray[900] }]}>{'\u2705'} {t.requestPackage.success.title}</Text>
                 <Text style={[styles.successMessage, { fontFamily: fonts.regular, color: colors.gray[500] }]}>{t.requestPackage.success.message}</Text>
 
-                <View style={[styles.successSteps, { backgroundColor: colors.white, borderRadius: borderRadius.lg, padding: spacing.lg, marginBottom: spacing.xl, ...shadows.sm }]}>
+                <View style={[styles.successSteps, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.lg, padding: spacing.lg, marginBottom: spacing.xl, ...shadows.sm }]}>
                   {(t.requestPackage.success.steps as string[]).map((step, i) => (
                     <View key={i} style={[styles.successStep, { gap: spacing.sm }]}>
                       <Text style={[styles.successStepNum, { backgroundColor: colors.primary[100], color: colors.primary[700], fontFamily: fonts.bold }]}>{i + 1}</Text>
@@ -592,8 +592,8 @@ export default function PackagesScreen() {
                 <Text style={[styles.modalSubtitle, { fontFamily: fonts.regular, color: colors.gray[500], marginBottom: spacing.xl }]}>{t.requestPackage.subtitle}</Text>
 
                 {requestError ? (
-                  <View style={[styles.errorBox, { backgroundColor: colors.red[50], borderRadius: borderRadius.md, padding: spacing.md, marginBottom: spacing.lg, borderColor: colors.red[100] }]}>
-                    <Text style={[styles.errorText, { color: colors.red[600], fontFamily: fonts.medium }]}>{requestError}</Text>
+                  <View style={[styles.errorBox, { backgroundColor: isDark ? colors.red[900] : colors.red[50], borderRadius: borderRadius.md, padding: spacing.md, marginBottom: spacing.lg, borderColor: isDark ? colors.red[800] : colors.red[100] }]}>
+                    <Text style={[styles.errorText, { color: isDark ? colors.red[300] : colors.red[600], fontFamily: fonts.medium }]}>{requestError}</Text>
                   </View>
                 ) : null}
 
@@ -603,7 +603,7 @@ export default function PackagesScreen() {
                     {'\uD83D\uDD22'} {t.requestPackage.fields.trackingNumber.label} *
                   </Text>
                   <TextInput
-                    style={[styles.fieldInput, { backgroundColor: colors.white, borderRadius: borderRadius.lg, borderColor: colors.gray[200], paddingHorizontal: spacing.lg, paddingVertical: spacing.md + 2, fontFamily: fonts.regular, color: colors.gray[900] }]}
+                    style={[styles.fieldInput, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.lg, borderColor: card.borderColor, paddingHorizontal: spacing.lg, paddingVertical: spacing.md + 2, fontFamily: fonts.regular, color: colors.gray[900] }]}
                     value={trackingNumber}
                     onChangeText={(v) => { setTrackingNumber(v); setRequestError(''); }}
                     placeholder={t.requestPackage.fields.trackingNumber.placeholder}
@@ -634,8 +634,8 @@ export default function PackagesScreen() {
                               paddingVertical: spacing.md,
                               paddingHorizontal: spacing.sm,
                               borderRadius: borderRadius.lg,
-                              borderColor: isSelected ? colors.primary[500] : colors.gray[200],
-                              backgroundColor: isSelected ? colors.primary[500] : colors.white,
+                              borderColor: isSelected ? colors.primary[500] : card.borderColor,
+                              backgroundColor: isSelected ? colors.primary[500] : card.backgroundColor,
                             },
                           ]}
                           onPress={() => { setSelectedCity(city.id); setRequestError(''); }}
@@ -676,7 +676,7 @@ export default function PackagesScreen() {
                     {'\u270D\uFE0F'} {t.requestPackage.fields.description.label} *
                   </Text>
                   <TextInput
-                    style={[styles.fieldInput, styles.fieldTextarea, { backgroundColor: colors.white, borderRadius: borderRadius.lg, borderColor: colors.gray[200], paddingHorizontal: spacing.lg, paddingVertical: spacing.md + 2, paddingTop: spacing.md, fontFamily: fonts.regular, color: colors.gray[900] }]}
+                    style={[styles.fieldInput, styles.fieldTextarea, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.lg, borderColor: card.borderColor, paddingHorizontal: spacing.lg, paddingVertical: spacing.md + 2, paddingTop: spacing.md, fontFamily: fonts.regular, color: colors.gray[900] }]}
                     value={description}
                     onChangeText={(v) => { setDescription(v); setRequestError(''); }}
                     placeholder={t.requestPackage.fields.description.placeholder}
@@ -704,8 +704,8 @@ export default function PackagesScreen() {
                               paddingHorizontal: spacing.md,
                               paddingVertical: spacing.sm + 2,
                               borderRadius: borderRadius.full,
-                              borderColor: isSelected ? colors.primary[500] : colors.gray[200],
-                              backgroundColor: isSelected ? colors.primary[500] : colors.white,
+                              borderColor: isSelected ? colors.primary[500] : card.borderColor,
+                              backgroundColor: isSelected ? colors.primary[500] : card.backgroundColor,
                             },
                           ]}
                           onPress={() => { setCategory(cat.id); setRequestError(''); }}
@@ -733,7 +733,7 @@ export default function PackagesScreen() {
                 <View style={[styles.fieldGroup, { marginBottom: spacing.xl }]}>
                   <Text style={[styles.fieldLabel, { fontFamily: fonts.semiBold, color: colors.gray[700], marginBottom: spacing.sm }]}>{'\uD83D\uDCDD'} Notes</Text>
                   <TextInput
-                    style={[styles.fieldInput, styles.fieldTextarea, { backgroundColor: colors.white, borderRadius: borderRadius.lg, borderColor: colors.gray[200], paddingHorizontal: spacing.lg, paddingVertical: spacing.md + 2, paddingTop: spacing.md, fontFamily: fonts.regular, color: colors.gray[900] }]}
+                    style={[styles.fieldInput, styles.fieldTextarea, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.lg, borderColor: card.borderColor, paddingHorizontal: spacing.lg, paddingVertical: spacing.md + 2, paddingTop: spacing.md, fontFamily: fonts.regular, color: colors.gray[900] }]}
                     value={customerNotes}
                     onChangeText={setCustomerNotes}
                     placeholder="..."
@@ -747,7 +747,7 @@ export default function PackagesScreen() {
                 {/* Buttons */}
                 <View style={[styles.modalBtnRow, { gap: spacing.md, marginTop: spacing.lg }]}>
                   <TouchableOpacity
-                    style={[styles.cancelBtn, { borderRadius: borderRadius.lg, borderColor: colors.gray[200], backgroundColor: colors.white }]}
+                    style={[styles.cancelBtn, { borderRadius: borderRadius.lg, borderColor: card.borderColor, backgroundColor: card.backgroundColor }]}
                     onPress={closeRequestModal}
                     activeOpacity={0.7}
                   >
@@ -853,7 +853,7 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 18, flex: 1 },
   modalCloseBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   modalSubtitle: { fontSize: 14, lineHeight: 20 },
-  modalScroll: { paddingBottom: 40 },
+  modalScroll: { paddingBottom: 120 },
   errorBox: { borderWidth: 1 },
   errorText: { fontSize: 13, lineHeight: 20 },
 

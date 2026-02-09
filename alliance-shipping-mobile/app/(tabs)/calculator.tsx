@@ -7,6 +7,7 @@ import {
   Switch,
   TouchableOpacity,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,6 +28,7 @@ import {
   Plus,
   Droplets,
   MapPin,
+  Package,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/themes/ThemeProvider';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -36,38 +38,41 @@ import { api } from '@/lib/api';
 // Types
 // ---------------------------------------------------------------------------
 
-interface FeeData {
+interface CityPricing {
+  id: number;
+  city: string;
   serviceFee: number;
   pricePerLb: number;
+  deliveryDaysMin: number;
+  deliveryDaysMax: number;
+  perfumeDaysMin: number;
+  perfumeDaysMax: number;
 }
 
-interface CityConfig {
-  id: string;
-  emoji: string;
-  labelKey: string;
-  subKey: string;
+interface SpecialItem {
+  id: number;
+  category: string;
+  brand: string;
+  itemName: string;
+  minModel: string | null;
+  maxModel: string | null;
+  fixedFee: number;
+  description: string | null;
+  imageUrl: string | null;
 }
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const CITIES: CityConfig[] = [
-  { id: 'Port-au-Prince', emoji: '🏛️', labelKey: 'portAuPrince', subKey: 'capitale' },
-  { id: 'Cap-Haïtien', emoji: '⚓', labelKey: 'capHaitien', subKey: 'nord' },
-  { id: 'Port-de-Paix', emoji: '🌊', labelKey: 'portDePaix', subKey: 'nordOuest' },
-];
+const CITY_META: Record<string, { emoji: string; labelKey: string; subKey: string }> = {
+  'Port-au-Prince': { emoji: '🏛️', labelKey: 'portAuPrince', subKey: 'capitale' },
+  'Cap-Haïtien': { emoji: '⚓', labelKey: 'capHaitien', subKey: 'nord' },
+  'Port-de-Paix': { emoji: '🌊', labelKey: 'portDePaix', subKey: 'nordOuest' },
+};
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const DEFAULT_SERVICE_FEE = 5;
-const DEFAULT_PRICE_PER_LB = 4;
 const MIN_WEIGHT = 1;
 const MAX_WEIGHT = 100;
-const STANDARD_DAYS = '3-6';
-const PERFUME_DAYS = '8-11';
 
 // ---------------------------------------------------------------------------
 // Component
@@ -76,35 +81,51 @@ const PERFUME_DAYS = '8-11';
 export default function CalculatorScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const { colors, fonts, spacing, borderRadius, shadows, spring } = useTheme();
+  const { colors, fonts, spacing, borderRadius, shadows, spring, card, isDark } = useTheme();
 
   const [selectedCity, setSelectedCity] = useState('');
   const [weight, setWeight] = useState(1);
   const [hasPerfume, setHasPerfume] = useState(false);
-  const [serviceFee, setServiceFee] = useState(DEFAULT_SERVICE_FEE);
-  const [pricePerLb, setPricePerLb] = useState(DEFAULT_PRICE_PER_LB);
+  const [cities, setCities] = useState<CityPricing[]>([]);
+  const [specialItems, setSpecialItems] = useState<SpecialItem[]>([]);
+  const [loadingPricing, setLoadingPricing] = useState(true);
+
+  // Fetch all pricing + special items at mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const [pricingRes, itemsRes, profileRes] = await Promise.all([
+          api.get<{ cities: CityPricing[] }>('/api/pricing/all'),
+          api.get<{ items: SpecialItem[] }>('/api/special-items/public').catch(() => ({ items: [] })),
+          api.get<{ success: boolean; user: any }>('/api/user/profile').catch(() => ({ user: null })),
+        ]);
+        if (pricingRes.cities) setCities(pricingRes.cities);
+        if (itemsRes.items) setSpecialItems(itemsRes.items);
+        // Auto-select user's city
+        if (profileRes.user?.city && pricingRes.cities?.some((c: CityPricing) => c.city === profileRes.user.city)) {
+          setSelectedCity(profileRes.user.city);
+        }
+      } catch (error) {
+        console.error('Error loading pricing:', error);
+      } finally {
+        setLoadingPricing(false);
+      }
+    })();
+  }, []);
+
+  // Current city pricing
+  const currentCity = cities.find((c) => c.city === selectedCity);
+  const serviceFee = currentCity?.serviceFee ?? 5;
+  const pricePerLb = currentCity?.pricePerLb ?? 4;
+  const deliveryDays = currentCity
+    ? (hasPerfume
+        ? `${currentCity.perfumeDaysMin}-${currentCity.perfumeDaysMax}`
+        : `${currentCity.deliveryDaysMin}-${currentCity.deliveryDaysMax}`)
+    : (hasPerfume ? '8-11' : '3-6');
 
   // Animated values
   const weightScale = useSharedValue(1);
   const totalScale = useSharedValue(1);
-
-  // -------------------------------------------------------------------------
-  // Fetch city-specific pricing from API
-  // -------------------------------------------------------------------------
-
-  useEffect(() => {
-    if (!selectedCity) return;
-
-    (async () => {
-      try {
-        const data = await api.get<FeeData>(`/api/city-pricing/${selectedCity}`);
-        if (data.serviceFee != null) setServiceFee(data.serviceFee);
-        if (data.pricePerLb != null) setPricePerLb(data.pricePerLb);
-      } catch {
-        // Silently fall back to defaults
-      }
-    })();
-  }, [selectedCity]);
 
   // -------------------------------------------------------------------------
   // Derived pricing
@@ -112,7 +133,6 @@ export default function CalculatorScreen() {
 
   const weightCost = weight * pricePerLb;
   const total = serviceFee + weightCost;
-  const deliveryDays = hasPerfume ? PERFUME_DAYS : STANDARD_DAYS;
 
   // -------------------------------------------------------------------------
   // Animated styles
@@ -177,10 +197,29 @@ export default function CalculatorScreen() {
     `$${amount.toFixed(2)}`;
 
   // -------------------------------------------------------------------------
+  // Group special items by category
+  // -------------------------------------------------------------------------
+
+  const itemsByCategory = specialItems.reduce<Record<string, SpecialItem[]>>((acc, item) => {
+    const cat = item.category || 'Other';
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(item);
+    return acc;
+  }, {});
+
+  // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
 
   const cityLabels = t.requestPackage?.fields?.destinationCity as Record<string, string> || {};
+
+  if (loadingPricing) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary[600]} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
@@ -192,33 +231,34 @@ export default function CalculatorScreen() {
         <Animated.View entering={FadeInDown.duration(500)}>
           <LinearGradient
             colors={[colors.primary[500], colors.primary[700]]}
-            style={[styles.headerCard, { marginHorizontal: spacing.xl, marginTop: spacing.lg, borderRadius: borderRadius.xl, padding: spacing['2xl'], paddingBottom: spacing['3xl'] }]}
+            style={[styles.headerCard, { marginHorizontal: spacing.xl, marginTop: spacing.lg, borderRadius: borderRadius.xl, padding: spacing.lg }]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <View style={[styles.headerIconRow, { marginBottom: spacing.md }]}>
+            <View style={[styles.headerIconRow, { marginBottom: spacing.xs }]}>
               <View style={styles.headerIconCircle}>
-                <Calculator size={24} color={colors.primary[600]} />
+                <Calculator size={20} color={colors.primary[600]} />
               </View>
+              <Text style={[styles.headerTitle, { fontFamily: fonts.headingBold, color: colors.white }]}>{t.calculator.title}</Text>
             </View>
-            <Text style={[styles.headerTitle, { fontFamily: fonts.headingBold, color: colors.white }]}>{t.calculator.title}</Text>
             <Text style={[styles.headerSubtitle, { fontFamily: fonts.regular }]}>{t.calculator.subtitle}</Text>
           </LinearGradient>
         </Animated.View>
 
         {/* ---- City Selection (FIRST) ---- */}
         <Animated.View entering={FadeInDown.delay(60).duration(500)}>
-          <View style={[styles.card, { backgroundColor: colors.white, borderRadius: borderRadius.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginTop: spacing.lg, ...shadows.sm }]}>
+          <View style={[styles.card, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginTop: spacing.lg, ...shadows.sm }]}>
             <View style={[styles.cardHeaderRow, { gap: spacing.sm, marginBottom: spacing.md }]}>
               <MapPin size={16} color={colors.primary[500]} />
               <Text style={[styles.cardTitle, { fontFamily: fonts.semiBold, color: colors.gray[800] }]}>
-                Select Destination City *
+                {t.calculator.selectCity} *
               </Text>
             </View>
 
             <View style={[styles.cityGrid, { gap: spacing.sm }]}>
-              {CITIES.map((city) => {
-                const isSelected = selectedCity === city.id;
+              {cities.map((city) => {
+                const isSelected = selectedCity === city.city;
+                const meta = CITY_META[city.city] || { emoji: '📍', labelKey: '', subKey: '' };
                 return (
                   <TouchableOpacity
                     key={city.id}
@@ -228,8 +268,8 @@ export default function CalculatorScreen() {
                         paddingVertical: spacing.md,
                         paddingHorizontal: spacing.sm,
                         borderRadius: borderRadius.lg,
-                        borderColor: isSelected ? colors.primary[500] : colors.gray[200],
-                        backgroundColor: isSelected ? colors.primary[500] : colors.white,
+                        borderColor: isSelected ? colors.primary[500] : card.borderColor,
+                        backgroundColor: isSelected ? colors.primary[500] : card.backgroundColor,
                         borderWidth: 1.5,
                         flex: 1,
                         alignItems: 'center',
@@ -237,11 +277,11 @@ export default function CalculatorScreen() {
                     ]}
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setSelectedCity(city.id);
+                      setSelectedCity(city.city);
                     }}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.cityEmoji}>{city.emoji}</Text>
+                    <Text style={styles.cityEmoji}>{meta.emoji}</Text>
                     <Text
                       style={[
                         styles.cityChipText,
@@ -251,28 +291,30 @@ export default function CalculatorScreen() {
                         },
                       ]}
                     >
-                      {cityLabels[city.labelKey] || city.id}
+                      {cityLabels[meta.labelKey] || city.city}
                     </Text>
-                    <Text
-                      style={[
-                        styles.cityChipSub,
-                        {
-                          fontFamily: fonts.regular,
-                          color: isSelected ? 'rgba(255,255,255,0.75)' : colors.gray[400],
-                        },
-                      ]}
-                    >
-                      {cityLabels[city.subKey] || ''}
-                    </Text>
+                    {meta.subKey ? (
+                      <Text
+                        style={[
+                          styles.cityChipSub,
+                          {
+                            fontFamily: fonts.regular,
+                            color: isSelected ? 'rgba(255,255,255,0.75)' : colors.gray[400],
+                          },
+                        ]}
+                      >
+                        {cityLabels[meta.subKey] || ''}
+                      </Text>
+                    ) : null}
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            {selectedCity && (
-              <View style={[styles.pricingBadge, { backgroundColor: colors.green[50], borderRadius: borderRadius.md, padding: spacing.sm, marginTop: spacing.md, borderWidth: 1, borderColor: colors.green[100] }]}>
-                <Text style={[styles.pricingBadgeText, { fontFamily: fonts.medium, color: colors.green[700], fontSize: 12 }]}>
-                  💵 Service: ${serviceFee.toFixed(2)} | Per lb: ${pricePerLb.toFixed(2)}
+            {selectedCity && currentCity && (
+              <View style={[styles.pricingBadge, { backgroundColor: isDark ? colors.green[900] : colors.green[50], borderRadius: borderRadius.md, padding: spacing.sm, marginTop: spacing.md, borderWidth: 1, borderColor: isDark ? colors.green[800] : colors.green[100] }]}>
+                <Text style={[styles.pricingBadgeText, { fontFamily: fonts.medium, color: isDark ? colors.green[300] : colors.green[700], fontSize: 12 }]}>
+                  💵 {t.calculator.serviceFeeLabel}: ${serviceFee.toFixed(2)} | {t.calculator.perLbLabel}: ${pricePerLb.toFixed(2)}
                 </Text>
               </View>
             )}
@@ -281,7 +323,7 @@ export default function CalculatorScreen() {
 
         {/* ---- Pricing info card ---- */}
         <Animated.View entering={FadeInDown.delay(80).duration(500)}>
-          <View style={[styles.card, { backgroundColor: colors.white, borderRadius: borderRadius.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginTop: spacing.lg, ...shadows.sm }]}>
+          <View style={[styles.card, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginTop: spacing.lg, ...shadows.sm }]}>
             <View style={[styles.cardHeaderRow, { gap: spacing.sm, marginBottom: spacing.md }]}>
               <Info size={16} color={colors.primary[500]} />
               <Text style={[styles.cardTitle, { fontFamily: fonts.semiBold, color: colors.gray[800] }]}>{t.calculator.pricing.title}</Text>
@@ -305,7 +347,7 @@ export default function CalculatorScreen() {
 
         {/* ---- Weight stepper section ---- */}
         <Animated.View entering={FadeInDown.delay(160).duration(500)}>
-          <View style={[styles.card, { backgroundColor: colors.white, borderRadius: borderRadius.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginTop: spacing.lg, ...shadows.sm, opacity: selectedCity ? 1 : 0.5 }]}>
+          <View style={[styles.card, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginTop: spacing.lg, ...shadows.sm, opacity: selectedCity ? 1 : 0.5 }]}>
             <View style={[styles.cardHeaderRow, { gap: spacing.sm, marginBottom: spacing.md }]}>
               <Weight size={16} color={colors.primary[500]} />
               <Text style={[styles.cardTitle, { fontFamily: fonts.semiBold, color: colors.gray[800] }]}>{t.calculator.weightLabel}</Text>
@@ -320,8 +362,8 @@ export default function CalculatorScreen() {
                 style={[
                   styles.stepperButton,
                   {
-                    borderColor: (weight <= MIN_WEIGHT || !selectedCity) ? colors.gray[200] : colors.primary[500],
-                    backgroundColor: (weight <= MIN_WEIGHT || !selectedCity) ? colors.gray[50] : colors.white,
+                    borderColor: (weight <= MIN_WEIGHT || !selectedCity) ? card.borderColor : colors.primary[500],
+                    backgroundColor: (weight <= MIN_WEIGHT || !selectedCity) ? colors.gray[50] : card.backgroundColor,
                   },
                 ]}
               >
@@ -352,8 +394,8 @@ export default function CalculatorScreen() {
                 style={[
                   styles.stepperButton,
                   {
-                    borderColor: (weight >= MAX_WEIGHT || !selectedCity) ? colors.gray[200] : colors.primary[500],
-                    backgroundColor: (weight >= MAX_WEIGHT || !selectedCity) ? colors.gray[50] : colors.white,
+                    borderColor: (weight >= MAX_WEIGHT || !selectedCity) ? card.borderColor : colors.primary[500],
+                    backgroundColor: (weight >= MAX_WEIGHT || !selectedCity) ? colors.gray[50] : card.backgroundColor,
                   },
                 ]}
               >
@@ -372,7 +414,7 @@ export default function CalculatorScreen() {
             {!selectedCity && (
               <View style={{ alignItems: 'center', marginTop: spacing.md }}>
                 <Text style={[styles.disabledText, { fontFamily: fonts.regular, color: colors.gray[400], fontSize: 12 }]}>
-                  ⬆️ Select a city first
+                  ⬆️ {t.calculator.selectCity}
                 </Text>
               </View>
             )}
@@ -398,11 +440,11 @@ export default function CalculatorScreen() {
 
         {/* ---- Perfume toggle ---- */}
         <Animated.View entering={FadeInDown.delay(240).duration(500)}>
-          <View style={[styles.card, { backgroundColor: colors.white, borderRadius: borderRadius.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginTop: spacing.lg, ...shadows.sm }]}>
+          <View style={[styles.card, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginTop: spacing.lg, ...shadows.sm }]}>
             <View style={styles.perfumeRow}>
               <View style={[styles.perfumeLeft, { marginRight: spacing.md }]}>
-                <View style={[styles.perfumeIconCircle, { backgroundColor: colors.purple[50], marginRight: spacing.md }]}>
-                  <Droplets size={18} color={colors.purple[500]} />
+                <View style={[styles.perfumeIconCircle, { backgroundColor: isDark ? colors.purple[900] : colors.purple[50], marginRight: spacing.md }]}>
+                  <Droplets size={18} color={isDark ? colors.purple[400] : colors.purple[500]} />
                 </View>
                 <View style={styles.perfumeTextGroup}>
                   <Text style={[styles.perfumeLabel, { fontFamily: fonts.semiBold, color: colors.gray[800] }]}>
@@ -429,13 +471,13 @@ export default function CalculatorScreen() {
 
         {/* ---- Result card ---- */}
         <Animated.View entering={FadeInDown.delay(320).duration(500)}>
-          <View style={[styles.resultCard, { backgroundColor: colors.white, borderRadius: borderRadius.xl, padding: spacing.xl, marginHorizontal: spacing.xl, marginTop: spacing.xl, borderColor: colors.primary[100], ...shadows.md }]}>
+          <View style={[styles.resultCard, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.xl, padding: spacing.xl, marginHorizontal: spacing.xl, marginTop: spacing.xl, borderColor: colors.primary[100], ...shadows.md }]}>
             {/* City indicator */}
             {selectedCity && (
-              <View style={[styles.resultRow, { paddingVertical: spacing.xs, backgroundColor: colors.primary[50], borderRadius: borderRadius.md, paddingHorizontal: spacing.md, marginBottom: spacing.md }]}>
+              <View style={[styles.resultRow, { paddingVertical: spacing.xs, backgroundColor: isDark ? colors.primary[900] : colors.primary[50], borderRadius: borderRadius.md, paddingHorizontal: spacing.md, marginBottom: spacing.md }]}>
                 <View style={[styles.resultLabelRow, { gap: spacing.xs }]}>
-                  <MapPin size={14} color={colors.primary[600]} />
-                  <Text style={[styles.resultLabel, { fontFamily: fonts.medium, color: colors.primary[700] }]}>
+                  <MapPin size={14} color={isDark ? colors.primary[400] : colors.primary[600]} />
+                  <Text style={[styles.resultLabel, { fontFamily: fonts.medium, color: isDark ? colors.primary[200] : colors.primary[700] }]}>
                     📍 {selectedCity}
                   </Text>
                 </View>
@@ -479,15 +521,59 @@ export default function CalculatorScreen() {
 
             {/* Delivery time */}
             <View style={[styles.deliveryRow, { marginTop: spacing.md }]}>
-              <View style={[styles.deliveryBadge, { backgroundColor: colors.primary[50], paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: borderRadius.full, gap: spacing.xs }]}>
-                <Clock size={13} color={colors.primary[600]} />
-                <Text style={[styles.deliveryText, { fontFamily: fonts.medium, color: colors.primary[600] }]}>
+              <View style={[styles.deliveryBadge, { backgroundColor: isDark ? colors.primary[900] : colors.primary[50], paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: borderRadius.full, gap: spacing.xs }]}>
+                <Clock size={13} color={isDark ? colors.primary[400] : colors.primary[600]} />
+                <Text style={[styles.deliveryText, { fontFamily: fonts.medium, color: isDark ? colors.primary[200] : colors.primary[600] }]}>
                   {t.calculator.result.deliveryTime}: {deliveryDays} {t.calculator.result.days}
                 </Text>
               </View>
             </View>
           </View>
         </Animated.View>
+
+        {/* ---- Special Items Section ---- */}
+        {specialItems.length > 0 && (
+          <Animated.View entering={FadeInDown.delay(400).duration(500)}>
+            <View style={[styles.card, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginTop: spacing.xl, ...shadows.sm }]}>
+              <View style={[styles.cardHeaderRow, { gap: spacing.sm, marginBottom: spacing.md }]}>
+                <Package size={16} color={colors.primary[500]} />
+                <Text style={[styles.cardTitle, { fontFamily: fonts.semiBold, color: colors.gray[800] }]}>
+                  Special Items
+                </Text>
+              </View>
+              <Text style={{ fontFamily: fonts.regular, color: colors.gray[500], fontSize: 12, marginBottom: spacing.md }}>
+                Fixed fees for specific items (separate from weight pricing)
+              </Text>
+
+              {Object.entries(itemsByCategory).map(([category, items]) => (
+                <View key={category} style={{ marginBottom: spacing.md }}>
+                  <Text style={{ fontFamily: fonts.semiBold, fontSize: 13, color: colors.primary[600], marginBottom: spacing.sm, textTransform: 'uppercase', letterSpacing: 1 }}>
+                    {category}
+                  </Text>
+                  {items.map((item) => (
+                    <View key={item.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.gray[100] }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: fonts.medium, fontSize: 14, color: colors.gray[800] }}>
+                          {item.brand ? `${item.brand} ` : ''}{item.itemName}
+                        </Text>
+                        {(item.minModel || item.maxModel) && (
+                          <Text style={{ fontFamily: fonts.regular, fontSize: 11, color: colors.gray[400] }}>
+                            {item.minModel && item.maxModel ? `${item.minModel} - ${item.maxModel}` : item.minModel || item.maxModel}
+                          </Text>
+                        )}
+                      </View>
+                      <View style={{ backgroundColor: isDark ? colors.primary[900] : colors.primary[50], paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: borderRadius.md }}>
+                        <Text style={{ fontFamily: fonts.bold, fontSize: 14, color: colors.primary[600] }}>
+                          ${item.fixedFee.toFixed(2)}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+        )}
       </ScrollView>
     </View>
   );
@@ -507,18 +593,22 @@ const styles = StyleSheet.create({
 
   // ----- Header card -----
   headerCard: {},
-  headerIconRow: {},
+  headerIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   headerIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(255,255,255,0.9)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 24,
-    marginBottom: 4,
+    fontSize: 22,
+    flex: 1,
   },
   headerSubtitle: {
     fontSize: 14,
@@ -577,6 +667,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 2,
   },
+  disabledText: {},
 
   // ----- Range indicator -----
   rangeRow: {
@@ -672,4 +763,29 @@ const styles = StyleSheet.create({
   deliveryText: {
     fontSize: 13,
   },
+
+  // ----- City selection (horizontal) -----
+  cityGrid: {
+    flexDirection: 'row',
+  },
+  cityChip: {
+    minWidth: 100,
+  },
+  cityEmoji: {
+    fontSize: 24,
+    marginBottom: 6,
+  },
+  cityChipText: {
+    fontSize: 13,
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  cityChipSub: {
+    fontSize: 10,
+    textAlign: 'center',
+  },
+
+  // ----- Pricing badge -----
+  pricingBadge: {},
+  pricingBadgeText: {},
 });

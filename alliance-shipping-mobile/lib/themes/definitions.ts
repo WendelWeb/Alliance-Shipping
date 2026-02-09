@@ -77,17 +77,6 @@ const darkGray: ColorScale = {
   500: '#9ca3af', 600: '#d1d5db', 700: '#e5e7eb', 800: '#f3f4f6', 900: '#f9fafb',
 };
 
-// Neumorphic gray (softer, muted)
-const neuGray: ColorScale = {
-  50: '#e8ecf1', 100: '#dfe3e8', 200: '#cdd2d9', 300: '#b8bfc8', 400: '#8e97a3',
-  500: '#6b7280', 600: '#4b5563', 700: '#374151', 800: '#1f2937', 900: '#111827',
-};
-
-// Dark neumorphic gray
-const darkNeuGray: ColorScale = {
-  50: '#1a1a2e', 100: '#222238', 200: '#2d2d44', 300: '#3d3d56', 400: '#6b7280',
-  500: '#9ca3af', 600: '#d1d5db', 700: '#e5e7eb', 800: '#f0f0f5', 900: '#fafafe',
-};
 
 // ==================== SHADOW PRESETS ====================
 
@@ -105,26 +94,6 @@ const darkShadows = {
   xl: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.6, shadowRadius: 16, elevation: 8 },
 };
 
-const neuShadows = {
-  sm: { shadowColor: '#a3b1c6', shadowOffset: { width: 3, height: 3 }, shadowOpacity: 0.5, shadowRadius: 4, elevation: 2 },
-  md: { shadowColor: '#a3b1c6', shadowOffset: { width: 5, height: 5 }, shadowOpacity: 0.5, shadowRadius: 8, elevation: 4 },
-  lg: { shadowColor: '#a3b1c6', shadowOffset: { width: 8, height: 8 }, shadowOpacity: 0.5, shadowRadius: 12, elevation: 6 },
-  xl: { shadowColor: '#a3b1c6', shadowOffset: { width: 12, height: 12 }, shadowOpacity: 0.5, shadowRadius: 20, elevation: 8 },
-};
-
-const darkNeuShadows = {
-  sm: { shadowColor: '#0a0a15', shadowOffset: { width: 3, height: 3 }, shadowOpacity: 0.7, shadowRadius: 4, elevation: 2 },
-  md: { shadowColor: '#0a0a15', shadowOffset: { width: 5, height: 5 }, shadowOpacity: 0.7, shadowRadius: 8, elevation: 4 },
-  lg: { shadowColor: '#0a0a15', shadowOffset: { width: 8, height: 8 }, shadowOpacity: 0.7, shadowRadius: 12, elevation: 6 },
-  xl: { shadowColor: '#0a0a15', shadowOffset: { width: 12, height: 12 }, shadowOpacity: 0.7, shadowRadius: 20, elevation: 8 },
-};
-
-const glassShadows = {
-  sm: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
-  md: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 12, elevation: 4 },
-  lg: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 20, elevation: 6 },
-  xl: { shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.25, shadowRadius: 30, elevation: 8 },
-};
 
 // ==================== BLUE PRIMARY (DEFAULT) ====================
 
@@ -191,147 +160,9 @@ export const themes: ThemeDefinition[] = [
     card: { backgroundColor: '#1a1d27', borderWidth: 1, borderColor: '#252a36' },
   },
 
-  // 3. NEUMORPHISM
-  {
-    id: 'neumorphism',
-    name: 'Neumorphism',
-    nameKey: 'themes.neumorphism',
-    category: 'style',
-    preview: { bg: '#e0e5ec', accent: '#3b82f6', card: '#e0e5ec', text: '#2d3748' },
-    isDark: false,
-    defaultAccent: '#3b82f6',
-    colors: {
-      primary: bluePrimary,
-      gray: neuGray,
-      ...semanticColors,
-      white: '#ffffff',
-      black: '#000000',
-      background: '#e0e5ec',
-      surface: 'rgba(224,229,236,0.9)',
-      surfaceSolid: '#e0e5ec',
-    },
-    shadows: neuShadows,
-    card: { backgroundColor: '#e0e5ec', borderWidth: 0, borderColor: 'transparent' },
-  },
-
-  // 4. BLACK NEUMORPHISM
-  {
-    id: 'black-neumorphism',
-    name: 'Black Neumorphic',
-    nameKey: 'themes.blackNeumorphism',
-    category: 'style',
-    preview: { bg: '#1a1a2e', accent: '#818cf8', card: '#1a1a2e', text: '#e2e8f0' },
-    isDark: true,
-    defaultAccent: '#818cf8',
-    colors: {
-      primary: makeColorScale('#818cf8'),
-      gray: darkNeuGray,
-      ...semanticColors,
-      white: '#ffffff',
-      black: '#000000',
-      background: '#1a1a2e',
-      surface: 'rgba(26,26,46,0.95)',
-      surfaceSolid: '#1a1a2e',
-    },
-    shadows: darkNeuShadows,
-    card: { backgroundColor: '#1a1a2e', borderWidth: 0, borderColor: 'transparent' },
-  },
-
-  // 5. WHITE NEUMORPHISM
-  {
-    id: 'white-neumorphism',
-    name: 'White Neumorphic',
-    nameKey: 'themes.whiteNeumorphism',
-    category: 'style',
-    preview: { bg: '#f0f0f3', accent: '#6366f1', card: '#f0f0f3', text: '#1e293b' },
-    isDark: false,
-    defaultAccent: '#6366f1',
-    colors: {
-      primary: makeColorScale('#6366f1'),
-      gray: { ...neuGray, 50: '#f0f0f3', 100: '#e6e6eb' },
-      ...semanticColors,
-      white: '#ffffff',
-      black: '#000000',
-      background: '#f0f0f3',
-      surface: 'rgba(240,240,243,0.95)',
-      surfaceSolid: '#f0f0f3',
-    },
-    shadows: neuShadows,
-    card: { backgroundColor: '#f0f0f3', borderWidth: 0, borderColor: 'transparent' },
-  },
-
-  // 6. GLASSMORPHISM
-  {
-    id: 'glassmorphism',
-    name: 'Glassmorphism',
-    nameKey: 'themes.glassmorphism',
-    category: 'style',
-    preview: { bg: '#667eea', accent: '#764ba2', card: 'rgba(255,255,255,0.15)', text: '#ffffff' },
-    isDark: true,
-    defaultAccent: '#764ba2',
-    colors: {
-      primary: makeColorScale('#a78bfa'),
-      gray: darkGray,
-      ...semanticColors,
-      white: '#ffffff',
-      black: '#000000',
-      background: '#1a1033',
-      surface: 'rgba(255,255,255,0.08)',
-      surfaceSolid: '#2a1f4e',
-    },
-    shadows: glassShadows,
-    card: { backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' },
-  },
-
-  // 7. WHITE GLASSMORPHISM
-  {
-    id: 'white-glassmorphism',
-    name: 'White Glass',
-    nameKey: 'themes.whiteGlass',
-    category: 'style',
-    preview: { bg: '#f0f4ff', accent: '#6366f1', card: 'rgba(255,255,255,0.6)', text: '#1e293b' },
-    isDark: false,
-    defaultAccent: '#6366f1',
-    colors: {
-      primary: makeColorScale('#6366f1'),
-      gray: lightGray,
-      ...semanticColors,
-      white: '#ffffff',
-      black: '#000000',
-      background: '#eef2ff',
-      surface: 'rgba(255,255,255,0.55)',
-      surfaceSolid: '#ffffff',
-    },
-    shadows: glassShadows,
-    card: { backgroundColor: 'rgba(255,255,255,0.6)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)' },
-  },
-
-  // 8. BLACK GLASSMORPHISM
-  {
-    id: 'black-glassmorphism',
-    name: 'Black Glass',
-    nameKey: 'themes.blackGlass',
-    category: 'style',
-    preview: { bg: '#0a0a0f', accent: '#22d3ee', card: 'rgba(255,255,255,0.06)', text: '#f0f9ff' },
-    isDark: true,
-    defaultAccent: '#22d3ee',
-    colors: {
-      primary: makeColorScale('#22d3ee'),
-      gray: { ...darkGray, 50: '#0a0a0f', 100: '#111118' },
-      ...semanticColors,
-      white: '#ffffff',
-      black: '#000000',
-      background: '#0a0a0f',
-      surface: 'rgba(255,255,255,0.04)',
-      surfaceSolid: '#111118',
-    },
-    shadows: { ...glassShadows, lg: { ...glassShadows.lg, shadowColor: '#22d3ee', shadowOpacity: 0.08 } },
-    card: { backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  },
-
   // ──────────── COLOR THEMES (Dark-based, polished) ────────────
 
-  // 9. OCEAN BLUE
+  // 5. OCEAN BLUE
   {
     id: 'ocean-blue',
     name: 'Ocean Blue',
@@ -351,7 +182,7 @@ export const themes: ThemeDefinition[] = [
     card: { backgroundColor: '#0f2035', borderWidth: 1, borderColor: '#163152' },
   },
 
-  // 10. ROYAL GOLD
+  // 6. ROYAL GOLD
   {
     id: 'royal-gold',
     name: 'Royal Gold',
@@ -371,7 +202,7 @@ export const themes: ThemeDefinition[] = [
     card: { backgroundColor: '#251e0e', borderWidth: 1, borderColor: '#362c15' },
   },
 
-  // 11. EMERALD GREEN
+  // 7. EMERALD GREEN
   {
     id: 'emerald-green',
     name: 'Emerald',
@@ -391,7 +222,7 @@ export const themes: ThemeDefinition[] = [
     card: { backgroundColor: '#0f2e20', borderWidth: 1, borderColor: '#16402e' },
   },
 
-  // 12. ROSE PINK
+  // 8. ROSE PINK
   {
     id: 'rose-pink',
     name: 'Rose',
@@ -411,7 +242,7 @@ export const themes: ThemeDefinition[] = [
     card: { backgroundColor: '#2e0f25', borderWidth: 1, borderColor: '#401835' },
   },
 
-  // 13. MIDNIGHT PURPLE
+  // 9. MIDNIGHT PURPLE
   {
     id: 'midnight-purple',
     name: 'Midnight',
@@ -431,7 +262,7 @@ export const themes: ThemeDefinition[] = [
     card: { backgroundColor: '#1c1030', borderWidth: 1, borderColor: '#291844' },
   },
 
-  // 14. CRIMSON RED
+  // 10. CRIMSON RED
   {
     id: 'crimson-red',
     name: 'Crimson',
@@ -451,7 +282,7 @@ export const themes: ThemeDefinition[] = [
     card: { backgroundColor: '#2b0f0f', borderWidth: 1, borderColor: '#3d1818' },
   },
 
-  // 15. SUNSET ORANGE
+  // 11. SUNSET ORANGE
   {
     id: 'sunset-orange',
     name: 'Sunset',
@@ -471,7 +302,7 @@ export const themes: ThemeDefinition[] = [
     card: { backgroundColor: '#2b1c0f', borderWidth: 1, borderColor: '#3d2918' },
   },
 
-  // 16. ARCTIC SILVER
+  // 12. ARCTIC SILVER
   {
     id: 'arctic-silver',
     name: 'Arctic',

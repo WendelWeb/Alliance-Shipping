@@ -27,46 +27,39 @@ export default function SettingsScreen() {
   const { user } = useUser();
   const router = useRouter();
   const { t } = useTranslation();
-  const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
+  const { colors, fonts, spacing, borderRadius, shadows, card } = useTheme();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('');
   const [warehouseId, setWarehouseId] = useState<number | null>(null);
+  const [warehouseName, setWarehouseName] = useState('');
   const [warehouses, setWarehouses] = useState<any[]>([]);
   const [loadingWarehouses, setLoadingWarehouses] = useState(false);
-  const [showCityPicker, setShowCityPicker] = useState(false);
-  const [showWarehousePicker, setShowWarehousePicker] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  const HAITI_CITIES = [
-    'Port-au-Prince',
-    'Cap-Haïtien',
-    'Port-de-Paix',
-    'Gonaïves',
-    'Saint-Marc',
-    'Les Cayes',
-    'Pétion-Ville',
-    'Delmas',
-    'Carrefour',
-    'Jacmel',
-  ];
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const loadUserData = async () => {
       if (user) {
         setFirstName(user.firstName || '');
         setLastName(user.lastName || '');
-        setPhone(user.primaryPhoneNumber?.phoneNumber || '');
 
-        // Load city and warehouse from API
+        // Load phone, city and warehouse from API
         try {
           const { api } = await import('@/lib/api');
           const response = await api.get<{ success: boolean; user: any }>('/api/user/profile');
+
+          // Load phone from database (with country code)
+          if (response.user?.phone) {
+            setPhone(response.user.phone);
+          }
+
           if (response.user?.city) {
             setCity(response.user.city);
           }
+
           if (response.user?.warehouseId) {
             setWarehouseId(response.user.warehouseId);
           }
@@ -83,6 +76,7 @@ export default function SettingsScreen() {
     const loadWarehouses = async () => {
       if (!city) {
         setWarehouses([]);
+        setWarehouseName('');
         return;
       }
 
@@ -93,6 +87,14 @@ export default function SettingsScreen() {
           `/api/warehouses?city=${encodeURIComponent(city)}`
         );
         setWarehouses(response.warehouses || []);
+
+        // Set warehouse name if we have a warehouseId
+        if (warehouseId && response.warehouses) {
+          const warehouse = response.warehouses.find((w: any) => w.id === warehouseId);
+          if (warehouse) {
+            setWarehouseName(warehouse.name);
+          }
+        }
       } catch (error) {
         console.error('Error loading warehouses:', error);
         setWarehouses([]);
@@ -102,7 +104,7 @@ export default function SettingsScreen() {
     };
 
     loadWarehouses();
-  }, [city]);
+  }, [city, warehouseId]);
 
   const email = user?.primaryEmailAddress?.emailAddress || '';
 
@@ -118,15 +120,11 @@ export default function SettingsScreen() {
     if (!user) return;
     setSaving(true);
     try {
-      // Update Clerk profile
+      // Update Clerk profile (only first and last name)
       await user.update({
         firstName,
         lastName,
       });
-
-      // Update city and warehouse in our database
-      const { api } = await import('@/lib/api');
-      await api.patch('/api/user/profile', { city, warehouseId });
 
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
@@ -150,6 +148,54 @@ export default function SettingsScreen() {
     router.back();
   };
 
+  const handleDeleteInfo = async () => {
+    Alert.alert(
+      'Supprimer les informations',
+      'Êtes-vous sûr de vouloir supprimer votre numéro de téléphone, ville et dépôt ? Vous devrez les saisir à nouveau lors de votre prochaine connexion.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            setDeleting(true);
+            try {
+              const { api } = await import('@/lib/api');
+              await api.patch('/api/user/profile', {
+                phone: null,
+                city: null,
+                warehouseId: null,
+              });
+
+              // Clear local state
+              setPhone('');
+              setCity('');
+              setWarehouseId(null);
+              setWarehouseName('');
+
+              await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              Alert.alert(
+                'Informations supprimées',
+                'Vos informations ont été supprimées avec succès.',
+                [{ text: 'OK' }]
+              );
+            } catch (error) {
+              console.error('Error deleting info:', error);
+              await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+              Alert.alert(
+                'Erreur',
+                'Impossible de supprimer les informations. Veuillez réessayer.',
+                [{ text: 'OK' }]
+              );
+            } finally {
+              setDeleting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const themedStyles = useMemo(() => ({
     screen: { backgroundColor: colors.background },
     backButton: {
@@ -162,11 +208,13 @@ export default function SettingsScreen() {
     },
     headerTitle: { fontFamily: fonts.headingBold, fontSize: 18, color: colors.gray[900] },
     card: {
-      backgroundColor: colors.white,
+      backgroundColor: card.backgroundColor,
       borderRadius: borderRadius.xl,
       padding: spacing.lg,
       marginBottom: spacing.lg,
       ...shadows.md,
+      borderWidth: card.borderWidth,
+      borderColor: card.borderColor,
     },
     sectionTitle: { fontFamily: fonts.semiBold, fontSize: 16, color: colors.gray[800], marginBottom: spacing.lg },
     avatar: {
@@ -187,7 +235,7 @@ export default function SettingsScreen() {
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
       borderWidth: 2,
-      borderColor: colors.white,
+      borderColor: card.backgroundColor,
     },
     changePhotoText: { fontFamily: fonts.semiBold, fontSize: 14, color: colors.primary[600], marginBottom: spacing.xs },
     photoNote: { fontFamily: fonts.regular, fontSize: 12, color: colors.gray[400] },
@@ -207,10 +255,10 @@ export default function SettingsScreen() {
     inputNote: { fontFamily: fonts.regular, fontSize: 12, color: colors.gray[400], marginTop: spacing.xs },
     cancelButton: {
       flex: 1,
-      backgroundColor: colors.white,
+      backgroundColor: card.backgroundColor,
       borderRadius: borderRadius.lg,
       borderWidth: 1.5,
-      borderColor: colors.gray[300],
+      borderColor: card.borderColor,
       paddingVertical: spacing.md + 2,
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
@@ -324,186 +372,70 @@ export default function SettingsScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={themedStyles.inputLabel}>{t.profile.settings.phone}</Text>
-              <TextInput
-                style={themedStyles.input}
-                value={phone}
-                onChangeText={setPhone}
-                placeholder={t.profile.settings.phonePlaceholder}
-                placeholderTextColor={colors.gray[400]}
-                keyboardType="phone-pad"
-              />
-              <Text style={themedStyles.inputNote}>{t.profile.settings.phoneNote}</Text>
+              <Text style={themedStyles.inputLabel}>📞 Numéro de téléphone</Text>
+              <View style={[themedStyles.input, themedStyles.inputReadOnly]}>
+                <Text style={{ color: phone ? colors.gray[700] : colors.gray[400], fontFamily: fonts.regular, fontSize: 15 }}>
+                  {phone || 'Non renseigné'}
+                </Text>
+              </View>
+              <Text style={themedStyles.inputNote}>Utilisez le modal de profil pour modifier votre numéro</Text>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={themedStyles.inputLabel}>Ville</Text>
-              <TouchableOpacity
-                style={themedStyles.input}
-                onPress={() => setShowCityPicker(true)}
-                activeOpacity={0.7}
-              >
-                <Text style={{ color: city ? colors.gray[900] : colors.gray[400], fontFamily: fonts.regular, fontSize: 15 }}>
-                  {city || 'Sélectionnez votre ville'}
+              <Text style={themedStyles.inputLabel}>📍 Ville</Text>
+              <View style={[themedStyles.input, themedStyles.inputReadOnly]}>
+                <Text style={{ color: city ? colors.gray[700] : colors.gray[400], fontFamily: fonts.regular, fontSize: 15 }}>
+                  {city || 'Non renseignée'}
                 </Text>
-              </TouchableOpacity>
+              </View>
+              <Text style={themedStyles.inputNote}>Utilisez le modal de profil pour modifier votre ville</Text>
             </View>
 
             <View style={styles.inputGroup}>
               <Text style={themedStyles.inputLabel}>📦 Dépôt de Réception</Text>
-              {loadingWarehouses ? (
-                <View style={[themedStyles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
-                  <ActivityIndicator size="small" color={colors.primary[600]} />
-                  <Text style={{ color: colors.gray[500], marginLeft: spacing.sm, fontFamily: fonts.regular, fontSize: 14 }}>
-                    Chargement...
-                  </Text>
-                </View>
-              ) : city && warehouses.length > 0 ? (
-                <TouchableOpacity
-                  style={themedStyles.input}
-                  onPress={() => setShowWarehousePicker(true)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={{ color: warehouseId ? colors.gray[900] : colors.gray[400], fontFamily: fonts.regular, fontSize: 15 }}>
-                    {warehouseId
-                      ? warehouses.find(w => w.id === warehouseId)?.name || 'Sélectionnez un dépôt'
-                      : 'Sélectionnez un dépôt'}
-                  </Text>
-                </TouchableOpacity>
-              ) : city && !loadingWarehouses ? (
-                <View style={[themedStyles.input, { backgroundColor: colors.yellow[50] }]}>
-                  <Text style={{ color: colors.yellow[800], fontFamily: fonts.regular, fontSize: 14 }}>
-                    Aucun dépôt disponible
-                  </Text>
-                </View>
-              ) : (
-                <View style={themedStyles.input}>
-                  <Text style={{ color: colors.gray[400], fontFamily: fonts.regular, fontSize: 14 }}>
-                    Sélectionnez d'abord une ville
-                  </Text>
-                </View>
-              )}
-              <Text style={themedStyles.inputNote}>Le dépôt où vous récupérerez vos colis</Text>
+              <View style={[themedStyles.input, themedStyles.inputReadOnly]}>
+                <Text style={{ color: warehouseName ? colors.gray[700] : colors.gray[400], fontFamily: fonts.regular, fontSize: 15 }}>
+                  {warehouseName || 'Non renseigné'}
+                </Text>
+              </View>
+              <Text style={themedStyles.inputNote}>Utilisez le modal de profil pour modifier votre dépôt</Text>
             </View>
+
+            {/* Delete Info Button */}
+            {(phone || city || warehouseId) && (
+              <TouchableOpacity
+                style={[
+                  styles.deleteButton,
+                  {
+                    backgroundColor: colors.red[50],
+                    borderColor: colors.red[500],
+                    borderWidth: 1.5,
+                    borderRadius: borderRadius.lg,
+                    paddingVertical: spacing.md,
+                    marginTop: spacing.md,
+                  },
+                  deleting && { opacity: 0.5 },
+                ]}
+                onPress={handleDeleteInfo}
+                disabled={deleting}
+                activeOpacity={0.7}
+              >
+                {deleting ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <ActivityIndicator size="small" color={colors.red[600]} />
+                    <Text style={{ fontFamily: fonts.semiBold, fontSize: 14, color: colors.red[600] }}>
+                      Suppression...
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={{ fontFamily: fonts.semiBold, fontSize: 14, color: colors.red[600], textAlign: 'center' }}>
+                    🗑️ Supprimer mes informations (téléphone, ville, dépôt)
+                  </Text>
+                )}
+              </TouchableOpacity>
+            )}
           </Animated.View>
 
-          {/* City Picker Modal */}
-          <Modal
-            visible={showCityPicker}
-            transparent
-            animationType="slide"
-          >
-            <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-              <View style={{ backgroundColor: colors.white, borderTopLeftRadius: borderRadius.xl, borderTopRightRadius: borderRadius.xl, padding: spacing.xl, maxHeight: '60%' }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg }}>
-                  <Text style={{ fontFamily: fonts.semiBold, fontSize: 18, color: colors.gray[900] }}>Sélectionnez une ville</Text>
-                  <TouchableOpacity onPress={() => setShowCityPicker(false)}>
-                    <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[600] }}>Fermer</Text>
-                  </TouchableOpacity>
-                </View>
-                <ScrollView>
-                  {HAITI_CITIES.map((cityName) => (
-                    <TouchableOpacity
-                      key={cityName}
-                      onPress={() => {
-                        setCity(cityName);
-                        setWarehouseId(null); // Reset warehouse when city changes
-                        setShowCityPicker(false);
-                        Haptics.selectionAsync();
-                      }}
-                      style={{
-                        paddingVertical: spacing.md,
-                        borderBottomWidth: 1,
-                        borderBottomColor: colors.gray[100],
-                      }}
-                    >
-                      <Text style={{
-                        fontFamily: city === cityName ? fonts.semiBold : fonts.regular,
-                        fontSize: 16,
-                        color: city === cityName ? colors.primary[600] : colors.gray[900],
-                      }}>
-                        {cityName}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            </View>
-          </Modal>
-
-          {/* Warehouse Picker Modal */}
-          <Modal
-            visible={showWarehousePicker}
-            transparent
-            animationType="slide"
-          >
-            <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-              <View style={{ backgroundColor: colors.white, borderTopLeftRadius: borderRadius.xl, borderTopRightRadius: borderRadius.xl, padding: spacing.xl, maxHeight: '70%' }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg }}>
-                  <Text style={{ fontFamily: fonts.semiBold, fontSize: 18, color: colors.gray[900] }}>Sélectionnez un dépôt</Text>
-                  <TouchableOpacity onPress={() => setShowWarehousePicker(false)}>
-                    <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[600] }}>Fermer</Text>
-                  </TouchableOpacity>
-                </View>
-                <ScrollView>
-                  {warehouses.map((warehouse) => (
-                    <TouchableOpacity
-                      key={warehouse.id}
-                      onPress={() => {
-                        setWarehouseId(warehouse.id);
-                        setShowWarehousePicker(false);
-                        Haptics.selectionAsync();
-                      }}
-                      style={{
-                        paddingVertical: spacing.md,
-                        paddingHorizontal: spacing.sm,
-                        borderBottomWidth: 1,
-                        borderBottomColor: colors.gray[100],
-                        backgroundColor: warehouseId === warehouse.id ? colors.primary[50] : 'transparent',
-                        borderRadius: borderRadius.md,
-                      }}
-                    >
-                      <Text style={{
-                        fontFamily: fonts.semiBold,
-                        fontSize: 15,
-                        color: warehouseId === warehouse.id ? colors.primary[700] : colors.gray[900],
-                        marginBottom: spacing.xs,
-                      }}>
-                        📦 {warehouse.name}
-                      </Text>
-                      <Text style={{
-                        fontFamily: fonts.regular,
-                        fontSize: 13,
-                        color: colors.gray[600],
-                      }}>
-                        📍 {warehouse.address}
-                      </Text>
-                      {warehouse.phone && (
-                        <Text style={{
-                          fontFamily: fonts.regular,
-                          fontSize: 13,
-                          color: colors.gray[600],
-                          marginTop: 2,
-                        }}>
-                          📞 {warehouse.phone}
-                        </Text>
-                      )}
-                      {warehouse.openingHours && (
-                        <Text style={{
-                          fontFamily: fonts.regular,
-                          fontSize: 13,
-                          color: colors.gray[600],
-                          marginTop: 2,
-                        }}>
-                          🕐 {warehouse.openingHours}
-                        </Text>
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            </View>
-          </Modal>
 
           <Animated.View
             entering={FadeInDown.delay(300).duration(500).springify().damping(18)}
@@ -563,7 +495,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   photoSection: {
     alignItems: 'center',
@@ -589,5 +521,9 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.7,
+  },
+  deleteButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

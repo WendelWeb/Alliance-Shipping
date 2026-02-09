@@ -65,7 +65,7 @@ export default function AddressesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { t } = useTranslation();
-  const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
+  const { colors, fonts, spacing, borderRadius, shadows, card } = useTheme();
 
   const [addresses, setAddresses] = useState<Address[]>(initialAddresses);
   const [modalVisible, setModalVisible] = useState(false);
@@ -177,7 +177,7 @@ export default function AddressesScreen() {
     headerTitle: { fontFamily: fonts.headingBold, fontSize: 18, color: colors.gray[900] },
     subtitle: { fontFamily: fonts.regular, fontSize: 14, color: colors.gray[500], marginBottom: spacing.xl },
     emptyCard: {
-      backgroundColor: colors.white,
+      backgroundColor: card.backgroundColor,
       borderRadius: borderRadius.xl,
       padding: spacing['3xl'],
       alignItems: 'center' as const,
@@ -196,7 +196,7 @@ export default function AddressesScreen() {
     emptyTitle: { fontFamily: fonts.headingSemiBold, fontSize: 16, color: colors.gray[800], marginBottom: spacing.xs },
     emptyDesc: { fontFamily: fonts.regular, fontSize: 13, color: colors.gray[400], textAlign: 'center' as const },
     addressCard: {
-      backgroundColor: colors.white,
+      backgroundColor: card.backgroundColor,
       borderRadius: borderRadius.xl,
       padding: spacing.lg,
       marginBottom: spacing.md,
@@ -245,7 +245,7 @@ export default function AddressesScreen() {
     },
     addButtonText: { fontFamily: fonts.semiBold, fontSize: 15, color: colors.white },
     modalContent: {
-      backgroundColor: colors.white,
+      backgroundColor: card.backgroundColor,
       borderTopLeftRadius: borderRadius['2xl'],
       borderTopRightRadius: borderRadius['2xl'],
       padding: spacing.xl,
@@ -257,7 +257,7 @@ export default function AddressesScreen() {
       backgroundColor: colors.gray[50],
       borderRadius: borderRadius.lg,
       borderWidth: 1,
-      borderColor: colors.gray[200],
+      borderColor: card.borderColor,
       paddingHorizontal: spacing.lg,
       paddingVertical: spacing.md + 2,
       fontSize: 15,
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   addressHeader: {
     marginBottom: 12,

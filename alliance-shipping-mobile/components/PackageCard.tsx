@@ -73,13 +73,29 @@ function getStatusLabel(status: string, statusTranslations: Record<string, strin
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-// Helper to translate nested keys like "packages.timeline.online"
+// Helper to translate nested keys like "packages.timeline.online" or simple keys like "delivered"
 function translateKey(key: string, translations: any): string {
   if (!key) return key;
 
-  // If it doesn't look like a translation key, return as-is
-  if (!key.includes('.')) return key;
+  // If it doesn't contain a dot, try to find it in packages.timeline first
+  if (!key.includes('.')) {
+    // Try packages.timeline[key]
+    const timelineValue = translations?.packages?.timeline?.[key];
+    if (timelineValue && typeof timelineValue === 'string') {
+      return timelineValue;
+    }
 
+    // Try packages.status[key]
+    const statusValue = translations?.packages?.status?.[key];
+    if (statusValue && typeof statusValue === 'string') {
+      return statusValue;
+    }
+
+    // Return original key with capitalization
+    return key.charAt(0).toUpperCase() + key.slice(1);
+  }
+
+  // Handle dotted keys like "packages.timeline.delivered"
   const parts = key.split('.');
   let value = translations;
 
@@ -97,7 +113,7 @@ function translateKey(key: string, translations: any): string {
 
 export function PackageCard({ item, index }: PackageCardProps) {
   const { t } = useTranslation();
-  const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
+  const { colors, fonts, spacing, borderRadius, shadows, card } = useTheme();
   const [expanded, setExpanded] = useState(false);
 
   const statusColors = useMemo(
@@ -283,7 +299,7 @@ export function PackageCard({ item, index }: PackageCardProps) {
     <Animated.View entering={FadeInDown.delay(index * 60).duration(400).springify()}>
       <Pressable
         onPress={toggleExpanded}
-        style={[styles.card, shadows.md, { backgroundColor: colors.white }]}
+        style={[styles.card, shadows.md, { backgroundColor: card.backgroundColor }]}
       >
         {/* Top row: tracking number + status badge */}
         <View style={styles.topRow}>
@@ -362,7 +378,7 @@ export function PackageCard({ item, index }: PackageCardProps) {
                     <View
                       style={[
                         styles.timelineDotOuter,
-                        { borderColor: eventPalette.dot, backgroundColor: colors.white },
+                        { borderColor: eventPalette.dot, backgroundColor: card.backgroundColor },
                       ]}
                     >
                       <View

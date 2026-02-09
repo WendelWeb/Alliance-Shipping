@@ -38,7 +38,7 @@ export default function SupportScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { t } = useTranslation();
-  const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
+  const { colors, fonts, spacing, borderRadius, shadows, card } = useTheme();
 
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [subject, setSubject] = useState('');
@@ -100,7 +100,7 @@ export default function SupportScreen() {
     subtitle: { fontFamily: fonts.regular, fontSize: 14, color: colors.gray[500], marginBottom: spacing.xl },
     contactCard: {
       flex: 1,
-      backgroundColor: colors.white,
+      backgroundColor: card.backgroundColor,
       borderRadius: borderRadius.xl,
       padding: spacing.md,
       alignItems: 'center' as const,
@@ -111,18 +111,18 @@ export default function SupportScreen() {
     contactNote: { fontFamily: fonts.regular, fontSize: 10, color: colors.gray[400], textAlign: 'center' as const },
     sectionTitle: { fontFamily: fonts.headingSemiBold, fontSize: 17, color: colors.gray[800], marginBottom: spacing.md },
     faqCard: {
-      backgroundColor: colors.white,
+      backgroundColor: card.backgroundColor,
       borderRadius: borderRadius.xl,
       padding: spacing.xs,
       marginBottom: spacing.xl,
       ...shadows.sm,
     },
-    faqItemBorder: { borderBottomWidth: 1, borderBottomColor: colors.gray[100] },
+    faqItemBorder: { borderBottomWidth: 1, borderBottomColor: card.borderColor },
     faqQuestionText: { fontFamily: fonts.medium, fontSize: 14, color: colors.gray[800], flex: 1, marginRight: spacing.sm },
     faqQuestionTextActive: { fontFamily: fonts.semiBold, color: colors.primary[600] },
     faqAnswerText: { fontFamily: fonts.regular, fontSize: 13, color: colors.gray[600], lineHeight: 20 },
     formCard: {
-      backgroundColor: colors.white,
+      backgroundColor: card.backgroundColor,
       borderRadius: borderRadius.xl,
       padding: spacing.lg,
       ...shadows.sm,
@@ -162,7 +162,7 @@ export default function SupportScreen() {
       width: 56,
       height: 56,
       borderRadius: 28,
-      backgroundColor: colors.white,
+      backgroundColor: card.backgroundColor,
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
       marginBottom: spacing.md,
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   contactCards: {
     flexDirection: 'row',

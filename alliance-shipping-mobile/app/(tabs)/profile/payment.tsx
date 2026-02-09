@@ -49,32 +49,42 @@ export default function PaymentScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { t } = useTranslation();
-  const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
+  const { colors, fonts, spacing, borderRadius, shadows, isDark } = useTheme();
 
   const [methods, setMethods] = useState<PaymentMethod[]>(initialMethods);
 
+  // DARK MODE: Use light colors for icons and text
+  // LIGHT MODE: Use dark colors for icons and text
+  const iconColor = isDark ? colors.gray[300] : colors.gray[700];
+  const textPrimary = isDark ? colors.gray[100] : colors.gray[900];
+  const textSecondary = isDark ? colors.gray[400] : colors.gray[600];
+  const bgPrimary = isDark ? colors.gray[900] : colors.gray[50];
+  const bgCard = isDark ? colors.gray[800] : colors.white;
+  const borderColor = isDark ? colors.gray[700] : colors.gray[200];
+
   function getTypeIcon(type: string) {
+    const color = isDark ? colors.primary[400] : colors.primary[600];
     switch (type) {
       case 'moncash':
       case 'natcash':
-        return <Smartphone size={20} color={colors.primary[600]} />;
+        return <Smartphone size={24} color={color} />;
       case 'card':
-        return <CreditCard size={20} color={colors.purple[600]} />;
+        return <CreditCard size={24} color={isDark ? colors.purple[400] : colors.purple[600]} />;
       default:
-        return <CreditCard size={20} color={colors.gray[500]} />;
+        return <CreditCard size={24} color={iconColor} />;
     }
   }
 
   function getTypeBgColor(type: string) {
     switch (type) {
       case 'moncash':
-        return colors.primary[50];
+        return isDark ? colors.primary[900] : colors.primary[100];
       case 'natcash':
-        return colors.green[50];
+        return isDark ? colors.green[900] : colors.green[100];
       case 'card':
-        return colors.purple[50];
+        return isDark ? colors.purple[900] : colors.purple[100];
       default:
-        return colors.gray[50];
+        return isDark ? colors.gray[700] : colors.gray[100];
     }
   }
 
@@ -121,64 +131,112 @@ export default function PaymentScreen() {
   };
 
   const themedStyles = useMemo(() => ({
-    screen: { backgroundColor: colors.background },
+    screen: {
+      backgroundColor: bgPrimary,
+    },
     backButton: {
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: colors.gray[100],
+      backgroundColor: bgCard,
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
+      borderWidth: 1,
+      borderColor: borderColor,
     },
-    headerTitle: { fontFamily: fonts.headingBold, fontSize: 18, color: colors.gray[900] },
-    subtitle: { fontFamily: fonts.regular, fontSize: 14, color: colors.gray[500], marginBottom: spacing.xl },
+    headerTitle: {
+      fontFamily: fonts.headingBold,
+      fontSize: 28,
+      color: textPrimary,
+    },
+    subtitle: {
+      fontFamily: fonts.regular,
+      fontSize: 18,
+      color: textSecondary,
+      marginBottom: spacing.xl,
+      lineHeight: 26,
+    },
     emptyCard: {
-      backgroundColor: colors.white,
+      backgroundColor: bgCard,
       borderRadius: borderRadius.xl,
       padding: spacing['3xl'],
       alignItems: 'center' as const,
       marginBottom: spacing.xl,
-      ...shadows.md,
+      borderWidth: 1,
+      borderColor: borderColor,
     },
     emptyIconCircle: {
       width: 64,
       height: 64,
       borderRadius: 32,
-      backgroundColor: colors.gray[100],
+      backgroundColor: isDark ? colors.gray[700] : colors.gray[100],
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
       marginBottom: spacing.lg,
     },
-    emptyTitle: { fontFamily: fonts.headingSemiBold, fontSize: 16, color: colors.gray[800], marginBottom: spacing.xs },
-    emptyDesc: { fontFamily: fonts.regular, fontSize: 13, color: colors.gray[400], textAlign: 'center' as const },
+    emptyTitle: {
+      fontFamily: fonts.headingSemiBold,
+      fontSize: 20,
+      color: textPrimary,
+      marginBottom: spacing.xs,
+    },
+    emptyDesc: {
+      fontFamily: fonts.regular,
+      fontSize: 17,
+      color: textSecondary,
+      textAlign: 'center' as const,
+      lineHeight: 24,
+    },
     methodCard: {
-      backgroundColor: colors.white,
+      backgroundColor: bgCard,
       borderRadius: borderRadius.xl,
       padding: spacing.lg,
       marginBottom: spacing.md,
-      ...shadows.sm,
+      borderWidth: 1,
+      borderColor: borderColor,
     },
-    methodType: { fontFamily: fonts.semiBold, fontSize: 15, color: colors.gray[900] },
+    methodType: {
+      fontFamily: fonts.semiBold,
+      fontSize: 19,
+      color: textPrimary,
+    },
     defaultBadge: {
       flexDirection: 'row' as const,
       alignItems: 'center' as const,
-      backgroundColor: colors.yellow[50],
-      borderRadius: borderRadius.sm,
-      paddingHorizontal: spacing.sm,
-      paddingVertical: 3,
-      gap: 4,
+      backgroundColor: isDark ? colors.yellow[900] : colors.yellow[100],
+      borderRadius: borderRadius.full,
+      paddingHorizontal: spacing.sm + 2,
+      paddingVertical: 6,
+      gap: 5,
     },
-    defaultBadgeText: { fontFamily: fonts.semiBold, fontSize: 11, color: colors.yellow[600] },
-    methodDisplay: { fontFamily: fonts.regular, fontSize: 14, color: colors.gray[500], marginTop: 2 },
+    defaultBadgeText: {
+      fontFamily: fonts.semiBold,
+      fontSize: 14,
+      color: isDark ? colors.yellow[300] : colors.yellow[700],
+    },
+    methodDisplay: {
+      fontFamily: fonts.regular,
+      fontSize: 17,
+      color: textSecondary,
+      marginTop: 4,
+    },
     methodActions: {
       flexDirection: 'row' as const,
       borderTopWidth: 1,
-      borderTopColor: colors.gray[100],
+      borderTopColor: borderColor,
       paddingTop: spacing.md,
-      gap: spacing.xl,
+      gap: spacing.md,
     },
-    actionTextYellow: { fontFamily: fonts.medium, fontSize: 13, color: colors.yellow[600] },
-    actionTextRed: { fontFamily: fonts.medium, fontSize: 13, color: colors.red[500] },
+    actionTextYellow: {
+      fontFamily: fonts.medium,
+      fontSize: 17,
+      color: isDark ? colors.yellow[400] : colors.yellow[700],
+    },
+    actionTextRed: {
+      fontFamily: fonts.medium,
+      fontSize: 17,
+      color: isDark ? colors.red[400] : colors.red[600],
+    },
     addButton: {
       flexDirection: 'row' as const,
       alignItems: 'center' as const,
@@ -189,19 +247,34 @@ export default function PaymentScreen() {
       gap: spacing.sm,
       marginTop: spacing.sm,
       marginBottom: spacing.xl,
+      ...shadows.md,
     },
-    addButtonText: { fontFamily: fonts.semiBold, fontSize: 15, color: colors.white },
+    addButtonText: {
+      fontFamily: fonts.semiBold,
+      fontSize: 19,
+      color: colors.white,
+    },
     infoCard: {
-      backgroundColor: colors.primary[50],
+      backgroundColor: isDark ? colors.gray[850] : colors.blue[50],
       borderRadius: borderRadius.xl,
       padding: spacing.lg,
       borderWidth: 1,
-      borderColor: colors.primary[100],
-      ...shadows.sm,
+      borderColor: isDark ? colors.gray[700] : colors.blue[100],
     },
-    infoTitle: { fontFamily: fonts.semiBold, fontSize: 14, color: colors.primary[700] },
-    infoText: { fontFamily: fonts.regular, fontSize: 13, color: colors.gray[700], flex: 1 },
-  }), [colors, fonts, spacing, borderRadius, shadows]);
+    infoTitle: {
+      fontFamily: fonts.semiBold,
+      fontSize: 19,
+      color: isDark ? colors.blue[300] : colors.blue[700],
+      marginBottom: spacing.xs,
+    },
+    infoText: {
+      fontFamily: fonts.regular,
+      fontSize: 17,
+      color: textSecondary,
+      flex: 1,
+      lineHeight: 24,
+    },
+  }), [colors, fonts, spacing, borderRadius, shadows, isDark, bgPrimary, bgCard, borderColor, textPrimary, textSecondary, iconColor]);
 
   return (
     <View style={[styles.screen, themedStyles.screen, { paddingTop: insets.top }]}>
@@ -214,10 +287,10 @@ export default function PaymentScreen() {
           onPress={() => router.back()}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={22} color={colors.gray[800]} />
+          <ArrowLeft size={26} color={textPrimary} />
         </TouchableOpacity>
         <Text style={themedStyles.headerTitle}>{t.profile.payment.title}</Text>
-        <View style={themedStyles.backButton} />
+        <View style={{ width: 40 }} />
       </Animated.View>
 
       <ScrollView
@@ -236,7 +309,7 @@ export default function PaymentScreen() {
             style={themedStyles.emptyCard}
           >
             <View style={themedStyles.emptyIconCircle}>
-              <CreditCard size={32} color={colors.gray[400]} />
+              <CreditCard size={36} color={iconColor} />
             </View>
             <Text style={themedStyles.emptyTitle}>{t.profile.payment.empty}</Text>
             <Text style={themedStyles.emptyDesc}>{t.profile.payment.emptyDesc}</Text>
@@ -268,7 +341,11 @@ export default function PaymentScreen() {
                       </Text>
                       {method.isDefault && (
                         <View style={themedStyles.defaultBadge}>
-                          <Star size={10} color={colors.yellow[600]} />
+                          <Star
+                            size={12}
+                            color={isDark ? colors.yellow[300] : colors.yellow[700]}
+                            fill={isDark ? colors.yellow[300] : colors.yellow[700]}
+                          />
                           <Text style={themedStyles.defaultBadgeText}>
                             {t.profile.payment.defaultBadge}
                           </Text>
@@ -287,7 +364,7 @@ export default function PaymentScreen() {
                     onPress={() => handleSetDefault(method.id)}
                     activeOpacity={0.7}
                   >
-                    <Star size={14} color={colors.yellow[600]} />
+                    <Star size={16} color={isDark ? colors.yellow[400] : colors.yellow[700]} />
                     <Text style={themedStyles.actionTextYellow}>
                       {t.profile.payment.setDefault}
                     </Text>
@@ -298,7 +375,7 @@ export default function PaymentScreen() {
                   onPress={() => handleDelete(method.id)}
                   activeOpacity={0.7}
                 >
-                  <Trash2 size={14} color={colors.red[500]} />
+                  <Trash2 size={16} color={isDark ? colors.red[400] : colors.red[600]} />
                   <Text style={themedStyles.actionTextRed}>
                     {t.profile.payment.delete}
                   </Text>
@@ -316,7 +393,7 @@ export default function PaymentScreen() {
             onPress={handleAdd}
             activeOpacity={0.8}
           >
-            <Plus size={18} color={colors.white} />
+            <Plus size={20} color={colors.white} />
             <Text style={themedStyles.addButtonText}>
               {t.profile.payment.addMethod}
             </Text>
@@ -328,29 +405,35 @@ export default function PaymentScreen() {
           style={themedStyles.infoCard}
         >
           <View style={styles.infoHeader}>
-            <Info size={18} color={colors.primary[600]} />
+            <Info size={20} color={isDark ? colors.blue[400] : colors.blue[600]} />
             <Text style={themedStyles.infoTitle}>
               {t.profile.payment.acceptedMethods}
             </Text>
           </View>
 
           <View style={styles.infoRow}>
-            <View style={[styles.infoIconCircle, { backgroundColor: colors.primary[50] }]}>
-              <Smartphone size={16} color={colors.primary[600]} />
+            <View style={[styles.infoIconCircle, {
+              backgroundColor: isDark ? colors.primary[800] : colors.primary[100]
+            }]}>
+              <Smartphone size={18} color={isDark ? colors.primary[400] : colors.primary[600]} />
             </View>
             <Text style={themedStyles.infoText}>{t.profile.payment.moncashDesc}</Text>
           </View>
 
           <View style={styles.infoRow}>
-            <View style={[styles.infoIconCircle, { backgroundColor: colors.green[50] }]}>
-              <Smartphone size={16} color={colors.green[600]} />
+            <View style={[styles.infoIconCircle, {
+              backgroundColor: isDark ? colors.green[800] : colors.green[100]
+            }]}>
+              <Smartphone size={18} color={isDark ? colors.green[400] : colors.green[600]} />
             </View>
             <Text style={themedStyles.infoText}>{t.profile.payment.natcashDesc}</Text>
           </View>
 
           <View style={styles.infoRow}>
-            <View style={[styles.infoIconCircle, { backgroundColor: colors.purple[50] }]}>
-              <CreditCard size={16} color={colors.purple[600]} />
+            <View style={[styles.infoIconCircle, {
+              backgroundColor: isDark ? colors.purple[800] : colors.purple[100]
+            }]}>
+              <CreditCard size={18} color={isDark ? colors.purple[400] : colors.purple[600]} />
             </View>
             <Text style={themedStyles.infoText}>{t.profile.payment.cardDesc}</Text>
           </View>
@@ -369,11 +452,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   methodHeader: {
     flexDirection: 'row',
@@ -387,9 +470,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   methodIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -405,7 +488,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   infoHeader: {
     flexDirection: 'row',
@@ -420,9 +503,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   infoIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },

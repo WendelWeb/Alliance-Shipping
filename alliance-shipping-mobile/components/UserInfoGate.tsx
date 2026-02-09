@@ -1,59 +1,104 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, ActivityIndicator, StyleSheet, AppState } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
+import { usePathname } from 'expo-router';
 import { PhoneNumberModal } from './PhoneNumberModal';
 import { api } from '@/lib/api';
 import { useTheme } from '@/lib/themes/ThemeProvider';
 
+/**
+ * UserInfoGate - Blocks app ONLY if user has never entered their info
+ *
+ * - First time (no info) → BLOCKS until user enters info
+ * - Info already entered → NEVER blocks
+ * - Info deleted → BLOCKS again until re-entered
+ */
 export function UserInfoGate({ children }: { children: React.ReactNode }) {
   const { isLoaded, isSignedIn } = useAuth();
   const { colors, fonts } = useTheme();
-  const [isBlocked, setIsBlocked] = useState(false);
+  const pathname = usePathname();
+  const [showModal, setShowModal] = useState(false);
   const [missingPhone, setMissingPhone] = useState(false);
   const [missingCity, setMissingCity] = useState(false);
   const [missingWarehouse, setMissingWarehouse] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+  const appState = useRef(AppState.currentState);
+  const lastPathname = useRef(pathname);
 
+  const checkUserInfo = async () => {
+    if (!isLoaded || !isSignedIn) {
+      setIsChecking(false);
+      return;
+    }
+
+    try {
+      const response = await api.get<{ success: boolean; user: any }>('/api/user/profile');
+
+      // Check if info is missing
+      const phoneValue = response.user?.phone;
+      const hasValidPhone = !!(phoneValue && phoneValue.startsWith('+'));
+      const hasCity = !!response.user?.city;
+      const hasWarehouse = !!response.user?.warehouseId;
+
+      const phoneMissing = !hasValidPhone;
+      const cityMissing = !hasCity;
+      const warehouseMissing = !hasWarehouse;
+
+      setMissingPhone(phoneMissing);
+      setMissingCity(cityMissing);
+      setMissingWarehouse(warehouseMissing);
+
+      // Block ONLY if ANY info is missing
+      const shouldBlock = phoneMissing || cityMissing || warehouseMissing;
+
+      if (shouldBlock) {
+        console.log('⚠️ UserInfoGate: Missing info - Phone:', phoneMissing, 'City:', cityMissing, 'Warehouse:', warehouseMissing);
+        setShowModal(true);
+      } else {
+        console.log('✅ UserInfoGate: All info present');
+        setShowModal(false);
+      }
+    } catch (error) {
+      console.error('❌ Error checking user info:', error);
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
+  // Check on mount
   useEffect(() => {
-    const checkUserInfo = async () => {
-      if (!isLoaded || !isSignedIn) {
-        setIsChecking(false);
-        return;
-      }
-
-      try {
-        const response = await api.get<{ success: boolean; user: any }>('/api/user/profile');
-        // Check if phone exists AND is properly formatted (with country code)
-        const phoneValue = response.user?.phone;
-        const hasValidPhone = !!(phoneValue && phoneValue.startsWith('+'));
-        const hasCity = !!response.user?.city;
-        const hasWarehouse = !!response.user?.warehouseId;
-
-        setMissingPhone(!hasValidPhone);
-        setMissingCity(!hasCity);
-        setMissingWarehouse(!hasWarehouse);
-
-        // BLOCK app if any is missing
-        if (!hasValidPhone || !hasCity || !hasWarehouse) {
-          console.log('🚫 UserInfoGate (Mobile): BLOCKING APP - Phone:', !hasValidPhone, 'City:', !hasCity, 'Warehouse:', !hasWarehouse);
-          setIsBlocked(true);
-        } else {
-          console.log('✅ UserInfoGate (Mobile): User has all required info');
-          setIsBlocked(false);
-        }
-      } catch (error) {
-        console.error('❌ Error checking user info:', error);
-      } finally {
-        setIsChecking(false);
-      }
-    };
-
     checkUserInfo();
   }, [isLoaded, isSignedIn]);
 
+  // Re-check when app comes to foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === 'active'
+      ) {
+        console.log('🔄 App came to foreground, re-checking user info...');
+        checkUserInfo();
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isLoaded, isSignedIn]);
+
+  // Re-check when navigating away from settings page
+  useEffect(() => {
+    if (lastPathname.current === '/(tabs)/profile/settings' && pathname !== '/(tabs)/profile/settings') {
+      console.log('🔄 Navigated away from settings, re-checking user info...');
+      checkUserInfo();
+    }
+    lastPathname.current = pathname;
+  }, [pathname, isLoaded, isSignedIn]);
+
   const handleSuccess = async () => {
     // Re-check user info after saving
-    setIsChecking(true);
     try {
       const response = await api.get<{ success: boolean; user: any }>('/api/user/profile');
       const phoneValue = response.user?.phone;
@@ -63,17 +108,15 @@ export function UserInfoGate({ children }: { children: React.ReactNode }) {
 
       if (hasValidPhone && hasCity && hasWarehouse) {
         console.log('✅ All info completed! Unblocking app...');
-        setIsBlocked(false);
+        setShowModal(false);
         setMissingPhone(false);
         setMissingCity(false);
         setMissingWarehouse(false);
       } else {
-        console.log('⚠️ Info still incomplete, keeping blocked');
+        console.log('⚠️ Info still incomplete');
       }
     } catch (error) {
       console.error('❌ Error re-checking user info:', error);
-    } finally {
-      setIsChecking(false);
     }
   };
 
@@ -89,8 +132,8 @@ export function UserInfoGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If blocked, show ONLY the modal (hide app completely)
-  if (isBlocked) {
+  // If info is missing, show modal (blocks app)
+  if (showModal) {
     return (
       <PhoneNumberModal
         visible={true}

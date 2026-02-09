@@ -7,18 +7,17 @@ import {
   ActivityIndicator,
   FlatList,
 } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUser } from '@clerk/clerk-expo';
-import { Newspaper } from 'lucide-react-native';
+import { Bell } from 'lucide-react-native';
 import { useTheme } from '@/lib/themes/ThemeProvider';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { api } from '@/lib/api';
 import { NewsCard } from '@/components/NewsCard';
 
 interface Announcement {
-  id: string;
+  id: number;
   title: string;
   content: string;
   priority: string;
@@ -33,7 +32,6 @@ interface AnnouncementsResponse {
 }
 
 export default function NewsScreen() {
-  const insets = useSafeAreaInsets();
   const { user } = useUser();
   const { t, locale } = useTranslation();
   const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
@@ -48,7 +46,8 @@ export default function NewsScreen() {
         '/api/announcements/public?lang=' + locale + '&limit=20'
       );
       setAnnouncements(data.announcements);
-    } catch {
+    } catch (error) {
+      console.error('Failed to fetch announcements:', error);
       setAnnouncements([]);
     } finally {
       setLoading(false);
@@ -68,6 +67,28 @@ export default function NewsScreen() {
 
   const firstName = user?.firstName || '';
 
+  // Type labels for news cards
+  const typeLabels = useMemo(() => {
+    const newsT = t.news as any;
+    return newsT?.types || { news: 'News', alert: 'Alert', promo: 'Promo', maintenance: 'Maintenance' };
+  }, [t.news]);
+
+  // Count badge text
+  const countText = useMemo(() => {
+    const newsT = t.news as any;
+    const template = newsT?.newsCount || '{count} articles';
+    return template.replace('{count}', String(announcements.length));
+  }, [t.news, announcements.length]);
+
+  // Greeting emoji based on time of day
+  const greetingEmoji = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 6) return '🌙';
+    if (hour < 12) return '☀️';
+    if (hour < 18) return '🌤️';
+    return '🌙';
+  }, []);
+
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -78,20 +99,32 @@ export default function NewsScreen() {
           paddingBottom: 100,
         },
         headerContainer: {
-          paddingTop: spacing.lg,
+          paddingTop: 48,
           marginBottom: spacing.sm,
         },
         greetingCard: {
           marginHorizontal: spacing.lg,
           borderRadius: borderRadius.xl,
           padding: spacing.xl,
-          marginBottom: spacing.xl,
+          marginBottom: spacing.lg,
+        },
+        greetingRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        },
+        greetingContent: {
+          flex: 1,
+        },
+        greetingEmoji: {
+          fontSize: 28,
+          marginBottom: spacing.xs,
         },
         greetingText: {
           fontFamily: fonts.headingBold,
-          fontSize: 22,
+          fontSize: 24,
           letterSpacing: 0.2,
-          marginBottom: spacing.xs,
+          marginBottom: 4,
         },
         greetingSubtitle: {
           fontFamily: fonts.regular,
@@ -99,14 +132,39 @@ export default function NewsScreen() {
           lineHeight: 20,
           letterSpacing: 0.1,
         },
+        bellCircle: {
+          width: 48,
+          height: 48,
+          borderRadius: 24,
+          backgroundColor: 'rgba(255,255,255,0.15)',
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
         sectionHeader: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           paddingHorizontal: spacing.lg,
           marginBottom: spacing.md,
+        },
+        sectionTitleRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
         },
         sectionTitle: {
           fontFamily: fonts.headingSemiBold,
           fontSize: 20,
           letterSpacing: 0.1,
+        },
+        countBadge: {
+          paddingHorizontal: 10,
+          paddingVertical: 3,
+          borderRadius: borderRadius.full,
+        },
+        countBadgeText: {
+          fontFamily: fonts.semiBold,
+          fontSize: 12,
         },
         loadingContainer: {
           flex: 1,
@@ -125,13 +183,9 @@ export default function NewsScreen() {
           paddingVertical: spacing['5xl'],
           paddingHorizontal: spacing['3xl'],
         },
-        emptyIconCircle: {
-          width: 72,
-          height: 72,
-          borderRadius: 36,
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: spacing.xl,
+        emptyEmoji: {
+          fontSize: 48,
+          marginBottom: spacing.md,
         },
         emptyTitle: {
           fontFamily: fonts.headingSemiBold,
@@ -158,19 +212,21 @@ export default function NewsScreen() {
         locale={locale}
         readMoreLabel={t.news.readMore}
         priorityLabels={t.news.priority}
+        typeLabels={typeLabels}
       />
     ),
-    [locale, t.news.readMore, t.news.priority]
+    [locale, t.news.readMore, t.news.priority, typeLabels]
   );
 
   const keyExtractor = useCallback(
-    (item: Announcement) => item.id,
+    (item: Announcement) => String(item.id),
     []
   );
 
   const renderHeader = useCallback(
     () => (
       <View style={styles.headerContainer}>
+        {/* Greeting card */}
         <Animated.View
           entering={FadeInDown.duration(500).springify().damping(18)}
         >
@@ -180,26 +236,50 @@ export default function NewsScreen() {
             end={{ x: 1, y: 1 }}
             style={[styles.greetingCard, shadows.lg]}
           >
-            <Text style={[styles.greetingText, { color: colors.white }]}>
-              {t.news.greeting}, {firstName}!
-            </Text>
-            <Text style={[styles.greetingSubtitle, { color: 'rgba(255,255,255,0.8)' }]}>
-              {t.news.subtitle}
-            </Text>
+            <View style={styles.greetingRow}>
+              <View style={styles.greetingContent}>
+                <Text style={styles.greetingEmoji}>{greetingEmoji}</Text>
+                <Text style={[styles.greetingText, { color: colors.white }]}>
+                  {t.news.greeting}, {firstName}!
+                </Text>
+                <Text style={[styles.greetingSubtitle, { color: 'rgba(255,255,255,0.75)' }]}>
+                  {t.news.subtitle}
+                </Text>
+              </View>
+              <View style={styles.bellCircle}>
+                <Bell size={24} color="rgba(255,255,255,0.8)" />
+              </View>
+            </View>
           </LinearGradient>
         </Animated.View>
 
+        {/* Section header with count */}
         <Animated.View
           entering={FadeInDown.delay(120).duration(400).springify().damping(18)}
           style={styles.sectionHeader}
         >
-          <Text style={[styles.sectionTitle, { color: colors.gray[900] }]}>
-            {t.news.title}
-          </Text>
+          <View style={styles.sectionTitleRow}>
+            <Text style={{ fontSize: 18 }}>📋</Text>
+            <Text style={[styles.sectionTitle, { color: colors.gray[900] }]}>
+              {t.news.title}
+            </Text>
+          </View>
+
+          {!loading && announcements.length > 0 && (
+            <Animated.View
+              entering={FadeInRight.delay(300).duration(300).springify()}
+            >
+              <View style={[styles.countBadge, { backgroundColor: colors.primary[50] }]}>
+                <Text style={[styles.countBadgeText, { color: colors.primary[600] }]}>
+                  {countText}
+                </Text>
+              </View>
+            </Animated.View>
+          )}
         </Animated.View>
       </View>
     ),
-    [firstName, t.news.greeting, t.news.subtitle, t.news.title, colors, shadows, styles]
+    [firstName, greetingEmoji, t.news, colors, shadows, styles, loading, announcements.length, countText]
   );
 
   const renderEmpty = useCallback(
@@ -220,9 +300,7 @@ export default function NewsScreen() {
           entering={FadeInDown.duration(400).springify().damping(18)}
           style={styles.emptyContainer}
         >
-          <View style={[styles.emptyIconCircle, { backgroundColor: colors.primary[50] }]}>
-            <Newspaper size={32} color={colors.primary[400]} />
-          </View>
+          <Text style={styles.emptyEmoji}>📭</Text>
           <Text style={[styles.emptyTitle, { color: colors.gray[900] }]}>
             {t.news.noNews}
           </Text>
@@ -241,7 +319,6 @@ export default function NewsScreen() {
         data={announcements}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
-
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={styles.listContent}
