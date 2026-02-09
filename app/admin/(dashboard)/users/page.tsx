@@ -9,6 +9,9 @@ import {
   Download,
   Mail,
   Phone,
+  MessageCircle,
+  MapPin,
+  Building2,
   Package as PackageIcon,
   CheckCircle,
   Ban,
@@ -49,6 +52,10 @@ interface UserData {
   name: string;
   email: string;
   phone: string;
+  whatsappPhone?: string | null;
+  city?: string | null;
+  warehouseId?: number | null;
+  warehouseName?: string | null;
   imageUrl: string | null;
   totalPackages: number;
   totalSpent: string;
@@ -389,23 +396,45 @@ export default function UsersPage() {
                 </div>
 
                 {/* Contact Info */}
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2.5 text-sm text-gray-600">
+                <div className="space-y-1.5 mb-4">
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
                     <div className="p-1 bg-gray-50 rounded">
-                      <Mail className="h-3.5 w-3.5 text-gray-400" />
+                      <Mail className="h-3 w-3 text-gray-400" />
                     </div>
                     <span className="truncate">{user.email}</span>
                   </div>
-                  <div className="flex items-center gap-2.5 text-sm text-gray-600">
-                    <div className="p-1 bg-gray-50 rounded">
-                      <Phone className="h-3.5 w-3.5 text-gray-400" />
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <div className="p-1 bg-blue-50 rounded">
+                      <Phone className="h-3 w-3 text-blue-500" />
                     </div>
-                    <span>{user.phone || 'No phone'}</span>
+                    <span className="font-medium">{user.phone || 'Aucun'}</span>
                   </div>
-                  <div className="flex items-center gap-2.5 text-sm text-gray-600">
-                    <div className="p-1 bg-gray-50 rounded">
-                      <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                  {user.whatsappPhone && (
+                    <div className="flex items-center gap-2 text-xs text-gray-600">
+                      <div className="p-1 bg-green-50 rounded">
+                        <MessageCircle className="h-3 w-3 text-green-500" />
+                      </div>
+                      <span>{user.whatsappPhone}</span>
                     </div>
+                  )}
+                  {user.city && (
+                    <div className="flex items-center gap-2 text-xs text-gray-600">
+                      <div className="p-1 bg-emerald-50 rounded">
+                        <MapPin className="h-3 w-3 text-emerald-500" />
+                      </div>
+                      <span className="font-medium">{user.city}</span>
+                    </div>
+                  )}
+                  {user.warehouseName && (
+                    <div className="flex items-center gap-2 text-xs text-gray-600">
+                      <div className="p-1 bg-orange-50 rounded">
+                        <Building2 className="h-3 w-3 text-orange-500" />
+                      </div>
+                      <span className="truncate">{user.warehouseName}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-xs text-gray-500 pt-1">
+                    <Calendar className="h-3 w-3" />
                     <span>Joined {user.joinedAt}</span>
                   </div>
                 </div>

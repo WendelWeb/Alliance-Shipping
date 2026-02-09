@@ -29,18 +29,25 @@ export async function GET(request: NextRequest) {
       orderBy: '-created_at',
     });
 
-    // Get package stats from DB for all users
+    // Get package stats from DB for all users with warehouse info
+    const { warehouses } = await import('@/lib/db/schema');
+
     const dbUsers = await db
       .select({
         clerkId: users.clerkId,
         id: users.id,
         phone: users.phone,
+        whatsappPhone: users.whatsappPhone,
+        city: users.city,
+        warehouseId: users.warehouseId,
+        warehouseName: warehouses.name,
         packageCount: count(packages.id),
         totalSpent: sum(packages.totalCost),
       })
       .from(users)
       .leftJoin(packages, eq(users.id, packages.userId))
-      .groupBy(users.id, users.clerkId, users.phone);
+      .leftJoin(warehouses, eq(users.warehouseId, warehouses.id))
+      .groupBy(users.id, users.clerkId, users.phone, users.whatsappPhone, users.city, users.warehouseId, warehouses.name);
 
     // Get loyalty credits summary per user
     const loyaltySummary = await db
@@ -94,6 +101,10 @@ export async function GET(request: NextRequest) {
           {
             dbId: u.id,
             phone: u.phone,
+            whatsappPhone: u.whatsappPhone,
+            city: u.city,
+            warehouseId: u.warehouseId,
+            warehouseName: u.warehouseName,
             packageCount: Number(u.packageCount) || 0,
             totalSpent: u.totalSpent ? parseFloat(u.totalSpent) : 0,
             creditBalance: loyalty ? parseFloat(String(loyalty.creditBalance)) : 0,
@@ -127,6 +138,10 @@ export async function GET(request: NextRequest) {
         name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'N/A',
         email: clerkUser.emailAddresses[0]?.emailAddress || '',
         phone: clerkUser.phoneNumbers[0]?.phoneNumber || stats?.phone || '',
+        whatsappPhone: stats?.whatsappPhone || null,
+        city: stats?.city || null,
+        warehouseId: stats?.warehouseId || null,
+        warehouseName: stats?.warehouseName || null,
         imageUrl: clerkUser.imageUrl || null,
         totalPackages: stats?.packageCount || 0,
         totalSpent: stats?.totalSpent ? `$${stats.totalSpent.toFixed(2)}` : '$0.00',
