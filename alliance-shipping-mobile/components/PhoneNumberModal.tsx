@@ -52,12 +52,15 @@ export function PhoneNumberModal({
 
   const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [whatsappCountry, setWhatsappCountry] = useState<Country>(COUNTRIES[0]);
+  const [whatsappNumber, setWhatsappNumber] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState<number | null>(null);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [cities, setCities] = useState<string[]>([]);
 
   const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [showWhatsappCountryPicker, setShowWhatsappCountryPicker] = useState(false);
   const [showCityPicker, setShowCityPicker] = useState(false);
   const [showWarehousePicker, setShowWarehousePicker] = useState(false);
 
@@ -139,6 +142,14 @@ export function PhoneNumberModal({
         const phoneDigitsOnly = phoneNumber.replace(/\D/g, '');
         updateData.phone = '+' + dialDigitsOnly + phoneDigitsOnly;
         updateData.countryCode = selectedCountry.code;
+      }
+
+      // Save WhatsApp number if provided (optional)
+      if (whatsappNumber) {
+        const whatsappDialDigits = whatsappCountry.dial.replace(/\D/g, '');
+        const whatsappPhoneDigits = whatsappNumber.replace(/\D/g, '');
+        updateData.whatsappPhone = '+' + whatsappDialDigits + whatsappPhoneDigits;
+        updateData.whatsappCountryCode = whatsappCountry.code;
       }
 
       if (missingCity && selectedCity) {
@@ -230,11 +241,11 @@ export function PhoneNumberModal({
             }]}>
               <View style={styles.sectionHeader}>
                 <View style={[styles.labelIconContainer, { backgroundColor: colors.primary[50] }]}>
-                  <Text style={styles.labelIcon}>📞</Text>
+                  <Text style={styles.labelIcon}>📱</Text>
                 </View>
                 <View style={{ flex: 1, marginLeft: spacing.md }}>
                   <Text style={[styles.cardTitle, { fontFamily: fonts.semiBold, color: colors.gray[900], fontSize: 17 }]}>
-                    {t.phoneModal.phoneNumber}
+                    Numéros de Contact
                   </Text>
                   <Text style={[styles.cardSubtitle, { fontFamily: fonts.regular, color: colors.gray[500], fontSize: 13, marginTop: 2 }]}>
                     {t.phoneModal.phoneSubtitle}
@@ -242,58 +253,131 @@ export function PhoneNumberModal({
                 </View>
               </View>
 
-              {/* Country Picker */}
-              <TouchableOpacity
-                onPress={() => {
-                  setShowCountryPicker(true);
-                  Haptics.selectionAsync();
-                }}
-                style={[styles.modernInput, {
-                  backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
-                  borderColor: isDark ? colors.gray[700] : colors.gray[200],
-                  borderRadius: borderRadius.xl,
-                  paddingHorizontal: spacing.lg,
-                  paddingVertical: spacing.lg,
-                  marginTop: spacing.lg,
-                  marginBottom: spacing.md,
-                }]}
-              >
-                <Text style={{ fontFamily: fonts.medium, color: colors.gray[900], fontSize: 16 }}>
-                  {selectedCountry.flag}  {getCountryName(selectedCountry, locale)} ({selectedCountry.dial})
+              {/* Direct Number Section */}
+              <View style={{ marginTop: spacing.lg }}>
+                <Text style={{ fontFamily: fonts.semiBold, color: colors.gray[700], fontSize: 14, marginBottom: spacing.sm }}>
+                  📞 {t.phoneModal.phoneNumberDirect}
                 </Text>
-                <Text style={{ fontFamily: fonts.regular, color: colors.gray[400], fontSize: 20 }}>›</Text>
-              </TouchableOpacity>
+                <Text style={{ fontFamily: fonts.regular, color: colors.gray[500], fontSize: 12, marginBottom: spacing.sm }}>
+                  {t.phoneModal.directSubtitle}
+                </Text>
 
-              {/* Phone Input */}
-              <View style={[styles.phoneInputRow, { gap: spacing.md }]}>
-                <View style={[styles.dialCode, {
-                  backgroundColor: isDark ? colors.gray[700] : colors.primary[50],
-                  borderRadius: borderRadius.xl,
-                  paddingHorizontal: spacing.lg,
-                  paddingVertical: spacing.lg,
-                }]}>
-                  <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[700], fontSize: 16 }}>
-                    {selectedCountry.dial}
-                  </Text>
-                </View>
-                <TextInput
-                  value={phoneNumber}
-                  onChangeText={setPhoneNumber}
-                  placeholder={t.phoneModal.enterPhone}
-                  placeholderTextColor={colors.gray[400]}
-                  keyboardType="phone-pad"
-                  style={[styles.phoneInput, {
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowCountryPicker(true);
+                    Haptics.selectionAsync();
+                  }}
+                  style={[styles.modernInput, {
                     backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
                     borderColor: isDark ? colors.gray[700] : colors.gray[200],
                     borderRadius: borderRadius.xl,
-                    borderWidth: 1,
                     paddingHorizontal: spacing.lg,
-                    paddingVertical: spacing.lg,
-                    fontFamily: fonts.medium,
-                    color: colors.gray[900],
-                    fontSize: 16,
+                    paddingVertical: spacing.md,
+                    marginBottom: spacing.sm,
                   }]}
-                />
+                >
+                  <Text style={{ fontFamily: fonts.medium, color: colors.gray[900], fontSize: 15 }}>
+                    {selectedCountry.flag}  {getCountryName(selectedCountry, locale)} ({selectedCountry.dial})
+                  </Text>
+                  <Text style={{ fontFamily: fonts.regular, color: colors.gray[400], fontSize: 18 }}>›</Text>
+                </TouchableOpacity>
+
+                <View style={[styles.phoneInputRow, { gap: spacing.sm }]}>
+                  <View style={[styles.dialCode, {
+                    backgroundColor: isDark ? colors.gray[700] : colors.primary[50],
+                    borderRadius: borderRadius.lg,
+                    paddingHorizontal: spacing.md,
+                    paddingVertical: spacing.md,
+                  }]}>
+                    <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[700], fontSize: 15 }}>
+                      {selectedCountry.dial}
+                    </Text>
+                  </View>
+                  <TextInput
+                    value={phoneNumber}
+                    onChangeText={setPhoneNumber}
+                    placeholder={t.phoneModal.enterPhone}
+                    placeholderTextColor={colors.gray[400]}
+                    keyboardType="phone-pad"
+                    style={[styles.phoneInput, {
+                      backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+                      borderColor: isDark ? colors.gray[700] : colors.gray[200],
+                      borderRadius: borderRadius.lg,
+                      borderWidth: 1,
+                      paddingHorizontal: spacing.md,
+                      paddingVertical: spacing.md,
+                      fontFamily: fonts.medium,
+                      color: colors.gray[900],
+                      fontSize: 15,
+                    }]}
+                  />
+                </View>
+              </View>
+
+              {/* WhatsApp Number Section */}
+              <View style={{ marginTop: spacing.lg, paddingTop: spacing.lg, borderTopWidth: 1, borderTopColor: colors.gray[200] }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
+                  <Text style={{ fontFamily: fonts.semiBold, color: colors.gray[700], fontSize: 14 }}>
+                    💬 {t.phoneModal.phoneNumberWhatsApp}
+                  </Text>
+                  <View style={{ backgroundColor: colors.green[100], paddingHorizontal: spacing.xs, paddingVertical: 2, borderRadius: borderRadius.sm, marginLeft: spacing.sm }}>
+                    <Text style={{ fontFamily: fonts.medium, color: colors.green[700], fontSize: 10 }}>OPTIONNEL</Text>
+                  </View>
+                </View>
+                <Text style={{ fontFamily: fonts.regular, color: colors.gray[500], fontSize: 12, marginBottom: spacing.sm }}>
+                  {t.phoneModal.whatsappSubtitle}
+                </Text>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowWhatsappCountryPicker(true);
+                    Haptics.selectionAsync();
+                  }}
+                  style={[styles.modernInput, {
+                    backgroundColor: isDark ? colors.gray[800] : colors.green[50],
+                    borderColor: isDark ? colors.gray[700] : colors.green[200],
+                    borderRadius: borderRadius.xl,
+                    paddingHorizontal: spacing.lg,
+                    paddingVertical: spacing.md,
+                    marginBottom: spacing.sm,
+                  }]}
+                >
+                  <Text style={{ fontFamily: fonts.medium, color: colors.gray[900], fontSize: 15 }}>
+                    {whatsappCountry.flag}  {getCountryName(whatsappCountry, locale)} ({whatsappCountry.dial})
+                  </Text>
+                  <Text style={{ fontFamily: fonts.regular, color: colors.gray[400], fontSize: 18 }}>›</Text>
+                </TouchableOpacity>
+
+                <View style={[styles.phoneInputRow, { gap: spacing.sm }]}>
+                  <View style={[styles.dialCode, {
+                    backgroundColor: isDark ? colors.gray[700] : colors.green[100],
+                    borderRadius: borderRadius.lg,
+                    paddingHorizontal: spacing.md,
+                    paddingVertical: spacing.md,
+                  }]}>
+                    <Text style={{ fontFamily: fonts.semiBold, color: colors.green[700], fontSize: 15 }}>
+                      {whatsappCountry.dial}
+                    </Text>
+                  </View>
+                  <TextInput
+                    value={whatsappNumber}
+                    onChangeText={setWhatsappNumber}
+                    placeholder="Ex: 3456 7890"
+                    placeholderTextColor={colors.gray[400]}
+                    keyboardType="phone-pad"
+                    style={[styles.phoneInput, {
+                      backgroundColor: isDark ? colors.gray[800] : colors.green[50],
+                      borderColor: isDark ? colors.gray[700] : colors.green[200],
+                      borderRadius: borderRadius.lg,
+                      borderWidth: 1,
+                      paddingHorizontal: spacing.md,
+                      paddingVertical: spacing.md,
+                      fontFamily: fonts.medium,
+                      color: colors.gray[900],
+                      fontSize: 15,
+                    }]}
+                  />
+                </View>
               </View>
             </View>
           )}
@@ -576,6 +660,76 @@ export function PhoneNumberModal({
                       {country.flag}  {getCountryName(country, locale)}
                     </Text>
                     <Text style={{ fontFamily: fonts.regular, color: selectedCountry.code === country.code ? colors.primary[700] : colors.gray[600], fontSize: 14, marginTop: 2 }}>
+                      {country.dial}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Modal>
+
+        {/* WhatsApp Country Picker Modal */}
+        <Modal visible={showWhatsappCountryPicker} animationType="slide" transparent>
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowWhatsappCountryPicker(false)}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+              style={[styles.pickerModal, {
+                backgroundColor: colors.white,
+                borderTopLeftRadius: borderRadius.xl * 1.5,
+                borderTopRightRadius: borderRadius.xl * 1.5,
+                paddingBottom: insets.bottom,
+              }]}
+            >
+              <View style={[styles.pickerHeader, { paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderBottomWidth: 0 }]}>
+                <View style={{ alignItems: 'center', paddingVertical: spacing.xs }}>
+                  <View style={{ width: 40, height: 4, backgroundColor: colors.gray[300], borderRadius: 2 }} />
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xs }}>
+                  <Text style={[styles.pickerTitle, { fontFamily: fonts.bold, color: colors.gray[900], fontSize: 18 }]}>
+                    💬 Pays WhatsApp
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setShowWhatsappCountryPicker(false)}
+                    style={{ padding: spacing.xs }}
+                  >
+                    <Text style={{ fontFamily: fonts.semiBold, color: colors.green[600], fontSize: 16 }}>
+                      {t.phoneModal.close || 'Fermer'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <ScrollView
+                style={{ maxHeight: 500, backgroundColor: colors.white }}
+                contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: spacing.lg }}
+              >
+                {COUNTRIES.map((country, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => {
+                      setWhatsappCountry(country);
+                      setShowWhatsappCountryPicker(false);
+                      Haptics.selectionAsync();
+                    }}
+                    style={[styles.pickerItemCard, {
+                      backgroundColor: whatsappCountry.code === country.code ? colors.green[50] : colors.gray[50],
+                      borderRadius: borderRadius.lg,
+                      paddingHorizontal: spacing.lg,
+                      paddingVertical: spacing.md,
+                      marginVertical: spacing.xs,
+                      borderWidth: whatsappCountry.code === country.code ? 2 : 0,
+                      borderColor: colors.green[600],
+                    }]}
+                  >
+                    <Text style={{ fontFamily: fonts.semiBold, color: whatsappCountry.code === country.code ? colors.green[900] : colors.gray[900], fontSize: 16 }}>
+                      {country.flag}  {getCountryName(country, locale)}
+                    </Text>
+                    <Text style={{ fontFamily: fonts.regular, color: whatsappCountry.code === country.code ? colors.green[700] : colors.gray[600], fontSize: 14, marginTop: 2 }}>
                       {country.dial}
                     </Text>
                   </TouchableOpacity>

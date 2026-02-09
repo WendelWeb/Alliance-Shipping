@@ -58,7 +58,9 @@
       "Bash(timeout:*)",
       "Bash(ping:*)",
       "Bash(npm info:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npm run db:generate:*)",
+      "Bash(npm run:*)"
     ]
   }
 }
