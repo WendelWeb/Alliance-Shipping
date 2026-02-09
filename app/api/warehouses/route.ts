@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { warehouses } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, isNotNull } from 'drizzle-orm';
 
 // GET - Get warehouses by city (public endpoint)
 export async function GET(request: NextRequest) {
@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get active warehouses for the specified city
-    const cityWarehouses = await db
+    // Get only active warehouses for the specified city with valid coordinates
+    const activeWarehouses = await db
       .select({
         id: warehouses.id,
         name: warehouses.name,
@@ -30,13 +30,15 @@ export async function GET(request: NextRequest) {
         openingHours: warehouses.openingHours,
       })
       .from(warehouses)
-      .where(eq(warehouses.city, city))
+      .where(
+        and(
+          eq(warehouses.city, city),
+          eq(warehouses.isActive, true),
+          isNotNull(warehouses.latitude),
+          isNotNull(warehouses.longitude)
+        )
+      )
       .orderBy(warehouses.name);
-
-    // Filter only active warehouses
-    const activeWarehouses = cityWarehouses.filter(
-      (w) => w.latitude && w.longitude
-    );
 
     return NextResponse.json({
       success: true,

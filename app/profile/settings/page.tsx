@@ -36,24 +36,32 @@ export default function SettingsPage() {
   const [city, setCity] = useState('');
   const [warehouseId, setWarehouseId] = useState<number | null>(null);
   const [warehouses, setWarehouses] = useState<any[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
+  const [loadingCities, setLoadingCities] = useState(true);
   const [loadingWarehouses, setLoadingWarehouses] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  const HAITI_CITIES = [
-    'Port-au-Prince',
-    'Cap-Haïtien',
-    'Port-de-Paix',
-    'Gonaïves',
-    'Saint-Marc',
-    'Les Cayes',
-    'Pétion-Ville',
-    'Delmas',
-    'Carrefour',
-    'Jacmel',
-  ];
+  // Load available cities from API
+  useEffect(() => {
+    const loadCities = async () => {
+      try {
+        const response = await fetch('/api/pricing/all');
+        if (response.ok) {
+          const data = await response.json();
+          const cityNames = data.cities.map((c: any) => c.city);
+          setCities(cityNames);
+        }
+      } catch (error) {
+        console.error('Error loading cities:', error);
+      } finally {
+        setLoadingCities(false);
+      }
+    };
+    loadCities();
+  }, []);
 
   // Initialize form with user data
   useEffect(() => {
@@ -438,10 +446,13 @@ export default function SettingsPage() {
                       setCity(e.target.value);
                       setWarehouseId(null); // Reset warehouse when city changes
                     }}
-                    className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-100 transition-all"
+                    disabled={loadingCities}
+                    className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <option value="">Sélectionnez votre ville</option>
-                    {HAITI_CITIES.map((cityName) => (
+                    <option value="">
+                      {loadingCities ? 'Chargement des villes...' : 'Sélectionnez votre ville'}
+                    </option>
+                    {cities.map((cityName) => (
                       <option key={cityName} value={cityName}>
                         {cityName}
                       </option>

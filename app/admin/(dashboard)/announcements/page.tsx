@@ -1313,10 +1313,12 @@ export default function AnnouncementsPage() {
                           value={warehouseForm.city}
                           onChange={(e) => {
                             const city = e.target.value;
+                            // Check if we have predefined GPS coordinates for common cities
                             const coords = CITY_COORDINATES[city] || { lat: '', lng: '' };
                             setWarehouseForm((prev) => ({
                               ...prev,
                               city,
+                              // Auto-fill GPS if available from predefined list, otherwise leave empty for manual entry
                               latitude: coords.lat,
                               longitude: coords.lng
                             }));
@@ -1324,9 +1326,9 @@ export default function AnnouncementsPage() {
                           className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                           <option value="">-- Select City --</option>
-                          {Object.keys(CITY_COORDINATES).map((city) => (
-                            <option key={city} value={city}>
-                              📍 {city}
+                          {cityData.map((cityObj) => (
+                            <option key={cityObj.city} value={cityObj.city}>
+                              📍 {cityObj.city}
                             </option>
                           ))}
                         </select>
