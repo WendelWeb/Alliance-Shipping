@@ -1880,7 +1880,7 @@ export default function AnnouncementsPage() {
                       </p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {cityData.filter((c) => c.isActive).map((city) => (
+                      {cityData.map((city) => (
                         <motion.button
                           key={city.id}
                           type="button"
