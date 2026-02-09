@@ -85,22 +85,36 @@ export function PhoneNumberModal({
 
   // Load warehouses when city changes
   useEffect(() => {
+    // CRITICAL: Clear warehouses immediately when city changes to prevent showing old data
+    setWarehouses([]);
+    setSelectedWarehouse(null);
+
     const loadWarehouses = async () => {
-      if (!selectedCity || !missingWarehouse) return;
+      if (!selectedCity || !missingWarehouse) {
+        setIsLoadingWarehouses(false);
+        return;
+      }
 
       setIsLoadingWarehouses(true);
-      setSelectedWarehouse(null);
 
       try {
         const response = await api.get<{ success: boolean; warehouses: Warehouse[] }>(
           `/api/warehouses?city=${encodeURIComponent(selectedCity)}`
         );
-        setWarehouses(response.warehouses || []);
+
+        // Double-check: Only set warehouses if they match the selected city
+        const validWarehouses = (response.warehouses || []).filter(
+          (w) => w.city === selectedCity
+        );
+
+        setWarehouses(validWarehouses);
 
         // Auto-select if only one
-        if (response.warehouses?.length === 1) {
-          setSelectedWarehouse(response.warehouses[0].id);
+        if (validWarehouses.length === 1) {
+          setSelectedWarehouse(validWarehouses[0].id);
         }
+
+        console.log(`✅ Loaded ${validWarehouses.length} warehouses for ${selectedCity}`);
       } catch (error) {
         console.error('Error loading warehouses:', error);
         setWarehouses([]);
