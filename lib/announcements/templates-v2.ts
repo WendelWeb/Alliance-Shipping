@@ -177,6 +177,51 @@ export const TEMPLATES_V2: TemplateV2[] = [
     color: 'red',
     isAction: true,
   },
+  {
+    id: 'remove_warehouse',
+    category: 'operations',
+    name: { en: 'Remove Warehouse', fr: 'Supprimer Dépôt', ht: 'Efase Depo', es: 'Eliminar Almacén' },
+    description: {
+      en: 'Permanently delete a warehouse from the database',
+      fr: 'Supprimer définitivement un dépôt de la base de données',
+      ht: 'Efase yon depo pèmanantman nan baz done a',
+      es: 'Eliminar permanentemente un almacén de la base de datos',
+    },
+    type: 'alert',
+    icon: '🗑️',
+    color: 'red',
+    isAction: true,
+  },
+  {
+    id: 'new_city',
+    category: 'pricing',
+    name: { en: 'New City', fr: 'Nouvelle Ville', ht: 'Nouvo Vil', es: 'Nueva Ciudad' },
+    description: {
+      en: 'Add a new city to the pricing list',
+      fr: 'Ajouter une nouvelle ville à la liste de tarification',
+      ht: 'Ajoute yon nouvo vil nan lis pri a',
+      es: 'Agregar una nueva ciudad a la lista de precios',
+    },
+    type: 'news',
+    icon: '🏙️',
+    color: 'green',
+    isAction: true,
+  },
+  {
+    id: 'remove_city',
+    category: 'pricing',
+    name: { en: 'Remove City', fr: 'Supprimer Ville', ht: 'Retire Vil', es: 'Eliminar Ciudad' },
+    description: {
+      en: 'Deactivate a city from the pricing list',
+      fr: 'Désactiver une ville de la liste de tarification',
+      ht: 'Dezaktive yon vil nan lis pri a',
+      es: 'Desactivar una ciudad de la lista de precios',
+    },
+    type: 'alert',
+    icon: '🚫',
+    color: 'red',
+    isAction: true,
+  },
 
   // ═══ COMMUNICATION (7) ════════════════════════════════════════
   {
@@ -523,6 +568,28 @@ export interface CloseWarehousePayload {
   reason?: string;
 }
 
+export interface RemoveWarehousePayload {
+  warehouseId: number;
+  name: string;
+  city: string;
+  reason?: string;
+}
+
+export interface NewCityPayload {
+  city: string;
+  serviceFee: number;
+  pricePerLb: number;
+  deliveryDaysMin: number;
+  deliveryDaysMax: number;
+  perfumeDaysMin: number;
+  perfumeDaysMax: number;
+}
+
+export interface RemoveCityPayload {
+  city: string;
+  reason?: string;
+}
+
 // Loyalty config labels (4 languages)
 const loyaltyConfigLabels: Record<string, Record<Locale, string>> = {
   credit_per_shipment: { en: 'Credit per Shipment', fr: 'Crédit par Expédition', ht: 'Kredi pa Anvoy', es: 'Crédito por Envío' },
@@ -576,6 +643,12 @@ function generateActionContent(
       return generateModifyWarehouseContent(payload as ModifyWarehousePayload, locale);
     case 'close_warehouse':
       return generateCloseWarehouseContent(payload as CloseWarehousePayload, locale);
+    case 'remove_warehouse':
+      return generateRemoveWarehouseContent(payload as RemoveWarehousePayload, locale);
+    case 'new_city':
+      return generateNewCityContent(payload as NewCityPayload, locale);
+    case 'remove_city':
+      return generateRemoveCityContent(payload as RemoveCityPayload, locale);
     default:
       return { title: '', content: '' };
   }
@@ -886,6 +959,80 @@ function generateCloseWarehouseContent(payload: CloseWarehousePayload, locale: L
     fr: `Chers clients,\n\nNous avons le regret de vous informer que notre dépôt ${payload.name} à ${payload.city} a été définitivement fermé.${reasonLine.fr}\n\nVeuillez utiliser nos autres emplacements pour vos livraisons futures. Tous les colis déjà sur place seront transférés.\n\n— Équipe Alliance Shipping`,
     ht: `Chè kliyan,\n\nNou regrèt pou fè ou konnen ke depo ${payload.name} nan ${payload.city} fèmen pèmanantman.${reasonLine.ht}\n\nTanpri itilize lòt anplasman nou yo pou livrezon alavni. Tout pakyè ki deja la pral transfere.\n\n— Ekip Alliance Shipping`,
     es: `Estimados clientes,\n\nLamentamos informarles que nuestro almacén ${payload.name} en ${payload.city} ha sido cerrado permanentemente.${reasonLine.es}\n\nPor favor utilice nuestras otras ubicaciones para futuras entregas. Todos los paquetes ya en esta ubicación serán transferidos.\n\n— Equipo Alliance Shipping`,
+  };
+
+  return { title: titles[locale], content: contents[locale] };
+}
+
+// ─── Remove Warehouse ───────────────────────────────────────────
+
+function generateRemoveWarehouseContent(payload: RemoveWarehousePayload, locale: Locale): { title: string; content: string } {
+  const titles: Record<Locale, string> = {
+    en: `Warehouse Removed: ${payload.name} (${payload.city})`,
+    fr: `Dépôt Supprimé: ${payload.name} (${payload.city})`,
+    ht: `Depo Efase: ${payload.name} (${payload.city})`,
+    es: `Almacén Eliminado: ${payload.name} (${payload.city})`,
+  };
+
+  const reasonLine = payload.reason ? {
+    en: `\n📋 Reason: ${payload.reason}`,
+    fr: `\n📋 Raison: ${payload.reason}`,
+    ht: `\n📋 Rezon: ${payload.reason}`,
+    es: `\n📋 Razón: ${payload.reason}`,
+  } : { en: '', fr: '', ht: '', es: '' };
+
+  const contents: Record<Locale, string> = {
+    en: `Dear customers,\n\nOur ${payload.name} warehouse in ${payload.city} has been permanently removed from our system.${reasonLine.en}\n\nPlease use our other active locations for all future deliveries.\n\n— Alliance Shipping Team`,
+    fr: `Chers clients,\n\nNotre dépôt ${payload.name} à ${payload.city} a été définitivement supprimé de notre système.${reasonLine.fr}\n\nVeuillez utiliser nos autres emplacements actifs pour toutes vos livraisons futures.\n\n— Équipe Alliance Shipping`,
+    ht: `Chè kliyan,\n\nDepo ${payload.name} nan ${payload.city} efase pèmanantman nan sistèm nou an.${reasonLine.ht}\n\nTanpri itilize lòt anplasman aktif nou yo pou tout livrezon alavni.\n\n— Ekip Alliance Shipping`,
+    es: `Estimados clientes,\n\nNuestro almacén ${payload.name} en ${payload.city} ha sido eliminado permanentemente de nuestro sistema.${reasonLine.es}\n\nPor favor utilice nuestras otras ubicaciones activas para todas sus futuras entregas.\n\n— Equipo Alliance Shipping`,
+  };
+
+  return { title: titles[locale], content: contents[locale] };
+}
+
+// ─── New City ───────────────────────────────────────────────────
+
+function generateNewCityContent(payload: NewCityPayload, locale: Locale): { title: string; content: string } {
+  const titles: Record<Locale, string> = {
+    en: `New Destination: ${payload.city} Now Available!`,
+    fr: `Nouvelle Destination: ${payload.city} Maintenant Disponible!`,
+    ht: `Nouvo Destinasyon: ${payload.city} Disponib Kounye a!`,
+    es: `¡Nuevo Destino: ${payload.city} Ya Disponible!`,
+  };
+
+  const contents: Record<Locale, string> = {
+    en: `Great news!\n\nWe are expanding our service to ${payload.city}!\n\n📍 City: ${payload.city}\n💰 Service Fee: $${payload.serviceFee.toFixed(2)}\n📦 Price per Pound: $${payload.pricePerLb.toFixed(2)}/lb\n🚚 Delivery Time: ${payload.deliveryDaysMin}-${payload.deliveryDaysMax} days\n🌸 Perfume Items: ${payload.perfumeDaysMin}-${payload.perfumeDaysMax} days\n\nYou can now select ${payload.city} as a delivery destination when submitting your package requests.\n\nWe continue to grow to serve you better!\n\n— Alliance Shipping Team`,
+    fr: `Bonne nouvelle!\n\nNous élargissons notre service à ${payload.city}!\n\n📍 Ville: ${payload.city}\n💰 Frais de Service: $${payload.serviceFee.toFixed(2)}\n📦 Prix par Livre: $${payload.pricePerLb.toFixed(2)}/lb\n🚚 Délai de Livraison: ${payload.deliveryDaysMin}-${payload.deliveryDaysMax} jours\n🌸 Articles Parfumés: ${payload.perfumeDaysMin}-${payload.perfumeDaysMax} jours\n\nVous pouvez désormais sélectionner ${payload.city} comme destination de livraison lors de vos demandes de colis.\n\nNous continuons à grandir pour mieux vous servir!\n\n— Équipe Alliance Shipping`,
+    ht: `Bon nouvèl!\n\nNou ap agrandi sèvis nou nan ${payload.city}!\n\n📍 Vil: ${payload.city}\n💰 Frè Sèvis: $${payload.serviceFee.toFixed(2)}\n📦 Pri pa Liv: $${payload.pricePerLb.toFixed(2)}/lb\n🚚 Tan Livrezon: ${payload.deliveryDaysMin}-${payload.deliveryDaysMax} jou\n🌸 Atik Pafen: ${payload.perfumeDaysMin}-${payload.perfumeDaysMax} jou\n\nKounye a ou ka chwazi ${payload.city} kòm destinasyon livrezon lè ou soumèt demann pakyè ou.\n\nNou kontinye grandi pou sèvi ou pi byen!\n\n— Ekip Alliance Shipping`,
+    es: `¡Buenas noticias!\n\n¡Estamos expandiendo nuestro servicio a ${payload.city}!\n\n📍 Ciudad: ${payload.city}\n💰 Tarifa de Servicio: $${payload.serviceFee.toFixed(2)}\n📦 Precio por Libra: $${payload.pricePerLb.toFixed(2)}/lb\n🚚 Tiempo de Entrega: ${payload.deliveryDaysMin}-${payload.deliveryDaysMax} días\n🌸 Artículos de Perfume: ${payload.perfumeDaysMin}-${payload.perfumeDaysMax} días\n\nAhora puede seleccionar ${payload.city} como destino de entrega al enviar sus solicitudes de paquetes.\n\n¡Seguimos creciendo para servirle mejor!\n\n— Equipo Alliance Shipping`,
+  };
+
+  return { title: titles[locale], content: contents[locale] };
+}
+
+// ─── Remove City ────────────────────────────────────────────────
+
+function generateRemoveCityContent(payload: RemoveCityPayload, locale: Locale): { title: string; content: string } {
+  const titles: Record<Locale, string> = {
+    en: `Service Discontinued: ${payload.city}`,
+    fr: `Service Interrompu: ${payload.city}`,
+    ht: `Sèvis Sispann: ${payload.city}`,
+    es: `Servicio Descontinuado: ${payload.city}`,
+  };
+
+  const reasonLine = payload.reason ? {
+    en: `\n📋 Reason: ${payload.reason}`,
+    fr: `\n📋 Raison: ${payload.reason}`,
+    ht: `\n📋 Rezon: ${payload.reason}`,
+    es: `\n📋 Razón: ${payload.reason}`,
+  } : { en: '', fr: '', ht: '', es: '' };
+
+  const contents: Record<Locale, string> = {
+    en: `Dear customers,\n\nWe regret to inform you that we are no longer serving ${payload.city}.${reasonLine.en}\n\nPlease select one of our other active destinations for your future shipments. We apologize for any inconvenience.\n\n— Alliance Shipping Team`,
+    fr: `Chers clients,\n\nNous avons le regret de vous informer que nous ne desservons plus ${payload.city}.${reasonLine.fr}\n\nVeuillez sélectionner l'une de nos autres destinations actives pour vos futurs envois. Nous nous excusons pour tout désagrément.\n\n— Équipe Alliance Shipping`,
+    ht: `Chè kliyan,\n\nNou regrèt pou fè ou konnen ke nou pa sèvi ${payload.city} ankò.${reasonLine.ht}\n\nTanpri chwazi youn nan lòt destinasyon aktif nou yo pou anvoy alavni ou. Nou eskize pou tout enkonvenyans.\n\n— Ekip Alliance Shipping`,
+    es: `Estimados clientes,\n\nLamentamos informarles que ya no prestamos servicio a ${payload.city}.${reasonLine.es}\n\nPor favor seleccione uno de nuestros otros destinos activos para sus futuros envíos. Pedimos disculpas por cualquier inconveniente.\n\n— Equipo Alliance Shipping`,
   };
 
   return { title: titles[locale], content: contents[locale] };

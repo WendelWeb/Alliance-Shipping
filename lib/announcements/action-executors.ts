@@ -16,6 +16,9 @@ import type {
   NewWarehousePayload,
   ModifyWarehousePayload,
   CloseWarehousePayload,
+  RemoveWarehousePayload,
+  NewCityPayload,
+  RemoveCityPayload,
 } from './templates-v2';
 
 export interface ActionChange {
@@ -58,6 +61,12 @@ export async function executeAction(
       return executeModifyWarehouse(payload as ModifyWarehousePayload);
     case 'close_warehouse':
       return executeCloseWarehouse(payload as CloseWarehousePayload);
+    case 'remove_warehouse':
+      return executeRemoveWarehouse(payload as RemoveWarehousePayload);
+    case 'new_city':
+      return executeNewCity(payload as NewCityPayload);
+    case 'remove_city':
+      return executeRemoveCity(payload as RemoveCityPayload);
     default:
       return { success: false, changes: [], error: `Unknown action template: ${templateId}` };
   }
@@ -469,6 +478,112 @@ async function executeCloseWarehouse(payload: CloseWarehousePayload): Promise<Ac
       table: 'warehouses',
       action: 'deactivate',
       identifier: `${payload.name} (${payload.city})`,
+      oldValues: { isActive: true },
+      newValues: { isActive: false },
+    }],
+  };
+}
+
+// ─── REMOVE WAREHOUSE ───────────────────────────────────────────
+
+async function executeRemoveWarehouse(payload: RemoveWarehousePayload): Promise<ActionResult> {
+  const [existing] = await db
+    .select()
+    .from(warehouses)
+    .where(eq(warehouses.id, payload.warehouseId))
+    .limit(1);
+
+  if (!existing) {
+    return { success: false, changes: [], error: `Warehouse #${payload.warehouseId} not found` };
+  }
+
+  await db
+    .delete(warehouses)
+    .where(eq(warehouses.id, payload.warehouseId));
+
+  return {
+    success: true,
+    changes: [{
+      table: 'warehouses',
+      action: 'deactivate',
+      identifier: `${payload.name} (${payload.city})`,
+      oldValues: { exists: true },
+      newValues: { exists: false },
+    }],
+  };
+}
+
+// ─── NEW CITY ───────────────────────────────────────────────────
+
+async function executeNewCity(payload: NewCityPayload): Promise<ActionResult> {
+  // Check if city already exists
+  const [existing] = await db
+    .select()
+    .from(cityPricing)
+    .where(eq(cityPricing.city, payload.city))
+    .limit(1);
+
+  if (existing) {
+    return { success: false, changes: [], error: `City "${payload.city}" already exists in pricing table` };
+  }
+
+  const [created] = await db
+    .insert(cityPricing)
+    .values({
+      city: payload.city,
+      serviceFee: payload.serviceFee.toFixed(2),
+      pricePerLb: payload.pricePerLb.toFixed(2),
+      deliveryDaysMin: payload.deliveryDaysMin,
+      deliveryDaysMax: payload.deliveryDaysMax,
+      perfumeDaysMin: payload.perfumeDaysMin,
+      perfumeDaysMax: payload.perfumeDaysMax,
+      isActive: true,
+    })
+    .returning();
+
+  return {
+    success: true,
+    changes: [{
+      table: 'city_pricing',
+      action: 'insert',
+      identifier: payload.city,
+      newValues: {
+        city: payload.city,
+        serviceFee: payload.serviceFee,
+        pricePerLb: payload.pricePerLb,
+        deliveryDaysMin: payload.deliveryDaysMin,
+        deliveryDaysMax: payload.deliveryDaysMax,
+        perfumeDaysMin: payload.perfumeDaysMin,
+        perfumeDaysMax: payload.perfumeDaysMax,
+      },
+    }],
+  };
+}
+
+// ─── REMOVE CITY ────────────────────────────────────────────────
+
+async function executeRemoveCity(payload: RemoveCityPayload): Promise<ActionResult> {
+  const [existing] = await db
+    .select()
+    .from(cityPricing)
+    .where(eq(cityPricing.city, payload.city))
+    .limit(1);
+
+  if (!existing) {
+    return { success: false, changes: [], error: `City "${payload.city}" not found in pricing table` };
+  }
+
+  await db
+    .update(cityPricing)
+    .set({ isActive: false, updatedAt: new Date() })
+    .where(eq(cityPricing.city, payload.city));
+
+  return {
+    success: true,
+    changes: [{
+      table: 'city_pricing',
+      action: 'deactivate',
+      identifier: payload.city,
       oldValues: { isActive: true },
       newValues: { isActive: false },
     }],
