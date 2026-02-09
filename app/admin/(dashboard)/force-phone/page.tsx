@@ -85,7 +85,7 @@ export default function ForcePhonePage() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Email de l'utilisateur
+              Email de l&apos;utilisateur
             </label>
             <input
               type="email"

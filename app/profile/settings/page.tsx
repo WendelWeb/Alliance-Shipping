@@ -512,7 +512,7 @@ export default function SettingsPage() {
                     </div>
                   ) : (
                     <div className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl">
-                      <p className="text-sm text-gray-500">Veuillez d'abord sélectionner une ville</p>
+                      <p className="text-sm text-gray-500">Veuillez d&apos;abord sélectionner une ville</p>
                     </div>
                   )}
                   <p className="text-xs text-gray-500 mt-1">

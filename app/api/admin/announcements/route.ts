@@ -2,7 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { announcements } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
-import { eq, desc, or, like, and } from 'drizzle-orm';
+import { eq, desc, or, like, and, isNull } from 'drizzle-orm';
+import { executeAction } from '@/lib/announcements/action-executors';
+import {
+  getTemplateById,
+  generateActionTranslations,
+  generateCommunicationTranslations,
+  COMMUNICATION_TEMPLATES,
+} from '@/lib/announcements/templates-v2';
 
 // GET - List all announcements
 export async function GET(request: NextRequest) {
@@ -64,7 +71,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create new announcement
+// POST - Create new announcement (supports action templates + scheduling)
 export async function POST(request: NextRequest) {
   try {
     const session = await getAdminSession();
@@ -79,35 +86,84 @@ export async function POST(request: NextRequest) {
       content,
       isPublished,
       imageUrl,
+      // V2 fields
+      templateId,
+      actionPayload,
+      variables,
+      scheduledFor,
     } = body;
 
-    // Validate required fields
-    if (!title || !category || !content) {
-      return NextResponse.json(
-        { error: 'Title, category, and content are required' },
-        { status: 400 }
-      );
+    const template = templateId ? getTemplateById(templateId) : null;
+
+    // Generate translations based on template type
+    let translations: Record<string, { title: string; content: string }> | null = null;
+    let announcementTitle = title;
+    let announcementContent = content;
+    let announcementType = category || 'news';
+
+    if (template) {
+      announcementType = template.type;
+
+      if (template.isAction && actionPayload) {
+        // Action template: generate translations from payload
+        translations = generateActionTranslations(templateId!, actionPayload);
+      } else if (!template.isAction && variables) {
+        // Communication template: fill {{variables}}
+        translations = generateCommunicationTranslations(templateId!, variables);
+      }
+
+      if (translations) {
+        // Use English as default title/content
+        announcementTitle = translations.en?.title || title;
+        announcementContent = translations.en?.content || content;
+      }
     }
 
-    // Create announcement
+    // Handle scheduling
+    const isScheduled = scheduledFor && new Date(scheduledFor) > new Date();
+
+    // If action template + immediate (not scheduled): execute DB changes now
+    if (template?.isAction && actionPayload && !isScheduled) {
+      const result = await executeAction(templateId!, actionPayload, session.adminId);
+      if (!result.success) {
+        return NextResponse.json({ error: result.error || 'Action failed' }, { status: 400 });
+      }
+    }
+
+    // Create the announcement
     const [newAnnouncement] = await db
       .insert(announcements)
       .values({
-        title,
-        type: category,
-        content,
-        isPublished: isPublished || false,
-        publishDate: isPublished ? new Date() : null,
+        title: announcementTitle,
+        type: announcementType,
+        content: announcementContent,
+        isPublished: isScheduled ? false : (isPublished !== false),
+        publishDate: isScheduled ? null : new Date(),
+        showOnHomepage: true,
         imageUrl: imageUrl || null,
+        translations,
+        templateId: templateId || null,
+        actionPayload: actionPayload || null,
+        actionExecutedAt: (template?.isAction && !isScheduled) ? new Date() : null,
+        scheduledFor: isScheduled ? new Date(scheduledFor) : null,
+        scheduledStatus: isScheduled ? 'pending' : null,
         createdBy: session.adminId,
       })
       .returning();
 
-    return NextResponse.json({ announcement: newAnnouncement }, { status: 201 });
+    return NextResponse.json({
+      announcement: newAnnouncement,
+      actionExecuted: template?.isAction && !isScheduled,
+      scheduled: isScheduled,
+    }, { status: 201 });
   } catch (error) {
     console.error('Error creating announcement:', error);
+    console.error('Stack:', error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json(
-      { error: 'Failed to create announcement' },
+      {
+        error: 'Failed to create announcement',
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }
@@ -132,6 +188,19 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Handle special actions
+    if (action === 'cancel_scheduled') {
+      const [cancelled] = await db
+        .update(announcements)
+        .set({
+          scheduledStatus: 'cancelled',
+          updatedAt: new Date(),
+        })
+        .where(eq(announcements.id, id))
+        .returning();
+
+      return NextResponse.json({ announcement: cancelled });
+    }
+
     if (action === 'publish') {
       const [published] = await db
         .update(announcements)

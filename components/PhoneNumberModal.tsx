@@ -142,7 +142,7 @@ export function PhoneNumberModal({
     // Prevent closing when clicking outside
     e.stopPropagation();
     // Show alert that info is required
-    alert(t.phoneModal.requiredInfo || 'Veuillez compléter toutes les informations requises avant de continuer.');
+    alert('Veuillez compléter toutes les informations requises avant de continuer.');
   };
 
   return (
@@ -217,7 +217,7 @@ export function PhoneNumberModal({
                       }
                       setPhoneNumber(formatted);
                     }}
-                    placeholder={t.phoneModal.enterPhone}
+                    placeholder={t.phoneModal.phoneNumber}
                     className="flex-1 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all text-base"
                     autoFocus
                   />

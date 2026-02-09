@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { users, loyaltyCredits, referrals } from '@/lib/db/schema';
-import { eq, sql, desc } from 'drizzle-orm';
-import { cookies } from 'next/headers';
+import { loyaltyCredits } from '@/lib/db/schema';
+import { sql } from 'drizzle-orm';
+import { getAdminSession } from '@/lib/auth/admin';
 
-// GET - Admin loyalty overview: totals, active users, top referrers
+// GET - Admin loyalty overview: totals, active users, credit breakdown
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const adminId = cookieStore.get('admin_id')?.value;
-    if (!adminId) {
+    const session = await getAdminSession();
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -39,22 +38,6 @@ export async function GET(request: NextRequest) {
 
     const activeUsersWithCredits = activeUsersResult.length;
 
-    // Top referrers (users with the most successful referrals)
-    const topReferrers = await db
-      .select({
-        referrerId: referrals.referrerId,
-        totalReferrals: sql<number>`COUNT(*)`,
-        totalCreditsEarned: sql<string>`COALESCE(SUM(${referrals.creditAmount}), 0)`,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        email: users.email,
-      })
-      .from(referrals)
-      .leftJoin(users, eq(referrals.referrerId, users.id))
-      .groupBy(referrals.referrerId, users.firstName, users.lastName, users.email)
-      .orderBy(desc(sql`COUNT(*)`))
-      .limit(10);
-
     // Credit breakdown by type
     const creditsByType = await db
       .select({
@@ -65,13 +48,6 @@ export async function GET(request: NextRequest) {
       .from(loyaltyCredits)
       .groupBy(loyaltyCredits.type);
 
-    // Total referrals count
-    const [totalReferralsResult] = await db
-      .select({
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(referrals);
-
     return NextResponse.json({
       success: true,
       overview: {
@@ -79,15 +55,9 @@ export async function GET(request: NextRequest) {
         totalCreditsRedeemed: parseFloat(redeemedResult.totalRedeemed),
         netCreditsOutstanding: parseFloat(issuedResult.totalIssued) - parseFloat(redeemedResult.totalRedeemed),
         activeUsersWithCredits,
-        totalReferrals: Number(totalReferralsResult.count),
+        totalReferrals: 0,
       },
-      topReferrers: topReferrers.map((r) => ({
-        userId: r.referrerId,
-        name: `${r.firstName || ''} ${r.lastName || ''}`.trim(),
-        email: r.email,
-        totalReferrals: Number(r.totalReferrals),
-        totalCreditsEarned: parseFloat(r.totalCreditsEarned),
-      })),
+      topReferrers: [],
       creditsByType: creditsByType.map((c) => ({
         type: c.type,
         totalAmount: parseFloat(c.totalAmount),

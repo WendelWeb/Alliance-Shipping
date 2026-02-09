@@ -29,7 +29,6 @@ import {
   TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
-  Share2,
 } from 'lucide-react';
 import { CardSkeleton } from '@/components/admin/LoadingSpinner';
 
@@ -65,8 +64,6 @@ interface UserData {
   totalPointsEarned: number;
   totalPointsUsed: number;
   transactionCount: number;
-  totalReferrals: number;
-  referralCode: string;
   recentTransactions: LoyaltyTransaction[];
 }
 
@@ -445,21 +442,13 @@ export default function UsersPage() {
                   </div>
                 </div>
 
-                {/* Referral & Transactions mini info */}
-                {(user.totalReferrals > 0 || user.transactionCount > 0) && (
+                {/* Transactions mini info */}
+                {user.transactionCount > 0 && (
                   <div className="flex items-center gap-3 mt-2 text-[11px] text-gray-400">
-                    {user.totalReferrals > 0 && (
-                      <span className="flex items-center gap-1">
-                        <Share2 className="h-3 w-3" />
-                        {user.totalReferrals} referral{user.totalReferrals !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                    {user.transactionCount > 0 && (
-                      <span className="flex items-center gap-1">
-                        <TrendingUp className="h-3 w-3" />
-                        {user.transactionCount} transaction{user.transactionCount !== 1 ? 's' : ''}
-                      </span>
-                    )}
+                    <span className="flex items-center gap-1">
+                      <TrendingUp className="h-3 w-3" />
+                      {user.transactionCount} transaction{user.transactionCount !== 1 ? 's' : ''}
+                    </span>
                   </div>
                 )}
 
@@ -658,22 +647,6 @@ export default function UsersPage() {
                       </div>
                     </div>
 
-                    {/* Referral Info */}
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2 bg-blue-50 rounded-lg px-3 py-2">
-                        <Share2 className="h-4 w-4 text-blue-500" />
-                        <div>
-                          <p className="text-xs font-bold text-blue-700">{selectedUser.totalReferrals} Referral{selectedUser.totalReferrals !== 1 ? 's' : ''}</p>
-                        </div>
-                      </div>
-                      {selectedUser.referralCode && (
-                        <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
-                          <span className="text-xs text-gray-500">Code:</span>
-                          <span className="text-xs font-bold font-mono text-gray-800">{selectedUser.referralCode}</span>
-                        </div>
-                      )}
-                    </div>
-
                     {/* Recent Transactions */}
                     {selectedUser.recentTransactions && selectedUser.recentTransactions.length > 0 && (
                       <div>
@@ -685,7 +658,6 @@ export default function UsersPage() {
                             <div key={tx.id} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
                               <div className="flex items-center gap-2 min-w-0">
                                 <div className={`p-1.5 rounded-md ${
-                                  tx.type === 'referral' ? 'bg-blue-100' :
                                   tx.type === 'shipment' ? 'bg-green-100' :
                                   tx.type === 'weight' ? 'bg-yellow-100' :
                                   tx.type === 'redemption' ? 'bg-red-100' :
@@ -693,8 +665,7 @@ export default function UsersPage() {
                                   tx.type === 'spending' ? 'bg-indigo-100' :
                                   'bg-gray-100'
                                 }`}>
-                                  {tx.type === 'referral' ? <Share2 className="h-3 w-3 text-blue-600" /> :
-                                   tx.type === 'shipment' ? <PackageIcon className="h-3 w-3 text-green-600" /> :
+                                  {tx.type === 'shipment' ? <PackageIcon className="h-3 w-3 text-green-600" /> :
                                    tx.type === 'redemption' ? <ArrowDownRight className="h-3 w-3 text-red-600" /> :
                                    tx.type === 'conversion' ? <TrendingUp className="h-3 w-3 text-purple-600" /> :
                                    tx.type === 'spending' ? <Star className="h-3 w-3 text-indigo-600" /> :

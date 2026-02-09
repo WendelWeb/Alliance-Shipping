@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
@@ -12,19 +12,12 @@ import { usePricing } from '@/hooks/usePricing';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useTheme } from '@/lib/themes/ThemeProvider';
 
-const CITIES = [
-  { id: 'Port-au-Prince', label: 'Port-au-Prince', description: 'Capitale' },
-  { id: 'Cap-Haïtien', label: 'Cap-Haïtien', description: 'Deuxième ville' },
-  { id: 'Port-de-Paix', label: 'Port-de-Paix', description: 'Nord-Ouest' },
-];
-
 export default function CalculatorPage() {
   const { t } = useTranslation();
-  const { pricing } = usePricing();
+  const { pricing, cities, loading: pricingLoading } = usePricing();
   const { theme, isDark } = useTheme();
   const colors = theme.colors;
   const [selectedCity, setSelectedCity] = useState('');
-  const [cityPricing, setCityPricing] = useState<{ serviceFee: number; pricePerLb: number } | null>(null);
   const [weight, setWeight] = useState('');
   const [result, setResult] = useState<{
     serviceFee: number;
@@ -33,27 +26,10 @@ export default function CalculatorPage() {
     deliveryDays: string;
   } | null>(null);
 
-  // Fetch city-specific pricing when city is selected
-  useEffect(() => {
-    if (selectedCity) {
-      fetch(`/api/city-pricing/${selectedCity}`)
-        .then(res => res.json())
-        .then(data => {
-          setCityPricing({
-            serviceFee: data.serviceFee,
-            pricePerLb: data.pricePerLb,
-          });
-        })
-        .catch(err => {
-          console.error('Error fetching city pricing:', err);
-          // Fallback to default pricing
-          setCityPricing({
-            serviceFee: pricing.serviceFee,
-            pricePerLb: pricing.pricePerLb,
-          });
-        });
-    }
-  }, [selectedCity, pricing]);
+  // Get pricing for selected city
+  const currentCityData = cities.find((c) => c.city === selectedCity);
+  const cityServiceFee = currentCityData?.serviceFee ?? pricing.serviceFee;
+  const cityPricePerLb = currentCityData?.pricePerLb ?? pricing.pricePerLb;
 
   const calculatePrice = () => {
     if (!selectedCity) {
@@ -67,15 +43,12 @@ export default function CalculatorPage() {
       return;
     }
 
-    if (!cityPricing) {
-      alert('Loading city pricing...');
-      return;
-    }
-
-    const serviceFee = cityPricing.serviceFee;
-    const weightCost = weightNum * cityPricing.pricePerLb;
+    const serviceFee = cityServiceFee;
+    const weightCost = weightNum * cityPricePerLb;
     const total = serviceFee + weightCost;
-    const deliveryDays = `${pricing.standardDelivery.min}-${pricing.standardDelivery.max}`;
+    const deliveryDays = currentCityData
+      ? `${currentCityData.deliveryDaysMin}-${currentCityData.deliveryDaysMax}`
+      : `${pricing.standardDelivery.min}-${pricing.standardDelivery.max}`;
 
     setResult({
       serviceFee,
@@ -118,31 +91,42 @@ export default function CalculatorPage() {
                   <h2 className="text-2xl font-bold" style={{ color: colors.gray[900] }}>Select Destination City</h2>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {CITIES.map((city) => (
-                    <button
-                      key={city.id}
-                      onClick={() => setSelectedCity(city.id)}
-                      className={`p-6 rounded-xl border-2 transition-all`}
-                      style={{
-                        borderColor: selectedCity === city.id ? colors.primary[500] : colors.gray[200],
-                        backgroundColor: selectedCity === city.id
-                          ? (isDark ? colors.primary[900] : colors.primary[50])
-                          : (isDark ? 'transparent' : colors.gray[50]),
-                        boxShadow: selectedCity === city.id ? theme.shadow.lg : 'none'
-                      }}
-                    >
-                      <div className="text-center">
-                        <MapPin
-                          className="h-8 w-8 mx-auto mb-2"
-                          style={{ color: selectedCity === city.id ? colors.primary[600] : colors.gray[400] }}
-                        />
-                        <h3 className="font-bold text-lg" style={{ color: colors.gray[900] }}>{city.label}</h3>
-                        <p className="text-sm" style={{ color: colors.gray[500] }}>{city.description}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                {pricingLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: colors.primary[500] }} />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {cities.map((city) => (
+                      <button
+                        key={city.id}
+                        onClick={() => {
+                          setSelectedCity(city.city);
+                          setResult(null);
+                        }}
+                        className="p-6 rounded-xl border-2 transition-all"
+                        style={{
+                          borderColor: selectedCity === city.city ? colors.primary[500] : colors.gray[200],
+                          backgroundColor: selectedCity === city.city
+                            ? (isDark ? colors.primary[900] : colors.primary[50])
+                            : (isDark ? 'transparent' : colors.gray[50]),
+                          boxShadow: selectedCity === city.city ? theme.shadow.lg : 'none'
+                        }}
+                      >
+                        <div className="text-center">
+                          <MapPin
+                            className="h-8 w-8 mx-auto mb-2"
+                            style={{ color: selectedCity === city.city ? colors.primary[600] : colors.gray[400] }}
+                          />
+                          <h3 className="font-bold text-lg" style={{ color: colors.gray[900] }}>{city.city}</h3>
+                          <p className="text-sm mt-1" style={{ color: colors.gray[500] }}>
+                            ${city.serviceFee.toFixed(2)} + ${city.pricePerLb.toFixed(2)}/lb
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </Card>
             </motion.div>
 

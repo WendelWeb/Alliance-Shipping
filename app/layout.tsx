@@ -22,7 +22,7 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: 'Alliance Shipping | USA-Haiti International Shipping Services',
   description:
-    'Fast, reliable, and affordable international shipping between USA and Haiti. $5 service fee + $4/lb. Track your packages in real-time. 3-6 days delivery.',
+    'Fast, reliable, and affordable international shipping between USA and Haiti. Competitive per-city pricing. Track your packages in real-time. 3-6 days delivery.',
   keywords: [
     'shipping USA Haiti',
     'international shipping',

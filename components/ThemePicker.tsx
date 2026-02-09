@@ -20,7 +20,6 @@ function ThemePreviewCard({ theme, isSelected, onSelect }: {
         'hover:scale-[1.02] active:scale-[0.98]',
         isSelected ? 'ring-2 ring-primary-500 ring-offset-2' : 'ring-1 ring-gray-200'
       )}
-      style={{ ringOffsetColor: isSelected ? undefined : undefined }}
     >
       {/* Mini preview */}
       <div

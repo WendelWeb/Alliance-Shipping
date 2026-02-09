@@ -465,10 +465,9 @@ export default function PackagesPage() {
                                     <div key={idx} className="flex gap-3">
                                       <div className="relative flex flex-col items-center">
                                         <div
-                                          className="w-2.5 h-2.5 rounded-full ring-4 z-10"
+                                          className="w-2.5 h-2.5 rounded-full ring-4 ring-white dark:ring-gray-50 z-10"
                                           style={{
-                                            backgroundColor: event.pending ? colors.gray[300] : eventStatusInfo.dot,
-                                            ringColor: isDark ? colors.gray[50] : '#ffffff'
+                                            backgroundColor: event.pending ? colors.gray[300] : eventStatusInfo.dot
                                           }}
                                         />
                                         {idx < pkg.timeline.length - 1 && (

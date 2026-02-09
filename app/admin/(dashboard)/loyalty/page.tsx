@@ -3,19 +3,22 @@
 import { useState, useCallback } from 'react';
 import { useCachedFetch } from '@/hooks/useAdminCache';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import {
   Gift,
   Users,
   DollarSign,
   TrendingUp,
-  Edit,
-  Save,
-  X,
   RefreshCw,
   Loader2,
-  Trophy,
   Truck,
   Weight,
+  Star,
+  Info,
+  ChevronRight,
+  XCircle,
+  Megaphone,
+  ArrowRight,
 } from 'lucide-react';
 
 interface LoyaltyConfigItem {
@@ -26,14 +29,6 @@ interface LoyaltyConfigItem {
   updatedBy: number | null;
   updatedAt: string | null;
   isDefault?: boolean;
-}
-
-interface TopReferrer {
-  userId: number;
-  name: string;
-  email: string;
-  totalReferrals: number;
-  totalCreditsEarned: number;
 }
 
 interface CreditByType {
@@ -50,34 +45,86 @@ interface OverviewData {
     activeUsersWithCredits: number;
     totalReferrals: number;
   };
-  topReferrers: TopReferrer[];
+  topReferrers: unknown[];
   creditsByType: CreditByType[];
 }
 
-const CONFIG_LABELS: Record<string, { label: string; icon: React.ReactNode; unit?: string }> = {
-  credit_per_referral: { label: 'Credit per Referral', icon: <Users className="w-5 h-5 text-blue-600" />, unit: '$' },
-  credit_per_shipment: { label: 'Credit per Shipment', icon: <Truck className="w-5 h-5 text-green-600" />, unit: '$' },
-  credit_per_lb: { label: 'Credit per Pound', icon: <Weight className="w-5 h-5 text-purple-600" />, unit: '$' },
-  points_per_dollar_spent: { label: 'Points per $ Spent', icon: <DollarSign className="w-5 h-5 text-yellow-600" />, unit: 'pts' },
-  points_to_dollar_rate: { label: 'Points to $1 Credit', icon: <TrendingUp className="w-5 h-5 text-orange-600" />, unit: 'pts' },
+const CONFIG_LABELS: Record<string, { label: string; icon: React.ReactNode; unit?: string; color: string }> = {
+  credit_per_shipment: { label: 'Credit per Shipment', icon: <Truck className="w-5 h-5 text-green-600" />, unit: '$', color: 'green' },
+  credit_per_lb: { label: 'Credit per Pound', icon: <Weight className="w-5 h-5 text-purple-600" />, unit: '$', color: 'purple' },
+  points_per_dollar_spent: { label: 'Points per $ Spent', icon: <DollarSign className="w-5 h-5 text-yellow-600" />, unit: 'pts', color: 'yellow' },
+  points_to_dollar_rate: { label: 'Points to $1 Credit', icon: <TrendingUp className="w-5 h-5 text-orange-600" />, unit: 'pts', color: 'orange' },
 };
 
 const TYPE_LABELS: Record<string, string> = {
-  referral: 'Referral Bonuses',
   shipment: 'Shipment Credits',
   weight: 'Weight Bonuses',
   redemption: 'Redemptions',
   admin_adjustment: 'Admin Adjustments',
+  spending: 'Points Earned',
+  conversion: 'Points Conversion',
 };
 
+// Default config values (matches API defaults)
+const DEFAULT_CONFIG_VALUES: Record<string, { value: number; description: string }> = {
+  credit_per_shipment: { value: 1.00, description: 'Credit (in $) earned per completed shipment' },
+  credit_per_lb: { value: 0.10, description: 'Credit (in $) earned per pound shipped on delivered packages' },
+  points_per_dollar_spent: { value: 50, description: 'Points earned for every dollar spent on shipments' },
+  points_to_dollar_rate: { value: 1000, description: 'Points needed to convert to 1 dollar of credit' },
+};
+
+// How It Works steps (no referral)
+const HOW_IT_WORKS_STEPS = [
+  {
+    key: 'credit_per_shipment',
+    icon: <Truck className="w-6 h-6" />,
+    title: 'Ship a Package',
+    desc: 'Credit earned for each delivered shipment',
+    bgColor: 'bg-green-50',
+    iconColor: 'text-green-600',
+    borderColor: 'border-green-200',
+  },
+  {
+    key: 'credit_per_lb',
+    icon: <Weight className="w-6 h-6" />,
+    title: 'Weight Bonus',
+    desc: 'Extra credit per pound on delivered packages',
+    bgColor: 'bg-purple-50',
+    iconColor: 'text-purple-600',
+    borderColor: 'border-purple-200',
+  },
+  {
+    key: 'points_per_dollar_spent',
+    icon: <Star className="w-6 h-6" />,
+    title: 'Earn Points',
+    desc: 'Points earned for every $1 spent on shipments',
+    bgColor: 'bg-yellow-50',
+    iconColor: 'text-yellow-600',
+    borderColor: 'border-yellow-200',
+  },
+  {
+    key: 'points_to_dollar_rate',
+    icon: <TrendingUp className="w-6 h-6" />,
+    title: 'Convert Points',
+    desc: 'Points needed to get $1.00 in credits',
+    bgColor: 'bg-orange-50',
+    iconColor: 'text-orange-600',
+    borderColor: 'border-orange-200',
+  },
+];
+
 export default function LoyaltyPage() {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValues, setEditValues] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState(false);
+  const [configError, setConfigError] = useState<string | null>(null);
 
   const fetchConfig = useCallback(async () => {
+    setConfigError(null);
     const res = await fetch('/api/admin/loyalty/config');
-    if (!res.ok) throw new Error('Failed to fetch config');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      const msg = err.error || `API error: ${res.status}`;
+      setConfigError(msg);
+      throw new Error(msg);
+    }
     const data = await res.json();
     return data.configs as LoyaltyConfigItem[];
   }, []);
@@ -98,42 +145,21 @@ export default function LoyaltyPage() {
     fetchOverview,
   );
 
-  const startEditing = () => {
-    const values: Record<string, string> = {};
-    (configs || []).forEach((c) => {
-      values[c.key] = String(c.value);
-    });
-    setEditValues(values);
-    setIsEditing(true);
-  };
+  const configMap = new Map((configs || []).map((c) => [c.key, c.value]));
+  const getConfigValue = (key: string) => configMap.get(key) ?? DEFAULT_CONFIG_VALUES[key]?.value ?? 0;
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const configsToSave = Object.entries(editValues).map(([key, value]) => ({
+  // Build display configs: use API data if available, otherwise defaults (exclude referral)
+  const displayConfigs: LoyaltyConfigItem[] = (configs && configs.length > 0)
+    ? configs.filter((c) => c.key !== 'credit_per_referral')
+    : Object.entries(DEFAULT_CONFIG_VALUES).map(([key, def]) => ({
+        id: null,
         key,
-        value: parseFloat(value),
+        value: def.value,
+        description: def.description,
+        updatedBy: null,
+        updatedAt: null,
+        isDefault: true,
       }));
-
-      const res = await fetch('/api/admin/loyalty/config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ configs: configsToSave }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to save');
-      }
-
-      setIsEditing(false);
-      refreshConfig();
-    } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to save configuration');
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const loading = configLoading || overviewLoading;
   const stats = overview?.overview;
@@ -147,7 +173,7 @@ export default function LoyaltyPage() {
             <Gift className="w-7 h-7 text-primary-600" />
             Loyalty Program
           </h1>
-          <p className="text-gray-500 text-sm mt-1">Manage referral credits, shipment rewards, and loyalty configuration</p>
+          <p className="text-gray-500 text-sm mt-1">View shipment rewards and loyalty configuration</p>
         </div>
         <button
           onClick={() => { refreshConfig(); refreshOverview(); }}
@@ -158,21 +184,101 @@ export default function LoyaltyPage() {
         </button>
       </div>
 
+      {/* Banner: Go to Announcements Hub to modify */}
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+        <Link
+          href="/admin/announcements"
+          className="flex items-center gap-3 p-4 bg-primary-50 border border-primary-200 rounded-xl hover:bg-primary-100 transition-colors group"
+        >
+          <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center group-hover:bg-primary-200 transition-colors">
+            <Megaphone className="w-5 h-5 text-primary-600" />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-primary-800">Want to modify loyalty rates?</p>
+            <p className="text-sm text-primary-600">Use the Announcements Hub to update rates and notify all users automatically.</p>
+          </div>
+          <ArrowRight className="w-5 h-5 text-primary-400 group-hover:text-primary-600 transition-colors" />
+        </Link>
+      </motion.div>
+
       {loading ? (
         <div className="flex justify-center py-20">
           <Loader2 className="w-10 h-10 text-primary-600 animate-spin" />
         </div>
       ) : (
         <>
+          {/* Error Banner */}
+          {configError && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+              <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-800">Failed to load config from server: {configError}</p>
+                <p className="text-xs text-red-600 mt-0.5">Showing default values.</p>
+              </div>
+              <button onClick={refreshConfig} className="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200">
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* How It Works Section */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="theme-card rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-5">
+                <Info className="w-5 h-5 text-primary-600" />
+                <h2 className="text-lg font-bold text-gray-900">How the Loyalty Program Works</h2>
+              </div>
+
+              {/* Steps flow */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                {HOW_IT_WORKS_STEPS.map((step, i) => {
+                  const value = getConfigValue(step.key);
+                  const isPoints = step.key.includes('points');
+                  const displayValue = isPoints
+                    ? `${Math.round(value)} pts`
+                    : `$${value.toFixed(2)}`;
+
+                  return (
+                    <div key={step.key} className="relative">
+                      <div className={`${step.bgColor} border ${step.borderColor} rounded-xl p-4 text-center h-full`}>
+                        <div className={`w-12 h-12 ${step.bgColor} rounded-full flex items-center justify-center mx-auto mb-3 ${step.iconColor}`}>
+                          {step.icon}
+                        </div>
+                        <p className="font-semibold text-gray-800 text-sm mb-1">{step.title}</p>
+                        <p className="text-2xl font-bold text-gray-900 mb-1">{displayValue}</p>
+                        <p className="text-xs text-gray-500">{step.desc}</p>
+                      </div>
+                      {i < HOW_IT_WORKS_STEPS.length - 1 && (
+                        <div className="hidden md:flex absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
+                          <ChevronRight className="w-5 h-5 text-gray-300" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Summary explanation */}
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">
+                  <strong>Example:</strong> A 10 lb package costing $50 earns the user:
+                  <span className="font-semibold text-green-600"> ${getConfigValue('credit_per_shipment').toFixed(2)}</span> (shipment) +
+                  <span className="font-semibold text-purple-600"> ${(getConfigValue('credit_per_lb') * 10).toFixed(2)}</span> (weight: 10 lbs) +
+                  <span className="font-semibold text-yellow-600"> {Math.floor(getConfigValue('points_per_dollar_spent') * 50)} pts</span> (spending).
+                  <span className="font-semibold text-orange-600"> {Math.round(getConfigValue('points_to_dollar_rate'))} pts</span> = $1.00 credit.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
           {/* Overview Stats */}
           {stats && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 { label: 'Total Issued', value: `$${stats.totalCreditsIssued.toFixed(2)}`, icon: <TrendingUp className="w-5 h-5 text-green-600" />, color: 'bg-green-50' },
                 { label: 'Total Redeemed', value: `$${stats.totalCreditsRedeemed.toFixed(2)}`, icon: <DollarSign className="w-5 h-5 text-red-600" />, color: 'bg-red-50' },
                 { label: 'Outstanding', value: `$${stats.netCreditsOutstanding.toFixed(2)}`, icon: <Gift className="w-5 h-5 text-primary-600" />, color: 'bg-primary-50' },
                 { label: 'Active Users', value: String(stats.activeUsersWithCredits), icon: <Users className="w-5 h-5 text-blue-600" />, color: 'bg-blue-50' },
-                { label: 'Total Referrals', value: String(stats.totalReferrals), icon: <Trophy className="w-5 h-5 text-yellow-600" />, color: 'bg-yellow-50' },
               ].map((stat, i) => (
                 <div key={i} className="theme-card rounded-xl p-4">
                   <div className="flex items-center gap-3 mb-2">
@@ -187,47 +293,24 @@ export default function LoyaltyPage() {
             </motion.div>
           )}
 
-          {/* Credit Rates Config */}
+          {/* Credit Rates (Read-Only) */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
             <div className="theme-card rounded-xl p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-bold text-gray-900">Credit Rates</h2>
-                {!isEditing ? (
-                  <button
-                    onClick={startEditing}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary-100 text-primary-600 rounded-lg hover:bg-primary-200 transition-colors text-sm font-medium"
-                  >
-                    <Edit className="w-4 h-4" />
-                    Edit Rates
-                  </button>
-                ) : (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setIsEditing(false)}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-                    >
-                      <X className="w-4 h-4" />
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleSave}
-                      disabled={saving}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium disabled:opacity-50"
-                    >
-                      {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      Save
-                    </button>
-                  </div>
-                )}
+                <h2 className="text-lg font-bold text-gray-900">Current Credit Rates</h2>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium">
+                  <Info className="w-3 h-3" />
+                  Read-only
+                </span>
               </div>
 
               <div className="space-y-4">
-                {(configs || []).map((config) => {
-                  const meta = CONFIG_LABELS[config.key] || { label: config.key, icon: <Gift className="w-5 h-5 text-gray-400" />, unit: '' };
+                {displayConfigs.map((config) => {
+                  const meta = CONFIG_LABELS[config.key] || { label: config.key, icon: <Gift className="w-5 h-5 text-gray-400" />, unit: '', color: 'gray' };
                   const isPoints = config.key.includes('points');
-                  const unit = meta.unit || '$';
+
                   return (
-                    <div key={config.key} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                    <div key={config.key} className="flex items-center gap-4 p-4 rounded-xl bg-gray-50">
                       <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
                         {meta.icon}
                       </div>
@@ -235,25 +318,10 @@ export default function LoyaltyPage() {
                         <p className="font-semibold text-gray-800">{meta.label}</p>
                         <p className="text-sm text-gray-500">{config.description}</p>
                       </div>
-                      {isEditing ? (
-                        <div className="flex items-center gap-1">
-                          {!isPoints && <span className="text-gray-400 font-medium">{unit}</span>}
-                          <input
-                            type="number"
-                            step={isPoints ? "1" : "0.01"}
-                            min="0"
-                            value={editValues[config.key] || '0'}
-                            onChange={(e) => setEditValues({ ...editValues, [config.key]: e.target.value })}
-                            className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-right font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                          />
-                          {isPoints && <span className="text-gray-400 font-medium text-sm">{unit}</span>}
-                        </div>
-                      ) : (
-                        <p className="text-xl font-bold text-gray-900">
-                          {isPoints ? Math.round(config.value) : `$${config.value.toFixed(2)}`}
-                          {isPoints && <span className="text-sm text-gray-500 ml-1">{unit}</span>}
-                        </p>
-                      )}
+                      <p className="text-xl font-bold text-gray-900">
+                        {isPoints ? Math.round(config.value) : `$${config.value.toFixed(2)}`}
+                        {isPoints && <span className="text-sm text-gray-500 ml-1">{meta.unit}</span>}
+                      </p>
                     </div>
                   );
                 })}
@@ -267,7 +335,9 @@ export default function LoyaltyPage() {
               <div className="theme-card rounded-xl p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4">Credit Breakdown</h2>
                 <div className="space-y-3">
-                  {overview.creditsByType.map((entry) => (
+                  {overview.creditsByType
+                    .filter((entry) => entry.type !== 'referral')
+                    .map((entry) => (
                     <div key={entry.type} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
                       <div>
                         <p className="font-medium text-gray-800">{TYPE_LABELS[entry.type] || entry.type}</p>
@@ -278,49 +348,6 @@ export default function LoyaltyPage() {
                       </p>
                     </div>
                   ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Top Referrers */}
-          {overview?.topReferrers && overview.topReferrers.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-              <div className="theme-card rounded-xl p-6">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">Top Referrers</h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-2 font-medium text-gray-500">#</th>
-                        <th className="text-left py-3 px-2 font-medium text-gray-500">User</th>
-                        <th className="text-right py-3 px-2 font-medium text-gray-500">Referrals</th>
-                        <th className="text-right py-3 px-2 font-medium text-gray-500">Credits Earned</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {overview.topReferrers.map((referrer, i) => (
-                        <tr key={referrer.userId} className="border-b border-gray-50 last:border-0">
-                          <td className="py-3 px-2">
-                            <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-                              i === 0 ? 'bg-yellow-100 text-yellow-700' :
-                              i === 1 ? 'bg-gray-100 text-gray-600' :
-                              i === 2 ? 'bg-orange-100 text-orange-700' :
-                              'bg-gray-50 text-gray-400'
-                            }`}>
-                              {i + 1}
-                            </span>
-                          </td>
-                          <td className="py-3 px-2">
-                            <p className="font-medium text-gray-800">{referrer.name || 'Unknown'}</p>
-                            <p className="text-xs text-gray-400">{referrer.email}</p>
-                          </td>
-                          <td className="py-3 px-2 text-right font-semibold text-gray-900">{referrer.totalReferrals}</td>
-                          <td className="py-3 px-2 text-right font-bold text-green-600">${referrer.totalCreditsEarned.toFixed(2)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
               </div>
             </motion.div>

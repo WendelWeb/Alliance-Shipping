@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clerkClient } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { users, packages, loyaltyCredits, referrals, referralCodes } from '@/lib/db/schema';
+import { users, packages, loyaltyCredits } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
-import { eq, sql, count, sum, gt, lt, and } from 'drizzle-orm';
+import { eq, sql, count, sum } from 'drizzle-orm';
 
 // GET - List users from Clerk with DB stats
 export async function GET(request: NextRequest) {
@@ -57,23 +57,6 @@ export async function GET(request: NextRequest) {
       .from(loyaltyCredits)
       .groupBy(loyaltyCredits.userId);
 
-    // Get referral counts per user (as referrer)
-    const referralCounts = await db
-      .select({
-        referrerId: referrals.referrerId,
-        totalReferrals: count(referrals.id),
-      })
-      .from(referrals)
-      .groupBy(referrals.referrerId);
-
-    // Get referral codes
-    const codes = await db
-      .select({
-        userId: referralCodes.userId,
-        code: referralCodes.code,
-      })
-      .from(referralCodes);
-
     // Get recent transactions per user (last 10 each)
     const recentTransactions = await db
       .select({
@@ -91,12 +74,6 @@ export async function GET(request: NextRequest) {
     // Build lookup maps
     const loyaltyMap = new Map(
       loyaltySummary.map((l) => [l.userId, l])
-    );
-    const referralCountMap = new Map(
-      referralCounts.map((r) => [r.referrerId, Number(r.totalReferrals) || 0])
-    );
-    const codeMap = new Map(
-      codes.map((c) => [c.userId, c.code])
     );
     // Group transactions by userId (max 10 per user)
     const transactionsMap = new Map<number, typeof recentTransactions>();
@@ -119,7 +96,6 @@ export async function GET(request: NextRequest) {
             phone: u.phone,
             packageCount: Number(u.packageCount) || 0,
             totalSpent: u.totalSpent ? parseFloat(u.totalSpent) : 0,
-            // Loyalty data
             creditBalance: loyalty ? parseFloat(String(loyalty.creditBalance)) : 0,
             totalCreditsEarned: loyalty ? parseFloat(String(loyalty.totalCreditsEarned)) : 0,
             totalCreditsRedeemed: loyalty ? parseFloat(String(loyalty.totalCreditsRedeemed)) : 0,
@@ -127,8 +103,6 @@ export async function GET(request: NextRequest) {
             totalPointsEarned: loyalty ? Number(loyalty.totalPointsEarned) : 0,
             totalPointsUsed: loyalty ? Number(loyalty.totalPointsUsed) : 0,
             transactionCount: loyalty ? Number(loyalty.transactionCount) : 0,
-            totalReferrals: referralCountMap.get(u.id) || 0,
-            referralCode: codeMap.get(u.id) || '',
             recentTransactions: (transactionsMap.get(u.id) || []).map((tx) => ({
               id: tx.id,
               amount: parseFloat(String(tx.amount)),
@@ -164,7 +138,6 @@ export async function GET(request: NextRequest) {
           month: 'short',
           year: 'numeric',
         }),
-        // Loyalty data
         creditBalance: stats?.creditBalance || 0,
         totalCreditsEarned: stats?.totalCreditsEarned || 0,
         totalCreditsRedeemed: stats?.totalCreditsRedeemed || 0,
@@ -172,8 +145,6 @@ export async function GET(request: NextRequest) {
         totalPointsEarned: stats?.totalPointsEarned || 0,
         totalPointsUsed: stats?.totalPointsUsed || 0,
         transactionCount: stats?.transactionCount || 0,
-        totalReferrals: stats?.totalReferrals || 0,
-        referralCode: stats?.referralCode || '',
         recentTransactions: stats?.recentTransactions || [],
       };
     });

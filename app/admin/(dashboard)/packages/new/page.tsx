@@ -21,6 +21,7 @@ export default function NewPackagePage() {
   const [loading, setLoading] = useState(false);
   const [currentServiceFee, setCurrentServiceFee] = useState(5.00); // Fallback
   const [currentPricePerLb, setCurrentPricePerLb] = useState(4.00); // Fallback
+  const [allCityPricing, setAllCityPricing] = useState<{ city: string; serviceFee: number; pricePerLb: number }[]>([]);
   const [formData, setFormData] = useState({
     // Sender Information
     senderName: '',
@@ -45,19 +46,35 @@ export default function NewPackagePage() {
     notes: '',
   });
 
-  // Fetch current fees from API
+  // Fetch all city pricing on mount
   useEffect(() => {
-    fetch('/api/fees/current')
+    fetch('/api/pricing/all')
       .then(res => res.json())
       .then(data => {
-        setCurrentServiceFee(data.serviceFee);
-        setCurrentPricePerLb(data.pricePerLb);
+        const cities = data.cities || [];
+        setAllCityPricing(cities);
+        // Set initial pricing for default city
+        const defaultCity = cities.find((c: any) => c.city === 'Port-au-Prince');
+        if (defaultCity) {
+          setCurrentServiceFee(defaultCity.serviceFee);
+          setCurrentPricePerLb(defaultCity.pricePerLb);
+        }
       })
       .catch(error => {
-        console.error('Error fetching fees:', error);
-        // Keep fallback values
+        console.error('Error fetching pricing:', error);
       });
   }, []);
+
+  // Update pricing when city changes
+  useEffect(() => {
+    if (formData.recipientCity && allCityPricing.length > 0) {
+      const found = allCityPricing.find(c => c.city === formData.recipientCity);
+      if (found) {
+        setCurrentServiceFee(found.serviceFee);
+        setCurrentPricePerLb(found.pricePerLb);
+      }
+    }
+  }, [formData.recipientCity, allCityPricing]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;

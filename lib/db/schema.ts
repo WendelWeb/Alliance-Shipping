@@ -197,7 +197,7 @@ export const packageRequests = pgTable('package_requests', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// Service Fees Configuration
+// DEPRECATED: Service Fees Configuration - Use cityPricing instead (per-city fees)
 export const serviceFees = pgTable('service_fees', {
   id: serial('id').primaryKey(),
   feeType: varchar('fee_type', { length: 50 }).notNull(), // service_fee, per_pound, etc.
@@ -237,6 +237,15 @@ export const announcements = pgTable('announcements', {
   type: varchar('type', { length: 50 }).notNull(), // news, alert, promo, maintenance
   targetAudience: varchar('target_audience', { length: 50 }).default('all').notNull(), // all, users, specific
   specificUserIds: json('specific_user_ids').$type<number[]>(),
+
+  // Action template system
+  templateId: varchar('template_id', { length: 100 }), // e.g. city_fee_change, loyalty_rate_change, new_special_item
+  actionPayload: json('action_payload').$type<Record<string, any>>(), // Template-specific data (old/new values, cities, items, etc.)
+  actionExecutedAt: timestamp('action_executed_at'), // When the DB action was executed
+
+  // Scheduling
+  scheduledFor: timestamp('scheduled_for'), // If set, action executes at this time instead of immediately
+  scheduledStatus: varchar('scheduled_status', { length: 20 }), // pending, executed, failed, cancelled
 
   // Publishing
   isPublished: boolean('is_published').default(false).notNull(),
@@ -296,6 +305,10 @@ export const cityPricing = pgTable('city_pricing', {
   city: varchar('city', { length: 100 }).notNull().unique(), // Port-au-Prince, Cap-Haïtien, Port-de-Paix
   serviceFee: decimal('service_fee', { precision: 10, scale: 2 }).notNull().default('5.00'),
   pricePerLb: decimal('price_per_lb', { precision: 10, scale: 2 }).notNull().default('4.00'),
+  deliveryDaysMin: integer('delivery_days_min').default(3).notNull(),
+  deliveryDaysMax: integer('delivery_days_max').default(6).notNull(),
+  perfumeDaysMin: integer('perfume_days_min').default(8).notNull(),
+  perfumeDaysMax: integer('perfume_days_max').default(11).notNull(),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -419,7 +432,7 @@ export const loyaltyConfig = pgTable('loyalty_config', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-// Referral Codes (one per user)
+// DEPRECATED: Referral Codes - Referral system being removed
 export const referralCodes = pgTable('referral_codes', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').references(() => users.id).notNull().unique(),
@@ -427,7 +440,7 @@ export const referralCodes = pgTable('referral_codes', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-// Referrals (who referred whom)
+// DEPRECATED: Referrals - Referral system being removed
 export const referrals = pgTable('referrals', {
   id: serial('id').primaryKey(),
   referrerId: integer('referrer_id').references(() => users.id).notNull(),

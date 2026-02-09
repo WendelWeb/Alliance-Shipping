@@ -29,6 +29,7 @@ export default function RequestPackagePage() {
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [cityPricing, setCityPricing] = useState<{ serviceFee: number; pricePerLb: number } | null>(null);
+  const [allCityPricing, setAllCityPricing] = useState<{ city: string; serviceFee: number; pricePerLb: number }[]>([]);
   const [formData, setFormData] = useState({
     externalTrackingNumber: '',
     recipientCity: '',
@@ -38,22 +39,30 @@ export default function RequestPackagePage() {
     otherCategoryDescription: '', // Pour la catégorie "Autre"
   });
 
-  // Fetch city-specific pricing when city is selected
+  // Fetch all city pricing on mount
   useEffect(() => {
-    if (formData.recipientCity) {
-      fetch(`/api/city-pricing/${formData.recipientCity}`)
-        .then(res => res.json())
-        .then(data => {
-          setCityPricing({
-            serviceFee: data.serviceFee,
-            pricePerLb: data.pricePerLb,
-          });
-        })
-        .catch(err => {
-          console.error('Error fetching city pricing:', err);
+    fetch('/api/pricing/all')
+      .then(res => res.json())
+      .then(data => {
+        setAllCityPricing(data.cities || []);
+      })
+      .catch(err => {
+        console.error('Error fetching pricing:', err);
+      });
+  }, []);
+
+  // Update city pricing when city is selected
+  useEffect(() => {
+    if (formData.recipientCity && allCityPricing.length > 0) {
+      const found = allCityPricing.find(c => c.city === formData.recipientCity);
+      if (found) {
+        setCityPricing({
+          serviceFee: found.serviceFee,
+          pricePerLb: found.pricePerLb,
         });
+      }
     }
-  }, [formData.recipientCity]);
+  }, [formData.recipientCity, allCityPricing]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

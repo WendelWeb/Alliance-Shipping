@@ -6,11 +6,13 @@ interface CardProps {
   className?: string;
   hover?: boolean;
   padding?: 'none' | 'sm' | 'md' | 'lg';
+  style?: React.CSSProperties;
 }
 
-export function Card({ children, className, hover = false, padding = 'md' }: CardProps) {
+export function Card({ children, className, hover = false, padding = 'md', style }: CardProps) {
   return (
     <div
+      style={style}
       className={cn(
         'theme-card rounded-xl',
         {

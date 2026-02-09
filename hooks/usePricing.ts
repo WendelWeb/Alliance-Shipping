@@ -3,6 +3,17 @@
 import { useState, useEffect } from 'react';
 import { PRICING } from '@/constants';
 
+interface CityPricing {
+  id: number;
+  city: string;
+  serviceFee: number;
+  pricePerLb: number;
+  deliveryDaysMin: number;
+  deliveryDaysMax: number;
+  perfumeDaysMin: number;
+  perfumeDaysMax: number;
+}
+
 interface PricingData {
   serviceFee: number;
   pricePerLb: number;
@@ -15,49 +26,57 @@ interface PricingData {
 
 /**
  * Custom hook to fetch dynamic pricing from API
- * Falls back to PRICING constants if API fails or is loading
+ * Fetches all city pricing from /api/pricing/all
+ * Falls back to PRICING constants if API fails
  *
  * Usage:
- * const { pricing, loading } = usePricing();
- * const total = pricing.serviceFee + weight * pricing.pricePerLb;
+ * const { pricing, cities, loading } = usePricing();
+ * const cityData = cities.find(c => c.city === selectedCity);
  */
 export function usePricing() {
+  const [cities, setCities] = useState<CityPricing[]>([]);
   const [pricing, setPricing] = useState<PricingData>({
     serviceFee: PRICING.serviceFee,
     pricePerLb: PRICING.pricePerLb,
     standardDelivery: PRICING.standardDelivery,
     perfumeDelay: PRICING.perfumeDelay,
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-
-    fetch('/api/fees/current')
+    fetch('/api/pricing/all')
       .then((res) => {
-        if (!res.ok) {
-          throw new Error('Failed to fetch fees');
-        }
+        if (!res.ok) throw new Error('Failed to fetch pricing');
         return res.json();
       })
       .then((data) => {
-        setPricing((prev) => ({
-          ...prev,
-          serviceFee: data.serviceFee,
-          pricePerLb: data.pricePerLb,
-        }));
+        const fetchedCities: CityPricing[] = data.cities || [];
+        setCities(fetchedCities);
+
+        // Use first city as default pricing (or lowest serviceFee)
+        if (fetchedCities.length > 0) {
+          const first = fetchedCities[0];
+          setPricing({
+            serviceFee: first.serviceFee,
+            pricePerLb: first.pricePerLb,
+            standardDelivery: {
+              min: first.deliveryDaysMin,
+              max: first.deliveryDaysMax,
+            },
+            perfumeDelay: first.perfumeDaysMax - first.deliveryDaysMax,
+          });
+        }
         setError(null);
       })
       .catch((err) => {
         console.error('Error fetching pricing:', err);
         setError(err.message);
-        // Keep fallback constants - no need to update state
       })
       .finally(() => {
         setLoading(false);
       });
   }, []);
 
-  return { pricing, loading, error };
+  return { pricing, cities, loading, error };
 }

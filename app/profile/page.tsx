@@ -46,6 +46,11 @@ export default function ProfilePage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [dbPhone, setDbPhone] = useState<string | null>(null);
+  const [stats, setStats] = useState([
+    { label: t.profile.stats.totalPackages, value: '0', icon: Package },
+    { label: t.profile.stats.inTransit, value: '0', icon: MapPin },
+    { label: t.profile.stats.delivered, value: '0', icon: Package },
+  ]);
 
   const handleSignOut = async () => {
     try {
@@ -142,12 +147,6 @@ export default function ProfilePage() {
       </div>
     );
   }
-
-  const [stats, setStats] = useState([
-    { label: t.profile.stats.totalPackages, value: '0', icon: Package },
-    { label: t.profile.stats.inTransit, value: '0', icon: MapPin },
-    { label: t.profile.stats.delivered, value: '0', icon: Package },
-  ]);
 
   const menuItems = [
     { label: t.profile.menuItems.myPackages, icon: Package, href: '/packages' },

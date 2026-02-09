@@ -14,6 +14,8 @@ import {
   CheckCircle,
   Plus,
   RefreshCw,
+  Megaphone,
+  Zap,
 } from 'lucide-react';
 import { LoadingSpinner, CardSkeleton, SkeletonLoader } from '@/components/admin/LoadingSpinner';
 import { useCachedFetch } from '@/hooks/useAdminCache';
@@ -27,6 +29,27 @@ interface DashboardStats {
   availableCount: number;
   recentPackages: { id: string; customer: string; destination: string; status: string; amount: string }[];
 }
+
+interface RecentAnnouncement {
+  id: number;
+  title: string;
+  templateId: string | null;
+  type: string;
+  publishDate: string | null;
+  createdAt: string;
+}
+
+const TEMPLATE_ICONS: Record<string, string> = {
+  city_fee_change: 'bg-blue-50 text-blue-600',
+  delivery_time_change: 'bg-indigo-50 text-indigo-600',
+  loyalty_rate_change: 'bg-yellow-50 text-yellow-600',
+  new_special_item: 'bg-green-50 text-green-600',
+  modify_special_item: 'bg-orange-50 text-orange-600',
+  remove_special_item: 'bg-red-50 text-red-600',
+  new_warehouse: 'bg-emerald-50 text-emerald-600',
+  modify_warehouse: 'bg-teal-50 text-teal-600',
+  close_warehouse: 'bg-rose-50 text-rose-600',
+};
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -47,6 +70,20 @@ export default function AdminDashboard() {
   const { data, loading, refreshing, refresh } = useCachedFetch<DashboardStats>(
     'admin-dashboard',
     fetchDashboard,
+  );
+
+  const fetchRecentChanges = useCallback(async () => {
+    const response = await fetch('/api/admin/announcements?limit=5');
+    if (!response.ok) return [];
+    const data = await response.json();
+    return (data.announcements || [])
+      .filter((a: RecentAnnouncement) => a.templateId)
+      .slice(0, 5) as RecentAnnouncement[];
+  }, []);
+
+  const { data: recentChanges } = useCachedFetch<RecentAnnouncement[]>(
+    'admin-recent-changes',
+    fetchRecentChanges,
   );
 
   const dashboardData = data || {
@@ -246,6 +283,53 @@ export default function AdminDashboard() {
           </table>
         </div>
       </motion.div>
+      )}
+
+      {/* Recent Changes (Action Announcements) */}
+      {!loading && recentChanges && recentChanges.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="rounded-2xl theme-card p-6 shadow-sm border border-gray-100"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary-600" />
+              Recent Changes
+            </h2>
+            <Link
+              href="/admin/announcements"
+              className="text-sm font-semibold text-primary-600 hover:text-primary-700"
+            >
+              View all →
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {recentChanges.map((ann) => {
+              const colors = TEMPLATE_ICONS[ann.templateId || ''] || 'bg-gray-50 text-gray-600';
+              const date = ann.publishDate || ann.createdAt;
+              return (
+                <div key={ann.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${colors}`}>
+                    <Megaphone className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{ann.title}</p>
+                    <p className="text-xs text-gray-500">
+                      {ann.templateId?.replace(/_/g, ' ')} · {new Date(date).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
+                    ann.type === 'action' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {ann.type}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
       )}
 
       {/* Quick Actions */}

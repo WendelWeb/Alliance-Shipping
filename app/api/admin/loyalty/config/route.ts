@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { loyaltyConfig, admins } from '@/lib/db/schema';
+import { loyaltyConfig } from '@/lib/db/schema';
+import { getAdminSession } from '@/lib/auth/admin';
 import { eq } from 'drizzle-orm';
-import { cookies } from 'next/headers';
 
 // Default config keys and their values
 const DEFAULT_CONFIGS: Record<string, { value: string; description: string }> = {
-  credit_per_referral: {
-    value: '5.00',
-    description: 'Credit (in $) given to referrer when someone signs up',
-  },
   credit_per_shipment: {
     value: '1.00',
     description: 'Credit (in $) earned per completed shipment',
@@ -31,9 +27,8 @@ const DEFAULT_CONFIGS: Record<string, { value: string; description: string }> = 
 // GET - Get all loyalty config values
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const adminId = cookieStore.get('admin_id')?.value;
-    if (!adminId) {
+    const session = await getAdminSession();
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -86,11 +81,12 @@ export async function GET(request: NextRequest) {
 // PUT - Update loyalty config values
 export async function PUT(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const adminId = cookieStore.get('admin_id')?.value;
-    if (!adminId) {
+    const session = await getAdminSession();
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const adminId = session.adminId;
 
     const body = await request.json();
     const { configs } = body;
@@ -100,16 +96,6 @@ export async function PUT(request: NextRequest) {
         { error: 'configs array is required' },
         { status: 400 }
       );
-    }
-
-    // Validate the admin exists
-    const [admin] = await db
-      .select()
-      .from(admins)
-      .where(eq(admins.id, parseInt(adminId)));
-
-    if (!admin) {
-      return NextResponse.json({ error: 'Admin not found' }, { status: 404 });
     }
 
     const updatedConfigs = [];
@@ -142,7 +128,7 @@ export async function PUT(request: NextRequest) {
           .set({
             value: numericValue.toFixed(2),
             description: description || existing.description,
-            updatedBy: admin.id,
+            updatedBy: adminId,
             updatedAt: new Date(),
           })
           .where(eq(loyaltyConfig.key, key))
@@ -157,7 +143,7 @@ export async function PUT(request: NextRequest) {
             key,
             value: numericValue.toFixed(2),
             description: description || DEFAULT_CONFIGS[key]?.description || null,
-            updatedBy: admin.id,
+            updatedBy: adminId,
           })
           .returning();
 

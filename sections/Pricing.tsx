@@ -13,7 +13,7 @@ import { useState } from 'react';
 
 export function Pricing() {
   const { t } = useTranslation();
-  const { pricing } = usePricing();
+  const { pricing, cities } = usePricing();
   const [weight, setWeight] = useState(10);
 
   const calculatedPrice = pricing.serviceFee + weight * pricing.pricePerLb;
@@ -40,25 +40,43 @@ export function Pricing() {
                 <p className="text-primary-100">USA ↔ Haiti</p>
               </div>
 
-              {/* Pricing Display */}
-              <div className="space-y-6 mb-8">
-                <div className="flex items-center justify-between p-4 bg-white/10 rounded-lg backdrop-blur-sm">
-                  <span className="text-lg">{t.pricing.serviceFee}</span>
-                  <span className="text-3xl font-bold">${pricing.serviceFee}</span>
+              {/* Per-city pricing */}
+              {cities.length > 0 ? (
+                <div className="space-y-3 mb-8">
+                  {cities.map((city) => (
+                    <div key={city.id} className="flex items-center justify-between p-4 bg-white/10 rounded-lg backdrop-blur-sm">
+                      <span className="text-lg font-medium">{city.city}</span>
+                      <div className="text-right">
+                        <span className="text-2xl font-bold">${city.serviceFee.toFixed(2)}</span>
+                        <span className="text-sm text-white/70 ml-1">+ ${city.pricePerLb.toFixed(2)}/lb</span>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between p-4 bg-white/10 rounded-lg backdrop-blur-sm">
+                    <span className="text-lg">{t.pricing.deliveryTime}</span>
+                    <span className="text-2xl font-bold">
+                      {pricing.standardDelivery.min}-{pricing.standardDelivery.max} {t.pricing.days}
+                    </span>
+                  </div>
                 </div>
-
-                <div className="flex items-center justify-between p-4 bg-white/10 rounded-lg backdrop-blur-sm">
-                  <span className="text-lg">{t.pricing.perPound}</span>
-                  <span className="text-3xl font-bold">${pricing.pricePerLb}</span>
+              ) : (
+                <div className="space-y-6 mb-8">
+                  <div className="flex items-center justify-between p-4 bg-white/10 rounded-lg backdrop-blur-sm">
+                    <span className="text-lg">{t.pricing.serviceFee}</span>
+                    <span className="text-3xl font-bold">${pricing.serviceFee}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-white/10 rounded-lg backdrop-blur-sm">
+                    <span className="text-lg">{t.pricing.perPound}</span>
+                    <span className="text-3xl font-bold">${pricing.pricePerLb}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-white/10 rounded-lg backdrop-blur-sm">
+                    <span className="text-lg">{t.pricing.deliveryTime}</span>
+                    <span className="text-3xl font-bold">
+                      {pricing.standardDelivery.min}-{pricing.standardDelivery.max} {t.pricing.days}
+                    </span>
+                  </div>
                 </div>
-
-                <div className="flex items-center justify-between p-4 bg-white/10 rounded-lg backdrop-blur-sm">
-                  <span className="text-lg">{t.pricing.deliveryTime}</span>
-                  <span className="text-3xl font-bold">
-                    {pricing.standardDelivery.min}-{pricing.standardDelivery.max} {t.pricing.days}
-                  </span>
-                </div>
-              </div>
+              )}
 
               {/* Price Calculator */}
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 mb-6">
@@ -75,7 +93,7 @@ export function Pricing() {
                 />
                 <div className="flex justify-between items-center mt-4">
                   <span className="text-sm">{weight} lbs</span>
-                  <span className="text-2xl font-bold">${calculatedPrice}</span>
+                  <span className="text-2xl font-bold">${calculatedPrice.toFixed(2)}</span>
                 </div>
               </div>
             </Card>
