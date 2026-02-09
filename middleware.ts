@@ -11,6 +11,11 @@ const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/api/webhooks(.*)',
+  '/api/announcements/public',
+  '/api/locations',
+  '/api/pricing/all',
+  '/api/special-items/public',
+  '/api/fees/current',
   // Admin login page and auth endpoints are public
   '/admin/login',
   '/api/admin/login',
