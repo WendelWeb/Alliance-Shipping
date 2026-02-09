@@ -68,6 +68,8 @@ export async function GET(request: NextRequest) {
         lastName: user.lastName,
         phone: user.phone,
         countryCode: user.countryCode,
+        whatsappPhone: user.whatsappPhone,
+        whatsappCountryCode: user.whatsappCountryCode,
         city: user.city,
         warehouseId: user.warehouseId,
         preferredLanguage: user.preferredLanguage,
@@ -91,7 +93,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { phone, countryCode, city, warehouseId } = body;
+    const { phone, countryCode, whatsappPhone, whatsappCountryCode, city, warehouseId } = body;
 
     // Find user in DB
     const [user] = await db
@@ -131,6 +133,21 @@ export async function PATCH(request: NextRequest) {
 
     if (countryCode !== undefined) {
       updateData.countryCode = countryCode;
+    }
+
+    if (whatsappPhone !== undefined) {
+      // Validate WhatsApp phone number if provided
+      if (whatsappPhone && !/^\+\d{6,15}$/.test(whatsappPhone)) {
+        return NextResponse.json(
+          { error: 'Invalid WhatsApp phone number format. Must start with + and country code (e.g., +50912345678)' },
+          { status: 400 }
+        );
+      }
+      updateData.whatsappPhone = whatsappPhone;
+    }
+
+    if (whatsappCountryCode !== undefined) {
+      updateData.whatsappCountryCode = whatsappCountryCode;
     }
 
     if (city !== undefined) {
