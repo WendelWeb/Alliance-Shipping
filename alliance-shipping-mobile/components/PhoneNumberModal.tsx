@@ -173,12 +173,12 @@ export function PhoneNumberModal({
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen">
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        {/* Ultra Compact Header with Gradient */}
+        {/* Minimal Centered Header */}
         <LinearGradient
           colors={[colors.primary[600], colors.primary[700], colors.primary[800]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={[styles.header, { paddingTop: insets.top + spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.md }]}
+          style={[styles.header, { paddingTop: insets.top + spacing.xs, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }]}
         >
           <View style={[styles.headerContent, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
             <Text style={styles.iconEmoji}>✨</Text>
@@ -188,10 +188,31 @@ export function PhoneNumberModal({
           </View>
         </LinearGradient>
 
+        {/* Why We Ask - Info Card */}
+        <View style={[styles.infoCard, {
+          backgroundColor: colors.primary[50],
+          marginHorizontal: spacing.lg,
+          marginTop: spacing.lg,
+          marginBottom: spacing.md,
+          padding: spacing.md,
+          borderRadius: borderRadius.lg,
+          borderLeftWidth: 3,
+          borderLeftColor: colors.primary[600],
+        }]}>
+          <Text style={[styles.infoTitle, { fontFamily: fonts.semiBold, color: colors.primary[900], fontSize: 14, marginBottom: spacing.xs }]}>
+            💡 {t.phoneModal.whyWeAsk}
+          </Text>
+          <Text style={[styles.infoText, { fontFamily: fonts.regular, color: colors.primary[800], fontSize: 12, lineHeight: 18 }]}>
+            • {t.phoneModal.whyPhone}
+            {'\n'}• {t.phoneModal.whyCity}
+            {'\n'}• {t.phoneModal.whyWarehouse}
+          </Text>
+        </View>
+
         {/* Content */}
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[styles.content, { paddingHorizontal: spacing.lg, paddingVertical: spacing.xl }]}
+          contentContainerStyle={[styles.content, { paddingHorizontal: spacing.lg, paddingTop: 0, paddingBottom: spacing.xl }]}
           showsVerticalScrollIndicator={false}
         >
           {/* Phone Number Section */}
@@ -759,6 +780,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
+  infoCard: {},
+  infoTitle: {},
+  infoText: {},
   scrollView: {
     flex: 1,
   },
