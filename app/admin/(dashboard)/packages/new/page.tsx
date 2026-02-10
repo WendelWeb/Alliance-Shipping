@@ -17,6 +17,7 @@ import {
   Search,
   User,
   XCircle,
+  CheckCircle,
 } from 'lucide-react';
 
 export default function NewPackagePage() {
