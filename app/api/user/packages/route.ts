@@ -73,6 +73,9 @@ export async function GET(request: NextRequest) {
         serviceFee: packages.serviceFee,
         weightCost: packages.weightCost,
         totalCost: packages.totalCost,
+        customsFees: packages.customsFees, // ⭐ Customs fees
+        specialItemId: packages.specialItemId, // ⭐ Special item ID
+        chargeByWeight: packages.chargeByWeight, // ⭐ Charge by weight flag
         currency: packages.currency,
         status: packages.status,
         currentLocation: packages.currentLocation,
