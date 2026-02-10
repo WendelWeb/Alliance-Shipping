@@ -236,7 +236,7 @@ export default function NewPackagePage() {
           category: formData.category,
           status: formData.status,
           specialInstructions: formData.notes || undefined,
-          userId: selectedUser?.id || undefined, // Assign to specific user if selected
+          userId: selectedUser?.dbId || undefined, // ⭐ FIX: Use dbId (database ID) not Clerk ID
           specialItemId: packageType === 'special' ? selectedSpecialItem : undefined,
           chargeByWeight: packageType === 'special' ? chargeByWeight : undefined,
           customsFees: formData.customsFees || undefined, // ⭐ Include customs fees if provided
