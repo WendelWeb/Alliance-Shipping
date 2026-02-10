@@ -55,7 +55,6 @@ interface PackageItem {
   category: string;
   createdAt: string;
   currentLocation?: string;
-  recipientCity?: string;
   timeline: TimelineEvent[];
 }
 
@@ -126,11 +125,14 @@ export default function PackagesScreen() {
   const [requestLoading, setRequestLoading] = useState(false);
   const [requestSuccess, setRequestSuccess] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
+  // ✅ REMOVED: selectedCity state - now uses user's profile city
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
   const [customerNotes, setCustomerNotes] = useState('');
   const [requestError, setRequestError] = useState('');
+  const [packageType, setPackageType] = useState<'normal' | 'special' | null>(null);
+  const [selectedSpecialItem, setSelectedSpecialItem] = useState<number | null>(null);
+  const [specialItems, setSpecialItems] = useState<any[]>([]);
 
   // -------------------------------------------------------------------------
   // Data fetching
@@ -167,6 +169,19 @@ export default function PackagesScreen() {
       setLoading(false);
     }
   }, [isSignedIn, fetchPackages]);
+
+  // Fetch special items when modal opens
+  useEffect(() => {
+    if (showRequestModal && specialItems.length === 0) {
+      api.get('/api/special-items/public')
+        .then((res: any) => {
+          setSpecialItems(res?.items || res || []);
+        })
+        .catch((err: any) => {
+          console.error('[SPECIAL-ITEMS] Fetch error:', err);
+        });
+    }
+  }, [showRequestModal]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -230,6 +245,8 @@ export default function PackagesScreen() {
     setCustomerNotes('');
     setRequestError('');
     setRequestSuccess(false);
+    setPackageType(null);
+    setSelectedSpecialItem(null);
   }, []);
 
   const openRequestModal = useCallback(() => {
@@ -248,6 +265,14 @@ export default function PackagesScreen() {
   const handleSubmitRequest = useCallback(async () => {
     setRequestError('');
 
+    if (!packageType) {
+      setRequestError('\u26A0\uFE0F ' + t.requestPackage.fields.packageType.required);
+      return;
+    }
+    if (packageType === 'special' && !selectedSpecialItem) {
+      setRequestError('\u26A0\uFE0F ' + t.requestPackage.fields.specialItem.required);
+      return;
+    }
     if (!trackingNumber.trim()) {
       setRequestError('\u26A0\uFE0F ' + t.requestPackage.fields.trackingNumber.required);
       return;
@@ -256,10 +281,7 @@ export default function PackagesScreen() {
       setRequestError('\u26A0\uFE0F ' + t.requestPackage.fields.trackingNumber.minLength);
       return;
     }
-    if (!selectedCity) {
-      setRequestError('\uD83D\uDCCD ' + t.requestPackage.fields.destinationCity.required);
-      return;
-    }
+    // ✅ REMOVED: City validation - now uses user's profile city
     if (!description.trim()) {
       setRequestError('\u270D\uFE0F ' + t.requestPackage.fields.description.required);
       return;
@@ -278,10 +300,10 @@ export default function PackagesScreen() {
       console.log('[PACKAGE-REQUEST] Submitting with locale:', locale);
       await api.post('/api/package-requests', {
         externalTrackingNumber: trackingNumber.trim(),
-        recipientCity: selectedCity,
         description: description.trim(),
         category,
         customerNotes: customerNotes.trim() || undefined,
+        specialItemId: packageType === 'special' ? selectedSpecialItem : null,
         locale: locale,
       });
       console.log('[PACKAGE-REQUEST] Success!');
@@ -298,7 +320,7 @@ export default function PackagesScreen() {
     } finally {
       setRequestLoading(false);
     }
-  }, [trackingNumber, selectedCity, description, category, customerNotes, locale, t]);
+  }, [trackingNumber, description, category, customerNotes, packageType, selectedSpecialItem, locale, t]);
 
   const categoryLabel = useCallback(
     (cat: string): string => {
@@ -597,6 +619,113 @@ export default function PackagesScreen() {
                   </View>
                 ) : null}
 
+                {/* Package Type Selection */}
+                <View style={[styles.fieldGroup, { marginBottom: spacing.xl }]}>
+                  <Text style={[styles.fieldLabel, { fontFamily: fonts.semiBold, color: colors.gray[700], marginBottom: spacing.sm }]}>
+                    {'\uD83D\uDCE6'} {t.requestPackage.fields.packageType.label} *
+                  </Text>
+                  <View style={{ flexDirection: 'row', gap: spacing.md }]}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setPackageType('normal');
+                        setSelectedSpecialItem(null);
+                        setRequestError('');
+                      }}
+                      style={[
+                        styles.typeButton,
+                        {
+                          flex: 1,
+                          borderWidth: 2,
+                          borderColor: packageType === 'normal' ? colors.primary[500] : card.borderColor,
+                          backgroundColor: packageType === 'normal' ? colors.primary[50] : card.backgroundColor,
+                          borderRadius: borderRadius.lg,
+                          padding: spacing.lg,
+                          alignItems: 'center',
+                        },
+                      ]}
+                      activeOpacity={0.7}
+                    >
+                      <Package size={32} color={packageType === 'normal' ? colors.primary[600] : colors.gray[400]} />
+                      <Text style={[{ fontFamily: fonts.semibold, color: packageType === 'normal' ? colors.primary[700] : colors.gray[600], marginTop: spacing.sm }]}>
+                        {t.requestPackage.types.normal}
+                      </Text>
+                      <Text style={[{ fontSize: 11, color: colors.gray[500] }]}>
+                        {t.requestPackage.types.normalDesc}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setPackageType('special');
+                        setRequestError('');
+                      }}
+                      style={[
+                        styles.typeButton,
+                        {
+                          flex: 1,
+                          borderWidth: 2,
+                          borderColor: packageType === 'special' ? colors.primary[500] : card.borderColor,
+                          backgroundColor: packageType === 'special' ? colors.primary[50] : card.backgroundColor,
+                          borderRadius: borderRadius.lg,
+                          padding: spacing.lg,
+                          alignItems: 'center',
+                        },
+                      ]}
+                      activeOpacity={0.7}
+                    >
+                      {/* Smartphone icon - using Package as substitute */}
+                      <Package size={32} color={packageType === 'special' ? colors.primary[600] : colors.gray[400]} />
+                      <Text style={[{ fontFamily: fonts.semibold, color: packageType === 'special' ? colors.primary[700] : colors.gray[600], marginTop: spacing.sm }]}>
+                        {t.requestPackage.types.special}
+                      </Text>
+                      <Text style={[{ fontSize: 11, color: colors.gray[500] }]}>
+                        {t.requestPackage.types.specialDesc}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Special Items Grid */}
+                {packageType === 'special' && (
+                  <View style={[styles.fieldGroup, { marginBottom: spacing.xl }]}>
+                    <Text style={[styles.fieldLabel, { fontFamily: fonts.semibold, color: colors.gray[700], marginBottom: spacing.sm }]}>
+                      {'\uD83D\uDCF1'} {t.requestPackage.fields.specialItem.label} *
+                    </Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md }]}>
+                      {specialItems.filter((item: any) => item.isActive).map((item: any) => (
+                        <TouchableOpacity
+                          key={item.id}
+                          onPress={() => {
+                            setSelectedSpecialItem(item.id);
+                            setRequestError('');
+                          }}
+                          style={[
+                            {
+                              width: '48%',
+                              borderWidth: 2,
+                              borderColor: selectedSpecialItem === item.id ? colors.primary[500] : card.borderColor,
+                              backgroundColor: selectedSpecialItem === item.id ? colors.primary[50] : card.backgroundColor,
+                              borderRadius: borderRadius.md,
+                              padding: spacing.md,
+                              alignItems: 'center',
+                            },
+                          ]}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={[{ fontFamily: fonts.semibold, fontSize: 14, textAlign: 'center', color: colors.gray[900] }]}>
+                            {item.itemName}
+                          </Text>
+                          <Text style={[{ fontSize: 12, color: colors.gray[500], marginTop: spacing.xs }]}>
+                            {item.brand}
+                          </Text>
+                          <Text style={[{ fontSize: 16, fontFamily: fonts.bold, color: colors.primary[600], marginTop: spacing.xs }]}>
+                            ${parseFloat(item.fixedFee).toFixed(2)}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
                 {/* Tracking Number */}
                 <View style={[styles.fieldGroup, { marginBottom: spacing.xl }]}>
                   <Text style={[styles.fieldLabel, { fontFamily: fonts.semiBold, color: colors.gray[700], marginBottom: spacing.sm }]}>
@@ -616,59 +745,7 @@ export default function PackagesScreen() {
                   </Text>
                 </View>
 
-                {/* Destination City */}
-                <View style={[styles.fieldGroup, { marginBottom: spacing.xl }]}>
-                  <Text style={[styles.fieldLabel, { fontFamily: fonts.semiBold, color: colors.gray[700], marginBottom: spacing.sm }]}>
-                    {'\uD83D\uDCCD'} {t.requestPackage.fields.destinationCity.label} *
-                  </Text>
-                  <View style={[styles.cityGrid, { gap: spacing.sm }]}>
-                    {CITIES.map((city) => {
-                      const isSelected = selectedCity === city.id;
-                      const cityLabels = t.requestPackage.fields.destinationCity as Record<string, string>;
-                      return (
-                        <TouchableOpacity
-                          key={city.id}
-                          style={[
-                            styles.cityChip,
-                            {
-                              paddingVertical: spacing.md,
-                              paddingHorizontal: spacing.sm,
-                              borderRadius: borderRadius.lg,
-                              borderColor: isSelected ? colors.primary[500] : card.borderColor,
-                              backgroundColor: isSelected ? colors.primary[500] : card.backgroundColor,
-                            },
-                          ]}
-                          onPress={() => { setSelectedCity(city.id); setRequestError(''); }}
-                          activeOpacity={0.7}
-                        >
-                          <Text style={styles.cityEmoji}>{city.emoji}</Text>
-                          <Text
-                            style={[
-                              styles.cityChipText,
-                              {
-                                fontFamily: fonts.semiBold,
-                                color: isSelected ? colors.white : colors.gray[700],
-                              },
-                            ]}
-                          >
-                            {cityLabels[city.labelKey]}
-                          </Text>
-                          <Text
-                            style={[
-                              styles.cityChipSub,
-                              {
-                                fontFamily: fonts.regular,
-                                color: isSelected ? 'rgba(255,255,255,0.75)' : colors.gray[400],
-                              },
-                            ]}
-                          >
-                            {cityLabels[city.subKey]}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </View>
+                {/* ✅ REMOVED: Destination City - now uses user's profile city */}
 
                 {/* Description */}
                 <View style={[styles.fieldGroup, { marginBottom: spacing.xl }]}>

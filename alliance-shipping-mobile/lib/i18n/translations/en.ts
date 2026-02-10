@@ -104,6 +104,9 @@ export const en = {
       delivered: 'Delivered',
       rejected: 'Rejected',
     },
+    specialItem: 'Special Item',
+    customsFees: 'Customs fees',
+    fixedPrice: 'Fixed price',
     details: {
       trackingNumber: 'Tracking Number',
       description: 'Description',
@@ -178,6 +181,14 @@ export const en = {
       allianceTracking: 'After validation, you will receive an Alliance Shipping tracking (AS-XXXXXXXXXX)',
     },
     fields: {
+      packageType: {
+        label: 'Package Type',
+        required: 'Please select a package type',
+      },
+      specialItem: {
+        label: 'Select an Item',
+        required: 'Please select a special item',
+      },
       trackingNumber: {
         label: 'Tracking Number',
         placeholder: 'Ex: 1Z999AA10123456784',
@@ -228,6 +239,12 @@ export const en = {
         minValue: 'Weight must be at least 1 lb',
       },
     },
+    types: {
+      normal: 'Normal Package',
+      normalDesc: 'Calculated by weight',
+      special: 'Special Item',
+      specialDesc: 'Fixed price',
+    },
     buttons: {
       cancel: 'Cancel',
       submit: 'Send Request',
@@ -236,6 +253,9 @@ export const en = {
     errors: {
       title: 'Please correct the following errors:',
       submit: 'Error sending request. Please try again.',
+      sameUserDuplicate: 'You have already made a request for this tracking number.',
+      otherUserRequest: 'Another user has already made a request for this package.',
+      packageClaimed: 'This package already belongs to another user.',
     },
   },
   calculator: {

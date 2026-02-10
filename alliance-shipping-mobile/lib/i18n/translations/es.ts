@@ -102,6 +102,9 @@ export const es = {
       delivered: 'Entregado',
       rejected: 'Rechazado',
     },
+    specialItem: 'Artículo Especial',
+    customsFees: 'Tasas aduaneras',
+    fixedPrice: 'Precio fijo',
     details: {
       trackingNumber: 'Número de Seguimiento',
       description: 'Descripción',
@@ -186,6 +189,14 @@ export const es = {
       allianceTracking: 'Después de la validación, recibirás un seguimiento de Alliance Shipping (AS-XXXXXXXXXX)',
     },
     fields: {
+      packageType: {
+        label: 'Tipo de Paquete',
+        required: 'Por favor selecciona el tipo de paquete',
+      },
+      specialItem: {
+        label: 'Selecciona un Artículo',
+        required: 'Por favor selecciona un artículo especial',
+      },
       trackingNumber: {
         label: 'Número de Seguimiento',
         placeholder: 'Ej: 1Z999AA10123456784',
@@ -236,6 +247,12 @@ export const es = {
         minValue: 'El peso debe ser de al menos 1 lb',
       },
     },
+    types: {
+      normal: 'Paquete Normal',
+      normalDesc: 'Calculado por peso',
+      special: 'Artículo Especial',
+      specialDesc: 'Precio fijo',
+    },
     buttons: {
       cancel: 'Cancelar',
       submit: 'Enviar Solicitud',
@@ -244,6 +261,9 @@ export const es = {
     errors: {
       title: 'Por favor corrige los siguientes errores:',
       submit: 'Error al enviar la solicitud. Por favor intenta de nuevo.',
+      sameUserDuplicate: 'Ya has hecho una solicitud para este número de seguimiento.',
+      otherUserRequest: 'Otro usuario ya ha hecho una solicitud para este paquete.',
+      packageClaimed: 'Este paquete ya pertenece a otro usuario.',
     },
   },
   calculator: {

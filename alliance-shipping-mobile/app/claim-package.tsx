@@ -108,7 +108,6 @@ export default function ClaimPackageScreen() {
     try {
       await api.post('/api/package-requests', {
         externalTrackingNumber: trackingNumber.trim(),
-        recipientCity: selectedCity,
         description: description.trim(),
         category,
         customerNotes: customerNotes.trim() || undefined,

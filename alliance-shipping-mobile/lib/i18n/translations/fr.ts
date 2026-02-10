@@ -102,6 +102,9 @@ export const fr = {
       delivered: 'Livré',
       rejected: 'Rejeté',
     },
+    specialItem: 'Article Spécial',
+    customsFees: 'Frais de douane',
+    fixedPrice: 'Prix fixe',
     details: {
       trackingNumber: 'Numéro de Suivi',
       description: 'Description',
@@ -176,6 +179,14 @@ export const fr = {
       allianceTracking: 'Après validation, vous recevrez un tracking Alliance Shipping (AS-XXXXXXXXXX)',
     },
     fields: {
+      packageType: {
+        label: 'Type de Colis',
+        required: 'Veuillez sélectionner le type de colis',
+      },
+      specialItem: {
+        label: 'Sélectionnez un Article',
+        required: 'Veuillez sélectionner un article spécial',
+      },
       trackingNumber: {
         label: 'Tracking Number',
         placeholder: 'Ex: 1Z999AA10123456784',
@@ -226,6 +237,12 @@ export const fr = {
         minValue: 'Le poids doit être d\'au moins 1 lb',
       },
     },
+    types: {
+      normal: 'Colis Normal',
+      normalDesc: 'Calculé par poids',
+      special: 'Article Spécial',
+      specialDesc: 'Prix fixe',
+    },
     buttons: {
       cancel: 'Annuler',
       submit: 'Envoyer la Demande',
@@ -234,6 +251,9 @@ export const fr = {
     errors: {
       title: 'Veuillez corriger les erreurs suivantes :',
       submit: 'Erreur lors de l\'envoi de la demande. Veuillez réessayer.',
+      sameUserDuplicate: 'Vous avez déjà fait une demande pour ce numéro de suivi.',
+      otherUserRequest: 'Un autre utilisateur a déjà fait une demande pour ce colis.',
+      packageClaimed: 'Ce colis appartient déjà à un autre utilisateur.',
     },
   },
   calculator: {

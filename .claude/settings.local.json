@@ -60,7 +60,11 @@
       "Bash(npm info:*)",
       "Bash(find:*)",
       "Bash(npm run db:generate:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(head:*)",
+      "Bash(npx next lint:*)",
+      "Bash(git log:*)",
+      "Bash(\"alliance-shipping-web/app/api/special-items/public/route.ts\" << 'EOF'\nimport { NextResponse } from 'next/server';\nimport { db } from '@/lib/db';\nimport { specialItemFees } from '@/lib/db/schema';\nimport { eq } from 'drizzle-orm';\n\n// GET - Public endpoint to fetch active special items\nexport async function GET\\(\\) {\n  try {\n    const items = await db\n      .select\\(\\)\n      .from\\(specialItemFees\\)\n      .where\\(eq\\(specialItemFees.isActive, true\\)\\);\n\n    return NextResponse.json\\({\n      success: true,\n      items,\n    }\\);\n  } catch \\(error: any\\) {\n    console.error\\('[GET /api/special-items/public] Error:', error\\);\n    return NextResponse.json\\(\n      {\n        error: 'Failed to fetch special items',\n        details: error.message,\n      },\n      { status: 500 }\n    \\);\n  }\n}\nEOF)"
     ]
   }
 }

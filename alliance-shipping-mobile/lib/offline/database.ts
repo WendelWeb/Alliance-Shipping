@@ -131,7 +131,7 @@ export async function upsertPackages(packages: any[]) {
       [
         pkg.id, pkg.trackingNumber, pkg.externalTrackingNumber || null,
         pkg.description, pkg.weight, pkg.category, pkg.status,
-        pkg.currentLocation || null, pkg.recipientCity || null, pkg.recipientName || null,
+        pkg.currentLocation || null, null, null, // ✅ recipientCity & recipientName removed (use user profile)
         pkg.serviceFee || null, pkg.weightCost || null, pkg.totalCost || null,
         pkg.createdAt, pkg.updatedAt || pkg.createdAt, now,
       ]
@@ -180,7 +180,7 @@ export async function upsertPackageRequests(requests: any[]) {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         req.id, req.externalTrackingNumber, req.description, req.category,
-        req.customerNotes || null, req.recipientCity || null, req.status,
+        req.customerNotes || null, null, req.status, // ✅ recipientCity removed (use user profile)
         req.createdAt, req.updatedAt || req.createdAt, now,
       ]
     );
@@ -202,7 +202,7 @@ export async function addPendingPackageRequest(data: any) {
      VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, 1)`,
     [
       -Date.now(), data.externalTrackingNumber, data.description, data.category,
-      data.customerNotes || null, data.recipientCity || null, now, now,
+      data.customerNotes || null, null, now, now, // ✅ recipientCity removed (use user profile)
     ]
   );
 

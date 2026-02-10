@@ -102,6 +102,9 @@ export const ht = {
       delivered: 'Livre',
       rejected: 'Rejte',
     },
+    specialItem: 'Atik Espesyal',
+    customsFees: 'Frè dwan',
+    fixedPrice: 'Pri fiks',
     details: {
       trackingNumber: 'Nimewo Swivi',
       description: 'Deskripsyon',
@@ -186,6 +189,14 @@ export const ht = {
       allianceTracking: 'Apre validasyon, w ap resevwa yon nimewo swivi Alliance Shipping (AS-XXXXXXXXXX)',
     },
     fields: {
+      packageType: {
+        label: 'Tip Koli',
+        required: 'Tanpri chwazi tip koli a',
+      },
+      specialItem: {
+        label: 'Chwazi yon Atik',
+        required: 'Tanpri chwazi yon atik espesyal',
+      },
       trackingNumber: {
         label: 'Nimewo Swivi',
         placeholder: 'Egzanp: 1Z999AA10123456784',
@@ -236,6 +247,12 @@ export const ht = {
         minValue: 'Pwa dwe omwen 1 lb',
       },
     },
+    types: {
+      normal: 'Koli Nòmal',
+      normalDesc: 'Kalkile pa pwa',
+      special: 'Atik Espesyal',
+      specialDesc: 'Pri fiks',
+    },
     buttons: {
       cancel: 'Anile',
       submit: 'Voye Demann',
@@ -244,6 +261,9 @@ export const ht = {
     errors: {
       title: 'Tanpri korije erè sa yo:',
       submit: 'Erè pandan w ap voye demann. Tanpri eseye ankò.',
+      sameUserDuplicate: 'Ou te deja fè yon demann pou nimewo swivi sa a.',
+      otherUserRequest: 'Yon lòt itilizatè te deja fè yon demann pou koli sa a.',
+      packageClaimed: 'Koli sa a deja pou yon lòt itilizatè.',
     },
   },
   calculator: {
