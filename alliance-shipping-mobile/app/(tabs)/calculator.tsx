@@ -564,7 +564,7 @@ export default function CalculatorScreen() {
                       </View>
                       <View style={{ backgroundColor: isDark ? colors.primary[900] : colors.primary[50], paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: borderRadius.md }}>
                         <Text style={{ fontFamily: fonts.bold, fontSize: 14, color: colors.primary[600] }}>
-                          ${item.fixedFee.toFixed(2)}
+                          ${parseFloat(item.fixedFee).toFixed(2)}
                         </Text>
                       </View>
                     </View>
