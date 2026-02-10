@@ -21,6 +21,7 @@ import {
   ChevronUp,
   DollarSign,
   Scale,
+  AlertTriangle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -35,6 +36,7 @@ interface PackageData {
   weight: string;
   serviceFee?: string;
   weightCost?: string;
+  customsFees?: string; // ⭐ Customs fees
   totalCost: string;
   currentLocation: string;
   estimatedDelivery: string | null;
@@ -338,6 +340,7 @@ export default function PackagesPage() {
               const isExpanded = expandedId === pkg.id;
               const serviceFee = pkg.serviceFee ? parseFloat(pkg.serviceFee) : 0;
               const weightCost = pkg.weightCost ? parseFloat(pkg.weightCost) : 0;
+              const customsFees = pkg.customsFees ? parseFloat(pkg.customsFees) : 0; // ⭐ Parse customs fees
 
               return (
                 <motion.div
@@ -392,6 +395,21 @@ export default function PackagesPage() {
                         {pkg.description}
                       </p>
 
+                      {/* ⭐ Customs Fees Alert (if > 0) */}
+                      {customsFees > 0 && (
+                        <div className="flex items-center gap-2 text-sm rounded-lg p-2.5 mb-3 border" style={{
+                          backgroundColor: isDark ? '#7f1d1d' : '#fee2e2',
+                          borderColor: isDark ? '#991b1b' : '#fecaca',
+                          color: '#dc2626'
+                        }}>
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                          <div className="flex-1">
+                            <p className="font-semibold text-xs">{t.packages.customsFees?.label || 'Frais de douane'}</p>
+                            <p className="font-bold">+${customsFees.toFixed(2)}</p>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Info Grid */}
                       <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 mb-3">
                         <div className="flex items-center gap-2">
@@ -428,6 +446,20 @@ export default function PackagesPage() {
                             </p>
                           </div>
                         </div>
+                        {/* ⭐ Customs Fees in Grid (always show if exists) */}
+                        {customsFees > 0 && (
+                          <div className="flex items-center gap-2 col-span-2">
+                            <AlertTriangle className="w-3.5 h-3.5 shrink-0" style={{ color: '#dc2626' }} />
+                            <div>
+                              <p className="text-[10px] uppercase tracking-wide" style={{ color: colors.gray[400] }}>
+                                {t.packages.customsFees?.label || 'FRAIS DOUANE'}
+                              </p>
+                              <p className="text-sm font-bold" style={{ color: '#dc2626' }}>
+                                +${customsFees.toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Current Location */}
