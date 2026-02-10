@@ -37,6 +37,10 @@ interface ReceivedPackage {
   locationDetails: string;
   photos: string[];
   status: string;
+  // ✅ ADDED: Fetch from DB instead of calculating with hardcoded values
+  serviceFee: number;
+  weightCost: number;
+  totalCost: number;
 }
 
 export default function ReceivedPackagesPage() {
@@ -74,6 +78,10 @@ export default function ReceivedPackagesPage() {
       locationDetails: pkg.locationDetails?.warehouse || 'Warehouse A',
       photos: [],
       status: pkg.status,
+      // ✅ ADDED: Extract actual fees from DB
+      serviceFee: parseFloat(pkg.serviceFee) || 0,
+      weightCost: parseFloat(pkg.weightCost) || 0,
+      totalCost: parseFloat(pkg.totalCost) || 0,
     }));
 
     return transformedPackages;
@@ -168,15 +176,8 @@ export default function ReceivedPackagesPage() {
     }
   };
 
-  const calculateFees = (weight: number, specialItemId: number | null) => {
-    if (specialItemId) {
-      // Special item has fixed fee
-      return { serviceFee: 5.0, shippingFee: 20.0, total: 25.0 };
-    }
-    const serviceFee = 5.0;
-    const shippingFee = weight * 4.0;
-    return { serviceFee, shippingFee, total: serviceFee + shippingFee };
-  };
+  // ✅ REMOVED hardcoded calculation - use actual fees from database
+  // Fees are already calculated server-side and stored in DB
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -232,7 +233,7 @@ export default function ReceivedPackagesPage() {
       <div className="space-y-4">
         {filteredPackages.map((pkg, index) => {
           const currentWeight = packageWeights[pkg.id] ?? pkg.weight;
-          const fees = calculateFees(currentWeight, pkg.specialItemId);
+          // ✅ Use actual fees from database (fetched from Drizzle)
           const isEditing = editingPackage === pkg.id;
 
           return (
@@ -365,16 +366,16 @@ export default function ReceivedPackagesPage() {
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Service Fee:</span>
-                        <span className="font-medium">${fees.serviceFee.toFixed(2)}</span>
+                        <span className="font-medium">${pkg.serviceFee.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Shipping Fee:</span>
-                        <span className="font-medium">${fees.shippingFee.toFixed(2)}</span>
+                        <span className="font-medium">${pkg.weightCost.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between pt-2 border-t border-green-200">
                         <span className="font-semibold text-gray-900">Total:</span>
                         <span className="font-bold text-green-600">
-                          ${fees.total.toFixed(2)}
+                          ${pkg.totalCost.toFixed(2)}
                         </span>
                       </div>
                     </div>

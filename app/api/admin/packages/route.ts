@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { packages, users, trackingHistory, packageRequests, adminActivityLogs, serviceFees, specialItemFees, loyaltyConfig, loyaltyCredits, warehouses, cityPricing, packageTransfers } from '@/lib/db/schema';
+import {
+  packages,
+  users,
+  trackingHistory,
+  packageRequests,
+  adminActivityLogs,
+  serviceFees,
+  specialItemFees,
+  loyaltyConfig,
+  loyaltyCredits,
+  warehouses,
+  cityPricing,
+  packageTransfers,
+  notifications,
+  deliveryProof,
+  revenueRecords
+} from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
 import { eq, and, like, or, desc, sql, lte } from 'drizzle-orm';
 import { sendPushNotification } from '@/lib/notifications/push';
@@ -196,6 +212,8 @@ export async function POST(request: NextRequest) {
       category,
       status: initialStatus,
       specialInstructions,
+      specialItemId,
+      chargeByWeight,
     } = body;
 
     // Get Alliance Shipping user ID for reference
@@ -225,7 +243,48 @@ export async function POST(request: NextRequest) {
       .where(eq(users.id, ownerId))
       .limit(1);
 
-    const fees = await calculateFeesForCity(owner?.city || null, parseFloat(weight) || 0);
+    // Calculate fees based on special item or normal package
+    let fees: { serviceFee: number; weightCost: number; totalCost: number };
+
+    if (specialItemId) {
+      // Fetch special item
+      const [specialItem] = await db
+        .select()
+        .from(specialItemFees)
+        .where(eq(specialItemFees.id, parseInt(specialItemId)))
+        .limit(1);
+
+      if (!specialItem) {
+        return NextResponse.json(
+          { error: 'Special item not found' },
+          { status: 400 }
+        );
+      }
+
+      // Get city pricing for service fee
+      const cityFees = await calculateFeesForCity(owner?.city || null, parseFloat(weight) || 0);
+      const fixedFee = parseFloat(specialItem.fixedFee);
+
+      // Calculate based on chargeByWeight checkbox
+      if (chargeByWeight) {
+        // Special item price + service fee + weight cost
+        fees = {
+          serviceFee: cityFees.serviceFee,
+          weightCost: cityFees.weightCost,
+          totalCost: fixedFee + cityFees.serviceFee + cityFees.weightCost,
+        };
+      } else {
+        // Special item price + service fee only (no weight charge)
+        fees = {
+          serviceFee: cityFees.serviceFee,
+          weightCost: 0,
+          totalCost: fixedFee + cityFees.serviceFee,
+        };
+      }
+    } else {
+      // Normal package: calculate by weight
+      fees = await calculateFeesForCity(owner?.city || null, parseFloat(weight) || 0);
+    }
 
     // Check for duplicate external tracking number
     if (externalTrackingNumber && externalTrackingNumber.trim()) {
@@ -294,6 +353,9 @@ export async function POST(request: NextRequest) {
         currentLocation: locationMap[pkgStatus] || 'Miami Warehouse',
         assignedToAdmin: session.adminId,
         specialInstructions: specialInstructions?.trim() || null,
+        specialItemId: specialItemId ? parseInt(specialItemId) : null,
+        chargeByWeight: chargeByWeight || false,
+        customsFees: '0.00',
       })
       .returning();
 
@@ -326,14 +388,17 @@ export async function POST(request: NextRequest) {
 
     // If assigned to a specific user (not Alliance Shipping), log as direct assignment transfer
     if (targetUserId && targetUserId !== asUserId) {
+      // ✅ FIXED: Calculate default fees from Drizzle (not hardcoded)
+      const defaultFees = await calculateFeesForCity(null, parseFloat(weight));
+
       await db.insert(packageTransfers).values({
         packageId: newPackage.id,
         fromUserId: asUserId || targetUserId, // Alliance Shipping or fallback to target user
         toUserId: targetUserId,
         requestId: null,
-        oldServiceFee: '5.00', // Default fees before assignment
-        oldWeightCost: (parseFloat(weight) * 4.0).toFixed(2),
-        oldTotalCost: (5.0 + parseFloat(weight) * 4.0).toFixed(2),
+        oldServiceFee: defaultFees.serviceFee.toFixed(2),
+        oldWeightCost: defaultFees.weightCost.toFixed(2),
+        oldTotalCost: defaultFees.totalCost.toFixed(2),
         newServiceFee: fees.serviceFee.toFixed(2),
         newWeightCost: fees.weightCost.toFixed(2),
         newTotalCost: fees.totalCost.toFixed(2),
@@ -411,8 +476,48 @@ export async function PATCH(request: NextRequest) {
 
     if (weight !== undefined) {
       updateData.weight = weight;
-      updateData.shippingFee = weight * 4.0;
-      updateData.totalFee = (updateData.serviceFee || 5.0) + updateData.shippingFee;
+
+      // ✅ FIXED: Fetch pricing from Drizzle based on user's city, not hardcoded
+      // Get package with user info to recalculate fees
+      const [pkg] = await db
+        .select({
+          userId: packages.userId,
+          specialItemId: packages.specialItemId,
+          chargeByWeight: packages.chargeByWeight,
+          userCity: users.city,
+        })
+        .from(packages)
+        .leftJoin(users, eq(packages.userId, users.id))
+        .where(eq(packages.id, id))
+        .limit(1);
+
+      if (pkg) {
+        if (pkg.specialItemId && !pkg.chargeByWeight) {
+          // Special item WITHOUT charge by weight - don't update weightCost
+          // Keep existing fees
+        } else {
+          // Normal package OR special item WITH charge by weight
+          const fees = await calculateFeesForCity(pkg.userCity, parseFloat(weight));
+          if (pkg.specialItemId && pkg.chargeByWeight) {
+            // Special item with charge by weight: fixed fee already in DB, just update weight portion
+            const [specialItem] = await db
+              .select({ fixedFee: specialItemFees.fixedFee })
+              .from(specialItemFees)
+              .where(eq(specialItemFees.id, pkg.specialItemId))
+              .limit(1);
+            if (specialItem) {
+              updateData.serviceFee = fees.serviceFee.toFixed(2);
+              updateData.weightCost = fees.weightCost.toFixed(2);
+              updateData.totalCost = (parseFloat(specialItem.fixedFee) + fees.serviceFee + fees.weightCost).toFixed(2);
+            }
+          } else {
+            // Normal package
+            updateData.serviceFee = fees.serviceFee.toFixed(2);
+            updateData.weightCost = fees.weightCost.toFixed(2);
+            updateData.totalCost = fees.totalCost.toFixed(2);
+          }
+        }
+      }
     }
 
     if (currentLocation) {
@@ -567,6 +672,29 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Package not found' }, { status: 404 });
     }
 
+    // Delete ALL related records first (foreign key constraints)
+    // 1. Delete notifications
+    await db.delete(notifications).where(eq(notifications.packageId, packageId));
+
+    // 2. Delete delivery proofs
+    await db.delete(deliveryProof).where(eq(deliveryProof.packageId, packageId));
+
+    // 3. Delete revenue records
+    await db.delete(revenueRecords).where(eq(revenueRecords.packageId, packageId));
+
+    // 4. Delete package transfers
+    await db.delete(packageTransfers).where(eq(packageTransfers.packageId, packageId));
+
+    // 5. Delete tracking history
+    await db.delete(trackingHistory).where(eq(trackingHistory.packageId, packageId));
+
+    // 6. Update package requests (set packageId to null)
+    await db
+      .update(packageRequests)
+      .set({ packageId: null })
+      .where(eq(packageRequests.packageId, packageId));
+
+    // 7. Finally delete the package
     await db.delete(packages).where(eq(packages.id, packageId));
 
     await db.insert(adminActivityLogs).values({

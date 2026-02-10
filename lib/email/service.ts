@@ -961,5 +961,268 @@ export const sendPackageDeliveredEmail = async (
   return sendEmail({ to: userEmail, subject: s.subject, html });
 };
 
+/**
+ * Send customs fees notification email
+ */
+export const sendCustomsFeesEmail = async (
+  to: string,
+  userName: string,
+  trackingNumber: string,
+  oldTotal: number,
+  newTotal: number,
+  customsFees: number,
+  locale: string = 'fr'
+): Promise<any> => {
+  const translations: Record<string, any> = {
+    fr: {
+      subject: `⚠️ Frais de douane ajoutés - Colis ${trackingNumber}`,
+      title: 'Frais de Douane Ajoutés',
+      greeting: `Bonjour ${userName},`,
+      message: 'Des frais de douane ont été ajoutés à votre colis.',
+      trackingLabel: 'Numéro de suivi',
+      oldTotalLabel: 'Ancien total:',
+      customsLabel: 'Frais de douane:',
+      newTotalLabel: 'Nouveau total:',
+      footer: 'Vous pouvez voir les détails de votre colis dans votre compte.',
+      buttonLabel: 'Voir Mon Colis',
+      automated: 'Ceci est un email automatique. Ne répondez pas directement.',
+      companyFooter: '© 2026 Alliance Shipping. Tous droits réservés.',
+    },
+    ht: {
+      subject: `⚠️ Frè dwan ajoute - Pakè ${trackingNumber}`,
+      title: 'Frè Dwan Ajoute',
+      greeting: `Bonjou ${userName},`,
+      message: 'Yo ajoute frè dwan nan pakè w la.',
+      trackingLabel: 'Nimewo pakè',
+      oldTotalLabel: 'Ansyen total:',
+      customsLabel: 'Frè dwan:',
+      newTotalLabel: 'Nouvo total:',
+      footer: 'Ou ka gade detay pakè w la nan kont ou.',
+      buttonLabel: 'Gade Pakè Mwen',
+      automated: 'Sa se yon imèl otomatik. Pa reponn dirèkteman.',
+      companyFooter: '© 2026 Alliance Shipping. Tout dwa rezève.',
+    },
+    en: {
+      subject: `⚠️ Customs fees added - Package ${trackingNumber}`,
+      title: 'Customs Fees Added',
+      greeting: `Hello ${userName},`,
+      message: 'Customs fees have been added to your package.',
+      trackingLabel: 'Tracking number',
+      oldTotalLabel: 'Previous total:',
+      customsLabel: 'Customs fees:',
+      newTotalLabel: 'New total:',
+      footer: 'You can view your package details in your account.',
+      buttonLabel: 'View My Package',
+      automated: 'This is an automated email. Please do not reply directly.',
+      companyFooter: '© 2026 Alliance Shipping. All rights reserved.',
+    },
+    es: {
+      subject: `⚠️ Tasas aduaneras agregadas - Paquete ${trackingNumber}`,
+      title: 'Tasas Aduaneras Agregadas',
+      greeting: `Hola ${userName},`,
+      message: 'Se han agregado tasas aduaneras a su paquete.',
+      trackingLabel: 'Número de seguimiento',
+      oldTotalLabel: 'Total anterior:',
+      customsLabel: 'Tasas aduaneras:',
+      newTotalLabel: 'Nuevo total:',
+      footer: 'Puede ver los detalles de su paquete en su cuenta.',
+      buttonLabel: 'Ver Mi Paquete',
+      automated: 'Este es un correo automático. No responda directamente.',
+      companyFooter: '© 2026 Alliance Shipping. Todos los derechos reservados.',
+    },
+  };
+
+  const t = translations[locale] || translations.fr;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://allianceshipping.com';
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>${t.title}</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          background-color: #f9fafb;
+          padding: 40px 20px;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          background: white;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+          background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+          padding: 32px;
+          text-align: center;
+        }
+        .warning-icon {
+          display: inline-block;
+          width: 64px;
+          height: 64px;
+          background: rgba(255,255,255,0.2);
+          border-radius: 50%;
+          margin-bottom: 16px;
+          line-height: 64px;
+          font-size: 32px;
+        }
+        .header h1 {
+          color: white;
+          margin: 0;
+          font-size: 24px;
+        }
+        .content {
+          padding: 32px;
+        }
+        .greeting {
+          font-size: 16px;
+          color: #4b5563;
+          margin-bottom: 24px;
+        }
+        .tracking-box {
+          background: #f3f4f6;
+          border-radius: 12px;
+          padding: 16px;
+          margin-bottom: 24px;
+          text-align: center;
+        }
+        .tracking-label {
+          color: #6b7280;
+          font-size: 14px;
+          margin-bottom: 8px;
+        }
+        .tracking-number {
+          color: #1f2937;
+          font-size: 20px;
+          font-weight: bold;
+          font-family: monospace;
+        }
+        .price-breakdown {
+          border: 2px solid #fee2e2;
+          border-radius: 12px;
+          padding: 20px;
+          background: #fef2f2;
+          margin-bottom: 24px;
+        }
+        .price-row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 12px;
+        }
+        .price-row.customs {
+          padding: 12px;
+          background: white;
+          border-radius: 8px;
+          margin-bottom: 12px;
+        }
+        .price-row.customs .label {
+          color: #dc2626;
+          font-weight: 600;
+        }
+        .price-row.customs .amount {
+          color: #dc2626;
+          font-weight: bold;
+        }
+        .price-row.total {
+          padding-top: 12px;
+          border-top: 2px solid #fecaca;
+        }
+        .price-row.total .label {
+          font-weight: bold;
+          color: #1f2937;
+        }
+        .price-row.total .amount {
+          font-weight: bold;
+          font-size: 20px;
+          color: #dc2626;
+        }
+        .label { color: #6b7280; }
+        .amount { font-weight: 600; color: #1f2937; }
+        .footer-text {
+          color: #6b7280;
+          font-size: 14px;
+          text-align: center;
+          margin-bottom: 24px;
+        }
+        .button {
+          display: inline-block;
+          background: #dc2626;
+          color: white;
+          padding: 14px 32px;
+          border-radius: 8px;
+          text-decoration: none;
+          font-weight: 600;
+        }
+        .button-container {
+          text-align: center;
+        }
+        .footer {
+          background: #f9fafb;
+          padding: 20px;
+          text-align: center;
+          border-top: 1px solid #e5e7eb;
+        }
+        .footer p {
+          color: #9ca3af;
+          font-size: 12px;
+          margin: 5px 0;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div class="warning-icon">⚠️</div>
+          <h1>${t.title}</h1>
+        </div>
+
+        <div class="content">
+          <p class="greeting">${t.greeting}</p>
+          <p class="greeting">${t.message}</p>
+
+          <div class="tracking-box">
+            <p class="tracking-label">${t.trackingLabel}</p>
+            <p class="tracking-number">${trackingNumber}</p>
+          </div>
+
+          <div class="price-breakdown">
+            <div class="price-row">
+              <span class="label">${t.oldTotalLabel}</span>
+              <span class="amount">$${oldTotal.toFixed(2)}</span>
+            </div>
+            <div class="price-row customs">
+              <span class="label">${t.customsLabel}</span>
+              <span class="amount">+$${customsFees.toFixed(2)}</span>
+            </div>
+            <div class="price-row total">
+              <span class="label">${t.newTotalLabel}</span>
+              <span class="amount">$${newTotal.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <p class="footer-text">${t.footer}</p>
+
+          <div class="button-container">
+            <a href="${appUrl}/packages" class="button">${t.buttonLabel}</a>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p><strong>${t.companyFooter}</strong></p>
+          <p>${t.automated}</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({ to, subject: t.subject, html });
+};
+
 // Re-export warehouse change email
 export { sendWarehouseChangeEmail } from './warehouse-change';

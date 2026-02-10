@@ -27,9 +27,11 @@ export async function calculateFeesForCity(city: string | null, weight: number):
   weightCost: number;
   totalCost: number;
 }> {
-  let serviceFee = 5.00;
+  // ✅ FETCH default pricing from DB instead of hardcoding
+  let serviceFee = 10.00; // Default fallback (will be overridden by DB)
   let pricePerLb = 4.00;
 
+  // Try to get city-specific pricing
   if (city) {
     const [pricing] = await db
       .select({
@@ -43,6 +45,21 @@ export async function calculateFeesForCity(city: string | null, weight: number):
     if (pricing) {
       serviceFee = parseFloat(String(pricing.serviceFee));
       pricePerLb = parseFloat(String(pricing.pricePerLb));
+    }
+  } else {
+    // ✅ If no city provided, fetch default pricing from first active city
+    const [defaultPricing] = await db
+      .select({
+        serviceFee: cityPricing.serviceFee,
+        pricePerLb: cityPricing.pricePerLb,
+      })
+      .from(cityPricing)
+      .where(eq(cityPricing.isActive, true))
+      .limit(1);
+
+    if (defaultPricing) {
+      serviceFee = parseFloat(String(defaultPricing.serviceFee));
+      pricePerLb = parseFloat(String(defaultPricing.pricePerLb));
     }
   }
 

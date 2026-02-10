@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { packageRequests, users } from '@/lib/db/schema';
+import { packageRequests, users, packages } from '@/lib/db/schema';
 import { currentUser } from '@clerk/nextjs/server';
-import { eq, inArray, and, sql } from 'drizzle-orm';
+import { eq, inArray, and, sql, ne } from 'drizzle-orm';
 import { sendPackageRequestEmail } from '@/lib/email/service';
-import { findUnclaimedPackage, autoTransferPackage } from '@/lib/utils/package-transfer';
+import { findUnclaimedPackage, autoTransferPackage, getAllianceShippingUserId } from '@/lib/utils/package-transfer';
 
 // Resolve Clerk user → DB user (by clerkId first, then by email fallback + auto-sync)
 async function resolveDbUser(clerkUser: NonNullable<Awaited<ReturnType<typeof currentUser>>>) {
@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
       description,
       customerNotes,
       category,
+      specialItemId,
       locale,
     } = body;
 
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'Vous avez déjà fait une demande pour ce numéro de suivi.',
+          conflictType: 'same_user',
           duplicate: true,
           existingRequest: {
             id: existingRequest.id,
@@ -108,6 +110,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if ANOTHER user has already made a request for this tracking number
+    const [otherUserRequest] = await db
+      .select()
+      .from(packageRequests)
+      .where(
+        and(
+          ne(packageRequests.userId, dbUser.id),
+          sql`LOWER(${packageRequests.externalTrackingNumber}) = LOWER(${externalTrackingNumber.trim()})`
+        )
+      )
+      .limit(1);
+
+    if (otherUserRequest) {
+      return NextResponse.json(
+        {
+          error: 'Un autre utilisateur a déjà fait une demande pour ce numéro de suivi.',
+          conflictType: 'other_user_request',
+          duplicate: true,
+        },
+        { status: 409 }
+      );
+    }
+
+    // Check if package already belongs to another user (not Alliance Shipping)
+    const asUserId = await getAllianceShippingUserId();
+    if (asUserId) {
+      const [existingPackage] = await db
+        .select()
+        .from(packages)
+        .where(
+          and(
+            ne(packages.userId, asUserId),
+            sql`LOWER(${packages.externalTrackingNumber}) = LOWER(${externalTrackingNumber.trim()})`
+          )
+        )
+        .limit(1);
+
+      if (existingPackage) {
+        return NextResponse.json(
+          {
+            error: 'Ce colis appartient déjà à un autre utilisateur.',
+            conflictType: 'package_claimed',
+            duplicate: true,
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     // Create the package request
     const [packageRequest] = await db.insert(packageRequests).values({
       userId: dbUser.id,
@@ -116,6 +167,7 @@ export async function POST(request: NextRequest) {
       customerNotes: customerNotes?.trim() || null,
       estimatedWeight: null,
       category: category || 'general',
+      specialItemId: specialItemId || null,
       status: 'pending',
     }).returning();
 

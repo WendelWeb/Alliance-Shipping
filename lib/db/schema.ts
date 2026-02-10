@@ -60,6 +60,8 @@ export const packages = pgTable('packages', {
     notes?: string;
   }>(),
   specialItemId: integer('special_item_id').references(() => specialItemFees.id),
+  customsFees: decimal('customs_fees', { precision: 10, scale: 2 }).default('0.00').notNull(),
+  chargeByWeight: boolean('charge_by_weight').default(false).notNull(),
   priority: varchar('priority', { length: 20 }).default('normal').notNull(), // normal, urgent, express
 
   // Metadata
@@ -153,6 +155,7 @@ export const packageRequests = pgTable('package_requests', {
   customerNotes: text('customer_notes'),
   estimatedWeight: decimal('estimated_weight', { precision: 10, scale: 2 }),
   category: varchar('category', { length: 100 }),
+  specialItemId: integer('special_item_id').references(() => specialItemFees.id), // If requesting a special item
 
   // Status
   status: varchar('status', { length: 50 }).default('pending').notNull(), // pending, approved, rejected, converted
@@ -193,6 +196,13 @@ export const specialItemFees = pgTable('special_item_fees', {
   fixedFee: decimal('fixed_fee', { precision: 10, scale: 2 }).notNull(),
   description: text('description'),
   imageUrl: varchar('image_url', { length: 500 }),
+  // Translations
+  itemName_fr: varchar('item_name_fr', { length: 255 }),
+  itemName_ht: varchar('item_name_ht', { length: 255 }),
+  itemName_es: varchar('item_name_es', { length: 255 }),
+  description_fr: text('description_fr'),
+  description_ht: text('description_ht'),
+  description_es: text('description_es'),
   isActive: boolean('is_active').default(true).notNull(),
   createdBy: integer('created_by').references(() => admins.id).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),

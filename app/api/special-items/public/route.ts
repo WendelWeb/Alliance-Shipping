@@ -3,11 +3,7 @@ import { db } from '@/lib/db';
 import { specialItemFees } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-/**
- * GET /api/special-items/public (PUBLIC - no auth required)
- * Returns all active special items with their pricing.
- * Used by mobile calculator and profile special items page.
- */
+// GET - Public endpoint to fetch active special items
 export async function GET() {
   try {
     const items = await db
@@ -16,20 +12,17 @@ export async function GET() {
       .where(eq(specialItemFees.isActive, true));
 
     return NextResponse.json({
-      items: items.map((item) => ({
-        id: item.id,
-        category: item.category,
-        brand: item.brand,
-        itemName: item.itemName,
-        minModel: item.minModel,
-        maxModel: item.maxModel,
-        fixedFee: parseFloat(item.fixedFee),
-        description: item.description,
-        imageUrl: item.imageUrl,
-      })),
+      success: true,
+      items,
     });
-  } catch (error) {
-    console.error('Error fetching special items:', error);
-    return NextResponse.json({ error: 'Failed to fetch special items' }, { status: 500 });
+  } catch (error: any) {
+    console.error('[GET /api/special-items/public] Error:', error);
+    return NextResponse.json(
+      {
+        error: 'Failed to fetch special items',
+        details: error.message,
+      },
+      { status: 500 }
+    );
   }
 }

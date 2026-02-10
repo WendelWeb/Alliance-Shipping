@@ -23,8 +23,9 @@ export default function NewPackagePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [pricingLoading, setPricingLoading] = useState(true);
-  const [currentServiceFee, setCurrentServiceFee] = useState(5.0);
-  const [currentPricePerLb, setCurrentPricePerLb] = useState(4.0);
+  // ✅ CHANGED: Start at 0, fetch from Drizzle (not hardcoded)
+  const [currentServiceFee, setCurrentServiceFee] = useState(0);
+  const [currentPricePerLb, setCurrentPricePerLb] = useState(0);
   const [formData, setFormData] = useState({
     externalTrackingNumber: '',
     category: 'general',
@@ -39,6 +40,12 @@ export default function NewPackagePage() {
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userSearchResults, setUserSearchResults] = useState<any[]>([]);
   const [userSearchLoading, setUserSearchLoading] = useState(false);
+
+  // Special items
+  const [packageType, setPackageType] = useState<'normal' | 'special'>('normal');
+  const [specialItems, setSpecialItems] = useState<any[]>([]);
+  const [selectedSpecialItem, setSelectedSpecialItem] = useState<number | null>(null);
+  const [chargeByWeight, setChargeByWeight] = useState(false);
 
   // Fetch default pricing on mount (Alliance Shipping account = default city pricing)
   useEffect(() => {
@@ -57,6 +64,18 @@ export default function NewPackagePage() {
       })
       .finally(() => {
         setPricingLoading(false);
+      });
+  }, []);
+
+  // Fetch special items
+  useEffect(() => {
+    fetch('/api/special-items/public')
+      .then(res => res.json())
+      .then(data => {
+        setSpecialItems(data?.items || []);
+      })
+      .catch(error => {
+        console.error('Error fetching special items:', error);
       });
   }, []);
 
@@ -141,6 +160,8 @@ export default function NewPackagePage() {
           status: formData.status,
           specialInstructions: formData.notes || undefined,
           userId: selectedUser?.id || undefined, // Assign to specific user if selected
+          specialItemId: packageType === 'special' ? selectedSpecialItem : undefined,
+          chargeByWeight: packageType === 'special' ? chargeByWeight : undefined,
         }),
       });
 
@@ -206,10 +227,109 @@ export default function NewPackagePage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Form - 2/3 width */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Package Type */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="theme-card rounded-2xl p-6"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-purple-50 rounded-lg">
+                  <Package className="h-5 w-5 text-purple-600" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Type de Colis</h2>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPackageType('normal');
+                    setSelectedSpecialItem(null);
+                  }}
+                  className={`p-4 border-2 rounded-xl transition-all ${
+                    packageType === 'normal'
+                      ? 'border-primary-500 bg-primary-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <Package className="h-8 w-8 mx-auto mb-2 text-gray-700" />
+                  <p className="font-semibold text-gray-900">Colis Normal</p>
+                  <p className="text-xs text-gray-500">Calculé par poids</p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPackageType('special')}
+                  className={`p-4 border-2 rounded-xl transition-all ${
+                    packageType === 'special'
+                      ? 'border-primary-500 bg-primary-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <Package className="h-8 w-8 mx-auto mb-2 text-gray-700" />
+                  <p className="font-semibold text-gray-900">Article Spécial</p>
+                  <p className="text-xs text-gray-500">Prix fixe</p>
+                </button>
+              </div>
+
+              {/* Special Items Grid */}
+              {packageType === 'special' && (
+                <div className="mt-4">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">
+                    Sélectionner un Article
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {specialItems.filter(item => item.isActive).map(item => (
+                      <motion.div
+                        key={item.id}
+                        whileHover={{ scale: 1.02 }}
+                        onClick={() => setSelectedSpecialItem(item.id)}
+                        className={`p-3 border-2 rounded-xl cursor-pointer transition-all ${
+                          selectedSpecialItem === item.id
+                            ? 'border-primary-500 bg-primary-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <p className="font-semibold text-sm text-center text-gray-900">
+                          {item.itemName}
+                        </p>
+                        <p className="text-xs text-gray-500 text-center">{item.brand}</p>
+                        <p className="text-lg font-bold text-primary-600 text-center mt-1">
+                          ${parseFloat(item.fixedFee).toFixed(2)}
+                        </p>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* Charge by Weight Checkbox */}
+                  {selectedSpecialItem && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={chargeByWeight}
+                          onChange={(e) => setChargeByWeight(e.target.checked)}
+                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">
+                          Charger aussi par poids (lbs)
+                        </span>
+                      </label>
+                      <p className="text-xs text-gray-500 mt-1 ml-6">
+                        Si coché: Prix = Fixe + Service Fee + (Poids × Tarif/lb)
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+
             {/* Tracking & Category */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
               className="theme-card rounded-2xl p-6"
             >
               <div className="flex items-center gap-3 mb-6">

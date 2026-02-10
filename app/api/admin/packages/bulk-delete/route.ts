@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { packages, trackingHistory, adminActivityLogs, packageRequests } from '@/lib/db/schema';
+import {
+  packages,
+  trackingHistory,
+  adminActivityLogs,
+  packageRequests,
+  packageTransfers,
+  notifications,
+  deliveryProof,
+  revenueRecords
+} from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
 import { eq, inArray } from 'drizzle-orm';
 
@@ -38,12 +47,41 @@ export async function POST(request: NextRequest) {
         .from(packages)
         .where(inArray(packages.id, realPackageIds));
 
-      // Delete tracking history first (foreign key constraint)
+      // Delete ALL related records first (foreign key constraints)
+      // Order matters: delete in reverse order of dependencies
+
+      // 1. Delete notifications
+      await db
+        .delete(notifications)
+        .where(inArray(notifications.packageId, realPackageIds));
+
+      // 2. Delete delivery proofs
+      await db
+        .delete(deliveryProof)
+        .where(inArray(deliveryProof.packageId, realPackageIds));
+
+      // 3. Delete revenue records
+      await db
+        .delete(revenueRecords)
+        .where(inArray(revenueRecords.packageId, realPackageIds));
+
+      // 4. Delete package transfers
+      await db
+        .delete(packageTransfers)
+        .where(inArray(packageTransfers.packageId, realPackageIds));
+
+      // 5. Delete tracking history
       await db
         .delete(trackingHistory)
         .where(inArray(trackingHistory.packageId, realPackageIds));
 
-      // Delete packages
+      // 6. Update package requests (set packageId to null instead of deleting)
+      await db
+        .update(packageRequests)
+        .set({ packageId: null })
+        .where(inArray(packageRequests.packageId, realPackageIds));
+
+      // 7. Finally delete packages
       await db.delete(packages).where(inArray(packages.id, realPackageIds));
 
       deletedCount += packagesToDelete.length;
@@ -103,10 +141,20 @@ export async function POST(request: NextRequest) {
       success: true,
       deleted: deletedCount,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error bulk deleting packages:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      stack: error.stack,
+    });
     return NextResponse.json(
-      { error: 'Failed to delete packages' },
+      {
+        error: 'Failed to delete packages',
+        details: error.message,
+        code: error.code,
+      },
       { status: 500 }
     );
   }
