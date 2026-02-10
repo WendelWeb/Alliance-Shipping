@@ -624,7 +624,7 @@ export default function PackagesScreen() {
                   <Text style={[styles.fieldLabel, { fontFamily: fonts.semiBold, color: colors.gray[700], marginBottom: spacing.sm }]}>
                     {'\uD83D\uDCE6'} {t.requestPackage.fields.packageType.label} *
                   </Text>
-                  <View style={{ flexDirection: 'row', gap: spacing.md }]}>
+                  <View style={{ flexDirection: 'row', gap: spacing.md }}>
                     <TouchableOpacity
                       onPress={() => {
                         setPackageType('normal');
