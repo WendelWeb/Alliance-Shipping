@@ -309,35 +309,43 @@ export default function NewPackagePage() {
                 <h2 className="text-xl font-bold text-gray-900">Type de Colis</h2>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
                   onClick={() => {
                     setPackageType('normal');
                     setSelectedSpecialItem(null);
+                    setChargeByWeight(false); // ⭐ Reset charge by weight
                   }}
                   className={`p-4 border-2 rounded-xl transition-all ${
                     packageType === 'normal'
-                      ? 'border-primary-500 bg-primary-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-primary-500 bg-primary-50 shadow-md'
+                      : 'border-gray-200 hover:border-gray-300 bg-white'
                   }`}
                 >
-                  <Package className="h-8 w-8 mx-auto mb-2 text-gray-700" />
-                  <p className="font-semibold text-gray-900">Colis Normal</p>
+                  <Package className={`h-8 w-8 mx-auto mb-2 ${packageType === 'normal' ? 'text-primary-600' : 'text-gray-400'}`} />
+                  <p className={`font-semibold ${packageType === 'normal' ? 'text-gray-900' : 'text-gray-600'}`}>
+                    Colis Normal
+                  </p>
                   <p className="text-xs text-gray-500">Calculé par poids</p>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setPackageType('special')}
+                  onClick={() => {
+                    setPackageType('special');
+                    // Don't reset selectedSpecialItem to keep selection if switching back
+                  }}
                   className={`p-4 border-2 rounded-xl transition-all ${
                     packageType === 'special'
-                      ? 'border-primary-500 bg-primary-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-primary-500 bg-primary-50 shadow-md'
+                      : 'border-gray-200 hover:border-gray-300 bg-white'
                   }`}
                 >
-                  <Package className="h-8 w-8 mx-auto mb-2 text-gray-700" />
-                  <p className="font-semibold text-gray-900">Article Spécial</p>
+                  <Package className={`h-8 w-8 mx-auto mb-2 ${packageType === 'special' ? 'text-primary-600' : 'text-gray-400'}`} />
+                  <p className={`font-semibold ${packageType === 'special' ? 'text-gray-900' : 'text-gray-600'}`}>
+                    Article Spécial
+                  </p>
                   <p className="text-xs text-gray-500">Prix fixe</p>
                 </button>
               </div>
