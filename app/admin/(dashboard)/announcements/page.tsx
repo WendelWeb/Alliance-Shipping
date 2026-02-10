@@ -210,7 +210,7 @@ export default function AnnouncementsPage() {
         setCityData(data.cities || []);
       }
       if (['new_special_item', 'modify_special_item', 'remove_special_item'].includes(templateId)) {
-        const res = await fetch('/api/special-items/public');
+        const res = await fetch('/api/admin/special-items');
         const data = await res.json();
         setSpecialItems(data.items || []);
       }
