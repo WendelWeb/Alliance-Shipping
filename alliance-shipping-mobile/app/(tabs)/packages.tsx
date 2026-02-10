@@ -690,7 +690,7 @@ export default function PackagesScreen() {
                     <Text style={[styles.fieldLabel, { fontFamily: fonts.semibold, color: colors.gray[700], marginBottom: spacing.sm }]}>
                       {'\uD83D\uDCF1'} {t.requestPackage.fields.specialItem.label} *
                     </Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md }]}>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md }}>
                       {specialItems.filter((item: any) => item.isActive).map((item: any) => (
                         <TouchableOpacity
                           key={item.id}
