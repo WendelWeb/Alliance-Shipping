@@ -574,36 +574,73 @@ export default function AllPackagesPage() {
                       </div>
                     </div>
 
-                    {/* ⭐ BREAKDOWN DES FRAIS */}
+                    {/* ⭐ BADGE ARTICLE SPÉCIAL - VISIBLE EN HAUT */}
+                    {pkg.specialItemId && (
+                      <div className="mt-3 px-2">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-2 bg-purple-500 text-white rounded-lg text-xs font-bold shadow-md">
+                          <Smartphone className="h-4 w-4" />
+                          📱 ARTICLE SPÉCIAL
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ⭐ BREAKDOWN DES FRAIS - COMPLET ET COHÉRENT */}
                     <div className="mt-3 p-3 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-blue-200">
                       <p className="text-xs font-bold text-gray-700 mb-2 flex items-center gap-1">
                         <DollarSign className="h-3.5 w-3.5" />
                         Détail des Frais
                       </p>
                       <div className="space-y-1.5 text-xs">
+                        {/* Service Fee - TOUJOURS affiché */}
                         <div className="flex justify-between">
                           <span className="text-gray-600">Service Fee:</span>
                           <span className="font-semibold text-gray-900">
                             ${parseFloat(pkg.serviceFee || '0').toFixed(2)}
                           </span>
                         </div>
+
+                        {/* Weight Cost - TOUJOURS affiché */}
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Weight Cost:</span>
+                          <span className="text-gray-600">Weight Cost ({pkg.weight || 0} lbs):</span>
                           <span className="font-semibold text-gray-900">
                             ${parseFloat(pkg.weightCost || '0').toFixed(2)}
                           </span>
                         </div>
-                        {pkg.customsFees && parseFloat(pkg.customsFees) > 0 && (
-                          <div className="flex justify-between text-red-700">
-                            <span className="font-medium">Customs Fees:</span>
+
+                        {/* ⭐ SPECIAL ITEM - Si c'est un article spécial */}
+                        {pkg.specialItemId && (
+                          <div className="flex justify-between text-purple-700 bg-purple-100 -mx-1 px-1 py-1 rounded">
+                            <span className="font-semibold flex items-center gap-1">
+                              <Smartphone className="h-3 w-3" />
+                              Article Spécial (Prix Fixe):
+                            </span>
                             <span className="font-bold">
-                              +${parseFloat(pkg.customsFees).toFixed(2)}
+                              ${(() => {
+                                const total = parseFloat(pkg.totalCost || '0');
+                                const service = parseFloat(pkg.serviceFee || '0');
+                                const weight = parseFloat(pkg.weightCost || '0');
+                                const customs = parseFloat(pkg.customsFees || '0');
+                                const fixedPrice = total - service - weight - customs;
+                                return fixedPrice.toFixed(2);
+                              })()}
                             </span>
                           </div>
                         )}
-                        <div className="flex justify-between pt-1.5 border-t border-blue-300">
-                          <span className="font-bold text-gray-900">TOTAL:</span>
-                          <span className="font-bold text-primary-600 text-sm">
+
+                        {/* Customs Fees - TOUJOURS affiché (même si $0) */}
+                        <div className={`flex justify-between ${parseFloat(pkg.customsFees || '0') > 0 ? 'text-red-700 font-bold' : 'text-gray-600'}`}>
+                          <span className={parseFloat(pkg.customsFees || '0') > 0 ? 'font-semibold' : ''}>
+                            Customs Fees:
+                          </span>
+                          <span className={parseFloat(pkg.customsFees || '0') > 0 ? 'font-bold' : 'font-semibold text-gray-900'}>
+                            {parseFloat(pkg.customsFees || '0') > 0 ? '+' : ''}${parseFloat(pkg.customsFees || '0').toFixed(2)}
+                          </span>
+                        </div>
+
+                        {/* TOTAL */}
+                        <div className="flex justify-between pt-1.5 border-t-2 border-blue-400">
+                          <span className="font-bold text-gray-900 text-sm">TOTAL:</span>
+                          <span className="font-bold text-primary-600 text-base">
                             ${parseFloat(pkg.totalCost || pkg.totalFee || '0').toFixed(2)}
                           </span>
                         </div>
