@@ -58,7 +58,7 @@ interface SpecialItem {
   itemName: string;
   minModel: string | null;
   maxModel: string | null;
-  fixedFee: number;
+  fixedFee: string; // Drizzle returns decimal as string
   description: string | null;
 }
 
@@ -1125,7 +1125,7 @@ export default function AnnouncementsPage() {
                                 </div>
                               </div>
                               <span className="text-lg font-bold text-primary-600">
-                                ${item.fixedFee.toFixed(2)}
+                                ${parseFloat(item.fixedFee).toFixed(2)}
                               </span>
                             </div>
                             {item.description && (
@@ -1291,7 +1291,7 @@ export default function AnnouncementsPage() {
                                 </div>
                               </div>
                               <span className="text-lg font-bold text-primary-600">
-                                ${item.fixedFee.toFixed(2)}
+                                ${parseFloat(item.fixedFee).toFixed(2)}
                               </span>
                             </div>
                             {item.description && (
