@@ -33,6 +33,7 @@ export default function NewPackagePage() {
     description: '',
     status: 'received',
     notes: '',
+    customsFees: '', // ⭐ Nouveau champ optionnel
   });
 
   // User assignment
@@ -140,8 +141,9 @@ export default function NewPackagePage() {
     const weight = parseInt(formData.weight) || 0;
     const serviceFee = currentServiceFee;
     const shippingFee = weight * currentPricePerLb;
-    const total = serviceFee + shippingFee;
-    return { serviceFee, shippingFee, total };
+    const customsFees = parseFloat(formData.customsFees) || 0; // ⭐ Parse customs fees
+    const total = serviceFee + shippingFee + customsFees; // ⭐ Include dans le total
+    return { serviceFee, shippingFee, customsFees, total };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -162,6 +164,7 @@ export default function NewPackagePage() {
           userId: selectedUser?.id || undefined, // Assign to specific user if selected
           specialItemId: packageType === 'special' ? selectedSpecialItem : undefined,
           chargeByWeight: packageType === 'special' ? chargeByWeight : undefined,
+          customsFees: formData.customsFees || undefined, // ⭐ Include customs fees if provided
         }),
       });
 
@@ -572,6 +575,29 @@ export default function NewPackagePage() {
                     />
                   </div>
                 </div>
+
+                {/* ⭐ Customs Fees Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Frais de douane (Optionnel)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                    <input
+                      type="number"
+                      name="customsFees"
+                      value={formData.customsFees}
+                      onChange={handleChange}
+                      min="0"
+                      step="0.01"
+                      className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    À ajouter si des frais de douane sont déjà connus
+                  </p>
+                </div>
               </div>
             </motion.div>
           </div>
@@ -616,6 +642,16 @@ export default function NewPackagePage() {
                       ${fees.shippingFee.toFixed(2)}
                     </span>
                   </div>
+
+                  {/* ⭐ Customs Fees Display */}
+                  {fees.customsFees > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Frais de douane:</span>
+                      <span className="text-sm font-medium text-red-600">
+                        +${fees.customsFees.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
 
                   <div className="pt-3 border-t border-gray-200">
                     <div className="flex justify-between items-center">

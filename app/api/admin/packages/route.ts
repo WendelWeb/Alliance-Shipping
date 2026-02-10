@@ -214,6 +214,7 @@ export async function POST(request: NextRequest) {
       specialInstructions,
       specialItemId,
       chargeByWeight,
+      customsFees, // ⭐ Accept customs fees from frontend
     } = body;
 
     // Get Alliance Shipping user ID for reference
@@ -376,7 +377,7 @@ export async function POST(request: NextRequest) {
         specialInstructions: specialInstructions?.trim() || null,
         specialItemId: specialItemId ? parseInt(specialItemId) : null,
         chargeByWeight: chargeByWeight || false,
-        customsFees: '0.00',
+        customsFees: customsFees ? parseFloat(customsFees).toFixed(2) : '0.00', // ⭐ Use provided value or default
       })
       .returning();
 
