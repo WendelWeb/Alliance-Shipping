@@ -435,6 +435,99 @@ export default function AnnouncementsPage() {
     setSubmitting(true);
 
     try {
+      // ⭐ Handle special item actions DIRECTLY (not via announcements)
+      if (selectedTemplate.id === 'new_special_item') {
+        // Create new special item
+        const response = await fetch('/api/admin/special-items', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            category: specialItemForm.category,
+            brand: specialItemForm.brand,
+            itemName: specialItemForm.itemName,
+            minModel: specialItemForm.minModel || undefined,
+            maxModel: specialItemForm.maxModel || undefined,
+            fixedFee: parseFloat(specialItemForm.fixedFee),
+            description: specialItemForm.description || undefined,
+            isActive: true,
+          }),
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Failed to create special item');
+        }
+
+        alert('✅ Article spécial créé avec succès!');
+        setView('list');
+        setSelectedTemplate(null);
+        refresh();
+        setSubmitting(false);
+        return;
+      }
+
+      if (selectedTemplate.id === 'modify_special_item') {
+        // Modify existing special item
+        if (!selectedItemId) {
+          alert('Veuillez sélectionner un article à modifier');
+          setSubmitting(false);
+          return;
+        }
+
+        const response = await fetch(`/api/admin/special-items/${selectedItemId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            category: modifyItemForm.category,
+            brand: modifyItemForm.brand,
+            itemName: modifyItemForm.itemName,
+            minModel: modifyItemForm.minModel || undefined,
+            maxModel: modifyItemForm.maxModel || undefined,
+            fixedFee: parseFloat(modifyItemForm.fixedFee),
+            description: modifyItemForm.description || undefined,
+          }),
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Failed to update special item');
+        }
+
+        alert('✅ Article spécial modifié avec succès!');
+        setView('list');
+        setSelectedTemplate(null);
+        refresh();
+        setSubmitting(false);
+        return;
+      }
+
+      if (selectedTemplate.id === 'remove_special_item') {
+        // Delete/deactivate special item
+        if (!selectedItemId) {
+          alert('Veuillez sélectionner un article à supprimer');
+          setSubmitting(false);
+          return;
+        }
+
+        const response = await fetch(`/api/admin/special-items/${selectedItemId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Failed to delete special item');
+        }
+
+        alert('✅ Article spécial désactivé avec succès!');
+        setView('list');
+        setSelectedTemplate(null);
+        refresh();
+        setSubmitting(false);
+        return;
+      }
+
+      // ⭐ Continue with normal announcement flow for other templates
       const isAction = selectedTemplate.isAction;
       const actionPayload = isAction ? buildActionPayload() : null;
 
