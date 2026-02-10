@@ -49,6 +49,7 @@ interface PackageItem {
   category: string;
   createdAt: string;
   customsFees?: number; // ⭐ Customs fees
+  specialItemId?: number; // ⭐ Special item ID
   timeline: TimelineEvent[];
 }
 
@@ -326,6 +327,30 @@ export function PackageCard({ item, index }: PackageCardProps) {
         >
           {item.description}
         </Text>
+
+        {/* ⭐ Special Item Badge */}
+        {item.specialItemId && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              alignSelf: 'flex-start',
+              backgroundColor: colors.purple[100],
+              borderColor: colors.purple[200],
+              borderWidth: 1,
+              borderRadius: borderRadius.md,
+              paddingHorizontal: spacing.sm,
+              paddingVertical: spacing.xs,
+              marginBottom: spacing.sm,
+              gap: spacing.xs,
+            }}
+          >
+            <Smartphone size={12} color={colors.purple[700]} />
+            <Text style={{ fontFamily: fonts.semibold, fontSize: 11, color: colors.purple[800] }}>
+              {(t as any).packages?.specialItem || 'Article Spécial'}
+            </Text>
+          </View>
+        )}
 
         {/* ⭐ Customs Fees Alert (if > 0) */}
         {item.customsFees && item.customsFees > 0 && (

@@ -56,6 +56,7 @@ interface PackageItem {
   createdAt: string;
   currentLocation?: string;
   customsFees?: number; // ⭐ Customs fees
+  specialItemId?: number; // ⭐ Special item ID
   timeline: TimelineEvent[];
 }
 
