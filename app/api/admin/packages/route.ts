@@ -70,6 +70,8 @@ export async function GET(request: NextRequest) {
         totalCost: packages.totalCost,
         customsFees: packages.customsFees, // ⭐ Customs fees
         specialItemId: packages.specialItemId, // ⭐ Special item ID
+        specialItemName: specialItemFees.itemName, // ⭐ Special item name
+        specialItemBrand: specialItemFees.brand, // ⭐ Special item brand
         chargeByWeight: packages.chargeByWeight, // ⭐ Charge by weight flag
         currency: packages.currency,
         status: packages.status,
@@ -95,6 +97,7 @@ export async function GET(request: NextRequest) {
       .from(packages)
       .leftJoin(users, eq(packages.userId, users.id))
       .leftJoin(warehouses, eq(users.warehouseId, warehouses.id))
+      .leftJoin(specialItemFees, eq(packages.specialItemId, specialItemFees.id))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(packages.createdAt))
       .limit(limit)

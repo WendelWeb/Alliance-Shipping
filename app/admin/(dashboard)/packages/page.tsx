@@ -579,8 +579,17 @@ export default function AllPackagesPage() {
                       <div className="mt-3 px-2">
                         <div className="inline-flex items-center gap-1.5 px-3 py-2 bg-purple-500 text-white rounded-lg text-xs font-bold shadow-md">
                           <Smartphone className="h-4 w-4" />
-                          📱 ARTICLE SPÉCIAL
+                          📱 {pkg.specialItemBrand ? `${pkg.specialItemBrand} ` : ''}{pkg.specialItemName || 'ARTICLE SPÉCIAL'}
                         </div>
+                      </div>
+                    )}
+
+                    {/* ⭐ CATÉGORIE DU COLIS */}
+                    {pkg.category && (
+                      <div className="mt-2 px-2">
+                        <span className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium">
+                          📦 Catégorie: <span className="ml-1 font-bold">{pkg.category}</span>
+                        </span>
                       </div>
                     )}
 
