@@ -20,7 +20,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 import AddCustomsFeesModal from '@/components/admin/AddCustomsFeesModal';
-import { Toast } from '@/components/Toast';
+import { useToast } from '@/components/admin/Toast';
 
 interface InTransitPackage {
   id: number;
@@ -44,6 +44,7 @@ interface InTransitPackage {
 }
 
 export default function InTransitPackagesPage() {
+  const toast = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPackages, setSelectedPackages] = useState<number[]>([]);
   const [editingLocation, setEditingLocation] = useState<number | null>(null);
@@ -632,7 +633,7 @@ export default function InTransitPackagesPage() {
           }}
           onSuccess={() => {
             refresh();
-            Toast.success('Frais ajoutés avec succès', 'Email envoyé au client');
+            toast.success('Frais ajoutés avec succès', 'Email envoyé au client');
           }}
         />
       )}

@@ -21,7 +21,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import AddCustomsFeesModal from '@/components/admin/AddCustomsFeesModal';
-import { Toast } from '@/components/Toast';
+import { useToast } from '@/components/admin/Toast';
 
 interface DeliveredPackage {
   id: number;
@@ -56,6 +56,7 @@ const paymentMethodColors = {
 };
 
 export default function DeliveredPackagesPage() {
+  const toast = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPackages, setSelectedPackages] = useState<number[]>([]);
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
@@ -714,7 +715,7 @@ export default function DeliveredPackagesPage() {
           }}
           onSuccess={() => {
             refresh();
-            Toast.success('Frais ajoutés avec succès', 'Email envoyé au client');
+            toast.success('Frais ajoutés avec succès', 'Email envoyé au client');
           }}
         />
       )}

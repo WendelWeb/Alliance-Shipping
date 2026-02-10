@@ -22,7 +22,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import AddCustomsFeesModal from '@/components/admin/AddCustomsFeesModal';
-import { Toast } from '@/components/Toast';
+import { useToast } from '@/components/admin/Toast';
 
 interface AvailablePackage {
   id: number;
@@ -46,6 +46,7 @@ interface AvailablePackage {
 }
 
 export default function AvailablePackagesPage() {
+  const toast = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPackages, setSelectedPackages] = useState<number[]>([]);
   const [filterPaid, setFilterPaid] = useState<'all' | 'paid' | 'unpaid'>('all');
@@ -642,7 +643,7 @@ export default function AvailablePackagesPage() {
           }}
           onSuccess={() => {
             refresh();
-            Toast.success('Frais ajoutés avec succès', 'Email envoyé au client');
+            toast.success('Frais ajoutés avec succès', 'Email envoyé au client');
           }}
         />
       )}
