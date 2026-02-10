@@ -55,6 +55,7 @@ interface PackageItem {
   category: string;
   createdAt: string;
   currentLocation?: string;
+  customsFees?: number; // ⭐ Customs fees
   timeline: TimelineEvent[];
 }
 
@@ -239,7 +240,6 @@ export default function PackagesScreen() {
 
   const resetRequestForm = useCallback(() => {
     setTrackingNumber('');
-    setSelectedCity('');
     setDescription('');
     setCategory('');
     setCustomerNotes('');
@@ -691,37 +691,47 @@ export default function PackagesScreen() {
                       {'\uD83D\uDCF1'} {t.requestPackage.fields.specialItem.label} *
                     </Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md }}>
-                      {specialItems.filter((item: any) => item.isActive).map((item: any) => (
-                        <TouchableOpacity
-                          key={item.id}
-                          onPress={() => {
-                            setSelectedSpecialItem(item.id);
-                            setRequestError('');
-                          }}
-                          style={[
-                            {
-                              width: '48%',
-                              borderWidth: 2,
-                              borderColor: selectedSpecialItem === item.id ? colors.primary[500] : card.borderColor,
-                              backgroundColor: selectedSpecialItem === item.id ? colors.primary[50] : card.backgroundColor,
-                              borderRadius: borderRadius.md,
-                              padding: spacing.md,
-                              alignItems: 'center',
-                            },
-                          ]}
-                          activeOpacity={0.7}
-                        >
-                          <Text style={[{ fontFamily: fonts.semibold, fontSize: 14, textAlign: 'center', color: colors.gray[900] }]}>
-                            {item.itemName}
-                          </Text>
-                          <Text style={[{ fontSize: 12, color: colors.gray[500], marginTop: spacing.xs }]}>
-                            {item.brand}
-                          </Text>
-                          <Text style={[{ fontSize: 16, fontFamily: fonts.bold, color: colors.primary[600], marginTop: spacing.xs }]}>
-                            ${parseFloat(item.fixedFee).toFixed(2)}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
+                      {specialItems.filter((item: any) => item.isActive).map((item: any) => {
+                        // Format display name with model range
+                        const getLocalizedName = (item: any) => {
+                          const localizedName = item[`itemName_${locale}`] || item.itemName;
+                          if (item.minModel && item.maxModel) {
+                            return `${localizedName} ${item.minModel}-${item.maxModel}`;
+                          } else if (item.minModel) {
+                            return `${localizedName} ${item.minModel}+`;
+                          }
+                          return localizedName;
+                        };
+
+                        return (
+                          <TouchableOpacity
+                            key={item.id}
+                            onPress={() => {
+                              setSelectedSpecialItem(item.id);
+                              setRequestError('');
+                            }}
+                            style={[
+                              {
+                                width: '48%',
+                                borderWidth: 2,
+                                borderColor: selectedSpecialItem === item.id ? colors.primary[500] : card.borderColor,
+                                backgroundColor: selectedSpecialItem === item.id ? colors.primary[50] : card.backgroundColor,
+                                borderRadius: borderRadius.md,
+                                padding: spacing.md,
+                                alignItems: 'center',
+                              },
+                            ]}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={[{ fontFamily: fonts.semibold, fontSize: 14, textAlign: 'center', color: colors.gray[900] }]}>
+                              {getLocalizedName(item)}
+                            </Text>
+                            <Text style={[{ fontSize: 12, color: colors.gray[500], marginTop: spacing.xs }]}>
+                              {item.brand}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
                     </View>
                   </View>
                 )}

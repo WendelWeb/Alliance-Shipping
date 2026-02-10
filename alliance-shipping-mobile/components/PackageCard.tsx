@@ -22,6 +22,7 @@ import {
   MapPin,
   Calendar,
   Weight,
+  AlertTriangle,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/themes/ThemeProvider';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -47,6 +48,7 @@ interface PackageItem {
   status: string;
   category: string;
   createdAt: string;
+  customsFees?: number; // ⭐ Customs fees
   timeline: TimelineEvent[];
 }
 
@@ -324,6 +326,33 @@ export function PackageCard({ item, index }: PackageCardProps) {
         >
           {item.description}
         </Text>
+
+        {/* ⭐ Customs Fees Alert (if > 0) */}
+        {item.customsFees && item.customsFees > 0 && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: colors.red[50],
+              borderColor: colors.red[200],
+              borderWidth: 1,
+              borderRadius: borderRadius.md,
+              padding: spacing.sm,
+              marginBottom: spacing.sm,
+              gap: spacing.xs,
+            }}
+          >
+            <AlertTriangle size={14} color={colors.red[600]} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: fonts.semibold, fontSize: 11, color: colors.red[900] }}>
+                {t.packages.customsFees || 'Frais de douane'}
+              </Text>
+              <Text style={{ fontFamily: fonts.bold, fontSize: 13, color: colors.red[700] }}>
+                +${item.customsFees.toFixed(2)}
+              </Text>
+            </View>
+          </View>
+        )}
 
         {/* Bottom row: weight, category, date, expand chevron */}
         <View style={styles.bottomRow}>
