@@ -154,6 +154,11 @@ export default function CalculatorScreen() {
     return acc;
   }, {} as Record<string, SpecialItem[]>);
 
+  // Scroll content style with dynamic bottom padding
+  const scrollContentStyle = {
+    paddingBottom: Math.max(100, insets.bottom + 80), // Account for tab bar + safe area
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -170,7 +175,7 @@ export default function CalculatorScreen() {
   if (!isAuthenticated || !userCity) {
     return (
       <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={scrollContentStyle}>
           {/* Header */}
           <Animated.View entering={FadeInDown.duration(500)}>
             <LinearGradient
@@ -224,7 +229,7 @@ export default function CalculatorScreen() {
   // Authenticated - Show calculator
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={scrollContentStyle}>
         {/* Header */}
         <Animated.View entering={FadeInDown.duration(500)}>
           <LinearGradient
@@ -479,9 +484,6 @@ export default function CalculatorScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 40,
   },
   headerCard: {
     overflow: 'hidden',
