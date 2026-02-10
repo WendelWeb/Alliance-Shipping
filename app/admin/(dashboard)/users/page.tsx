@@ -586,7 +586,8 @@ export default function UsersPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleOpenAddPackage(user);
+                      // ⭐ Redirect to new package page with user pre-selected
+                      router.push(`/admin/packages/new?userId=${user.dbId}`);
                     }}
                     title="Ajouter un colis"
                     className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 bg-green-50 text-green-700 text-sm font-medium rounded-xl hover:bg-green-100 transition-colors border border-green-100 hover:border-green-200"

@@ -39,14 +39,20 @@ export default function NewPackagePage() {
   // User assignment
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [allUsers, setAllUsers] = useState<any[]>([]); // ⭐ Store all users
   const [userSearchResults, setUserSearchResults] = useState<any[]>([]);
   const [userSearchLoading, setUserSearchLoading] = useState(false);
+  const [usersInitialLoading, setUsersInitialLoading] = useState(true); // ⭐ Initial load state
 
   // Special items
   const [packageType, setPackageType] = useState<'normal' | 'special'>('normal');
   const [specialItems, setSpecialItems] = useState<any[]>([]);
   const [selectedSpecialItem, setSelectedSpecialItem] = useState<number | null>(null);
   const [chargeByWeight, setChargeByWeight] = useState(false);
+
+  // ⭐ Tracking validation
+  const [trackingValidation, setTrackingValidation] = useState<any>(null);
+  const [validatingTracking, setValidatingTracking] = useState(false);
 
   // Fetch default pricing on mount (Alliance Shipping account = default city pricing)
   useEffect(() => {
@@ -80,6 +86,36 @@ export default function NewPackagePage() {
       });
   }, []);
 
+  // ⭐ Fetch ALL users on mount (for better search UX)
+  useEffect(() => {
+    setUsersInitialLoading(true);
+    fetch('/api/admin/users?limit=1000') // Fetch up to 1000 users
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setAllUsers(data.users || []);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching users:', error);
+      })
+      .finally(() => {
+        setUsersInitialLoading(false);
+      });
+  }, []);
+
+  // ⭐ Check for pre-selected user from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const userIdParam = params.get('userId');
+    if (userIdParam && allUsers.length > 0) {
+      const preSelectedUser = allUsers.find(u => u.dbId?.toString() === userIdParam || u.id === userIdParam);
+      if (preSelectedUser) {
+        setSelectedUser(preSelectedUser);
+      }
+    }
+  }, [allUsers]);
+
   // Update pricing when user is selected
   useEffect(() => {
     if (selectedUser && selectedUser.city) {
@@ -103,31 +139,60 @@ export default function NewPackagePage() {
     }
   }, [selectedUser]);
 
-  // Search users with debounce
+  // ⭐ Filter users client-side (faster and more reliable)
+  useEffect(() => {
+    if (userSearchQuery.trim().length >= 2) {
+      const query = userSearchQuery.toLowerCase();
+      const filtered = allUsers.filter(user => {
+        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
+        const email = (user.email || '').toLowerCase();
+        const phone = (user.phone || '').toLowerCase();
+        return fullName.includes(query) || email.includes(query) || phone.includes(query);
+      }).slice(0, 10); // Show max 10 results
+      setUserSearchResults(filtered);
+    } else {
+      setUserSearchResults([]);
+    }
+  }, [userSearchQuery, allUsers]);
+
+  // ⭐ Validate tracking number in real-time with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (userSearchQuery.trim().length >= 2) {
-        setUserSearchLoading(true);
-        fetch(`/api/admin/users?search=${encodeURIComponent(userSearchQuery.trim())}&limit=5`)
+      const tracking = formData.externalTrackingNumber.trim();
+      if (tracking.length >= 5) {
+        setValidatingTracking(true);
+        fetch(`/api/admin/packages/validate-tracking?tracking=${encodeURIComponent(tracking)}`)
           .then(res => res.json())
           .then(data => {
-            if (data.success) {
-              setUserSearchResults(data.users || []);
+            setTrackingValidation(data);
+            // Auto-fill transfer info if available
+            if (data.canTransfer && data.transferInfo) {
+              const transferUser = allUsers.find(u => u.dbId === data.transferInfo.userId);
+              if (transferUser) {
+                setSelectedUser(transferUser);
+              }
+              // Auto-fill description and category if not already set
+              if (!formData.description && data.transferInfo.description) {
+                setFormData(prev => ({ ...prev, description: data.transferInfo.description }));
+              }
+              if (!formData.category || formData.category === 'general') {
+                setFormData(prev => ({ ...prev, category: data.transferInfo.category || 'general' }));
+              }
             }
           })
           .catch(error => {
-            console.error('Error searching users:', error);
+            console.error('Error validating tracking:', error);
           })
           .finally(() => {
-            setUserSearchLoading(false);
+            setValidatingTracking(false);
           });
       } else {
-        setUserSearchResults([]);
+        setTrackingValidation(null);
       }
-    }, 500);
+    }, 800);
 
     return () => clearTimeout(timer);
-  }, [userSearchQuery]);
+  }, [formData.externalTrackingNumber, allUsers]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -343,7 +408,7 @@ export default function NewPackagePage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Numero de Tracking Externe *
                   </label>
@@ -356,6 +421,59 @@ export default function NewPackagePage() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                     placeholder="Ex: 1Z999AA10123456784"
                   />
+
+                  {/* ⭐ Tracking Validation Feedback */}
+                  {validatingTracking && (
+                    <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+                      <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-primary-600 rounded-full" />
+                      Vérification du tracking...
+                    </div>
+                  )}
+
+                  {!validatingTracking && trackingValidation && (
+                    <>
+                      {/* Tracking available */}
+                      {!trackingValidation.exists && (
+                        <div className="mt-2 flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-green-900">Tracking disponible</p>
+                            <p className="text-xs text-green-700">Ce numéro peut être utilisé</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Package already exists */}
+                      {trackingValidation.exists && trackingValidation.type === 'package' && (
+                        <div className="mt-2 flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                          <XCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-red-900">Tracking déjà utilisé</p>
+                            <p className="text-xs text-red-700">
+                              Colis #{trackingValidation.package.id} - {trackingValidation.package.status}
+                              {trackingValidation.package.userName && ` (${trackingValidation.package.userName})`}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Pending request - can transfer */}
+                      {trackingValidation.exists && trackingValidation.type === 'request' && trackingValidation.canTransfer && (
+                        <div className="mt-2 flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-blue-900">Requête pendante détectée</p>
+                            <p className="text-xs text-blue-700">
+                              ✅ User: {trackingValidation.request.userName}
+                            </p>
+                            <p className="text-xs text-blue-600 mt-1">
+                              Le colis sera automatiquement transféré à cet utilisateur
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 <div>
@@ -436,12 +554,13 @@ export default function NewPackagePage() {
                       value={userSearchQuery}
                       onChange={(e) => setUserSearchQuery(e.target.value)}
                       placeholder="Nom, email, téléphone..."
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      disabled={usersInitialLoading}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-gray-100"
                     />
                   </div>
 
-                  {userSearchLoading && (
-                    <div className="mt-2 text-sm text-gray-500">Recherche...</div>
+                  {usersInitialLoading && (
+                    <div className="mt-2 text-sm text-gray-500">Chargement des utilisateurs...</div>
                   )}
 
                   {userSearchResults.length > 0 && (
