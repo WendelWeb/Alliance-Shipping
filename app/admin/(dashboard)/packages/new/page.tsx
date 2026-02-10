@@ -93,8 +93,10 @@ export default function NewPackagePage() {
     fetch('/api/admin/users?limit=1000') // Fetch up to 1000 users
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          setAllUsers(data.users || []);
+        // ⭐ API returns { users: [...] } directly (no success field)
+        if (data.users && Array.isArray(data.users)) {
+          setAllUsers(data.users);
+          console.log('✅ Loaded users:', data.users.length);
         }
       })
       .catch(error => {
@@ -110,9 +112,16 @@ export default function NewPackagePage() {
     const params = new URLSearchParams(window.location.search);
     const userIdParam = params.get('userId');
     if (userIdParam && allUsers.length > 0) {
-      const preSelectedUser = allUsers.find(u => u.dbId?.toString() === userIdParam || u.id === userIdParam);
+      // Try to find by dbId (database ID) first, then by Clerk ID
+      const preSelectedUser = allUsers.find(u =>
+        u.dbId?.toString() === userIdParam ||
+        u.id?.toString() === userIdParam
+      );
       if (preSelectedUser) {
         setSelectedUser(preSelectedUser);
+        console.log('✅ Pre-selected user:', preSelectedUser.firstName, preSelectedUser.lastName);
+      } else {
+        console.warn('⚠️ User not found with ID:', userIdParam);
       }
     }
   }, [allUsers]);
