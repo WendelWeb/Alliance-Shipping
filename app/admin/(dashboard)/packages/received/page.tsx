@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { useCachedFetch } from '@/hooks/useAdminCache';
 import { motion } from 'framer-motion';
 import { useToast } from '@/components/admin/Toast';
+import AddCustomsFeesModal from '@/components/admin/AddCustomsFeesModal'; // ⭐ Import modal
 import {
   Search,
   Filter,
@@ -20,6 +21,7 @@ import {
   Smartphone,
   Loader2,
   RefreshCw,
+  AlertTriangle, // ⭐ Pour affichage customs fees
 } from 'lucide-react';
 
 interface ReceivedPackage {
@@ -40,6 +42,7 @@ interface ReceivedPackage {
   // ✅ ADDED: Fetch from DB instead of calculating with hardcoded values
   serviceFee: number;
   weightCost: number;
+  customsFees: number; // ⭐ Customs fees
   totalCost: number;
 }
 
@@ -52,6 +55,9 @@ export default function ReceivedPackagesPage() {
   const [newStatus, setNewStatus] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [processingIds, setProcessingIds] = useState<number[]>([]);
+  // ⭐ Customs fees modal state
+  const [showCustomsModal, setShowCustomsModal] = useState(false);
+  const [selectedPackageForCustoms, setSelectedPackageForCustoms] = useState<ReceivedPackage | null>(null);
 
   const fetchPackages = useCallback(async () => {
     const response = await fetch('/api/admin/packages?status=received');
@@ -81,6 +87,7 @@ export default function ReceivedPackagesPage() {
       // ✅ ADDED: Extract actual fees from DB
       serviceFee: parseFloat(pkg.serviceFee) || 0,
       weightCost: parseFloat(pkg.weightCost) || 0,
+      customsFees: parseFloat(pkg.customsFees) || 0, // ⭐ Extract customs fees
       totalCost: parseFloat(pkg.totalCost) || 0,
     }));
 
@@ -372,6 +379,13 @@ export default function ReceivedPackagesPage() {
                         <span className="text-gray-600">Shipping Fee:</span>
                         <span className="font-medium">${pkg.weightCost.toFixed(2)}</span>
                       </div>
+                      {/* ⭐ Customs Fees Display - Always visible */}
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Customs Fees:</span>
+                        <span className={`font-medium ${pkg.customsFees > 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                          ${pkg.customsFees.toFixed(2)}
+                        </span>
+                      </div>
                       <div className="flex justify-between pt-2 border-t border-green-200">
                         <span className="font-semibold text-gray-900">Total:</span>
                         <span className="font-bold text-green-600">
@@ -429,6 +443,17 @@ export default function ReceivedPackagesPage() {
                   <button className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
                     <Edit className="h-4 w-4" />
                     Edit Details
+                  </button>
+                  {/* ⭐ Customs Fees Button */}
+                  <button
+                    onClick={() => {
+                      setSelectedPackageForCustoms(pkg);
+                      setShowCustomsModal(true);
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-red-300 text-red-700 font-medium rounded-lg hover:bg-red-50 transition-colors"
+                  >
+                    <AlertTriangle className="h-4 w-4" />
+                    {pkg.customsFees > 0 ? 'Modifier Douane' : 'Ajouter Douane'}
                   </button>
                   {pkg.photos.length === 0 && (
                     <button className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
@@ -594,6 +619,26 @@ export default function ReceivedPackagesPage() {
         </div>
         );
       })()}
+
+      {/* ⭐ Customs Fees Modal */}
+      {selectedPackageForCustoms && (
+        <AddCustomsFeesModal
+          isOpen={showCustomsModal}
+          onClose={() => {
+            setShowCustomsModal(false);
+            setSelectedPackageForCustoms(null);
+          }}
+          packageData={{
+            id: selectedPackageForCustoms.id,
+            trackingNumber: selectedPackageForCustoms.trackingNumber,
+            totalCost: selectedPackageForCustoms.totalCost.toString(),
+          }}
+          onSuccess={() => {
+            refresh();
+            setSelectedPackageForCustoms(null);
+          }}
+        />
+      )}
     </div>
   );
 }

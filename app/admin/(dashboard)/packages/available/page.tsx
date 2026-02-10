@@ -19,7 +19,10 @@ import {
   FileText,
   Loader2,
   RefreshCw,
+  AlertTriangle,
 } from 'lucide-react';
+import AddCustomsFeesModal from '@/components/admin/AddCustomsFeesModal';
+import { Toast } from '@/components/Toast';
 
 interface AvailablePackage {
   id: number;
@@ -31,6 +34,8 @@ interface AvailablePackage {
   destination: string;
   weight: number;
   totalFee: number;
+  customsFees: number; // ⭐ Customs fees
+  totalCost: number; // ⭐ Total cost for modal
   arrivedAt: string;
   availableSince: string;
   pickupLocation: string;
@@ -48,6 +53,8 @@ export default function AvailablePackagesPage() {
   const [newStatus, setNewStatus] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [processingIds, setProcessingIds] = useState<number[]>([]);
+  const [showCustomsModal, setShowCustomsModal] = useState(false);
+  const [selectedPackageForCustoms, setSelectedPackageForCustoms] = useState<AvailablePackage | null>(null);
 
   const fetchPackages = useCallback(async (): Promise<AvailablePackage[]> => {
     const response = await fetch('/api/admin/packages?status=available');
@@ -69,6 +76,8 @@ export default function AvailablePackagesPage() {
       destination: pkg.user?.city || '-',
       weight: parseFloat(pkg.weight) || 0,
       totalFee: parseFloat(pkg.totalCost) || 0,
+      customsFees: parseFloat(pkg.customsFees) || 0, // ⭐ Extract customs fees
+      totalCost: parseFloat(pkg.totalCost) || 0, // ⭐ For modal
       arrivedAt: pkg.updatedAt,
       availableSince: pkg.updatedAt,
       pickupLocation: `${pkg.user?.city || 'Haiti'} Office`,
@@ -367,6 +376,13 @@ export default function AvailablePackagesPage() {
                       Fee: <span className="font-semibold">${pkg.totalFee.toFixed(2)}</span>
                     </span>
                   </div>
+                  {/* ⭐ Customs Fees Display */}
+                  <div className="flex items-center gap-2 text-sm">
+                    <AlertTriangle className={`h-4 w-4 ${pkg.customsFees > 0 ? 'text-red-600' : 'text-gray-400'}`} />
+                    <span className="text-gray-600">
+                      Customs: <span className={`font-medium ${pkg.customsFees > 0 ? 'text-red-600' : 'text-gray-500'}`}>${pkg.customsFees.toFixed(2)}</span>
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -422,6 +438,17 @@ export default function AvailablePackagesPage() {
                 <button className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
                   <FileText className="h-4 w-4" />
                   View Details
+                </button>
+                {/* ⭐ Customs Fees Button */}
+                <button
+                  onClick={() => {
+                    setSelectedPackageForCustoms(pkg);
+                    setShowCustomsModal(true);
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 border border-red-300 text-red-700 font-medium rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  <AlertTriangle className="h-4 w-4" />
+                  {pkg.customsFees > 0 ? 'Modifier Douane' : 'Ajouter Douane'}
                 </button>
               </div>
             </div>
@@ -599,6 +626,26 @@ export default function AvailablePackagesPage() {
         </div>
         );
       })()}
+
+      {/* ⭐ Customs Fees Modal */}
+      {showCustomsModal && selectedPackageForCustoms && (
+        <AddCustomsFeesModal
+          isOpen={showCustomsModal}
+          onClose={() => {
+            setShowCustomsModal(false);
+            setSelectedPackageForCustoms(null);
+          }}
+          packageData={{
+            id: selectedPackageForCustoms.id,
+            trackingNumber: selectedPackageForCustoms.trackingNumber,
+            totalCost: selectedPackageForCustoms.totalCost.toString(),
+          }}
+          onSuccess={() => {
+            refresh();
+            Toast.success('Frais ajoutés avec succès', 'Email envoyé au client');
+          }}
+        />
+      )}
     </div>
   );
 }

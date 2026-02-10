@@ -18,7 +18,10 @@ import {
   Eye,
   Filter,
   RefreshCw,
+  AlertTriangle,
 } from 'lucide-react';
+import AddCustomsFeesModal from '@/components/admin/AddCustomsFeesModal';
+import { Toast } from '@/components/Toast';
 
 interface DeliveredPackage {
   id: number;
@@ -29,6 +32,8 @@ interface DeliveredPackage {
   destination: string;
   weight: number;
   totalFee: number;
+  customsFees: number; // ⭐ Customs fees
+  totalCost: number; // ⭐ Total cost for modal
   deliveredAt: string;
   deliveredBy: string;
   recipientSignature: string | null;
@@ -57,6 +62,8 @@ export default function DeliveredPackagesPage() {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showCustomsModal, setShowCustomsModal] = useState(false);
+  const [selectedPackageForCustoms, setSelectedPackageForCustoms] = useState<DeliveredPackage | null>(null);
 
   const fetchDeliveredPackages = useCallback(async () => {
     const response = await fetch('/api/admin/packages?status=delivered');
@@ -77,6 +84,8 @@ export default function DeliveredPackagesPage() {
       destination: pkg.user?.city || '-',
       weight: parseFloat(pkg.weight) || 0,
       totalFee: parseFloat(pkg.totalCost) || 0,
+      customsFees: parseFloat(pkg.customsFees) || 0, // ⭐ Extract customs fees
+      totalCost: parseFloat(pkg.totalCost) || 0, // ⭐ For modal
       deliveredAt: pkg.actualDelivery || pkg.updatedAt,
       deliveredBy: 'Admin User',
       recipientSignature: null,
@@ -420,6 +429,21 @@ export default function DeliveredPackagesPage() {
                 </div>
               </div>
 
+              {/* ⭐ Customs Fees Display (if > 0) */}
+              {pkg.customsFees > 0 && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                      <span className="text-sm font-medium text-red-900">Frais de douane ajoutés</span>
+                    </div>
+                    <span className="text-lg font-bold text-red-700">
+                      +${pkg.customsFees.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Delivery Proof */}
               <div className="bg-blue-50 rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between mb-2">
@@ -492,6 +516,17 @@ export default function DeliveredPackagesPage() {
                 >
                   <Archive className="h-4 w-4" />
                   Archive
+                </button>
+                {/* ⭐ Customs Fees Button (historique/info uniquement) */}
+                <button
+                  onClick={() => {
+                    setSelectedPackageForCustoms(pkg);
+                    setShowCustomsModal(true);
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 border border-red-300 text-red-700 font-medium rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  <AlertTriangle className="h-4 w-4" />
+                  {pkg.customsFees > 0 ? 'Voir Douane' : 'Ajouter Douane'}
                 </button>
               </div>
             </div>
@@ -663,6 +698,26 @@ export default function DeliveredPackagesPage() {
         </div>
       );
     })()}
+
+      {/* ⭐ Customs Fees Modal */}
+      {showCustomsModal && selectedPackageForCustoms && (
+        <AddCustomsFeesModal
+          isOpen={showCustomsModal}
+          onClose={() => {
+            setShowCustomsModal(false);
+            setSelectedPackageForCustoms(null);
+          }}
+          packageData={{
+            id: selectedPackageForCustoms.id,
+            trackingNumber: selectedPackageForCustoms.trackingNumber,
+            totalCost: selectedPackageForCustoms.totalCost.toString(),
+          }}
+          onSuccess={() => {
+            refresh();
+            Toast.success('Frais ajoutés avec succès', 'Email envoyé au client');
+          }}
+        />
+      )}
     </div>
   );
 }

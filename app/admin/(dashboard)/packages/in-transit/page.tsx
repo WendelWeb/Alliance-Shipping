@@ -17,7 +17,10 @@ import {
   AlertTriangle,
   Loader2,
   RefreshCw,
+  DollarSign,
 } from 'lucide-react';
+import AddCustomsFeesModal from '@/components/admin/AddCustomsFeesModal';
+import { Toast } from '@/components/Toast';
 
 interface InTransitPackage {
   id: number;
@@ -28,6 +31,8 @@ interface InTransitPackage {
   destination: string;
   weight: number;
   totalFee: number;
+  customsFees: number; // ⭐ Customs fees
+  totalCost: number; // ⭐ Total cost for modal
   departedMiami: string;
   estimatedArrival: string;
   currentLocation: string;
@@ -47,6 +52,8 @@ export default function InTransitPackagesPage() {
   const [newStatus, setNewStatus] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [processingIds, setProcessingIds] = useState<number[]>([]);
+  const [showCustomsModal, setShowCustomsModal] = useState(false);
+  const [selectedPackageForCustoms, setSelectedPackageForCustoms] = useState<InTransitPackage | null>(null);
 
   const fetchPackages = useCallback(async () => {
     const response = await fetch('/api/admin/packages?status=in-transit');
@@ -67,6 +74,8 @@ export default function InTransitPackagesPage() {
       destination: pkg.user?.city || '-',
       weight: parseFloat(pkg.weight) || 0,
       totalFee: parseFloat(pkg.totalCost) || 0,
+      customsFees: parseFloat(pkg.customsFees) || 0, // ⭐ Extract customs fees
+      totalCost: parseFloat(pkg.totalCost) || 0, // ⭐ For modal
       departedMiami: pkg.createdAt,
       estimatedArrival: pkg.estimatedDelivery || new Date().toISOString(),
       currentLocation: pkg.currentLocation || 'In Transit',
@@ -382,16 +391,26 @@ export default function InTransitPackagesPage() {
                 </div>
 
                 {/* Package Details */}
-                <div className="flex items-center justify-between text-sm mb-4 p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <span className="text-gray-600">Total Fee:</span>
-                    <span className="ml-2 font-bold text-gray-900">
-                      ${pkg.totalFee.toFixed(2)}
-                    </span>
+                <div className="space-y-2 mb-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between text-sm">
+                    <div>
+                      <span className="text-gray-600">Total Fee:</span>
+                      <span className="ml-2 font-bold text-gray-900">
+                        ${pkg.totalFee.toFixed(2)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Weight:</span>
+                      <span className="ml-2 font-semibold text-gray-900">{pkg.weight} lbs</span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-gray-600">Weight:</span>
-                    <span className="ml-2 font-semibold text-gray-900">{pkg.weight} lbs</span>
+
+                  {/* ⭐ Customs Fees Display - Always visible */}
+                  <div className="flex justify-between pt-2 border-t border-gray-200">
+                    <span className="text-gray-600">Customs Fees:</span>
+                    <span className={`font-medium ${pkg.customsFees > 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                      ${pkg.customsFees.toFixed(2)}
+                    </span>
                   </div>
                 </div>
 
@@ -427,6 +446,17 @@ export default function InTransitPackagesPage() {
                   <button className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
                     <User className="h-4 w-4" />
                     Notify Customer
+                  </button>
+                  {/* ⭐ Customs Fees Button */}
+                  <button
+                    onClick={() => {
+                      setSelectedPackageForCustoms(pkg);
+                      setShowCustomsModal(true);
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-red-300 text-red-700 font-medium rounded-lg hover:bg-red-50 transition-colors"
+                  >
+                    <AlertTriangle className="h-4 w-4" />
+                    {pkg.customsFees > 0 ? 'Modifier Douane' : 'Ajouter Douane'}
                   </button>
                 </div>
               </div>
@@ -586,6 +616,26 @@ export default function InTransitPackagesPage() {
         </div>
         );
       })()}
+
+      {/* ⭐ Customs Fees Modal */}
+      {showCustomsModal && selectedPackageForCustoms && (
+        <AddCustomsFeesModal
+          isOpen={showCustomsModal}
+          onClose={() => {
+            setShowCustomsModal(false);
+            setSelectedPackageForCustoms(null);
+          }}
+          packageData={{
+            id: selectedPackageForCustoms.id,
+            trackingNumber: selectedPackageForCustoms.trackingNumber,
+            totalCost: selectedPackageForCustoms.totalCost.toString(),
+          }}
+          onSuccess={() => {
+            refresh();
+            Toast.success('Frais ajoutés avec succès', 'Email envoyé au client');
+          }}
+        />
+      )}
     </div>
   );
 }
