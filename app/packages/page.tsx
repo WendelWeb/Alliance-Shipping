@@ -22,6 +22,7 @@ import {
   DollarSign,
   Scale,
   AlertTriangle,
+  Smartphone,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -34,9 +35,14 @@ interface PackageData {
   status: string;
   description: string;
   weight: string;
+  category?: string;
   serviceFee?: string;
   weightCost?: string;
-  customsFees?: string; // ⭐ Customs fees
+  customsFees?: string;
+  specialItemId?: number;
+  specialItemName?: string;
+  specialItemBrand?: string;
+  chargeByWeight?: boolean;
   totalCost: string;
   currentLocation: string;
   estimatedDelivery: string | null;
@@ -50,6 +56,15 @@ interface PackageData {
     pending?: boolean;
   }>;
 }
+
+const categoryLabels: Record<string, string> = {
+  general: 'General',
+  clothing: 'Vetements',
+  electronics: 'Electronique',
+  food: 'Nourriture',
+  documents: 'Documents',
+  other: 'Autre',
+};
 
 export default function PackagesPage() {
   const { user, isLoaded } = useUser();
@@ -395,18 +410,14 @@ export default function PackagesPage() {
                         {pkg.description}
                       </p>
 
-                      {/* ⭐ Customs Fees Alert (if > 0) */}
-                      {customsFees > 0 && (
-                        <div className="flex items-center gap-2 text-sm rounded-lg p-2.5 mb-3 border" style={{
-                          backgroundColor: isDark ? '#7f1d1d' : '#fee2e2',
-                          borderColor: isDark ? '#991b1b' : '#fecaca',
-                          color: '#dc2626'
+                      {/* Special Item Badge */}
+                      {pkg.specialItemId && (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold mb-3" style={{
+                          backgroundColor: isDark ? '#581c87' : '#f3e8ff',
+                          color: isDark ? '#e9d5ff' : '#7c3aed'
                         }}>
-                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                          <div className="flex-1">
-                            <p className="font-semibold text-xs">{t.packages.customsFees?.label || 'Frais de douane'}</p>
-                            <p className="font-bold">+${customsFees.toFixed(2)}</p>
-                          </div>
+                          <Smartphone className="w-3.5 h-3.5" />
+                          {(t as any).packages?.specialItem || 'Article Special'}
                         </div>
                       )}
 
@@ -427,11 +438,11 @@ export default function PackagesPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <DollarSign className="w-3.5 h-3.5 shrink-0" style={{ color: colors.gray[400] }} />
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" style={{ color: customsFees > 0 ? '#dc2626' : colors.gray[400] }} />
                           <div>
-                            <p className="text-[10px] uppercase tracking-wide" style={{ color: colors.gray[400] }}>{t.pricing.serviceFee}</p>
-                            <p className="text-sm font-semibold" style={{ color: colors.gray[900] }}>
-                              ${serviceFee.toFixed(2)} + ${weightCost.toFixed(2)}
+                            <p className="text-[10px] uppercase tracking-wide" style={{ color: colors.gray[400] }}>Taxes Douane</p>
+                            <p className={`text-sm font-semibold ${customsFees > 0 ? 'font-bold' : ''}`} style={{ color: customsFees > 0 ? '#dc2626' : colors.gray[900] }}>
+                              {customsFees > 0 ? `+$${customsFees.toFixed(2)}` : '$0.00'}
                             </p>
                           </div>
                         </div>
@@ -446,20 +457,71 @@ export default function PackagesPage() {
                             </p>
                           </div>
                         </div>
-                        {/* ⭐ Customs Fees in Grid (always show if exists) */}
-                        {customsFees > 0 && (
-                          <div className="flex items-center gap-2 col-span-2">
-                            <AlertTriangle className="w-3.5 h-3.5 shrink-0" style={{ color: '#dc2626' }} />
+                        {pkg.category && (
+                          <div className="flex items-center gap-2">
+                            <Package className="w-3.5 h-3.5 shrink-0" style={{ color: colors.gray[400] }} />
                             <div>
-                              <p className="text-[10px] uppercase tracking-wide" style={{ color: colors.gray[400] }}>
-                                {t.packages.customsFees?.label || 'FRAIS DOUANE'}
-                              </p>
-                              <p className="text-sm font-bold" style={{ color: '#dc2626' }}>
-                                +${customsFees.toFixed(2)}
+                              <p className="text-[10px] uppercase tracking-wide" style={{ color: colors.gray[400] }}>Categorie</p>
+                              <p className="text-sm font-semibold" style={{ color: colors.gray[900] }}>
+                                {categoryLabels[pkg.category] || pkg.category.charAt(0).toUpperCase() + pkg.category.slice(1)}
                               </p>
                             </div>
                           </div>
                         )}
+                      </div>
+
+                      {/* Fee Breakdown */}
+                      <div className="rounded-lg p-3 mb-2 border" style={{
+                        backgroundColor: isDark ? colors.gray[800] : '#f0f4ff',
+                        borderColor: isDark ? colors.gray[700] : '#c7d7fe'
+                      }}>
+                        <p className="text-[10px] uppercase tracking-wide font-bold mb-2 flex items-center gap-1" style={{ color: colors.gray[500] }}>
+                          <DollarSign className="w-3 h-3" />
+                          Detail des Frais
+                        </p>
+                        <div className="space-y-1 text-xs">
+                          <div className="flex justify-between">
+                            <span style={{ color: colors.gray[600] }}>Frais de service:</span>
+                            <span className="font-semibold" style={{ color: colors.gray[900] }}>${serviceFee.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span style={{ color: colors.gray[600] }}>Frais de poids ({parseFloat(pkg.weight).toFixed(1)} lbs):</span>
+                            <span className="font-semibold" style={{ color: colors.gray[900] }}>${weightCost.toFixed(2)}</span>
+                          </div>
+                          {pkg.specialItemId && (
+                            <div className="flex justify-between py-0.5 px-1 -mx-1 rounded" style={{
+                              backgroundColor: isDark ? '#581c87' : '#f3e8ff',
+                              color: isDark ? '#e9d5ff' : '#7c3aed'
+                            }}>
+                              <span className="font-semibold flex items-center gap-1">
+                                <Smartphone className="w-3 h-3" />
+                                Article Special (Prix Fixe):
+                              </span>
+                              <span className="font-bold">
+                                ${(() => {
+                                  const total = parseFloat(pkg.totalCost) || 0;
+                                  const s = serviceFee;
+                                  const w = weightCost;
+                                  const c = customsFees;
+                                  const fixed = total - s - w - c;
+                                  return fixed > 0 ? fixed.toFixed(2) : '0.00';
+                                })()}
+                              </span>
+                            </div>
+                          )}
+                          <div className={`flex justify-between ${customsFees > 0 ? 'font-bold' : ''}`} style={{ color: customsFees > 0 ? '#dc2626' : colors.gray[600] }}>
+                            <span>Taxes de douane:</span>
+                            <span className="font-semibold" style={{ color: customsFees > 0 ? '#dc2626' : colors.gray[900] }}>
+                              {customsFees > 0 ? '+' : ''}${customsFees.toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between pt-1.5 mt-1" style={{ borderTop: `2px solid ${isDark ? colors.gray[600] : '#93b4fd'}` }}>
+                            <span className="font-bold text-sm" style={{ color: colors.gray[900] }}>TOTAL:</span>
+                            <span className="font-bold text-sm" style={{ color: colors.primary[600] }}>
+                              ${parseFloat(pkg.totalCost).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Current Location */}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { packages, users, trackingHistory, packageRequests } from '@/lib/db/schema';
+import { packages, users, trackingHistory, packageRequests, specialItemFees } from '@/lib/db/schema';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { eq, desc, or } from 'drizzle-orm';
 
@@ -73,9 +73,11 @@ export async function GET(request: NextRequest) {
         serviceFee: packages.serviceFee,
         weightCost: packages.weightCost,
         totalCost: packages.totalCost,
-        customsFees: packages.customsFees, // ⭐ Customs fees
-        specialItemId: packages.specialItemId, // ⭐ Special item ID
-        chargeByWeight: packages.chargeByWeight, // ⭐ Charge by weight flag
+        customsFees: packages.customsFees,
+        specialItemId: packages.specialItemId,
+        specialItemName: specialItemFees.itemName,
+        specialItemBrand: specialItemFees.brand,
+        chargeByWeight: packages.chargeByWeight,
         currency: packages.currency,
         status: packages.status,
         currentLocation: packages.currentLocation,
@@ -85,6 +87,7 @@ export async function GET(request: NextRequest) {
         updatedAt: packages.updatedAt,
       })
       .from(packages)
+      .leftJoin(specialItemFees, eq(packages.specialItemId, specialItemFees.id))
       .where(eq(packages.userId, user.id))
       .orderBy(desc(packages.createdAt));
 

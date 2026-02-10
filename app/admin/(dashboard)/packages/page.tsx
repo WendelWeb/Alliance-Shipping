@@ -37,6 +37,15 @@ import { LoadingSpinner, SkeletonLoader, CardSkeleton } from '@/components/admin
 
 // ── Static style maps ────────────────────────────────────────────────────────
 
+const categoryLabels: Record<string, string> = {
+  general: 'General',
+  clothing: 'Vetements',
+  electronics: 'Electronique',
+  food: 'Nourriture',
+  documents: 'Documents',
+  other: 'Autre',
+};
+
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   requested: 'bg-yellow-100 text-yellow-800',
@@ -123,8 +132,18 @@ function transformPackage(pkg: any) {
     weight: parseFloat(pkg.weight) || 0,
     declaredValue: 0,
     serviceFee: parseFloat(pkg.serviceFee) || 0,
+    weightCost: parseFloat(pkg.weightCost) || 0,
+    totalCost: parseFloat(pkg.totalCost) || 0,
+    // Backwards compat aliases
     shippingFee: parseFloat(pkg.weightCost) || 0,
     totalFee: parseFloat(pkg.totalCost) || 0,
+    // ⭐ NEW FIELDS
+    customsFees: pkg.customsFees || '0.00',
+    specialItemId: pkg.specialItemId || null,
+    specialItemName: pkg.specialItemName || null,
+    specialItemBrand: pkg.specialItemBrand || null,
+    category: pkg.category || null,
+    chargeByWeight: pkg.chargeByWeight || false,
     createdAt: new Date(pkg.createdAt).toISOString().split('T')[0],
     updatedAt: new Date(pkg.updatedAt).toISOString().split('T')[0],
     assignedAdmin: pkg.assignedToAdmin ? 'Admin User' : null,
@@ -561,7 +580,7 @@ export default function AllPackagesPage() {
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-gray-400 shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-[10px] uppercase tracking-wide text-gray-400">Dépôt</p>
+                          <p className="text-[10px] uppercase tracking-wide text-gray-400">Depot</p>
                           <p className="text-sm font-medium text-gray-900 truncate">{pkg.warehouseName || '-'}</p>
                         </div>
                       </div>
@@ -572,85 +591,87 @@ export default function AllPackagesPage() {
                           <p className="text-sm font-medium text-gray-900">{pkg.weight > 0 ? `${pkg.weight} lbs` : '-'}</p>
                         </div>
                       </div>
-                    </div>
-
-                    {/* ⭐ BADGE ARTICLE SPÉCIAL - VISIBLE EN HAUT */}
-                    {pkg.specialItemId && (
-                      <div className="mt-3 px-2">
-                        <div className="inline-flex items-center gap-1.5 px-3 py-2 bg-purple-500 text-white rounded-lg text-xs font-bold shadow-md">
-                          <Smartphone className="h-4 w-4" />
-                          📱 {pkg.specialItemBrand ? `${pkg.specialItemBrand} ` : ''}{pkg.specialItemName || 'ARTICLE SPÉCIAL'}
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className={`h-4 w-4 shrink-0 ${parseFloat(pkg.customsFees || '0') > 0 ? 'text-red-500' : 'text-gray-400'}`} />
+                        <div>
+                          <p className="text-[10px] uppercase tracking-wide text-gray-400">Taxes Douane</p>
+                          <p className={`text-sm font-medium ${parseFloat(pkg.customsFees || '0') > 0 ? 'text-red-600 font-bold' : 'text-gray-900'}`}>
+                            {parseFloat(pkg.customsFees || '0') > 0 ? `+$${parseFloat(pkg.customsFees).toFixed(2)}` : '$0.00'}
+                          </p>
                         </div>
                       </div>
-                    )}
+                    </div>
 
-                    {/* ⭐ CATÉGORIE DU COLIS */}
-                    {pkg.category && (
-                      <div className="mt-2 px-2">
-                        <span className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium">
-                          📦 Catégorie: <span className="ml-1 font-bold">{pkg.category}</span>
-                        </span>
+                    {/* Badge article special + categorie */}
+                    {(pkg.specialItemId || pkg.category) && (
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {pkg.specialItemId && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-500 text-white rounded-lg text-xs font-bold shadow-sm">
+                            <Smartphone className="h-3.5 w-3.5" />
+                            {pkg.specialItemBrand ? `${pkg.specialItemBrand} ` : ''}{pkg.specialItemName || 'Article Special'}
+                          </span>
+                        )}
+                        {pkg.category && (
+                          <span className="inline-flex items-center px-2.5 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium">
+                            {categoryLabels[pkg.category] || pkg.category.charAt(0).toUpperCase() + pkg.category.slice(1)}
+                          </span>
+                        )}
                       </div>
                     )}
 
-                    {/* ⭐ BREAKDOWN DES FRAIS - COMPLET ET COHÉRENT */}
+                    {/* Breakdown des frais */}
                     <div className="mt-3 p-3 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-blue-200">
                       <p className="text-xs font-bold text-gray-700 mb-2 flex items-center gap-1">
                         <DollarSign className="h-3.5 w-3.5" />
-                        Détail des Frais
+                        Detail des Frais
                       </p>
                       <div className="space-y-1.5 text-xs">
-                        {/* Service Fee - TOUJOURS affiché */}
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Service Fee:</span>
+                          <span className="text-gray-600">Frais de service:</span>
                           <span className="font-semibold text-gray-900">
-                            ${parseFloat(pkg.serviceFee || '0').toFixed(2)}
+                            ${(pkg.serviceFee || 0).toFixed(2)}
                           </span>
                         </div>
 
-                        {/* Weight Cost - TOUJOURS affiché */}
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Weight Cost ({pkg.weight || 0} lbs):</span>
+                          <span className="text-gray-600">Frais de poids ({pkg.weight || 0} lbs):</span>
                           <span className="font-semibold text-gray-900">
-                            ${parseFloat(pkg.weightCost || '0').toFixed(2)}
+                            ${(pkg.weightCost || 0).toFixed(2)}
                           </span>
                         </div>
 
-                        {/* ⭐ SPECIAL ITEM - Si c'est un article spécial */}
                         {pkg.specialItemId && (
                           <div className="flex justify-between text-purple-700 bg-purple-100 -mx-1 px-1 py-1 rounded">
                             <span className="font-semibold flex items-center gap-1">
                               <Smartphone className="h-3 w-3" />
-                              Article Spécial (Prix Fixe):
+                              Article Special (Prix Fixe):
                             </span>
                             <span className="font-bold">
                               ${(() => {
-                                const total = parseFloat(pkg.totalCost || '0');
-                                const service = parseFloat(pkg.serviceFee || '0');
-                                const weight = parseFloat(pkg.weightCost || '0');
+                                const total = pkg.totalCost || 0;
+                                const service = pkg.serviceFee || 0;
+                                const wt = pkg.weightCost || 0;
                                 const customs = parseFloat(pkg.customsFees || '0');
-                                const fixedPrice = total - service - weight - customs;
-                                return fixedPrice.toFixed(2);
+                                const fixedPrice = total - service - wt - customs;
+                                return fixedPrice > 0 ? fixedPrice.toFixed(2) : '0.00';
                               })()}
                             </span>
                           </div>
                         )}
 
-                        {/* Customs Fees - TOUJOURS affiché (même si $0) */}
                         <div className={`flex justify-between ${parseFloat(pkg.customsFees || '0') > 0 ? 'text-red-700 font-bold' : 'text-gray-600'}`}>
                           <span className={parseFloat(pkg.customsFees || '0') > 0 ? 'font-semibold' : ''}>
-                            Customs Fees:
+                            Taxes de douane:
                           </span>
                           <span className={parseFloat(pkg.customsFees || '0') > 0 ? 'font-bold' : 'font-semibold text-gray-900'}>
                             {parseFloat(pkg.customsFees || '0') > 0 ? '+' : ''}${parseFloat(pkg.customsFees || '0').toFixed(2)}
                           </span>
                         </div>
 
-                        {/* TOTAL */}
                         <div className="flex justify-between pt-1.5 border-t-2 border-blue-400">
                           <span className="font-bold text-gray-900 text-sm">TOTAL:</span>
                           <span className="font-bold text-primary-600 text-base">
-                            ${parseFloat(pkg.totalCost || pkg.totalFee || '0').toFixed(2)}
+                            ${(pkg.totalCost || 0).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -682,29 +703,6 @@ export default function AllPackagesPage() {
                       <span>Créé le {pkg.createdAt}</span>
                     </div>
                   </div>
-
-                  {/* ⭐ Special Item Badge */}
-                  {pkg.specialItemId && (
-                    <div className="px-5 pb-3">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 border border-purple-200 text-purple-800 rounded-lg text-xs font-semibold">
-                        <Smartphone className="h-3.5 w-3.5" />
-                        Article Spécial
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ⭐ Customs Fees Alert */}
-                  {pkg.customsFees && parseFloat(pkg.customsFees) > 0 && (
-                    <div className="px-5 pb-3">
-                      <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
-                        <AlertTriangle className="h-4 w-4 text-red-600 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs text-red-600 font-medium">Frais de douane</p>
-                          <p className="text-sm text-red-700 font-bold">+${parseFloat(pkg.customsFees).toFixed(2)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Action Buttons */}
                   <div className="border-t border-gray-100 px-5 py-3 flex items-center gap-2">

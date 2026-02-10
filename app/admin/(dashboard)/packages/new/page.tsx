@@ -247,10 +247,21 @@ export default function NewPackagePage() {
   const calculateFees = () => {
     const weight = parseInt(formData.weight) || 0;
     const serviceFee = currentServiceFee;
+    const customsFees = parseFloat(formData.customsFees) || 0;
+
+    // Special item: fixed price + optional weight
+    if (packageType === 'special' && selectedSpecialItem) {
+      const item = specialItems.find((i: any) => i.id === selectedSpecialItem);
+      const fixedFee = item ? parseFloat(item.fixedFee) : 0;
+      const shippingFee = chargeByWeight ? weight * currentPricePerLb : 0;
+      const total = fixedFee + serviceFee + shippingFee + customsFees;
+      return { serviceFee, shippingFee, customsFees, fixedFee, total };
+    }
+
+    // Normal package: weight-based
     const shippingFee = weight * currentPricePerLb;
-    const customsFees = parseFloat(formData.customsFees) || 0; // ⭐ Parse customs fees
-    const total = serviceFee + shippingFee + customsFees; // ⭐ Include dans le total
-    return { serviceFee, shippingFee, customsFees, total };
+    const total = serviceFee + shippingFee + customsFees;
+    return { serviceFee, shippingFee, customsFees, fixedFee: 0, total };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -796,6 +807,16 @@ export default function NewPackagePage() {
                     </span>
                   </div>
 
+                  {/* Special Item Fixed Price */}
+                  {fees.fixedFee > 0 && (
+                    <div className="flex justify-between items-center bg-purple-50 -mx-2 px-2 py-1.5 rounded-lg">
+                      <span className="text-sm text-purple-700 font-semibold">Article Special (prix fixe):</span>
+                      <span className="text-sm font-bold text-purple-700">
+                        ${fees.fixedFee.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Frais de service:</span>
                     <span className="text-sm font-medium text-gray-900">
@@ -812,10 +833,9 @@ export default function NewPackagePage() {
                     </span>
                   </div>
 
-                  {/* ⭐ Customs Fees Display */}
                   {fees.customsFees > 0 && (
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Frais de douane:</span>
+                      <span className="text-sm text-gray-600">Taxes de douane:</span>
                       <span className="text-sm font-medium text-red-600">
                         +${fees.customsFees.toFixed(2)}
                       </span>
