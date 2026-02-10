@@ -39,10 +39,13 @@ export async function POST(
       return NextResponse.json({ error: 'Package not found' }, { status: 404 });
     }
 
-    // Calculer nouveau total
+    // ⭐ RECALCUL COMPLET (pas accumulation)
+    // TOTAL = serviceFee + weightCost + customsFees
     const customsFeesAmount = parseFloat(customsFees);
+    const serviceFee = parseFloat(pkg.serviceFee);
+    const weightCost = parseFloat(pkg.weightCost);
     const oldTotal = parseFloat(pkg.totalCost);
-    const newTotal = oldTotal + customsFeesAmount;
+    const newTotal = serviceFee + weightCost + customsFeesAmount;
 
     // Update package
     await db

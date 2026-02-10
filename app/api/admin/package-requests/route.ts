@@ -112,12 +112,29 @@ export async function PATCH(request: NextRequest) {
       // Generate Alliance Shipping tracking number
       const asTrackingNumber = generateASTrackingNumber();
 
-      // Determine current location based on status
+      // Get user's warehouse if available
+      let warehouseName: string | null = null;
+      if (userInfo?.warehouseId) {
+        const { warehouses } = await import('@/lib/db/schema');
+        const [warehouse] = await db
+          .select({ name: warehouses.name, city: warehouses.city })
+          .from(warehouses)
+          .where(eq(warehouses.id, userInfo.warehouseId))
+          .limit(1);
+
+        if (warehouse) {
+          warehouseName = `${warehouse.city} Office`;
+        }
+      }
+
+      // Determine current location based on status (use warehouse if available)
       const userCity = userInfo?.city || 'Port-au-Prince';
+      const officeLocation = warehouseName || `${userCity} Office`;
+
       const locationMap: Record<string, string> = {
         'received': 'Miami Warehouse',
         'in-transit': 'En route vers Haiti',
-        'available': `${userCity} Office`,
+        'available': officeLocation, // ⭐ Utilise le warehouse ou la ville du user
         'delivered': userCity,
       };
 

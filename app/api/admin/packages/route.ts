@@ -237,11 +237,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Get owner's city for fee calculation
+    // Get owner's city AND warehouse
     const [owner] = await db
-      .select({ city: users.city })
+      .select({
+        city: users.city,
+        warehouseId: users.warehouseId,
+      })
       .from(users)
       .where(eq(users.id, ownerId))
       .limit(1);
+
+    // If user has a warehouse, get its details
+    let warehouseName: string | null = null;
+    if (owner?.warehouseId) {
+      const [warehouse] = await db
+        .select({ name: warehouses.name, city: warehouses.city })
+        .from(warehouses)
+        .where(eq(warehouses.id, owner.warehouseId))
+        .limit(1);
+
+      if (warehouse) {
+        warehouseName = `${warehouse.city} Office`; // Format pour correspondre aux traductions
+      }
+    }
 
     // Calculate fees based on special item or normal package
     let fees: { serviceFee: number; weightCost: number; totalCost: number };
@@ -325,13 +343,16 @@ export async function POST(request: NextRequest) {
     // Generate tracking number
     const trackingNumber = generateASTrackingNumber();
 
-    // Determine status and location
+    // Determine status and location (use warehouse if available, otherwise fallback to city)
     const pkgStatus = initialStatus || 'received';
+    const officeLocation = warehouseName || (owner?.city ? `${owner.city} Office` : 'Port-au-Prince Office');
+    const deliveryLocation = owner?.city || 'Port-au-Prince';
+
     const locationMap: Record<string, string> = {
       'received': 'Miami Warehouse',
       'in-transit': 'En route vers Haiti',
-      'available': (owner?.city || 'Port-au-Prince') + ' Office',
-      'delivered': owner?.city || 'Port-au-Prince',
+      'available': officeLocation, // Utilise le warehouse ou la ville du user
+      'delivered': deliveryLocation,
     };
 
     // Create package
