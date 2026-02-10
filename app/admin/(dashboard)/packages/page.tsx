@@ -31,6 +31,7 @@ import {
   Phone,
   MessageCircle,
   Building2,
+  Smartphone, // ⭐ Pour articles spéciaux
 } from 'lucide-react';
 import { LoadingSpinner, SkeletonLoader, CardSkeleton } from '@/components/admin/LoadingSpinner';
 
@@ -487,7 +488,7 @@ export default function AllPackagesPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {filteredPackages.map((pkg, index) => {
               const avatar = nameToColor(pkg.userName || '?');
               const isSelected = selectedPackages.includes(pkg.id);
@@ -606,6 +607,29 @@ export default function AllPackagesPage() {
                       <span>Créé le {pkg.createdAt}</span>
                     </div>
                   </div>
+
+                  {/* ⭐ Special Item Badge */}
+                  {pkg.specialItemId && (
+                    <div className="px-5 pb-3">
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 border border-purple-200 text-purple-800 rounded-lg text-xs font-semibold">
+                        <Smartphone className="h-3.5 w-3.5" />
+                        Article Spécial
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ⭐ Customs Fees Alert */}
+                  {pkg.customsFees && parseFloat(pkg.customsFees) > 0 && (
+                    <div className="px-5 pb-3">
+                      <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+                        <AlertTriangle className="h-4 w-4 text-red-600 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-red-600 font-medium">Frais de douane</p>
+                          <p className="text-sm text-red-700 font-bold">+${parseFloat(pkg.customsFees).toFixed(2)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Action Buttons */}
                   <div className="border-t border-gray-100 px-5 py-3 flex items-center gap-2">
