@@ -21,13 +21,52 @@ export async function GET(request: NextRequest) {
 
     const client = await clerkClient();
 
-    // Fetch users from Clerk
-    const clerkResponse = await client.users.getUserList({
-      limit,
-      offset,
-      query: search || undefined,
-      orderBy: '-created_at',
-    });
+    // ⭐ ALWAYS fetch ALL users by paginating (no limit)
+    // This ensures user search/assignment works for ALL users, not just first 10-20
+    let clerkResponse: { data: any[]; totalCount: number };
+
+    if (limit >= 100 && !search) {
+      // Fetch ALL users in batches of 100 (Clerk's max per request)
+      let allClerkUsers: any[] = [];
+      let hasMore = true;
+      let currentOffset = 0;
+      const batchSize = 100;
+
+      console.log('📥 Fetching ALL users from Clerk (paginated)...');
+
+      while (hasMore) {
+        const batch = await client.users.getUserList({
+          limit: batchSize,
+          offset: currentOffset,
+          orderBy: '-created_at',
+        });
+        allClerkUsers.push(...batch.data);
+        hasMore = batch.data.length === batchSize; // Continue if we got a full batch
+        currentOffset += batchSize;
+
+        console.log(`  ↳ Fetched ${allClerkUsers.length} users so far...`);
+      }
+
+      console.log(`✅ Total users fetched: ${allClerkUsers.length}`);
+
+      // Create response structure
+      clerkResponse = {
+        data: allClerkUsers.slice(offset, offset + limit),
+        totalCount: allClerkUsers.length,
+      };
+    } else {
+      // Normal pagination for small page requests or searches
+      const response = await client.users.getUserList({
+        limit,
+        offset,
+        query: search || undefined,
+        orderBy: '-created_at',
+      });
+      clerkResponse = {
+        data: response.data,
+        totalCount: response.totalCount,
+      };
+    }
 
     // Get package stats from DB for all users with warehouse info
     const { warehouses } = await import('@/lib/db/schema');

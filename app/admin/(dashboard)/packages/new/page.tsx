@@ -97,6 +97,23 @@ export default function NewPackagePage() {
         if (data.users && Array.isArray(data.users)) {
           setAllUsers(data.users);
           console.log('✅ Loaded users:', data.users.length);
+
+          // 🔍 DEBUG: Check for specific user (stanley)
+          const stanleyUser = data.users.find((u: any) =>
+            u.email === 'stanleywendeljoseph@gmail.com' || u.dbId === 11
+          );
+          if (stanleyUser) {
+            console.log('🔍 Found Stanley user:', {
+              dbId: stanleyUser.dbId,
+              clerkId: stanleyUser.id,
+              firstName: stanleyUser.firstName,
+              lastName: stanleyUser.lastName,
+              email: stanleyUser.email,
+              name: stanleyUser.name,
+            });
+          } else {
+            console.warn('⚠️ Stanley user NOT found in loaded users!');
+          }
         }
       })
       .catch(error => {
@@ -157,8 +174,23 @@ export default function NewPackagePage() {
         const fullName = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
         const email = (user.email || '').toLowerCase();
         const phone = (user.phone || '').toLowerCase();
-        return fullName.includes(query) || email.includes(query) || phone.includes(query);
+        const matches = fullName.includes(query) || email.includes(query) || phone.includes(query);
+
+        // 🔍 DEBUG: Log stanley user specifically
+        if (user.email === 'stanleywendeljoseph@gmail.com' || user.dbId === 11) {
+          console.log('🔍 Stanley search check:', {
+            query,
+            fullName,
+            email,
+            phone,
+            matches,
+          });
+        }
+
+        return matches;
       }).slice(0, 10); // Show max 10 results
+
+      console.log(`🔍 Search "${query}" found ${filtered.length} users`);
       setUserSearchResults(filtered);
     } else {
       setUserSearchResults([]);
