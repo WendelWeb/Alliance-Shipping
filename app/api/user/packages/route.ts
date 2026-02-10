@@ -78,10 +78,6 @@ export async function GET(request: NextRequest) {
         currentLocation: packages.currentLocation,
         estimatedDelivery: packages.estimatedDelivery,
         actualDelivery: packages.actualDelivery,
-        recipientName: packages.recipientName,
-        recipientCity: packages.recipientCity,
-        recipientAddress: packages.recipientAddress,
-        recipientCountry: packages.recipientCountry,
         createdAt: packages.createdAt,
         updatedAt: packages.updatedAt,
       })
@@ -119,7 +115,6 @@ export async function GET(request: NextRequest) {
         estimatedWeight: packageRequests.estimatedWeight,
         category: packageRequests.category,
         status: packageRequests.status,
-        recipientInfo: packageRequests.recipientInfo,
         createdAt: packageRequests.createdAt,
         updatedAt: packageRequests.updatedAt,
       })
@@ -127,8 +122,11 @@ export async function GET(request: NextRequest) {
       .where(eq(packageRequests.userId, user.id))
       .orderBy(desc(packageRequests.createdAt));
 
+    // Only show pending and rejected requests (approved ones already exist in packages table)
+    const filteredRequests = userRequests.filter(req => req.status !== 'approved');
+
     // Transform package requests to match package format
-    const transformedRequests = userRequests.map(req => {
+    const transformedRequests = filteredRequests.map(req => {
       // Build timeline based on status
       const timeline: any[] = [
         {
@@ -156,13 +154,6 @@ export async function GET(request: NextRequest) {
           description: 'packages.messages.requestRejected',
           date: req.updatedAt.toISOString(),
         });
-      } else if (req.status === 'approved') {
-        timeline.push({
-          status: 'packages.timeline.requestApproved',
-          location: 'packages.timeline.allianceShipping',
-          description: 'packages.messages.requestApproved',
-          date: req.updatedAt.toISOString(),
-        });
       }
 
       return {
@@ -177,18 +168,12 @@ export async function GET(request: NextRequest) {
         weightCost: '0.00',
         totalCost: '0.00',
         currency: 'USD',
-        status: req.status === 'pending' ? 'pending' : req.status === 'rejected' ? 'rejected' : 'received',
+        status: req.status === 'pending' ? 'pending' : 'rejected',
         currentLocation: req.status === 'pending'
           ? 'packages.messages.pendingApproval'
-          : req.status === 'rejected'
-          ? 'packages.status.rejected'
-          : 'Miami Warehouse',
+          : 'packages.status.rejected',
         estimatedDelivery: null,
         actualDelivery: null,
-        recipientName: (req.recipientInfo as any)?.name || '',
-        recipientCity: (req.recipientInfo as any)?.city || '',
-        recipientAddress: (req.recipientInfo as any)?.address || '',
-        recipientCountry: 'Haiti',
         createdAt: req.createdAt,
         updatedAt: req.updatedAt,
         timeline,

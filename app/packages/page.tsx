@@ -29,6 +29,7 @@ import { useTheme } from '@/lib/themes/ThemeProvider';
 interface PackageData {
   id: number;
   trackingNumber: string;
+  externalTrackingNumber?: string;
   status: string;
   description: string;
   weight: string;
@@ -37,8 +38,6 @@ interface PackageData {
   totalCost: string;
   currentLocation: string;
   estimatedDelivery: string | null;
-  recipientName: string;
-  recipientCity: string;
   createdAt: string;
   updatedAt: string;
   timeline: Array<{
@@ -143,8 +142,13 @@ export default function PackagesPage() {
   const filteredAndSortedPackages = packages
     .filter(pkg => {
       if (statusFilter !== 'all' && pkg.status !== statusFilter) return false;
-      if (searchQuery && !pkg.trackingNumber.toLowerCase().includes(searchQuery.toLowerCase()) &&
-          !pkg.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesTracking = pkg.trackingNumber.toLowerCase().includes(query);
+        const matchesExternal = pkg.externalTrackingNumber?.toLowerCase().includes(query);
+        const matchesDescription = pkg.description.toLowerCase().includes(query);
+        if (!matchesTracking && !matchesExternal && !matchesDescription) return false;
+      }
       return true;
     })
     .sort((a, b) => {
@@ -372,6 +376,11 @@ export default function PackagesPage() {
                           <p className="font-mono text-sm font-bold tracking-wide" style={{ color: colors.gray[900] }}>
                             {pkg.trackingNumber}
                           </p>
+                          {pkg.externalTrackingNumber && pkg.externalTrackingNumber !== pkg.trackingNumber && (
+                            <p className="font-mono text-xs mt-0.5" style={{ color: colors.gray[500] }}>
+                              {pkg.externalTrackingNumber}
+                            </p>
+                          )}
                         </div>
                         <p className="text-lg font-bold" style={{ color: colors.gray[900] }}>
                           ${parseFloat(pkg.totalCost).toFixed(2)}
@@ -396,7 +405,7 @@ export default function PackagesPage() {
                           <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: colors.gray[400] }} />
                           <div>
                             <p className="text-[10px] uppercase tracking-wide" style={{ color: colors.gray[400] }}>{t.packages.details.recipient}</p>
-                            <p className="text-sm font-semibold truncate" style={{ color: colors.gray[900] }}>{pkg.recipientCity}</p>
+                            <p className="text-sm font-semibold truncate" style={{ color: colors.gray[900] }}>{translateText(pkg.currentLocation)}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">

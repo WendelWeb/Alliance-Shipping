@@ -1,16 +1,38 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Container } from '@/components/Container';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
-import { Calculator as CalcIcon, Package, DollarSign, Clock, MapPin } from 'lucide-react';
+import {
+  Calculator as CalcIcon,
+  Package,
+  DollarSign,
+  Clock,
+  MapPin,
+  Droplets,
+  Smartphone,
+  Tag,
+  Check,
+} from 'lucide-react';
 import { usePricing } from '@/hooks/usePricing';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useTheme } from '@/lib/themes/ThemeProvider';
+
+interface SpecialItem {
+  id: number;
+  category: string;
+  brand: string;
+  itemName: string;
+  minModel: string | null;
+  maxModel: string | null;
+  fixedFee: number;
+  description: string | null;
+  imageUrl: string | null;
+}
 
 export default function CalculatorPage() {
   const { t } = useTranslation();
@@ -19,12 +41,26 @@ export default function CalculatorPage() {
   const colors = theme.colors;
   const [selectedCity, setSelectedCity] = useState('');
   const [weight, setWeight] = useState('');
+  const [hasPerfume, setHasPerfume] = useState(false);
+  const [specialItems, setSpecialItems] = useState<SpecialItem[]>([]);
+  const [loadingSpecial, setLoadingSpecial] = useState(true);
   const [result, setResult] = useState<{
     serviceFee: number;
     weightCost: number;
     total: number;
     deliveryDays: string;
   } | null>(null);
+
+  const specialT = (t as any).specialItems || {};
+
+  // Fetch special items
+  useEffect(() => {
+    fetch('/api/special-items/public')
+      .then((res) => res.json())
+      .then((data) => setSpecialItems(data.items || []))
+      .catch(() => setSpecialItems([]))
+      .finally(() => setLoadingSpecial(false));
+  }, []);
 
   // Get pricing for selected city
   const currentCityData = cities.find((c) => c.city === selectedCity);
@@ -46,9 +82,15 @@ export default function CalculatorPage() {
     const serviceFee = cityServiceFee;
     const weightCost = weightNum * cityPricePerLb;
     const total = serviceFee + weightCost;
-    const deliveryDays = currentCityData
-      ? `${currentCityData.deliveryDaysMin}-${currentCityData.deliveryDaysMax}`
-      : `${pricing.standardDelivery.min}-${pricing.standardDelivery.max}`;
+
+    let deliveryDays: string;
+    if (hasPerfume && currentCityData) {
+      deliveryDays = `${currentCityData.perfumeDaysMin}-${currentCityData.perfumeDaysMax}`;
+    } else if (currentCityData) {
+      deliveryDays = `${currentCityData.deliveryDaysMin}-${currentCityData.deliveryDaysMax}`;
+    } else {
+      deliveryDays = `${pricing.standardDelivery.min}-${pricing.standardDelivery.max}`;
+    }
 
     setResult({
       serviceFee,
@@ -57,6 +99,14 @@ export default function CalculatorPage() {
       deliveryDays,
     });
   };
+
+  // Group special items by category
+  const groupedSpecialItems = specialItems.reduce((acc, item) => {
+    const key = item.category || 'Other';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {} as Record<string, SpecialItem[]>);
 
   return (
     <div className="overflow-x-hidden">
@@ -114,10 +164,19 @@ export default function CalculatorPage() {
                         }}
                       >
                         <div className="text-center">
-                          <MapPin
-                            className="h-8 w-8 mx-auto mb-2"
-                            style={{ color: selectedCity === city.city ? colors.primary[600] : colors.gray[400] }}
-                          />
+                          {selectedCity === city.city ? (
+                            <div
+                              className="h-8 w-8 mx-auto mb-2 rounded-full flex items-center justify-center"
+                              style={{ backgroundColor: colors.primary[600] }}
+                            >
+                              <Check className="w-5 h-5 text-white" />
+                            </div>
+                          ) : (
+                            <MapPin
+                              className="h-8 w-8 mx-auto mb-2"
+                              style={{ color: colors.gray[400] }}
+                            />
+                          )}
                           <h3 className="font-bold text-lg" style={{ color: colors.gray[900] }}>{city.city}</h3>
                           <p className="text-sm mt-1" style={{ color: colors.gray[500] }}>
                             ${city.serviceFee.toFixed(2)} + ${city.pricePerLb.toFixed(2)}/lb
@@ -167,6 +226,56 @@ export default function CalculatorPage() {
                           min="0"
                           step="0.1"
                           disabled={!selectedCity}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Perfume/Liquid Toggle */}
+                    <div
+                      className="flex items-center justify-between p-4 rounded-xl border-2 transition-all cursor-pointer"
+                      style={{
+                        borderColor: hasPerfume ? '#f59e0b' : colors.gray[200],
+                        backgroundColor: hasPerfume
+                          ? (isDark ? '#78350f' : '#fffbeb')
+                          : 'transparent',
+                      }}
+                      onClick={() => setHasPerfume(!hasPerfume)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="p-2 rounded-lg"
+                          style={{
+                            backgroundColor: hasPerfume
+                              ? (isDark ? '#92400e' : '#fef3c7')
+                              : (isDark ? colors.gray[700] : colors.gray[100]),
+                          }}
+                        >
+                          <Droplets
+                            className="w-5 h-5"
+                            style={{
+                              color: hasPerfume ? '#f59e0b' : colors.gray[400],
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm" style={{ color: colors.gray[900] }}>
+                            {t.calculator.perfumeLabel}
+                          </p>
+                          <p className="text-xs" style={{ color: colors.gray[500] }}>
+                            {t.calculator.perfumeNote}
+                          </p>
+                        </div>
+                      </div>
+                      <div
+                        className="relative w-12 h-7 rounded-full transition-all"
+                        style={{
+                          backgroundColor: hasPerfume ? '#f59e0b' : colors.gray[300],
+                        }}
+                      >
+                        <motion.div
+                          className="absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md"
+                          animate={{ left: hasPerfume ? '22px' : '2px' }}
+                          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                         />
                       </div>
                     </div>
@@ -229,8 +338,19 @@ export default function CalculatorPage() {
 
                         <div className="flex items-center justify-center gap-2 text-white bg-white/10 backdrop-blur-sm rounded-xl p-4">
                           <Clock className="w-5 h-5" />
-                          <span className="font-semibold">{t.calculator.result.deliveryTime}: {result.deliveryDays} {t.calculator.result.days}</span>
+                          <span className="font-semibold">
+                            {t.calculator.result.deliveryTime}: {result.deliveryDays} {t.calculator.result.days}
+                          </span>
                         </div>
+
+                        {hasPerfume && (
+                          <div className="flex items-center justify-center gap-2 bg-yellow-500/20 backdrop-blur-sm rounded-xl p-3">
+                            <Droplets className="w-4 h-4 text-yellow-300" />
+                            <span className="text-sm text-yellow-100 font-medium">
+                              {t.calculator.perfumeNote}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ) : (
@@ -257,12 +377,103 @@ export default function CalculatorPage() {
             </div>
           </div>
 
+          {/* Special Items Section */}
+          {!loadingSpecial && specialItems.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+              className="mt-12 max-w-4xl mx-auto"
+            >
+              <Card className="p-8 backdrop-blur-xl theme-surface shadow-2xl">
+                <div className="flex items-center gap-3 mb-6">
+                  <div
+                    className="p-3 rounded-2xl shadow-lg"
+                    style={{
+                      background: `linear-gradient(135deg, #8b5cf6, #7c3aed)`,
+                    }}
+                  >
+                    <Smartphone className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold" style={{ color: colors.gray[900] }}>
+                      {specialT.title || 'Special Items'}
+                    </h3>
+                    <p className="text-sm" style={{ color: colors.gray[500] }}>
+                      {specialT.subtitle || 'Fixed pricing for certain items'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  {Object.entries(groupedSpecialItems).map(([category, items]) => (
+                    <div key={category}>
+                      <h4
+                        className="text-sm font-bold uppercase tracking-wider mb-3"
+                        style={{ color: colors.gray[500] }}
+                      >
+                        {category}
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {items.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex items-center justify-between p-4 rounded-xl border-2 transition-all"
+                            style={{
+                              borderColor: colors.gray[200],
+                              backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="p-2 rounded-lg"
+                                style={{
+                                  backgroundColor: isDark ? '#581c87' : '#f3e8ff',
+                                }}
+                              >
+                                <Tag className="w-4 h-4" style={{ color: '#8b5cf6' }} />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-sm" style={{ color: colors.gray[900] }}>
+                                  {item.itemName}
+                                </p>
+                                {item.minModel && item.maxModel && (
+                                  <p className="text-xs" style={{ color: colors.gray[500] }}>
+                                    {item.minModel} - {item.maxModel}
+                                  </p>
+                                )}
+                                {item.description && (
+                                  <p className="text-xs" style={{ color: colors.gray[500] }}>
+                                    {item.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div
+                              className="px-3 py-1.5 rounded-lg text-sm font-bold"
+                              style={{
+                                backgroundColor: isDark ? '#581c87' : '#f3e8ff',
+                                color: '#8b5cf6',
+                              }}
+                            >
+                              ${item.fixedFee.toFixed(2)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </motion.div>
+          )}
+
           {/* Pricing Info */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="mt-12 max-w-4xl mx-auto"
+            className="mt-8 max-w-4xl mx-auto"
           >
             <Card className="p-8 backdrop-blur-xl theme-surface">
               <h3 className="text-xl font-bold mb-4" style={{ color: colors.gray[900] }}>{t.calculator.pricing.title}</h3>
@@ -283,6 +494,12 @@ export default function CalculatorPage() {
                   <div className="w-2 h-2 rounded-full mt-2" style={{ backgroundColor: colors.primary[600] }} />
                   <div>
                     {t.calculator.pricing.example}
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 rounded-full mt-2" style={{ backgroundColor: '#f59e0b' }} />
+                  <div>
+                    {t.calculator.pricing.perfumeExtra}
                   </div>
                 </div>
               </div>

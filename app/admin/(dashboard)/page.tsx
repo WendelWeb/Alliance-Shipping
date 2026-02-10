@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Megaphone,
   Zap,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { LoadingSpinner, CardSkeleton, SkeletonLoader } from '@/components/admin/LoadingSpinner';
 import { useCachedFetch } from '@/hooks/useAdminCache';
@@ -27,6 +28,9 @@ interface DashboardStats {
   pendingRequests: number;
   inTransitCount: number;
   availableCount: number;
+  transfersToday: number;
+  totalTransfers: number;
+  transferChange: number;
   recentPackages: { id: string; customer: string; destination: string; status: string; amount: string }[];
 }
 
@@ -93,6 +97,9 @@ export default function AdminDashboard() {
     pendingRequests: 0,
     inTransitCount: 0,
     availableCount: 0,
+    transfersToday: 0,
+    totalTransfers: 0,
+    transferChange: 0,
     recentPackages: [],
   };
 
@@ -334,7 +341,8 @@ export default function AdminDashboard() {
 
       {/* Quick Actions */}
       {loading ? (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="h-32 bg-gray-200 rounded-2xl animate-pulse" />
           <div className="h-32 bg-gray-200 rounded-2xl animate-pulse" />
           <div className="h-32 bg-gray-200 rounded-2xl animate-pulse" />
           <div className="h-32 bg-gray-200 rounded-2xl animate-pulse" />
@@ -344,7 +352,7 @@ export default function AdminDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+        className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4"
       >
         <a
           href="/admin/packages/requested"
@@ -391,6 +399,37 @@ export default function AdminDashboard() {
           </div>
           <div className="mt-4 text-sm text-white opacity-90">
             Notify customers →
+          </div>
+        </a>
+
+        <a
+          href="/admin/transfers"
+          className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 p-6 shadow-lg hover:shadow-xl transition-all"
+        >
+          <div className="flex items-center justify-between text-white">
+            <div>
+              <p className="text-sm font-medium opacity-90">Transferts aujourd&apos;hui</p>
+              <p className="mt-2 text-3xl font-bold">{dashboardData.transfersToday}</p>
+              <div className="mt-1 flex items-center gap-1 text-xs">
+                {dashboardData.transferChange > 0 ? (
+                  <>
+                    <ArrowUpRight className="h-3 w-3" />
+                    <span>+{dashboardData.transferChange}% vs hier</span>
+                  </>
+                ) : dashboardData.transferChange < 0 ? (
+                  <>
+                    <ArrowDownRight className="h-3 w-3" />
+                    <span>{dashboardData.transferChange}% vs hier</span>
+                  </>
+                ) : (
+                  <span>= vs hier</span>
+                )}
+              </div>
+            </div>
+            <ArrowRightLeft className="h-12 w-12 opacity-50" />
+          </div>
+          <div className="mt-4 text-sm text-white opacity-90">
+            Voir tous les transferts →
           </div>
         </a>
       </motion.div>

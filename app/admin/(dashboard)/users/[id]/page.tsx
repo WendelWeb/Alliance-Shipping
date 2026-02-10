@@ -67,9 +67,6 @@ interface PackageData {
   currentLocation: string | null;
   estimatedDelivery: string | null;
   actualDelivery: string | null;
-  recipientName: string;
-  recipientCity: string;
-  recipientCountry: string;
   priority: string;
   createdAt: string;
   updatedAt: string;
@@ -488,7 +485,7 @@ export default function UserDetailPage() {
                             </div>
                             <div className="bg-gray-50 rounded-xl p-3">
                               <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-1"><Truck className="h-3 w-3" />Destination</div>
-                              <p className="text-sm font-medium text-gray-900">{pkg.recipientCity}, {pkg.recipientCountry}</p>
+                              <p className="text-sm font-medium text-gray-900">{pkg.currentLocation || 'N/A'}</p>
                             </div>
                           </div>
 

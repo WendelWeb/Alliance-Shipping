@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
             userInfo.email,
             userName,
             pkg.trackingNumber,
-            pkg.recipientCity || 'Haiti Office',
+            userInfo?.city ? `${userInfo.city} Office` : 'Haiti Office',
             userLocale
           ).catch(error => {
             console.error('Failed to send available email:', error);
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
             userInfo.email,
             userName,
             pkg.trackingNumber,
-            pkg.recipientName || userName,
+            userName,
             userLocale
           ).catch(error => {
             console.error('Failed to send delivered email:', error);

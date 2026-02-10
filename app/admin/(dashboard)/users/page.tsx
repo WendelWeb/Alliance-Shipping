@@ -32,8 +32,10 @@ import {
   TrendingUp,
   ArrowUpRight,
   ArrowDownRight,
+  Plus,
 } from 'lucide-react';
 import { CardSkeleton } from '@/components/admin/LoadingSpinner';
+import TransferSuccessModal from '@/components/admin/TransferSuccessModal';
 
 interface LoyaltyTransaction {
   id: number;
@@ -94,6 +96,19 @@ export default function UsersPage() {
   const [searchInput, setSearchInput] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [addPackageUser, setAddPackageUser] = useState<UserData | null>(null);
+  const [addPackageForm, setAddPackageForm] = useState({
+    externalTrackingNumber: '',
+    category: 'general',
+    weight: '',
+    description: '',
+    city: '',
+  });
+  const [addPackageLoading, setAddPackageLoading] = useState(false);
+  const [addPackageResult, setAddPackageResult] = useState<{ trackingNumber: string } | null>(null);
+  const [cityPricing, setCityPricing] = useState<{ city: string; serviceFee: number; pricePerLb: number }[]>([]);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferInfo, setTransferInfo] = useState<any>(null);
   const router = useRouter();
   const initialFetchDone = useRef(!!cachedData);
 
@@ -145,14 +160,22 @@ export default function UsersPage() {
     return () => clearTimeout(timer);
   }, [searchInput, searchQuery, fetchUsers]);
 
+  useEffect(() => {
+    fetch('/api/pricing/all')
+      .then((res) => res.json())
+      .then((data) => setCityPricing(data.cities || []))
+      .catch(() => {});
+  }, []);
+
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > pagination.totalPages) return;
     fetchUsers(newPage, searchQuery);
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
-    fetchUsers(pagination.page, searchQuery);
+    await fetchUsers(pagination.page, searchQuery);
+    setRefreshing(false);
   };
 
   const handleExportCSV = () => {
@@ -174,6 +197,73 @@ export default function UsersPage() {
     link.download = `users-export-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleOpenAddPackage = (user: UserData) => {
+    setAddPackageUser(user);
+    setAddPackageForm({
+      externalTrackingNumber: '',
+      category: 'general',
+      weight: '',
+      description: '',
+      city: user.city || '',
+    });
+    setAddPackageResult(null);
+  };
+
+  const handleAddPackageSubmit = async () => {
+    if (!addPackageUser || !addPackageUser.dbId) return;
+    setAddPackageLoading(true);
+    try {
+      const response = await fetch('/api/admin/packages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: addPackageUser.dbId,
+          externalTrackingNumber: addPackageForm.externalTrackingNumber,
+          category: addPackageForm.category,
+          weight: addPackageForm.weight,
+          description: addPackageForm.description,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to create package');
+      const data = await response.json();
+      setAddPackageResult({ trackingNumber: data.package.trackingNumber });
+
+      // Show transfer modal with package details
+      const fees = getCalculatedFees();
+      setTransferInfo({
+        packageId: data.package.id,
+        trackingNumber: data.package.trackingNumber,
+        userId: addPackageUser.dbId,
+        userName: `${addPackageUser.firstName || ''} ${addPackageUser.lastName || ''}`.trim() || addPackageUser.email,
+        userEmail: addPackageUser.email,
+        userPhone: addPackageUser.phone,
+        userWhatsappPhone: addPackageUser.whatsappPhone,
+        userCity: addPackageUser.city,
+        transferType: 'admin_assigned' as const,
+        oldTotalCost: '5.00', // Default Alliance Shipping fee
+        newTotalCost: fees.total.toFixed(2),
+      });
+      setShowTransferModal(true);
+    } catch (error) {
+      console.error('Error creating package:', error);
+      alert('Erreur lors de la creation du colis.');
+    } finally {
+      setAddPackageLoading(false);
+    }
+  };
+
+  const getCalculatedFees = () => {
+    const w = parseFloat(addPackageForm.weight) || 0;
+    const userCity = addPackageUser?.city || addPackageForm.city;
+    const pricing = cityPricing.find((c) => c.city === userCity);
+    if (!pricing) return { serviceFee: 5, weightCost: w * 4, total: 5 + w * 4 };
+    return {
+      serviceFee: pricing.serviceFee,
+      weightCost: w * pricing.pricePerLb,
+      total: pricing.serviceFee + w * pricing.pricePerLb,
+    };
   };
 
   const formatLastSeen = (ts: number | null) => {
@@ -481,17 +571,30 @@ export default function UsersPage() {
                   </div>
                 )}
 
-                {/* View Packages Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(`/admin/users/${user.id}`);
-                  }}
-                  className="w-full mt-4 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-50 text-gray-700 text-sm font-medium rounded-xl hover:bg-primary-50 hover:text-primary-700 transition-colors border border-gray-100 hover:border-primary-200"
-                >
-                  <Eye className="h-4 w-4" />
-                  View Packages & Details
-                </button>
+                {/* Action Buttons */}
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/admin/users/${user.id}`);
+                    }}
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-50 text-gray-700 text-sm font-medium rounded-xl hover:bg-primary-50 hover:text-primary-700 transition-colors border border-gray-100 hover:border-primary-200"
+                  >
+                    <Eye className="h-4 w-4" />
+                    View Packages & Details
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAddPackage(user);
+                    }}
+                    title="Ajouter un colis"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 bg-green-50 text-green-700 text-sm font-medium rounded-xl hover:bg-green-100 transition-colors border border-green-100 hover:border-green-200"
+                  >
+                    <PackageIcon className="h-4 w-4" />
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
             </motion.div>
           ))}
@@ -802,6 +905,216 @@ export default function UsersPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Add Package Modal */}
+      <AnimatePresence>
+        {addPackageUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => { setAddPackageUser(null); setAddPackageResult(null); }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="theme-card rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="relative bg-gradient-to-br from-green-600 via-green-600 to-green-700 px-6 py-6">
+                <button
+                  onClick={() => { setAddPackageUser(null); setAddPackageResult(null); }}
+                  className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-white/15 rounded-xl">
+                    <PackageIcon className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white">Ajouter un colis</h2>
+                    <p className="text-green-100 text-sm">pour {addPackageUser.name}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Body */}
+              {addPackageResult ? (
+                <div className="p-6 text-center space-y-4">
+                  <div className="p-4 bg-green-50 rounded-xl border border-green-100">
+                    <CheckCircle className="h-10 w-10 text-green-500 mx-auto mb-2" />
+                    <p className="text-sm font-medium text-green-800 mb-1">Colis cree avec succes!</p>
+                    <p className="text-xs text-gray-500 mb-2">Numero de suivi Alliance Shipping:</p>
+                    <p className="text-lg font-bold text-gray-900 font-mono bg-white px-4 py-2 rounded-lg border border-gray-200 inline-block">
+                      {addPackageResult.trackingNumber}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        setAddPackageUser(null);
+                        setAddPackageResult(null);
+                        await handleRefresh();
+                      }}
+                      className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-200 transition-colors"
+                    >
+                      Fermer
+                    </button>
+                    <button
+                      onClick={() => {
+                        window.location.href = '/admin/packages';
+                      }}
+                      className="flex-1 px-4 py-2.5 bg-primary-600 text-white text-sm font-medium rounded-xl hover:bg-primary-700 transition-colors"
+                    >
+                      Voir les colis
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+                  {/* External Tracking Number */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Numero de suivi externe <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={addPackageForm.externalTrackingNumber}
+                      onChange={(e) => setAddPackageForm({ ...addPackageForm, externalTrackingNumber: e.target.value })}
+                      placeholder="ex: 1Z999AA10123456784"
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                    />
+                  </div>
+
+                  {/* Category */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Categorie</label>
+                    <select
+                      value={addPackageForm.category}
+                      onChange={(e) => setAddPackageForm({ ...addPackageForm, category: e.target.value })}
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm bg-white"
+                    >
+                      <option value="general">General</option>
+                      <option value="clothing">Clothing</option>
+                      <option value="electronics">Electronics</option>
+                      <option value="food">Food</option>
+                      <option value="documents">Documents</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  {/* Weight */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Poids (lbs) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      value={addPackageForm.weight}
+                      onChange={(e) => setAddPackageForm({ ...addPackageForm, weight: e.target.value })}
+                      placeholder="ex: 2.5"
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Description <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={addPackageForm.description}
+                      onChange={(e) => setAddPackageForm({ ...addPackageForm, description: e.target.value })}
+                      placeholder="Description du contenu du colis..."
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm resize-none"
+                    />
+                  </div>
+
+                  {/* City (only if user has no city) */}
+                  {!addPackageUser.city && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Ville de livraison
+                      </label>
+                      <select
+                        value={addPackageForm.city}
+                        onChange={(e) => setAddPackageForm({ ...addPackageForm, city: e.target.value })}
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm bg-white"
+                      >
+                        <option value="">-- Selectionner une ville --</option>
+                        {cityPricing.map((cp) => (
+                          <option key={cp.city} value={cp.city}>{cp.city}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Fee Summary */}
+                  {parseFloat(addPackageForm.weight) > 0 && (
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-2">
+                      <h4 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-green-500" />
+                        Estimation des frais
+                      </h4>
+                      <div className="space-y-1.5 text-sm">
+                        <div className="flex justify-between text-gray-600">
+                          <span>Frais de service</span>
+                          <span className="font-medium">${getCalculatedFees().serviceFee.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-gray-600">
+                          <span>Frais de poids ({addPackageForm.weight} lbs)</span>
+                          <span className="font-medium">${getCalculatedFees().weightCost.toFixed(2)}</span>
+                        </div>
+                        <div className="border-t border-gray-200 pt-1.5 flex justify-between font-semibold text-gray-900">
+                          <span>Total</span>
+                          <span>${getCalculatedFees().total.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Submit Button */}
+                  <button
+                    onClick={handleAddPackageSubmit}
+                    disabled={addPackageLoading || !addPackageForm.externalTrackingNumber || !addPackageForm.weight || !addPackageForm.description}
+                    className="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white text-sm font-semibold rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {addPackageLoading ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        Creation en cours...
+                      </>
+                    ) : (
+                      <>
+                        <PackageIcon className="h-4 w-4" />
+                        <Plus className="h-3.5 w-3.5 -ml-1" />
+                        Creer le colis
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Transfer Success Modal */}
+      <TransferSuccessModal
+        isOpen={showTransferModal}
+        onClose={() => {
+          setShowTransferModal(false);
+          setTransferInfo(null);
+        }}
+        transfer={transferInfo}
+      />
     </div>
   );
 }

@@ -58,7 +58,6 @@ export async function POST(request: NextRequest) {
           details: {
             trackingNumber: pkg.trackingNumber,
             status: pkg.status,
-            recipientCity: pkg.recipientCity,
             totalCost: pkg.totalCost,
             deletedAt: new Date().toISOString(),
           },

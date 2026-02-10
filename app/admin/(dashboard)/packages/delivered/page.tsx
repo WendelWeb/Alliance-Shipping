@@ -31,7 +31,6 @@ interface DeliveredPackage {
   totalFee: number;
   deliveredAt: string;
   deliveredBy: string;
-  recipientName: string;
   recipientSignature: string | null;
   deliveryPhoto: string | null;
   paymentMethod: string;
@@ -75,12 +74,11 @@ export default function DeliveredPackagesPage() {
       userId: pkg.userId,
       userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
       userEmail: pkg.user?.email || 'N/A',
-      destination: pkg.recipientCity,
+      destination: pkg.user?.city || '-',
       weight: parseFloat(pkg.weight) || 0,
       totalFee: parseFloat(pkg.totalCost) || 0,
       deliveredAt: pkg.actualDelivery || pkg.updatedAt,
       deliveredBy: 'Admin User',
-      recipientName: pkg.recipientName,
       recipientSignature: null,
       deliveryPhoto: null,
       paymentMethod: 'cash',
@@ -98,7 +96,7 @@ export default function DeliveredPackagesPage() {
     const matchesSearch =
       pkg.trackingNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pkg.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pkg.recipientName.toLowerCase().includes(searchQuery.toLowerCase());
+      pkg.userName.toLowerCase().includes(searchQuery.toLowerCase());
 
     // Date filter logic would go here
     return matchesSearch;
@@ -115,7 +113,7 @@ export default function DeliveredPackagesPage() {
   const handleViewProof = (pkg: DeliveredPackage) => {
     console.log('Viewing delivery proof for:', pkg.trackingNumber);
     // TODO: Open modal with signature and photo
-    alert(`Viewing delivery proof for ${pkg.trackingNumber}\n\nRecipient: ${pkg.recipientName}\nSignature: ${pkg.recipientSignature ? 'Available' : 'Not available'}\nPhoto: ${pkg.deliveryPhoto ? 'Available' : 'Not available'}`);
+    alert(`Viewing delivery proof for ${pkg.trackingNumber}\n\nRecipient: ${pkg.userName}\nSignature: ${pkg.recipientSignature ? 'Available' : 'Not available'}\nPhoto: ${pkg.deliveryPhoto ? 'Available' : 'Not available'}`);
   };
 
   const handleExportReceipt = (pkg: DeliveredPackage) => {
@@ -369,11 +367,11 @@ export default function DeliveredPackagesPage() {
                   <p className="text-xs text-gray-500 mb-2">RECIPIENT</p>
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold">
-                      {pkg.recipientName ? pkg.recipientName.charAt(0) : '?'}
+                      {pkg.userName ? pkg.userName.charAt(0) : '?'}
                     </div>
                     <div>
                       <div className="text-sm font-medium text-gray-900">
-                        {pkg.recipientName || 'Unknown Recipient'}
+                        {pkg.userName || 'Unknown'}
                       </div>
                       <div className="text-xs text-gray-500">
                         Delivered by {pkg.deliveredBy}

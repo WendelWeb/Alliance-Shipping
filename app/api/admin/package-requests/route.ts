@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { packageRequests, users, packages, trackingHistory, adminActivityLogs } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { sendPackageApprovedEmail, sendPackageRejectedEmail } from '@/lib/email/service';
 import { sendPushNotification } from '@/lib/notifications/push';
+import { generateASTrackingNumber } from '@/lib/utils/tracking';
+import { calculateFeesForCity } from '@/lib/utils/package-transfer';
 
 // GET - List all package requests
 export async function GET(request: NextRequest) {
@@ -23,13 +25,10 @@ export async function GET(request: NextRequest) {
         id: packageRequests.id,
         userId: packageRequests.userId,
         externalTrackingNumber: packageRequests.externalTrackingNumber,
-        receiptLocation: packageRequests.receiptLocation,
         description: packageRequests.description,
         customerNotes: packageRequests.customerNotes,
         estimatedWeight: packageRequests.estimatedWeight,
         category: packageRequests.category,
-        senderInfo: packageRequests.senderInfo,
-        recipientInfo: packageRequests.recipientInfo,
         status: packageRequests.status,
         adminNotes: packageRequests.adminNotes,
         reviewedBy: packageRequests.reviewedBy,
@@ -43,6 +42,8 @@ export async function GET(request: NextRequest) {
           firstName: users.firstName,
           lastName: users.lastName,
           phone: users.phone,
+          city: users.city,
+          warehouseId: users.warehouseId,
         },
       })
       .from(packageRequests)
@@ -71,7 +72,7 @@ export async function PATCH(request: NextRequest) {
     const adminId = session.adminId;
 
     const body = await request.json();
-    const { id, action, weight, category, initialStatus } = body; // action: 'approve' or 'reject'
+    const { id, action, weight, category, initialStatus } = body;
 
     if (!id || !action) {
       return NextResponse.json(
@@ -91,7 +92,6 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (action === 'approve') {
-      // Validate required fields
       if (!weight || !category || !initialStatus) {
         return NextResponse.json(
           { error: 'Weight, category, and initial status are required for approval' },
@@ -99,31 +99,29 @@ export async function PATCH(request: NextRequest) {
         );
       }
 
-      // Calculate fees
-      const serviceFee = 5.0;
+      // Get user info for fee calculation
+      const [userInfo] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, packageRequest.userId));
+
+      // Calculate fees based on user's city
       const packageWeight = parseFloat(weight);
-      const shippingFee = packageWeight * 4.0;
-      const totalFee = serviceFee + shippingFee;
+      const fees = await calculateFeesForCity(userInfo?.city || null, packageWeight);
 
       // Generate Alliance Shipping tracking number
-      const year = new Date().getFullYear();
-      const timestamp = Date.now();
-      const random = Math.floor(Math.random() * 1000);
-      const asTrackingNumber = `AS-${year}-${timestamp}${random}`.substring(0, 20);
-
-      // Get sender and recipient info from packageRequest
-      const senderInfo = packageRequest.senderInfo as any;
-      const recipientInfo = packageRequest.recipientInfo as any;
+      const asTrackingNumber = generateASTrackingNumber();
 
       // Determine current location based on status
+      const userCity = userInfo?.city || 'Port-au-Prince';
       const locationMap: Record<string, string> = {
-        'received': packageRequest.receiptLocation || 'Miami Warehouse',
-        'in-transit': 'En route vers Haïti',
-        'available': recipientInfo?.city ? `${recipientInfo.city} Office` : 'Haiti Office',
-        'delivered': recipientInfo?.city || 'Haiti',
+        'received': 'Miami Warehouse',
+        'in-transit': 'En route vers Haiti',
+        'available': `${userCity} Office`,
+        'delivered': userCity,
       };
 
-      // Create actual package
+      // Create actual package (no sender/recipient fields)
       const [newPackage] = await db
         .insert(packages)
         .values({
@@ -134,20 +132,10 @@ export async function PATCH(request: NextRequest) {
           weight: packageWeight.toString(),
           weightUnit: 'lbs',
           category: category,
-          serviceFee: serviceFee.toString(),
-          weightCost: shippingFee.toString(),
-          totalCost: totalFee.toString(),
+          serviceFee: fees.serviceFee.toFixed(2),
+          weightCost: fees.weightCost.toFixed(2),
+          totalCost: fees.totalCost.toFixed(2),
           currency: 'USD',
-          senderName: senderInfo?.name || 'Unknown',
-          senderAddress: senderInfo?.address || '',
-          senderCity: senderInfo?.city || 'Miami',
-          senderCountry: senderInfo?.country || 'USA',
-          senderPhone: senderInfo?.phone || null,
-          recipientName: recipientInfo?.name || 'Unknown',
-          recipientAddress: recipientInfo?.address || '',
-          recipientCity: recipientInfo?.city || 'Port-au-Prince',
-          recipientCountry: recipientInfo?.country || 'Haiti',
-          recipientPhone: recipientInfo?.phone || null,
           status: initialStatus,
           currentLocation: locationMap[initialStatus],
           assignedToAdmin: adminId,
@@ -166,7 +154,7 @@ export async function PATCH(request: NextRequest) {
         })
         .where(eq(packageRequests.id, id));
 
-      // Create tracking history with translation keys
+      // Create tracking history
       const statusDescriptions: Record<string, string> = {
         'received': 'packages.timeline.received',
         'in-transit': 'packages.timeline.inTransit',
@@ -174,7 +162,6 @@ export async function PATCH(request: NextRequest) {
         'delivered': 'packages.timeline.delivered',
       };
 
-      // First entry: Initial request by user
       await db.insert(trackingHistory).values({
         packageId: newPackage.id,
         status: 'packages.timeline.requestSubmitted',
@@ -183,7 +170,6 @@ export async function PATCH(request: NextRequest) {
         timestamp: packageRequest.createdAt,
       });
 
-      // Second entry: Current status after approval
       await db.insert(trackingHistory).values({
         packageId: newPackage.id,
         status: statusDescriptions[initialStatus] || 'packages.timeline.requestApproved',
@@ -191,7 +177,7 @@ export async function PATCH(request: NextRequest) {
         description: statusDescriptions[initialStatus] || 'packages.messages.requestApproved',
       });
 
-      // Log admin activity - Request approved and package created
+      // Log admin activity
       await db.insert(adminActivityLogs).values({
         adminId: adminId,
         action: 'approved_request',
@@ -204,33 +190,27 @@ export async function PATCH(request: NextRequest) {
           newTrackingNumber: asTrackingNumber,
           initialStatus: initialStatus,
           weight: packageWeight,
-          totalCost: totalFee,
-          recipientCity: recipientInfo?.city || 'Unknown',
+          totalCost: fees.totalCost,
+          userCity: userCity,
         },
         ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
         userAgent: request.headers.get('user-agent') || 'unknown',
       });
 
-      // Get user info for email
-      const [userInfo] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, packageRequest.userId));
-
-      // Send approval email to user
+      // Send approval email
       if (userInfo?.email) {
         const userName = `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || userInfo.email;
         await sendPackageApprovedEmail(
           userInfo.email,
           userName,
           asTrackingNumber,
-          totalFee
+          fees.totalCost
         ).catch(error => {
           console.error('Failed to send approval email:', error);
         });
       }
 
-      // Send push notification for approval
+      // Send push notification
       sendPushNotification({
         userId: packageRequest.userId,
         templateKey: 'request_approved',
@@ -243,7 +223,6 @@ export async function PATCH(request: NextRequest) {
         package: newPackage,
       });
     } else if (action === 'reject') {
-      // Update request status
       await db
         .update(packageRequests)
         .set({
@@ -253,7 +232,6 @@ export async function PATCH(request: NextRequest) {
         })
         .where(eq(packageRequests.id, id));
 
-      // Log admin activity - Request rejected
       await db.insert(adminActivityLogs).values({
         adminId: adminId,
         action: 'rejected_request',
@@ -268,13 +246,11 @@ export async function PATCH(request: NextRequest) {
         userAgent: request.headers.get('user-agent') || 'unknown',
       });
 
-      // Get user info for email
       const [userInfo] = await db
         .select()
         .from(users)
         .where(eq(users.id, packageRequest.userId));
 
-      // Send rejection email to user
       if (userInfo?.email) {
         const userName = `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || userInfo.email;
         await sendPackageRejectedEmail(
@@ -287,7 +263,6 @@ export async function PATCH(request: NextRequest) {
         });
       }
 
-      // Send push notification for rejection
       sendPushNotification({
         userId: packageRequest.userId,
         templateKey: 'request_rejected',

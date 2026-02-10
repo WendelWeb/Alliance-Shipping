@@ -65,7 +65,7 @@ export default function ReceivedPackagesPage() {
       userId: pkg.userId,
       userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
       userEmail: pkg.user?.email || 'N/A',
-      destination: pkg.recipientCity,
+      destination: pkg.user?.city || '-',
       description: pkg.description,
       receivedAt: pkg.createdAt,
       weight: parseFloat(pkg.weight) || 0,

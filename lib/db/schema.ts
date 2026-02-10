@@ -28,30 +28,17 @@ export const packages = pgTable('packages', {
   userId: integer('user_id').references(() => users.id).notNull(),
 
   // Package Details
-  description: text('description').notNull(),
-  weight: decimal('weight', { precision: 10, scale: 2 }).notNull(),
+  description: text('description'),
+  weight: decimal('weight', { precision: 10, scale: 2 }),
   weightUnit: varchar('weight_unit', { length: 10 }).default('lbs').notNull(),
   dimensions: json('dimensions').$type<{ length: number; width: number; height: number }>(),
   category: varchar('category', { length: 100 }),
 
   // Pricing
   serviceFee: decimal('service_fee', { precision: 10, scale: 2 }).default('5.00').notNull(),
-  weightCost: decimal('weight_cost', { precision: 10, scale: 2 }).notNull(),
-  totalCost: decimal('total_cost', { precision: 10, scale: 2 }).notNull(),
+  weightCost: decimal('weight_cost', { precision: 10, scale: 2 }).default('0.00').notNull(),
+  totalCost: decimal('total_cost', { precision: 10, scale: 2 }).default('0.00').notNull(),
   currency: varchar('currency', { length: 10 }).default('USD').notNull(),
-
-  // Shipping Details
-  senderName: varchar('sender_name', { length: 255 }).notNull(),
-  senderAddress: text('sender_address').notNull(),
-  senderCity: varchar('sender_city', { length: 100 }).notNull(),
-  senderCountry: varchar('sender_country', { length: 100 }).notNull(),
-  senderPhone: varchar('sender_phone', { length: 50 }),
-
-  recipientName: varchar('recipient_name', { length: 255 }).notNull(),
-  recipientAddress: text('recipient_address').notNull(),
-  recipientCity: varchar('recipient_city', { length: 100 }).notNull(),
-  recipientCountry: varchar('recipient_country', { length: 100 }).notNull(),
-  recipientPhone: varchar('recipient_phone', { length: 50 }),
 
   // Status & Tracking
   status: varchar('status', { length: 50 }).default('pending').notNull(),
@@ -161,30 +148,11 @@ export const admins = pgTable('admins', {
 export const packageRequests = pgTable('package_requests', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').references(() => users.id).notNull(),
-  externalTrackingNumber: varchar('external_tracking_number', { length: 255 }).notNull(), // Tracking du transporteur d'origine (TRÈS IMPORTANT)
-  receiptLocation: varchar('receipt_location', { length: 255 }).notNull(), // Lieu de réception du colis (TRÈS IMPORTANT) - Ex: "Miami Warehouse", "Our USA Address"
+  externalTrackingNumber: varchar('external_tracking_number', { length: 255 }).notNull(), // Tracking du transporteur d'origine
   description: text('description').notNull(),
-  customerNotes: text('customer_notes'), // Message explicant tout ce qu'il y a à savoir (FACULTATIF)
+  customerNotes: text('customer_notes'),
   estimatedWeight: decimal('estimated_weight', { precision: 10, scale: 2 }),
   category: varchar('category', { length: 100 }),
-
-  // Sender Info
-  senderInfo: json('sender_info').$type<{
-    name: string;
-    address: string;
-    city: string;
-    country: string;
-    phone?: string;
-  }>().notNull(),
-
-  // Recipient Info
-  recipientInfo: json('recipient_info').$type<{
-    name: string;
-    address: string;
-    city: string;
-    country: string;
-    phone?: string;
-  }>().notNull(),
 
   // Status
   status: varchar('status', { length: 50 }).default('pending').notNull(), // pending, approved, rejected, converted
@@ -345,6 +313,38 @@ export const adminActivityLogs = pgTable('admin_activity_logs', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Package Transfers - Track all transfers from Alliance Shipping to users
+export const packageTransfers = pgTable('package_transfers', {
+  id: serial('id').primaryKey(),
+  packageId: integer('package_id').references(() => packages.id).notNull(),
+  fromUserId: integer('from_user_id').references(() => users.id).notNull(), // Usually Alliance Shipping account
+  toUserId: integer('to_user_id').references(() => users.id).notNull(), // The actual recipient
+  requestId: integer('request_id').references(() => packageRequests.id), // If triggered by a package request
+
+  // Pricing before transfer
+  oldServiceFee: decimal('old_service_fee', { precision: 10, scale: 2 }).notNull(),
+  oldWeightCost: decimal('old_weight_cost', { precision: 10, scale: 2 }).notNull(),
+  oldTotalCost: decimal('old_total_cost', { precision: 10, scale: 2 }).notNull(),
+
+  // Pricing after transfer (recalculated for user's city)
+  newServiceFee: decimal('new_service_fee', { precision: 10, scale: 2 }).notNull(),
+  newWeightCost: decimal('new_weight_cost', { precision: 10, scale: 2 }).notNull(),
+  newTotalCost: decimal('new_total_cost', { precision: 10, scale: 2 }).notNull(),
+
+  // Location info
+  oldCity: varchar('old_city', { length: 100 }), // City before transfer (null for Alliance account)
+  newCity: varchar('new_city', { length: 100 }).notNull(), // User's destination city
+
+  // Transfer metadata
+  transferType: varchar('transfer_type', { length: 50 }).notNull(), // 'user_claimed', 'admin_assigned'
+  transferredBy: integer('transferred_by').references(() => admins.id), // Admin ID if manually assigned
+  notes: text('notes'), // Optional transfer notes
+
+  // Timestamps
+  transferredAt: timestamp('transferred_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Admin Relations
 export const adminsRelations = relations(admins, ({ one, many }) => ({
   user: one(users, {
@@ -418,6 +418,29 @@ export const revenueRecordsRelations = relations(revenueRecords, ({ one }) => ({
 export const adminActivityLogsRelations = relations(adminActivityLogs, ({ one }) => ({
   admin: one(admins, {
     fields: [adminActivityLogs.adminId],
+    references: [admins.id],
+  }),
+}));
+
+export const packageTransfersRelations = relations(packageTransfers, ({ one }) => ({
+  package: one(packages, {
+    fields: [packageTransfers.packageId],
+    references: [packages.id],
+  }),
+  fromUser: one(users, {
+    fields: [packageTransfers.fromUserId],
+    references: [users.id],
+  }),
+  toUser: one(users, {
+    fields: [packageTransfers.toUserId],
+    references: [users.id],
+  }),
+  request: one(packageRequests, {
+    fields: [packageTransfers.requestId],
+    references: [packageRequests.id],
+  }),
+  transferredByAdmin: one(admins, {
+    fields: [packageTransfers.transferredBy],
     references: [admins.id],
   }),
 }));
@@ -516,6 +539,9 @@ export type NewRevenueRecord = typeof revenueRecords.$inferInsert;
 
 export type AdminActivityLog = typeof adminActivityLogs.$inferSelect;
 export type NewAdminActivityLog = typeof adminActivityLogs.$inferInsert;
+
+export type PackageTransfer = typeof packageTransfers.$inferSelect;
+export type NewPackageTransfer = typeof packageTransfers.$inferInsert;
 
 // Types - Referral & Loyalty
 export type LoyaltyConfig = typeof loyaltyConfig.$inferSelect;

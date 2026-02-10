@@ -28,6 +28,9 @@ import {
   TrendingUp,
   Gift,
   CheckCircle,
+  Phone,
+  MessageCircle,
+  Building2,
 } from 'lucide-react';
 import { LoadingSpinner, SkeletonLoader, CardSkeleton } from '@/components/admin/LoadingSpinner';
 
@@ -74,6 +77,7 @@ const statusStyleMap: Record<string, { border: string; bg: string; check: string
 
 const statsCardStyles: Record<string, { bar: string; text: string; activeBg: string; activeBorder: string }> = {
   all:          { bar: 'bg-gray-400',   text: 'text-gray-900',   activeBg: 'bg-gray-50',    activeBorder: 'border-gray-300' },
+  unassigned:   { bar: 'bg-amber-500',  text: 'text-amber-600',  activeBg: 'bg-amber-50',    activeBorder: 'border-amber-300' },
   requested:    { bar: 'bg-yellow-500', text: 'text-yellow-600', activeBg: 'bg-yellow-50',   activeBorder: 'border-yellow-300' },
   received:     { bar: 'bg-blue-500',   text: 'text-blue-600',   activeBg: 'bg-blue-50',     activeBorder: 'border-blue-300' },
   'in-transit': { bar: 'bg-purple-500', text: 'text-purple-600', activeBg: 'bg-purple-50',   activeBorder: 'border-purple-300' },
@@ -104,11 +108,16 @@ function transformPackage(pkg: any) {
   return {
     id: pkg.id,
     trackingNumber: pkg.trackingNumber,
+    externalTrackingNumber: pkg.externalTrackingNumber || '',
     userId: pkg.userId,
     userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
     userEmail: pkg.user?.email || 'N/A',
     userLanguage: pkg.user?.preferredLanguage || 'fr',
-    destination: pkg.recipientCity,
+    userPhone: pkg.user?.phone || '',
+    userWhatsapp: pkg.user?.whatsappPhone || '',
+    userCity: pkg.user?.city || '',
+    warehouseName: pkg.warehouseName || '',
+    destination: pkg.user?.city || '-',
     status: pkg.status,
     weight: parseFloat(pkg.weight) || 0,
     declaredValue: 0,
@@ -189,7 +198,12 @@ export default function AllPackagesPage() {
       pkg.trackingNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pkg.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pkg.userEmail.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || pkg.status === statusFilter;
+    const matchesStatus =
+      statusFilter === 'all'
+        ? true
+        : statusFilter === 'unassigned'
+        ? pkg.userEmail === 'allianceshipping26@gmail.com'
+        : pkg.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -317,6 +331,7 @@ export default function AllPackagesPage() {
 
   const stats = {
     total: packages.length,
+    unassigned: packages.filter((p) => p.userEmail === 'allianceshipping26@gmail.com').length,
     requested: packages.filter((p) => p.status === 'requested').length,
     received: packages.filter((p) => p.status === 'received').length,
     inTransit: packages.filter((p) => p.status === 'in-transit').length,
@@ -326,6 +341,7 @@ export default function AllPackagesPage() {
 
   const statsCards = [
     { key: 'all', label: 'Total', value: stats.total },
+    { key: 'unassigned', label: 'Non assignés', value: stats.unassigned },
     { key: 'requested', label: 'Demandés', value: stats.requested },
     { key: 'received', label: 'Reçus', value: stats.received },
     { key: 'in-transit', label: 'En Transit', value: stats.inTransit },
@@ -372,9 +388,9 @@ export default function AllPackagesPage() {
 
       {/* ── Stats Cards ─────────────────────────────────────────────── */}
       {loading ? (
-        <CardSkeleton count={6} />
+        <CardSkeleton count={7} />
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
           {statsCards.map((card, index) => {
             const isActive = statusFilter === card.key;
             const style = statsCardStyles[card.key];
@@ -426,7 +442,7 @@ export default function AllPackagesPage() {
         <div className="flex items-center gap-3">
           {statusFilter !== 'all' && (
             <span className="inline-flex items-center gap-2 px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm font-medium">
-              {statusLabels[statusFilter] || statusFilter}
+              {statusFilter === 'unassigned' ? 'Non assignés' : (statusLabels[statusFilter] || statusFilter)}
               <button
                 onClick={() => setStatusFilter('all')}
                 className="hover:bg-primary-100 rounded-full p-0.5"
@@ -524,6 +540,11 @@ export default function AllPackagesPage() {
                     <p className="font-mono text-sm font-medium text-primary-600 tracking-wide">
                       {pkg.trackingNumber}
                     </p>
+                    {pkg.externalTrackingNumber && pkg.externalTrackingNumber !== pkg.trackingNumber && (
+                      <p className="font-mono text-xs text-gray-400 mt-0.5">
+                        Ext: {pkg.externalTrackingNumber}
+                      </p>
+                    )}
                   </div>
 
                   {/* Info Grid */}
@@ -532,8 +553,15 @@ export default function AllPackagesPage() {
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-gray-400 shrink-0" />
                         <div className="min-w-0">
-                          <p className="text-[10px] uppercase tracking-wide text-gray-400">Destination</p>
-                          <p className="text-sm font-medium text-gray-900 truncate">{pkg.destination || '-'}</p>
+                          <p className="text-[10px] uppercase tracking-wide text-gray-400">Ville</p>
+                          <p className="text-sm font-medium text-gray-900 truncate">{pkg.userCity || '-'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-gray-400 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-[10px] uppercase tracking-wide text-gray-400">Dépôt</p>
+                          <p className="text-sm font-medium text-gray-900 truncate">{pkg.warehouseName || '-'}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -550,15 +578,26 @@ export default function AllPackagesPage() {
                           <p className="text-sm font-bold text-gray-900">{pkg.totalFee > 0 ? `$${pkg.totalFee.toFixed(2)}` : '-'}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Truck className="h-4 w-4 text-gray-400 shrink-0" />
-                        <div>
-                          <p className="text-[10px] uppercase tracking-wide text-gray-400">Livraison est.</p>
-                          <p className="text-sm font-medium text-gray-900">{deliveryEstimates[pkg.status] || '-'}</p>
-                        </div>
-                      </div>
                     </div>
                   </div>
+
+                  {/* Contact Info */}
+                  {(pkg.userPhone || pkg.userWhatsapp) && (
+                    <div className="px-5 pb-3 flex flex-wrap items-center gap-3">
+                      {pkg.userPhone && (
+                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                          <Phone className="h-3.5 w-3.5 text-gray-400" />
+                          <span>{pkg.userPhone}</span>
+                        </div>
+                      )}
+                      {pkg.userWhatsapp && (
+                        <div className="flex items-center gap-1.5 text-xs text-green-600">
+                          <MessageCircle className="h-3.5 w-3.5 text-green-500" />
+                          <span>{pkg.userWhatsapp}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Date */}
                   <div className="px-5 pb-3">

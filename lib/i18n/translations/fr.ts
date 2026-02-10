@@ -670,6 +670,26 @@ export const fr = {
     step: 'Étape',
     of: 'sur',
   },
+  locationsPage: {
+    title: 'Nos Emplacements',
+    subtitle: 'Trouvez nos bureaux et entrepôts près de chez vous',
+    searchPlaceholder: 'Rechercher par nom ou ville...',
+    filterAll: 'Tous',
+    call: 'Appeler',
+    directions: 'Itinéraire',
+    hours: 'Horaires',
+    phone: 'Téléphone',
+    address: 'Adresse',
+    open: 'Ouvert',
+    closed: 'Fermé',
+    noResults: 'Aucun résultat pour votre recherche',
+    noLocations: 'Aucun emplacement disponible pour le moment',
+  },
+  specialItems: {
+    title: 'Articles Spéciaux',
+    subtitle: 'Prix fixes pour certains articles',
+    priceFixed: 'Prix Fixe',
+  },
 };
 
 export default fr;

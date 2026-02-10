@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { packageRequests, users } from '@/lib/db/schema';
 import { currentUser } from '@clerk/nextjs/server';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, and, sql } from 'drizzle-orm';
 import { sendPackageRequestEmail } from '@/lib/email/service';
+import { findUnclaimedPackage, autoTransferPackage } from '@/lib/utils/package-transfer';
 
 // Resolve Clerk user → DB user (by clerkId first, then by email fallback + auto-sync)
 async function resolveDbUser(clerkUser: NonNullable<Awaited<ReturnType<typeof currentUser>>>) {
@@ -64,76 +65,114 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       externalTrackingNumber,
-      recipientCity,
       description,
       customerNotes,
       category,
       locale,
     } = body;
 
-    if (!externalTrackingNumber || !recipientCity || !description) {
+    if (!externalTrackingNumber || !description) {
       return NextResponse.json(
-        { error: 'Missing required fields: externalTrackingNumber, recipientCity, description' },
+        { error: 'Missing required fields: externalTrackingNumber, description' },
         { status: 400 }
       );
     }
 
     const userName = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || dbUser.email;
 
+    // Check for duplicate request from same user
+    const [existingRequest] = await db
+      .select()
+      .from(packageRequests)
+      .where(
+        and(
+          eq(packageRequests.userId, dbUser.id),
+          sql`LOWER(${packageRequests.externalTrackingNumber}) = LOWER(${externalTrackingNumber.trim()})`
+        )
+      )
+      .limit(1);
+
+    if (existingRequest) {
+      return NextResponse.json(
+        {
+          error: 'Vous avez déjà fait une demande pour ce numéro de suivi.',
+          duplicate: true,
+          existingRequest: {
+            id: existingRequest.id,
+            externalTrackingNumber: existingRequest.externalTrackingNumber,
+            status: existingRequest.status,
+            createdAt: existingRequest.createdAt,
+          },
+        },
+        { status: 409 }
+      );
+    }
+
+    // Create the package request
     const [packageRequest] = await db.insert(packageRequests).values({
       userId: dbUser.id,
       externalTrackingNumber: externalTrackingNumber.trim(),
-      receiptLocation: 'Miami Warehouse',
       description: description.trim(),
       customerNotes: customerNotes?.trim() || null,
       estimatedWeight: null,
       category: category || 'general',
-      senderInfo: {
-        name: '',
-        address: '',
-        city: '',
-        country: 'USA',
-      },
-      recipientInfo: {
-        name: userName,
-        address: '',
-        city: recipientCity.trim(),
-        country: 'Haiti',
-        phone: dbUser.phone || clerkUser.phoneNumbers?.[0]?.phoneNumber || '',
-      },
       status: 'pending',
     }).returning();
 
-    // Send confirmation email in user's language
+    // Check if there's an unclaimed package matching this tracking number
+    const unclaimedPackage = await findUnclaimedPackage(externalTrackingNumber.trim());
+
+    if (unclaimedPackage) {
+      // Auto-transfer the package to this user
+      const transferResult = await autoTransferPackage({
+        packageId: unclaimedPackage.id,
+        newUserId: dbUser.id,
+        requestId: packageRequest.id,
+      });
+
+      if (transferResult.success) {
+        console.log('[PACKAGE-REQUEST] Auto-transfer successful:', transferResult.trackingNumber, '→', userName);
+        return NextResponse.json({
+          success: true,
+          autoTransferred: true,
+          packageRequest: {
+            id: packageRequest.id,
+            externalTrackingNumber: packageRequest.externalTrackingNumber,
+            status: 'approved',
+          },
+          package: {
+            trackingNumber: transferResult.trackingNumber,
+            status: unclaimedPackage.status,
+          },
+        });
+      }
+    }
+
+    // No match found - send confirmation email for pending request
     let emailResult: any = null;
     const userEmail = clerkUser.emailAddresses[0]?.emailAddress;
-    // Use locale from request, fallback to user's preferred language, then default to 'fr'
     const emailLocale = locale || dbUser.preferredLanguage || 'fr';
     console.log('[PACKAGE-REQUEST] User:', userEmail, '| Name:', userName, '| Tracking:', packageRequest.externalTrackingNumber, '| Locale:', emailLocale);
     if (userEmail) {
       try {
-        console.log('[PACKAGE-REQUEST] Sending email to:', userEmail);
         emailResult = await sendPackageRequestEmail(
           userEmail,
           userName,
           packageRequest.externalTrackingNumber,
           emailLocale
         );
-        console.log('[PACKAGE-REQUEST] Email result:', JSON.stringify(emailResult));
       } catch (error: any) {
         console.error('[PACKAGE-REQUEST] Email exception:', error);
         emailResult = { success: false, error: error?.message || 'Unknown error' };
       }
-    } else {
-      console.warn('[PACKAGE-REQUEST] No email found for user');
     }
 
     return NextResponse.json({
       success: true,
+      autoTransferred: false,
       packageRequest: {
         id: packageRequest.id,
         externalTrackingNumber: packageRequest.externalTrackingNumber,
-        receiptLocation: packageRequest.receiptLocation,
         status: packageRequest.status,
       },
       email: {

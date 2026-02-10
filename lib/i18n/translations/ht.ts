@@ -670,6 +670,26 @@ export const ht = {
     step: 'Etap',
     of: 'sou',
   },
+  locationsPage: {
+    title: 'Kote Nou Ye',
+    subtitle: 'Jwenn biwo ak depo nou yo toupre ou',
+    searchPlaceholder: 'Chèche pa non oswa vil...',
+    filterAll: 'Tout',
+    call: 'Rele',
+    directions: 'Direksyon',
+    hours: 'Èdouvèti',
+    phone: 'Telefòn',
+    address: 'Adrès',
+    open: 'Ouvè',
+    closed: 'Fèmen',
+    noResults: 'Pa gen rezilta pou rechèch ou a',
+    noLocations: 'Pa gen kote ki disponib pou kounye a',
+  },
+  specialItems: {
+    title: 'Atik Espesyal',
+    subtitle: 'Pri fiks pou sèten atik',
+    priceFixed: 'Pri Fiks',
+  },
 };
 
 export default ht;

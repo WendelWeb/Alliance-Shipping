@@ -670,6 +670,26 @@ export const en = {
     step: 'Step',
     of: 'of',
   },
+  locationsPage: {
+    title: 'Our Locations',
+    subtitle: 'Find our offices and warehouses near you',
+    searchPlaceholder: 'Search by name or city...',
+    filterAll: 'All',
+    call: 'Call',
+    directions: 'Directions',
+    hours: 'Hours',
+    phone: 'Phone',
+    address: 'Address',
+    open: 'Open',
+    closed: 'Closed',
+    noResults: 'No results for your search',
+    noLocations: 'No locations available at this time',
+  },
+  specialItems: {
+    title: 'Special Items',
+    subtitle: 'Fixed pricing for certain items',
+    priceFixed: 'Fixed Price',
+  },
 };
 
 export default en;

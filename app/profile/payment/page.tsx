@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useTheme } from '@/lib/themes/ThemeProvider';
@@ -17,9 +17,9 @@ import {
   Plus,
   Trash2,
   Star,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 
 interface PaymentMethod {
   id: string;
@@ -89,16 +89,16 @@ export default function PaymentPage() {
     }
   };
 
-  const getMethodColor = (type: string) => {
+  const getMethodGradient = (type: string) => {
     switch (type) {
       case 'moncash':
-        return 'from-red-500 to-red-600';
+        return 'linear-gradient(135deg, #ef4444, #dc2626)';
       case 'natcash':
-        return 'from-blue-500 to-blue-600';
+        return 'linear-gradient(135deg, #3b82f6, #2563eb)';
       case 'card':
-        return 'from-purple-500 to-purple-600';
+        return 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
       default:
-        return 'from-gray-500 to-gray-600';
+        return 'linear-gradient(135deg, #6b7280, #4b5563)';
     }
   };
 
@@ -149,11 +149,14 @@ export default function PaymentPage() {
                   transition={{ delay: index * 0.05 }}
                   className="theme-card rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-all"
                 >
-                  <div className={`h-2 bg-gradient-to-r ${getMethodColor(method.type)}`} />
+                  <div className="h-2" style={{ background: getMethodGradient(method.type) }} />
                   <div className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-4 flex-1">
-                        <div className={`p-3 bg-gradient-to-br ${getMethodColor(method.type)} rounded-xl text-white`}>
+                        <div
+                          className="p-3 rounded-xl text-white"
+                          style={{ background: getMethodGradient(method.type) }}
+                        >
                           {getMethodIcon(method.type)}
                         </div>
                         <div className="flex-1">
@@ -210,7 +213,10 @@ export default function PaymentPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             onClick={() => setShowAddModal(true)}
-            className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg hover:shadow-xl"
+            className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl"
+            style={{
+              background: `linear-gradient(135deg, ${colors.primary[600]}, ${colors.primary[800]})`,
+            }}
           >
             <Plus className="h-5 w-5" />
             {t.profile.payment.addMethod}
@@ -223,15 +229,17 @@ export default function PaymentPage() {
             transition={{ delay: 0.2 }}
             className="mt-6 border-l-4 p-4 rounded-lg"
             style={{
-              backgroundColor: isDark ? '#1e3a8a' : '#dbeafe',
-              borderColor: isDark ? '#3b82f6' : '#2563eb'
+              backgroundColor: isDark ? colors.primary[900] : colors.primary[50],
+              borderColor: colors.primary[600],
             }}
           >
             <div className="flex items-start gap-3">
-              <div style={{ color: isDark ? '#93c5fd' : '#2563eb' }}>ℹ️</div>
-              <div className="text-sm" style={{ color: isDark ? '#dbeafe' : '#1e3a8a' }}>
+              <div style={{ color: colors.primary[600] }}>
+                <Wallet className="w-5 h-5" />
+              </div>
+              <div className="text-sm" style={{ color: isDark ? colors.primary[100] : colors.primary[900] }}>
                 <p className="font-semibold mb-1">{t.profile.payment.acceptedMethods}</p>
-                <ul className="list-disc list-inside space-y-1" style={{ color: isDark ? '#bfdbfe' : '#1e40af' }}>
+                <ul className="list-disc list-inside space-y-1" style={{ color: isDark ? colors.primary[200] : colors.primary[800] }}>
                   <li>{t.profile.payment.moncashDesc}</li>
                   <li>{t.profile.payment.natcashDesc}</li>
                   <li>{t.profile.payment.cardDesc}</li>
@@ -244,152 +252,168 @@ export default function PaymentPage() {
       <BottomNav />
 
       {/* Add Payment Method Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="theme-card rounded-2xl shadow-2xl max-w-md w-full p-6"
-          >
-            <h2 className="text-2xl font-bold mb-4" style={{ color: colors.gray[900] }}>
-              {t.profile.payment.addMethod}
-            </h2>
-
-            {/* Payment Type Selection */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-3" style={{ color: colors.gray[700] }}>
-                {t.profile.payment.paymentType}
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                <button
-                  onClick={() => setSelectedType('moncash')}
-                  className="p-4 rounded-xl border-2 transition-all"
-                  style={{
-                    borderColor: selectedType === 'moncash' ? '#ef4444' : colors.gray[200],
-                    backgroundColor: selectedType === 'moncash'
-                      ? (isDark ? '#7f1d1d' : '#fee2e2')
-                      : 'transparent'
-                  }}
-                >
-                  <Smartphone
-                    className="h-6 w-6 mx-auto mb-2"
-                    style={{ color: selectedType === 'moncash' ? '#dc2626' : colors.gray[400] }}
-                  />
-                  <span
-                    className="text-sm font-medium"
-                    style={{ color: selectedType === 'moncash'
-                      ? (isDark ? '#fecaca' : '#7f1d1d')
-                      : colors.gray[600]
+      <AnimatePresence>
+        {showAddModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              onClick={() => {
+                setShowAddModal(false);
+                setNewMethodDetails('');
+              }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="relative rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
+              style={{ backgroundColor: isDark ? colors.gray[900] : '#ffffff' }}
+            >
+              {/* Gradient Header */}
+              <div
+                className="relative px-6 py-5 overflow-hidden"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.primary[600]}, ${colors.primary[800]})`,
+                }}
+              >
+                <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-white/10" />
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                      <CreditCard className="w-5 h-5 text-white" />
+                    </div>
+                    <h2 className="text-xl font-bold text-white">
+                      {t.profile.payment.addMethod}
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setNewMethodDetails('');
                     }}
+                    className="p-2 rounded-xl bg-white/10 text-white/80 hover:bg-white/20 transition-colors"
                   >
-                    Moncash
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => setSelectedType('natcash')}
-                  className="p-4 rounded-xl border-2 transition-all"
-                  style={{
-                    borderColor: selectedType === 'natcash' ? '#3b82f6' : colors.gray[200],
-                    backgroundColor: selectedType === 'natcash'
-                      ? (isDark ? '#1e3a8a' : '#dbeafe')
-                      : 'transparent'
-                  }}
-                >
-                  <Smartphone
-                    className="h-6 w-6 mx-auto mb-2"
-                    style={{ color: selectedType === 'natcash' ? '#2563eb' : colors.gray[400] }}
-                  />
-                  <span
-                    className="text-sm font-medium"
-                    style={{ color: selectedType === 'natcash'
-                      ? (isDark ? '#bfdbfe' : '#1e3a8a')
-                      : colors.gray[600]
-                    }}
-                  >
-                    Natcash
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => setSelectedType('card')}
-                  className="p-4 rounded-xl border-2 transition-all"
-                  style={{
-                    borderColor: selectedType === 'card' ? '#a855f7' : colors.gray[200],
-                    backgroundColor: selectedType === 'card'
-                      ? (isDark ? '#581c87' : '#f3e8ff')
-                      : 'transparent'
-                  }}
-                >
-                  <CreditCard
-                    className="h-6 w-6 mx-auto mb-2"
-                    style={{ color: selectedType === 'card' ? '#9333ea' : colors.gray[400] }}
-                  />
-                  <span
-                    className="text-sm font-medium"
-                    style={{ color: selectedType === 'card'
-                      ? (isDark ? '#e9d5ff' : '#581c87')
-                      : colors.gray[600]
-                    }}
-                  >
-                    {t.profile.payment.card}
-                  </span>
-                </button>
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* Details Input */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2" style={{ color: colors.gray[700] }}>
-                {selectedType === 'card'
-                  ? t.profile.payment.cardNumber
-                  : t.profile.payment.phoneNumber}
-              </label>
-              <input
-                type="text"
-                value={newMethodDetails}
-                onChange={(e) => setNewMethodDetails(e.target.value)}
-                placeholder={
-                  selectedType === 'card'
-                    ? '1234 5678 9012 3456'
-                    : '+509 1234 5678'
-                }
-                className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                style={{
-                  borderColor: colors.gray[300],
-                  backgroundColor: colors.gray[50],
-                  color: colors.gray[900]
-                }}
-              />
-            </div>
+              <div className="p-6">
+                {/* Payment Type Selection */}
+                <div className="mb-6">
+                  <label className="block text-sm font-bold mb-3" style={{ color: colors.gray[700] }}>
+                    {t.profile.payment.paymentType}
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { type: 'moncash' as const, label: 'Moncash', gradient: 'linear-gradient(135deg, #ef4444, #dc2626)' },
+                      { type: 'natcash' as const, label: 'Natcash', gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)' },
+                      { type: 'card' as const, label: t.profile.payment.card, gradient: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' },
+                    ].map((item) => (
+                      <button
+                        key={item.type}
+                        onClick={() => setSelectedType(item.type)}
+                        className="p-4 rounded-xl border-2 transition-all"
+                        style={{
+                          borderColor: selectedType === item.type ? colors.primary[500] : colors.gray[200],
+                          backgroundColor: selectedType === item.type
+                            ? (isDark ? colors.primary[900] : colors.primary[50])
+                            : 'transparent',
+                        }}
+                      >
+                        <div
+                          className="w-10 h-10 rounded-lg mx-auto mb-2 flex items-center justify-center"
+                          style={{
+                            background: selectedType === item.type
+                              ? item.gradient
+                              : (isDark ? colors.gray[700] : colors.gray[100]),
+                          }}
+                        >
+                          {item.type === 'card' ? (
+                            <CreditCard className="h-5 w-5" style={{ color: selectedType === item.type ? '#fff' : colors.gray[400] }} />
+                          ) : (
+                            <Smartphone className="h-5 w-5" style={{ color: selectedType === item.type ? '#fff' : colors.gray[400] }} />
+                          )}
+                        </div>
+                        <span
+                          className="text-xs font-bold block text-center"
+                          style={{ color: selectedType === item.type ? colors.primary[700] : colors.gray[600] }}
+                        >
+                          {item.label}
+                        </span>
+                        {selectedType === item.type && (
+                          <div
+                            className="w-5 h-5 rounded-full mx-auto mt-2 flex items-center justify-center"
+                            style={{ backgroundColor: colors.primary[600] }}
+                          >
+                            <Check className="w-3 h-3 text-white" />
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            {/* Buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowAddModal(false);
-                  setNewMethodDetails('');
-                }}
-                className="flex-1 px-4 py-3 border-2 font-semibold rounded-xl transition-colors"
-                style={{
-                  borderColor: colors.gray[300],
-                  color: colors.gray[700],
-                  backgroundColor: 'transparent'
-                }}
-              >
-                {t.profile.payment.cancel}
-              </button>
-              <button
-                onClick={handleAddMethod}
-                disabled={!newMethodDetails.trim()}
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {t.profile.payment.add}
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
+                {/* Details Input */}
+                <div className="mb-6">
+                  <label className="block text-sm font-bold mb-2" style={{ color: colors.gray[700] }}>
+                    {selectedType === 'card'
+                      ? t.profile.payment.cardNumber
+                      : t.profile.payment.phoneNumber}
+                  </label>
+                  <input
+                    type="text"
+                    value={newMethodDetails}
+                    onChange={(e) => setNewMethodDetails(e.target.value)}
+                    placeholder={
+                      selectedType === 'card'
+                        ? '1234 5678 9012 3456'
+                        : '+509 1234 5678'
+                    }
+                    className="w-full px-4 py-3.5 border-2 rounded-xl focus:outline-none focus:ring-4 transition-all"
+                    style={{
+                      borderColor: colors.gray[200],
+                      backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+                      color: colors.gray[900],
+                    }}
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setNewMethodDetails('');
+                    }}
+                    className="flex-1 px-4 py-3.5 border-2 font-bold rounded-xl transition-colors"
+                    style={{
+                      borderColor: colors.gray[300],
+                      color: colors.gray[700],
+                    }}
+                  >
+                    {t.profile.payment.cancel}
+                  </button>
+                  <button
+                    onClick={handleAddMethod}
+                    disabled={!newMethodDetails.trim()}
+                    className="flex-1 px-4 py-3.5 text-white font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      background: `linear-gradient(135deg, ${colors.primary[600]}, ${colors.primary[800]})`,
+                    }}
+                  >
+                    {t.profile.payment.add}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

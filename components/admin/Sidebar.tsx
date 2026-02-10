@@ -21,12 +21,14 @@ import {
   MapPin,
   Building2,
   PhoneCall,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Users', href: '/admin/users', icon: Users },
+  { name: 'Transferts', href: '/admin/transfers', icon: ArrowRightLeft },
   {
     name: 'Packages',
     icon: Package,
@@ -39,9 +41,9 @@ const navigation = [
       { name: 'Delivered', href: '/admin/packages/delivered' },
     ],
   },
+  { name: 'Analytics', href: '/admin/analytics', icon: TrendingUp },
   { name: 'Announcements', href: '/admin/announcements', icon: Megaphone },
   { name: 'Loyalty Program', href: '/admin/loyalty', icon: Gift },
-  { name: 'Analytics', href: '/admin/analytics', icon: TrendingUp },
   { name: 'Force Phone Modal', href: '/admin/force-phone', icon: PhoneCall },
   { name: 'Admin Management', href: '/admin/admins', icon: ShieldCheck },
 ];

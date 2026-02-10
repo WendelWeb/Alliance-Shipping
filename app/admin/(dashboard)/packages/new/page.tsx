@@ -5,93 +5,123 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   Package,
-  User,
-  MapPin,
   Scale,
-  DollarSign,
   Save,
   X,
   ArrowLeft,
-  Smartphone,
   AlertCircle,
+  FileText,
+  Hash,
+  Tag,
+  MessageSquare,
+  Search,
+  User,
+  XCircle,
 } from 'lucide-react';
 
 export default function NewPackagePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [currentServiceFee, setCurrentServiceFee] = useState(5.00); // Fallback
-  const [currentPricePerLb, setCurrentPricePerLb] = useState(4.00); // Fallback
-  const [allCityPricing, setAllCityPricing] = useState<{ city: string; serviceFee: number; pricePerLb: number }[]>([]);
+  const [pricingLoading, setPricingLoading] = useState(true);
+  const [currentServiceFee, setCurrentServiceFee] = useState(5.0);
+  const [currentPricePerLb, setCurrentPricePerLb] = useState(4.0);
   const [formData, setFormData] = useState({
-    // Sender Information
-    senderName: '',
-    senderEmail: '',
-    senderPhone: '',
-    senderAddress: '',
-
-    // Recipient Information
-    recipientName: '',
-    recipientPhone: '',
-    recipientAddress: '',
-    recipientCity: 'Port-au-Prince',
-
-    // Package Information
-    description: '',
+    externalTrackingNumber: '',
+    category: 'general',
     weight: '',
-    declaredValue: '',
-    isFragile: false,
-    specialItemId: null as number | null,
-
-    // Notes
+    description: '',
+    status: 'received',
     notes: '',
   });
 
-  // Fetch all city pricing on mount
+  // User assignment
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [userSearchResults, setUserSearchResults] = useState<any[]>([]);
+  const [userSearchLoading, setUserSearchLoading] = useState(false);
+
+  // Fetch default pricing on mount (Alliance Shipping account = default city pricing)
   useEffect(() => {
     fetch('/api/pricing/all')
       .then(res => res.json())
       .then(data => {
         const cities = data.cities || [];
-        setAllCityPricing(cities);
-        // Set initial pricing for default city
-        const defaultCity = cities.find((c: any) => c.city === 'Port-au-Prince');
-        if (defaultCity) {
-          setCurrentServiceFee(defaultCity.serviceFee);
-          setCurrentPricePerLb(defaultCity.pricePerLb);
+        // Use first city (default) pricing
+        if (cities.length > 0) {
+          setCurrentServiceFee(cities[0].serviceFee);
+          setCurrentPricePerLb(cities[0].pricePerLb);
         }
       })
       .catch(error => {
         console.error('Error fetching pricing:', error);
+      })
+      .finally(() => {
+        setPricingLoading(false);
       });
   }, []);
 
-  // Update pricing when city changes
+  // Update pricing when user is selected
   useEffect(() => {
-    if (formData.recipientCity && allCityPricing.length > 0) {
-      const found = allCityPricing.find(c => c.city === formData.recipientCity);
-      if (found) {
-        setCurrentServiceFee(found.serviceFee);
-        setCurrentPricePerLb(found.pricePerLb);
-      }
+    if (selectedUser && selectedUser.city) {
+      setPricingLoading(true);
+      fetch('/api/pricing/all')
+        .then(res => res.json())
+        .then(data => {
+          const cities = data.cities || [];
+          const userCityPricing = cities.find((c: any) => c.city === selectedUser.city);
+          if (userCityPricing) {
+            setCurrentServiceFee(userCityPricing.serviceFee);
+            setCurrentPricePerLb(userCityPricing.pricePerLb);
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching user city pricing:', error);
+        })
+        .finally(() => {
+          setPricingLoading(false);
+        });
     }
-  }, [formData.recipientCity, allCityPricing]);
+  }, [selectedUser]);
+
+  // Search users with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (userSearchQuery.trim().length >= 2) {
+        setUserSearchLoading(true);
+        fetch(`/api/admin/users?search=${encodeURIComponent(userSearchQuery.trim())}&limit=5`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              setUserSearchResults(data.users || []);
+            }
+          })
+          .catch(error => {
+            console.error('Error searching users:', error);
+          })
+          .finally(() => {
+            setUserSearchLoading(false);
+          });
+      } else {
+        setUserSearchResults([]);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [userSearchQuery]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value,
     }));
   };
 
   const calculateFees = () => {
-    const weight = parseFloat(formData.weight) || 0;
+    const weight = parseInt(formData.weight) || 0;
     const serviceFee = currentServiceFee;
     const shippingFee = weight * currentPricePerLb;
     const total = serviceFee + shippingFee;
-
     return { serviceFee, shippingFee, total };
   };
 
@@ -100,23 +130,57 @@ export default function NewPackagePage() {
     setLoading(true);
 
     try {
-      // TODO: Replace with real API call
-      console.log('Creating package:', formData);
+      const res = await fetch('/api/admin/packages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          externalTrackingNumber: formData.externalTrackingNumber,
+          description: formData.description,
+          weight: formData.weight,
+          category: formData.category,
+          status: formData.status,
+          specialInstructions: formData.notes || undefined,
+          userId: selectedUser?.id || undefined, // Assign to specific user if selected
+        }),
+      });
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to create package');
+      }
 
-      // Redirect to packages list
+      const data = await res.json();
+
+      if (data.transferMessage) {
+        alert(data.transferMessage);
+      }
+
       router.push('/admin/packages');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating package:', error);
-      alert('Failed to create package. Please try again.');
+      alert(error.message || 'Erreur lors de la creation du colis. Veuillez reessayer.');
     } finally {
       setLoading(false);
     }
   };
 
   const fees = calculateFees();
+
+  const categoryOptions = [
+    { value: 'general', label: 'General' },
+    { value: 'clothing', label: 'Vetements' },
+    { value: 'electronics', label: 'Electronique' },
+    { value: 'food', label: 'Nourriture' },
+    { value: 'documents', label: 'Documents' },
+    { value: 'other', label: 'Autre' },
+  ];
+
+  const statusOptions = [
+    { value: 'received', label: 'Recu (Miami)' },
+    { value: 'in-transit', label: 'En Transit' },
+    { value: 'available', label: 'Disponible' },
+    { value: 'delivered', label: 'Livre' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -130,9 +194,9 @@ export default function NewPackagePage() {
             <ArrowLeft className="h-5 w-5 text-gray-600" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Add New Package</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Ajouter un Colis</h1>
             <p className="mt-2 text-sm text-gray-600">
-              Create a new package entry in the system
+              Ajouter un nouveau colis dans le systeme
             </p>
           </div>
         </div>
@@ -142,7 +206,7 @@ export default function NewPackagePage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Form - 2/3 width */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Sender Information */}
+            {/* Tracking & Category */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -150,75 +214,153 @@ export default function NewPackagePage() {
             >
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-blue-50 rounded-lg">
-                  <User className="h-5 w-5 text-blue-600" />
+                  <Hash className="h-5 w-5 text-blue-600" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">Sender Information</h2>
+                <h2 className="text-xl font-bold text-gray-900">Identification</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name *
+                    Numero de Tracking Externe *
                   </label>
                   <input
                     type="text"
-                    name="senderName"
-                    value={formData.senderName}
+                    name="externalTrackingNumber"
+                    value={formData.externalTrackingNumber}
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="John Doe"
+                    placeholder="Ex: 1Z999AA10123456784"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email *
+                    Categorie *
                   </label>
-                  <input
-                    type="email"
-                    name="senderEmail"
-                    value={formData.senderEmail}
+                  <select
+                    name="category"
+                    value={formData.category}
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="john@example.com"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone *
-                  </label>
-                  <input
-                    type="tel"
-                    name="senderPhone"
-                    value={formData.senderPhone}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="+1 (305) 555-0123"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Address (USA) *
-                  </label>
-                  <input
-                    type="text"
-                    name="senderAddress"
-                    value={formData.senderAddress}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="123 Main St, Miami, FL"
-                  />
+                  >
+                    {categoryOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </motion.div>
 
-            {/* Recipient Information */}
+            {/* User Assignment (Optional) */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="theme-card rounded-2xl p-6"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-green-50 rounded-lg">
+                  <User className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Assigner à (Optionnel)</h2>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Laissez vide pour ajouter au compte Alliance Shipping
+                  </p>
+                </div>
+              </div>
+
+              {selectedUser ? (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-100 rounded-full">
+                        <User className="h-4 w-4 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {selectedUser.firstName} {selectedUser.lastName}
+                        </p>
+                        <p className="text-sm text-gray-600">{selectedUser.email}</p>
+                        {selectedUser.city && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            📍 {selectedUser.city}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedUser(null)}
+                      className="p-1 hover:bg-green-100 rounded-lg transition-colors"
+                    >
+                      <XCircle className="h-5 w-5 text-green-600" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Rechercher un utilisateur
+                  </label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="text"
+                      value={userSearchQuery}
+                      onChange={(e) => setUserSearchQuery(e.target.value)}
+                      placeholder="Nom, email, téléphone..."
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+
+                  {userSearchLoading && (
+                    <div className="mt-2 text-sm text-gray-500">Recherche...</div>
+                  )}
+
+                  {userSearchResults.length > 0 && (
+                    <div className="mt-2 border border-gray-200 rounded-lg divide-y divide-gray-200 max-h-60 overflow-y-auto">
+                      {userSearchResults.map((user) => (
+                        <button
+                          key={user.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setUserSearchQuery('');
+                            setUserSearchResults([]);
+                          }}
+                          className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-gray-100 rounded-full">
+                              <User className="h-4 w-4 text-gray-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {user.firstName} {user.lastName}
+                              </p>
+                              <p className="text-sm text-gray-600">{user.email}</p>
+                              {user.city && (
+                                <p className="text-xs text-gray-500">📍 {user.city}</p>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {userSearchQuery.trim().length >= 2 && !userSearchLoading && userSearchResults.length === 0 && (
+                    <div className="mt-2 text-sm text-gray-500">Aucun utilisateur trouvé</div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+
+            {/* Package Details */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -226,110 +368,17 @@ export default function NewPackagePage() {
               className="theme-card rounded-2xl p-6"
             >
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-green-50 rounded-lg">
-                  <MapPin className="h-5 w-5 text-green-600" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900">Recipient Information (Haiti)</h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="recipientName"
-                    value={formData.recipientName}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="Marie Dupont"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone *
-                  </label>
-                  <input
-                    type="tel"
-                    name="recipientPhone"
-                    value={formData.recipientPhone}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="+509 1234 5678"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    City *
-                  </label>
-                  <select
-                    name="recipientCity"
-                    value={formData.recipientCity}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    <option value="Port-au-Prince">Port-au-Prince</option>
-                    <option value="Cap-Haïtien">Cap-Haïtien</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Address *
-                  </label>
-                  <input
-                    type="text"
-                    name="recipientAddress"
-                    value={formData.recipientAddress}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="Delmas 75, Rue..."
-                  />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Package Information */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="theme-card rounded-2xl p-6"
-            >
-              <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 bg-purple-50 rounded-lg">
                   <Package className="h-5 w-5 text-purple-600" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900">Package Details</h2>
+                <h2 className="text-xl font-bold text-gray-900">Details du Colis</h2>
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description *
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    required
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="Describe the package contents..."
-                  />
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Weight (lbs) *
+                      Poids (lbs) *
                     </label>
                     <div className="relative">
                       <Scale className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -345,54 +394,63 @@ export default function NewPackagePage() {
                         placeholder="Ex: 5"
                       />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Whole numbers only (1, 2, 3...)</p>
+                    <p className="text-xs text-gray-500 mt-1">Nombres entiers seulement (1, 2, 3...)</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Declared Value ($)
+                      Statut Initial *
                     </label>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <input
-                        type="number"
-                        name="declaredValue"
-                        value={formData.declaredValue}
+                      <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <select
+                        name="status"
+                        value={formData.status}
                         onChange={handleChange}
-                        min="0"
-                        step="0.01"
+                        required
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        placeholder="0.00"
-                      />
+                      >
+                        {statusOptions.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="isFragile"
-                    checked={formData.isFragile}
-                    onChange={handleChange}
-                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  />
-                  <label className="text-sm font-medium text-gray-700">
-                    Mark as fragile
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description *
                   </label>
+                  <div className="relative">
+                    <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      required
+                      rows={3}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      placeholder="Decrivez le contenu du colis..."
+                    />
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Notes (Optional)
+                    Notes (Optionnel)
                   </label>
-                  <textarea
-                    name="notes"
-                    value={formData.notes}
-                    onChange={handleChange}
-                    rows={2}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="Any additional notes..."
-                  />
+                  <div className="relative">
+                    <MessageSquare className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                    <textarea
+                      name="notes"
+                      value={formData.notes}
+                      onChange={handleChange}
+                      rows={2}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      placeholder="Instructions speciales, remarques..."
+                    />
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -403,49 +461,77 @@ export default function NewPackagePage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.2 }}
               className="theme-card rounded-2xl p-6 sticky top-6"
             >
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Fee Summary</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Resume des Frais</h3>
 
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Weight:</span>
-                  <span className="text-sm font-medium text-gray-900">
-                    {formData.weight || '0'} lbs
-                  </span>
+              {pricingLoading ? (
+                <div className="space-y-3 mb-6">
+                  <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
+                  <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2" />
                 </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Service Fee:</span>
-                  <span className="text-sm font-medium text-gray-900">
-                    ${fees.serviceFee.toFixed(2)}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Shipping Fee:</span>
-                  <span className="text-sm font-medium text-gray-900">
-                    ${fees.shippingFee.toFixed(2)}
-                  </span>
-                </div>
-
-                <div className="pt-3 border-t border-gray-200">
+              ) : (
+                <div className="space-y-3 mb-6">
                   <div className="flex justify-between items-center">
-                    <span className="text-base font-semibold text-gray-900">Total:</span>
-                    <span className="text-xl font-bold text-primary-600">
-                      ${fees.total.toFixed(2)}
+                    <span className="text-sm text-gray-600">Poids:</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {formData.weight || '0'} lbs
                     </span>
                   </div>
-                </div>
-              </div>
 
-              <div className="bg-blue-50 rounded-lg p-4 mb-6">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Frais de service:</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      ${fees.serviceFee.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">
+                      Frais de poids ({currentPricePerLb.toFixed(2)}$/lb):
+                    </span>
+                    <span className="text-sm font-medium text-gray-900">
+                      ${fees.shippingFee.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <div className="pt-3 border-t border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <span className="text-base font-semibold text-gray-900">Total:</span>
+                      <span className="text-xl font-bold text-primary-600">
+                        ${fees.total.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className={`border rounded-lg p-4 mb-6 ${selectedUser ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-xs text-blue-800">
-                    <p className="font-semibold mb-1">Note:</p>
-                    <p>Package status will be set to &quot;Requested&quot; and will need approval before processing.</p>
+                  <AlertCircle className={`h-5 w-5 flex-shrink-0 mt-0.5 ${selectedUser ? 'text-green-600' : 'text-amber-600'}`} />
+                  <div className={`text-xs ${selectedUser ? 'text-green-800' : 'text-amber-800'}`}>
+                    <p className="font-semibold mb-1">
+                      {selectedUser ? 'Attribution directe' : 'Note'}:
+                    </p>
+                    <p>
+                      {selectedUser ? (
+                        <>
+                          Ce colis sera directement assigné à{' '}
+                          <span className="font-semibold">
+                            {selectedUser.firstName} {selectedUser.lastName}
+                          </span>
+                          {selectedUser.city && (
+                            <> ({selectedUser.city})</>
+                          )}.
+                        </>
+                      ) : (
+                        <>
+                          Ce colis sera ajoute au compte Alliance Shipping. Si un utilisateur a deja fait une requete avec ce tracking, le colis sera automatiquement transfere.
+                        </>
+                      )}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -457,7 +543,7 @@ export default function NewPackagePage() {
                   className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Save className="h-5 w-5" />
-                  {loading ? 'Creating...' : 'Create Package'}
+                  {loading ? 'Creation en cours...' : 'Creer le Colis'}
                 </button>
 
                 <button
@@ -467,7 +553,7 @@ export default function NewPackagePage() {
                   className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <X className="h-5 w-5" />
-                  Cancel
+                  Annuler
                 </button>
               </div>
             </motion.div>

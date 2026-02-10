@@ -670,6 +670,26 @@ export const es = {
     step: 'Paso',
     of: 'de',
   },
+  locationsPage: {
+    title: 'Nuestras Ubicaciones',
+    subtitle: 'Encuentre nuestras oficinas y almacenes cerca de usted',
+    searchPlaceholder: 'Buscar por nombre o ciudad...',
+    filterAll: 'Todos',
+    call: 'Llamar',
+    directions: 'Direcciones',
+    hours: 'Horario',
+    phone: 'Teléfono',
+    address: 'Dirección',
+    open: 'Abierto',
+    closed: 'Cerrado',
+    noResults: 'Sin resultados para su búsqueda',
+    noLocations: 'No hay ubicaciones disponibles en este momento',
+  },
+  specialItems: {
+    title: 'Artículos Especiales',
+    subtitle: 'Precios fijos para ciertos artículos',
+    priceFixed: 'Precio Fijo',
+  },
 };
 
 export default es;

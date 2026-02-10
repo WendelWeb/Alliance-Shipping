@@ -30,6 +30,29 @@ export async function GET() {
 // POST - Seed or reset admin password
 export async function POST() {
   try {
+    // 1. Create Alliance Shipping system account (for unclaimed packages)
+    const asEmail = 'allianceshipping26@gmail.com';
+    let asUser = await db.query.users.findFirst({
+      where: eq(users.email, asEmail),
+    });
+
+    if (!asUser) {
+      const [newAsUser] = await db
+        .insert(users)
+        .values({
+          clerkId: `system_${Date.now()}`,
+          email: asEmail,
+          firstName: 'Alliance',
+          lastName: 'Shipping',
+          phone: '+509-0000-0000',
+        })
+        .returning();
+      console.log('✅ Alliance Shipping system account created:', newAsUser.email);
+    } else {
+      console.log('✅ Alliance Shipping system account already exists');
+    }
+
+    // 2. Create/reset admin user
     const email = 'stanleywendeljoseph@gmail.com';
     const password = process.env.ADMIN_SEED_PASSWORD || 'Alliance$hip2026!';
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -98,7 +121,7 @@ export async function POST() {
     return NextResponse.json({
       success: true,
       action: 'created',
-      message: `Super admin created. Login: ${email} / ${password}`,
+      message: `Super admin created. Login: ${email} / ${password}. Alliance Shipping system account: ${asEmail}`,
     });
   } catch (error: any) {
     console.error('Setup error:', error);

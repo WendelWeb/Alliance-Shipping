@@ -64,7 +64,7 @@ export default function InTransitPackagesPage() {
       userId: pkg.userId,
       userName: pkg.user ? `${pkg.user.firstName || ''} ${pkg.user.lastName || ''}`.trim() : 'Unknown',
       userEmail: pkg.user?.email || 'N/A',
-      destination: pkg.recipientCity,
+      destination: pkg.user?.city || '-',
       weight: parseFloat(pkg.weight) || 0,
       totalFee: parseFloat(pkg.totalCost) || 0,
       departedMiami: pkg.createdAt,

@@ -1,14 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import {
   Package,
-  MapPin,
   Hash,
-  MessageSquare,
   Send,
   ArrowLeft,
   AlertCircle,
@@ -19,7 +17,6 @@ import {
   FileText,
   Box,
   Tag,
-  DollarSign,
 } from 'lucide-react';
 
 export default function RequestPackagePage() {
@@ -28,41 +25,13 @@ export default function RequestPackagePage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [cityPricing, setCityPricing] = useState<{ serviceFee: number; pricePerLb: number } | null>(null);
-  const [allCityPricing, setAllCityPricing] = useState<{ city: string; serviceFee: number; pricePerLb: number }[]>([]);
   const [formData, setFormData] = useState({
     externalTrackingNumber: '',
-    recipientCity: '',
     description: '',
     customerNotes: '',
     category: '',
     otherCategoryDescription: '', // Pour la catégorie "Autre"
   });
-
-  // Fetch all city pricing on mount
-  useEffect(() => {
-    fetch('/api/pricing/all')
-      .then(res => res.json())
-      .then(data => {
-        setAllCityPricing(data.cities || []);
-      })
-      .catch(err => {
-        console.error('Error fetching pricing:', err);
-      });
-  }, []);
-
-  // Update city pricing when city is selected
-  useEffect(() => {
-    if (formData.recipientCity && allCityPricing.length > 0) {
-      const found = allCityPricing.find(c => c.city === formData.recipientCity);
-      if (found) {
-        setCityPricing({
-          serviceFee: found.serviceFee,
-          pricePerLb: found.pricePerLb,
-        });
-      }
-    }
-  }, [formData.recipientCity, allCityPricing]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -96,10 +65,6 @@ export default function RequestPackagePage() {
       newErrors.externalTrackingNumber = t.requestPackage.fields.trackingNumber.required;
     } else if (formData.externalTrackingNumber.trim().length < 5) {
       newErrors.externalTrackingNumber = t.requestPackage.fields.trackingNumber.minLength;
-    }
-
-    if (!formData.recipientCity) {
-      newErrors.recipientCity = t.requestPackage.fields.destinationCity.required;
     }
 
     if (!formData.description.trim()) {
@@ -237,7 +202,6 @@ export default function RequestPackagePage() {
                 <h3 className="font-semibold mb-2">{t.requestPackage.info.title}</h3>
                 <ul className="text-sm space-y-1 text-blue-50">
                   <li>• <strong>{t.requestPackage.fields.trackingNumber.label}:</strong> {t.requestPackage.info.trackingNumber}</li>
-                  <li>• <strong>{t.requestPackage.fields.destinationCity.label}:</strong> {t.requestPackage.info.destinationCity}</li>
                   <li>• <strong>{t.requestPackage.fields.description.label}:</strong> {t.requestPackage.info.description}</li>
                   <li>• {t.requestPackage.info.recipient}</li>
                   <li>• {t.requestPackage.info.allianceTracking}</li>
@@ -297,195 +261,11 @@ export default function RequestPackagePage() {
             )}
           </motion.div>
 
-          {/* Ville de Destination - TRÈS IMPORTANT */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="theme-card rounded-2xl shadow-lg p-6"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-green-50 rounded-lg">
-                <MapPin className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  {t.requestPackage.fields.destinationCity.label} <span className="text-red-600">*</span>
-                </h2>
-                <p className="text-sm text-gray-600">{t.requestPackage.fields.destinationCity.question}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-              {/* Port-au-Prince */}
-              <motion.button
-                type="button"
-                onClick={() => { setFormData(prev => ({ ...prev, recipientCity: 'Port-au-Prince' })); if (errors.recipientCity) setErrors(prev => ({ ...prev, recipientCity: '' })); }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`relative p-3 md:p-6 rounded-xl border-2 transition-all ${
-                  formData.recipientCity === 'Port-au-Prince'
-                    ? 'border-blue-500 bg-blue-50 shadow-lg'
-                    : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                }`}
-              >
-                <div className="text-center">
-                  <div className={`inline-flex items-center justify-center w-10 h-10 md:w-16 md:h-16 rounded-full mb-1.5 md:mb-3 ${
-                    formData.recipientCity === 'Port-au-Prince'
-                      ? 'bg-blue-100'
-                      : 'bg-gray-100'
-                  }`}>
-                    <MapPin className={`h-5 w-5 md:h-8 md:w-8 ${
-                      formData.recipientCity === 'Port-au-Prince'
-                        ? 'text-blue-600'
-                        : 'text-gray-600'
-                    }`} />
-                  </div>
-                  <h3 className="font-bold text-sm md:text-lg text-gray-900 mb-0.5 md:mb-1">Port-au-Prince</h3>
-                  <p className="text-xs text-gray-500">{t.requestPackage.fields.destinationCity.capitale}</p>
-                </div>
-                {formData.recipientCity === 'Port-au-Prince' && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute top-2 right-2 md:top-3 md:right-3 w-5 h-5 md:w-6 md:h-6 bg-blue-600 rounded-full flex items-center justify-center"
-                  >
-                    <svg className="w-3 h-3 md:w-4 md:h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </motion.div>
-                )}
-              </motion.button>
-
-              {/* Cap-Haïtien */}
-              <motion.button
-                type="button"
-                onClick={() => { setFormData(prev => ({ ...prev, recipientCity: 'Cap-Haïtien' })); if (errors.recipientCity) setErrors(prev => ({ ...prev, recipientCity: '' })); }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`relative p-3 md:p-6 rounded-xl border-2 transition-all ${
-                  formData.recipientCity === 'Cap-Haïtien'
-                    ? 'border-purple-500 bg-purple-50 shadow-lg'
-                    : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50'
-                }`}
-              >
-                <div className="text-center">
-                  <div className={`inline-flex items-center justify-center w-10 h-10 md:w-16 md:h-16 rounded-full mb-1.5 md:mb-3 ${
-                    formData.recipientCity === 'Cap-Haïtien'
-                      ? 'bg-purple-100'
-                      : 'bg-gray-100'
-                  }`}>
-                    <MapPin className={`h-5 w-5 md:h-8 md:w-8 ${
-                      formData.recipientCity === 'Cap-Haïtien'
-                        ? 'text-purple-600'
-                        : 'text-gray-600'
-                    }`} />
-                  </div>
-                  <h3 className="font-bold text-sm md:text-lg text-gray-900 mb-0.5 md:mb-1">Cap-Haïtien</h3>
-                  <p className="text-xs text-gray-500">{t.requestPackage.fields.destinationCity.nord}</p>
-                </div>
-                {formData.recipientCity === 'Cap-Haïtien' && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute top-2 right-2 md:top-3 md:right-3 w-5 h-5 md:w-6 md:h-6 bg-purple-600 rounded-full flex items-center justify-center"
-                  >
-                    <svg className="w-3 h-3 md:w-4 md:h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </motion.div>
-                )}
-              </motion.button>
-
-              {/* Port-de-Paix */}
-              <motion.button
-                type="button"
-                onClick={() => { setFormData(prev => ({ ...prev, recipientCity: 'Port-de-Paix' })); if (errors.recipientCity) setErrors(prev => ({ ...prev, recipientCity: '' })); }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`relative p-3 md:p-6 rounded-xl border-2 transition-all ${
-                  formData.recipientCity === 'Port-de-Paix'
-                    ? 'border-green-500 bg-green-50 shadow-lg'
-                    : 'border-gray-200 hover:border-green-300 hover:bg-gray-50'
-                }`}
-              >
-                <div className="text-center">
-                  <div className={`inline-flex items-center justify-center w-10 h-10 md:w-16 md:h-16 rounded-full mb-1.5 md:mb-3 ${
-                    formData.recipientCity === 'Port-de-Paix'
-                      ? 'bg-green-100'
-                      : 'bg-gray-100'
-                  }`}>
-                    <MapPin className={`h-5 w-5 md:h-8 md:w-8 ${
-                      formData.recipientCity === 'Port-de-Paix'
-                        ? 'text-green-600'
-                        : 'text-gray-600'
-                    }`} />
-                  </div>
-                  <h3 className="font-bold text-sm md:text-lg text-gray-900 mb-0.5 md:mb-1">Port-de-Paix</h3>
-                  <p className="text-xs text-gray-500">{t.requestPackage.fields.destinationCity.nordOuest}</p>
-                </div>
-                {formData.recipientCity === 'Port-de-Paix' && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute top-2 right-2 md:top-3 md:right-3 w-5 h-5 md:w-6 md:h-6 bg-green-600 rounded-full flex items-center justify-center"
-                  >
-                    <svg className="w-3 h-3 md:w-4 md:h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </motion.div>
-                )}
-              </motion.button>
-            </div>
-
-            {errors.recipientCity && (
-              <motion.p
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-sm text-red-600 mt-4 flex items-center gap-2 p-3 bg-red-50 rounded-lg border border-red-200"
-              >
-                <AlertCircle className="h-5 w-5" />
-                {errors.recipientCity}
-              </motion.p>
-            )}
-
-            {formData.recipientCity && cityPricing && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-4 space-y-2"
-              >
-                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-sm text-blue-800 flex items-center gap-2">
-                    <Package className="h-4 w-4" />
-                    {t.requestPackage.fields.destinationCity.confirmation} <strong>{formData.recipientCity}</strong>
-                  </p>
-                </div>
-                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                  <p className="text-sm text-green-800 font-semibold mb-2 flex items-center gap-2">
-                    <DollarSign className="h-4 w-4" />
-                    Pricing for {formData.recipientCity}:
-                  </p>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-green-600">Service Fee:</span>
-                      <span className="ml-2 font-bold text-green-900">${cityPricing.serviceFee.toFixed(2)}</span>
-                    </div>
-                    <div>
-                      <span className="text-green-600">Per Pound:</span>
-                      <span className="ml-2 font-bold text-green-900">${cityPricing.pricePerLb.toFixed(2)}/lb</span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </motion.div>
-
           {/* Description du Colis */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.2 }}
             className="theme-card rounded-2xl shadow-lg p-6"
           >
             <div className="flex items-center gap-3 mb-4">
@@ -785,7 +565,7 @@ export default function RequestPackagePage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.4 }}
             className="flex gap-4"
           >
             <button

@@ -22,7 +22,6 @@ import { LoadingSpinner, SkeletonLoader } from '@/components/admin/LoadingSpinne
 interface PackageRequest {
   id: number;
   externalTrackingNumber: string;
-  receiptLocation: string;
   description: string;
   customerNotes: string | null;
   estimatedWeight: number | null;
@@ -31,11 +30,7 @@ interface PackageRequest {
   userName: string;
   userEmail: string;
   userPhone: string;
-  recipientInfo: {
-    name: string;
-    phone: string;
-    city: string;
-  };
+  userCity: string;
   status: string;
   createdAt: string;
 }
@@ -88,7 +83,6 @@ export default function RequestedPackagesPage() {
     const transformedRequests: PackageRequest[] = data.requests ? data.requests.map((req: any) => ({
       id: req.id,
       externalTrackingNumber: req.externalTrackingNumber || 'N/A',
-      receiptLocation: req.receiptLocation || 'Miami Warehouse',
       description: req.description || 'No description',
       customerNotes: req.notes || null,
       estimatedWeight: req.estimatedWeight ? parseFloat(req.estimatedWeight) : null,
@@ -97,11 +91,7 @@ export default function RequestedPackagesPage() {
       userName: req.user ? `${req.user.firstName || ''} ${req.user.lastName || ''}`.trim() : 'Unknown',
       userEmail: req.user?.email || 'N/A',
       userPhone: req.user?.phone || 'N/A',
-      recipientInfo: {
-        name: req.recipientName || 'N/A',
-        phone: req.recipientPhone || 'N/A',
-        city: req.recipientCity || 'N/A',
-      },
+      userCity: req.user?.city || '-',
       status: req.status || 'pending',
       createdAt: req.createdAt || new Date().toISOString(),
     })) : [];
@@ -407,15 +397,6 @@ export default function RequestedPackagesPage() {
                         <p className="text-lg font-mono font-bold text-gray-900">{request.externalTrackingNumber}</p>
                       </div>
 
-                      {/* Receipt Location */}
-                      <div className="bg-theme-surface-solid rounded-lg p-4 border border-gray-200">
-                        <div className="flex items-center gap-2 mb-2">
-                          <MapPin className="h-5 w-5 text-gray-500" />
-                          <span className="text-xs uppercase tracking-wide text-gray-500">Lieu de Réception</span>
-                        </div>
-                        <p className="text-base font-medium text-gray-900">{request.receiptLocation}</p>
-                      </div>
-
                       {/* Description */}
                       <div className="bg-theme-surface-solid rounded-lg p-4 border border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
@@ -436,16 +417,15 @@ export default function RequestedPackagesPage() {
                         </div>
                       )}
 
-                      {/* Recipient */}
+                      {/* User City */}
                       <div className="bg-theme-surface-solid rounded-lg p-4 border border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
-                          <User className="h-5 w-5 text-gray-500" />
-                          <span className="text-xs uppercase tracking-wide text-gray-500">Destinataire</span>
+                          <MapPin className="h-5 w-5 text-gray-500" />
+                          <span className="text-xs uppercase tracking-wide text-gray-500">Ville</span>
                         </div>
                         <p className="text-sm text-gray-700">
-                          {request.recipientInfo.name} - {request.recipientInfo.city}
+                          {request.userCity}
                         </p>
-                        <p className="text-sm text-gray-500">{request.recipientInfo.phone}</p>
                       </div>
                     </div>
 

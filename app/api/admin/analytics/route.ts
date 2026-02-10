@@ -82,18 +82,19 @@ export async function GET(request: NextRequest) {
     // 6. Revenue by Destination
     const revenueByDestination = await db
       .select({
-        destination: packages.recipientCountry,
+        destination: users.city,
         packages: sql<number>`COUNT(*)`,
         revenue: sql<number>`COALESCE(SUM(${packages.totalCost}), 0)`,
       })
       .from(packages)
+      .leftJoin(users, eq(packages.userId, users.id))
       .where(
         and(
           gte(packages.createdAt, startDate),
           eq(packages.status, 'delivered')
         )
       )
-      .groupBy(packages.recipientCountry);
+      .groupBy(users.city);
 
     // Calculate percentages for destinations
     const totalDestinationRevenue = revenueByDestination.reduce(

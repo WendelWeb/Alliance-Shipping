@@ -17,7 +17,7 @@ export function Header() {
     { label: t.nav.services, href: '#services' },
     { label: t.nav.pricing, href: '#pricing' },
     { label: t.nav.tracking, href: '#tracking' },
-    { label: t.nav.locations, href: '#locations' },
+    { label: t.nav.locations, href: '/locations' },
     { label: t.nav.faq, href: '#faq' },
     { label: t.nav.contact, href: '#contact' },
   ];

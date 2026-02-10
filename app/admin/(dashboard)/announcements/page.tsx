@@ -1668,7 +1668,7 @@ export default function AnnouncementsPage() {
                     </h3>
                     <div className="p-3 bg-red-50 border-2 border-red-300 rounded-lg">
                       <p className="text-sm text-red-700 font-medium">
-                        ⚠️ Warning: This will permanently DELETE the warehouse from the database. Use "Close Warehouse" if you want to deactivate instead.
+                        ⚠️ Warning: This will permanently DELETE the warehouse from the database. Use &ldquo;Close Warehouse&rdquo; if you want to deactivate instead.
                       </p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { packages, users, trackingHistory, packageRequests, adminActivityLogs, serviceFees, specialItemFees, loyaltyConfig, loyaltyCredits } from '@/lib/db/schema';
+import { packages, users, trackingHistory, packageRequests, adminActivityLogs, serviceFees, specialItemFees, loyaltyConfig, loyaltyCredits, warehouses, cityPricing, packageTransfers } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
 import { eq, and, like, or, desc, sql, lte } from 'drizzle-orm';
 import { sendPushNotification } from '@/lib/notifications/push';
+import { generateASTrackingNumber } from '@/lib/utils/tracking';
+import { getAllianceShippingUserId, findPendingRequest, autoTransferPackage, calculateFeesForCity, ALLIANCE_SHIPPING_EMAIL } from '@/lib/utils/package-transfer';
 
 // GET - List all packages with filters
 export async function GET(request: NextRequest) {
@@ -26,7 +28,8 @@ export async function GET(request: NextRequest) {
       conditions.push(
         or(
           like(packages.trackingNumber, `%${search}%`),
-          like(packages.description, `%${search}%`)
+          like(packages.description, `%${search}%`),
+          like(packages.externalTrackingNumber, `%${search}%`)
         )
       );
     }
@@ -35,15 +38,13 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(packages.status, status));
     }
 
-    // Get packages with user info
+    // Get packages with user info + warehouse name
     const packagesData = await db
       .select({
         id: packages.id,
         trackingNumber: packages.trackingNumber,
         externalTrackingNumber: packages.externalTrackingNumber,
         userId: packages.userId,
-        recipientCountry: packages.recipientCountry,
-        recipientCity: packages.recipientCity,
         description: packages.description,
         weight: packages.weight,
         weightUnit: packages.weightUnit,
@@ -65,16 +66,22 @@ export async function GET(request: NextRequest) {
           firstName: users.firstName,
           lastName: users.lastName,
           preferredLanguage: users.preferredLanguage,
+          phone: users.phone,
+          whatsappPhone: users.whatsappPhone,
+          city: users.city,
+          warehouseId: users.warehouseId,
         },
+        warehouseName: warehouses.name,
       })
       .from(packages)
       .leftJoin(users, eq(packages.userId, users.id))
+      .leftJoin(warehouses, eq(users.warehouseId, warehouses.id))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(packages.createdAt))
       .limit(limit)
       .offset(offset);
 
-    // Get package requests (pending/rejected/approved but not yet converted)
+    // Get package requests (pending/rejected but not yet converted)
     const requestsData = await db
       .select({
         id: packageRequests.id,
@@ -84,7 +91,6 @@ export async function GET(request: NextRequest) {
         estimatedWeight: packageRequests.estimatedWeight,
         category: packageRequests.category,
         status: packageRequests.status,
-        recipientInfo: packageRequests.recipientInfo,
         createdAt: packageRequests.createdAt,
         updatedAt: packageRequests.updatedAt,
         packageId: packageRequests.packageId,
@@ -94,20 +100,25 @@ export async function GET(request: NextRequest) {
           firstName: users.firstName,
           lastName: users.lastName,
           preferredLanguage: users.preferredLanguage,
+          phone: users.phone,
+          whatsappPhone: users.whatsappPhone,
+          city: users.city,
+          warehouseId: users.warehouseId,
         },
+        warehouseName: warehouses.name,
       })
       .from(packageRequests)
       .leftJoin(users, eq(packageRequests.userId, users.id))
+      .leftJoin(warehouses, eq(users.warehouseId, warehouses.id))
+      .where(eq(packageRequests.status, 'pending'))
       .orderBy(desc(packageRequests.createdAt));
 
     // Transform requests to match package format
     const transformedRequests = requestsData.map(req => ({
-      id: -req.id, // Negative ID to distinguish from real packages
+      id: -req.id,
       trackingNumber: req.externalTrackingNumber || `REQ-${req.id}`,
       externalTrackingNumber: req.externalTrackingNumber,
       userId: req.userId,
-      recipientCountry: 'Haiti',
-      recipientCity: (req.recipientInfo as any)?.city || '',
       description: req.description,
       weight: req.estimatedWeight || '0',
       weightUnit: 'lbs',
@@ -116,21 +127,16 @@ export async function GET(request: NextRequest) {
       weightCost: '0.00',
       totalCost: '0.00',
       currency: 'USD',
-      status: req.status, // pending, rejected, approved
-      currentLocation: req.status === 'pending'
-        ? 'En attente d\'approbation'
-        : req.status === 'rejected'
-        ? 'Demande rejetée'
-        : req.packageId
-        ? 'Converti en colis'
-        : 'Approuvé',
+      status: 'requested',
+      currentLocation: 'En attente d\'approbation',
       estimatedDelivery: null,
       actualDelivery: null,
       createdAt: req.createdAt,
       updatedAt: req.updatedAt,
       assignedToAdmin: null,
       user: req.user,
-      isRequest: true, // Flag to identify requests
+      warehouseName: req.warehouseName,
+      isRequest: true,
     }));
 
     // Combine packages and requests
@@ -141,7 +147,8 @@ export async function GET(request: NextRequest) {
     if (search) {
       filteredItems = allItems.filter(item =>
         item.trackingNumber?.toLowerCase().includes(search.toLowerCase()) ||
-        item.description?.toLowerCase().includes(search.toLowerCase())
+        item.description?.toLowerCase().includes(search.toLowerCase()) ||
+        item.externalTrackingNumber?.toLowerCase().includes(search.toLowerCase())
       );
     }
     if (status && status !== 'all') {
@@ -182,136 +189,192 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
-      userId,
-      destination,
+      userId: targetUserId,
+      externalTrackingNumber,
       description,
       weight,
-      declaredValue,
-      specialItemId,
+      category,
+      status: initialStatus,
+      specialInstructions,
     } = body;
 
-    // Query current fees from database for SNAPSHOT (immutable)
-    const now = new Date();
-
-    const [serviceFeeRecord] = await db
-      .select()
-      .from(serviceFees)
-      .where(
-        and(
-          eq(serviceFees.isActive, true),
-          eq(serviceFees.feeType, 'service_fee'),
-          lte(serviceFees.effectiveFrom, now)
-        )
-      )
-      .orderBy(desc(serviceFees.effectiveFrom))
-      .limit(1);
-
-    const [perPoundRecord] = await db
-      .select()
-      .from(serviceFees)
-      .where(
-        and(
-          eq(serviceFees.isActive, true),
-          eq(serviceFees.feeType, 'per_pound'),
-          lte(serviceFees.effectiveFrom, now)
-        )
-      )
-      .orderBy(desc(serviceFees.effectiveFrom))
-      .limit(1);
-
-    const currentServiceFee = serviceFeeRecord
-      ? parseFloat(serviceFeeRecord.amount)
-      : 5.0; // Fallback
-    const currentPricePerLb = perPoundRecord
-      ? parseFloat(perPoundRecord.amount)
-      : 4.0; // Fallback
-
-    // Calculate shipping fee
-    let shippingFee: number;
-
-    if (specialItemId) {
-      // Get special item fixed fee
-      const [specialItem] = await db
-        .select()
-        .from(specialItemFees)
-        .where(and(eq(specialItemFees.id, specialItemId), eq(specialItemFees.isActive, true)))
-        .limit(1);
-
-      shippingFee = specialItem ? parseFloat(specialItem.fixedFee) : 20.0; // Fallback
-    } else {
-      // Weight-based calculation
-      shippingFee = weight * currentPricePerLb;
+    // Get Alliance Shipping user ID for reference
+    const asUserId = await getAllianceShippingUserId();
+    if (!asUserId) {
+      console.error('[CREATE PACKAGE] Alliance Shipping account not found. Email searched:', ALLIANCE_SHIPPING_EMAIL);
+      return NextResponse.json({
+        error: 'Alliance Shipping system account not found. Please create the account with email: allianceshipping26@gmail.com',
+        searchedEmail: ALLIANCE_SHIPPING_EMAIL,
+      }, { status: 500 });
     }
 
-    const totalFee = currentServiceFee + shippingFee;
+    // Determine the owner
+    let ownerId = targetUserId;
+    if (!ownerId) {
+      // Default to Alliance Shipping account
+      ownerId = asUserId;
+      console.log('[CREATE PACKAGE] Using Alliance Shipping account, ID:', ownerId);
+    } else {
+      console.log('[CREATE PACKAGE] Using target user ID:', ownerId);
+    }
 
-    // IMPORTANT: These values are SNAPSHOT and will NEVER change even if fees change later
+    // Get owner's city for fee calculation
+    const [owner] = await db
+      .select({ city: users.city })
+      .from(users)
+      .where(eq(users.id, ownerId))
+      .limit(1);
+
+    const fees = await calculateFeesForCity(owner?.city || null, parseFloat(weight) || 0);
+
+    // Check for duplicate external tracking number
+    if (externalTrackingNumber && externalTrackingNumber.trim()) {
+      const [existingPackage] = await db
+        .select({
+          id: packages.id,
+          trackingNumber: packages.trackingNumber,
+          status: packages.status,
+          userId: packages.userId,
+          userEmail: users.email,
+          userFirstName: users.firstName,
+          userLastName: users.lastName,
+        })
+        .from(packages)
+        .leftJoin(users, eq(packages.userId, users.id))
+        .where(sql`LOWER(${packages.externalTrackingNumber}) = LOWER(${externalTrackingNumber.trim()})`)
+        .limit(1);
+
+      if (existingPackage) {
+        const userName = `${existingPackage.userFirstName || ''} ${existingPackage.userLastName || ''}`.trim() || existingPackage.userEmail || 'Unknown';
+        return NextResponse.json(
+          {
+            error: 'Ce numéro de suivi externe existe déjà dans le système.',
+            duplicate: true,
+            existingPackage: {
+              id: existingPackage.id,
+              trackingNumber: existingPackage.trackingNumber,
+              status: existingPackage.status,
+              owner: userName,
+              ownerEmail: existingPackage.userEmail,
+            },
+          },
+          { status: 409 }
+        );
+      }
+    }
 
     // Generate tracking number
-    const year = new Date().getFullYear();
-    const count = await db.select({ count: sql<number>`count(*)` }).from(packages);
-    const trackingNumber = `AS-${year}-${String(count[0].count + 1).padStart(5, '0')}`;
+    const trackingNumber = generateASTrackingNumber();
+
+    // Determine status and location
+    const pkgStatus = initialStatus || 'received';
+    const locationMap: Record<string, string> = {
+      'received': 'Miami Warehouse',
+      'in-transit': 'En route vers Haiti',
+      'available': (owner?.city || 'Port-au-Prince') + ' Office',
+      'delivered': owner?.city || 'Port-au-Prince',
+    };
 
     // Create package
     const [newPackage] = await db
       .insert(packages)
       .values({
         trackingNumber,
-        externalTrackingNumber: null,
-        userId,
-        description,
-        weight: weight.toString(),
+        externalTrackingNumber: externalTrackingNumber?.trim() || null,
+        userId: ownerId,
+        description: description?.trim() || null,
+        weight: weight ? weight.toString() : null,
         weightUnit: 'lbs',
-        category: 'general',
-        serviceFee: currentServiceFee.toString(),
-        weightCost: shippingFee.toString(),
-        totalCost: totalFee.toString(),
+        category: category || 'general',
+        serviceFee: fees.serviceFee.toFixed(2),
+        weightCost: fees.weightCost.toFixed(2),
+        totalCost: fees.totalCost.toFixed(2),
         currency: 'USD',
-        senderName: 'Unknown',
-        senderAddress: '',
-        senderCity: 'Miami',
-        senderCountry: 'USA',
-        recipientName: 'Unknown',
-        recipientAddress: '',
-        recipientCity: destination || 'Port-au-Prince',
-        recipientCountry: 'Haiti',
-        status: 'received',
-        currentLocation: 'Miami Warehouse',
+        status: pkgStatus,
+        currentLocation: locationMap[pkgStatus] || 'Miami Warehouse',
         assignedToAdmin: session.adminId,
-        specialItemId,
+        specialInstructions: specialInstructions?.trim() || null,
       })
       .returning();
 
     // Create tracking history entry
     await db.insert(trackingHistory).values({
       packageId: newPackage.id,
-      status: 'received',
-      location: 'Miami Warehouse',
-      description: 'Package received at Miami warehouse',
+      status: pkgStatus,
+      location: locationMap[pkgStatus] || 'Miami Warehouse',
+      description: `Package created with status: ${pkgStatus}`,
     });
 
-    // Log admin activity - Package created
-    const adminId = session.adminId;
+    // Log admin activity
     await db.insert(adminActivityLogs).values({
-      adminId: adminId,
+      adminId: session.adminId,
       action: 'created',
       targetType: 'package',
       targetId: newPackage.id,
       details: {
         trackingNumber: newPackage.trackingNumber,
-        userId: userId,
-        destination: destination,
-        weight: weight,
-        totalFee: totalFee,
-        specialItemId: specialItemId || null,
+        externalTrackingNumber: externalTrackingNumber || null,
+        userId: ownerId,
+        weight,
+        totalFee: fees.totalCost,
+        category,
+        initialStatus: pkgStatus,
       },
       ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
       userAgent: request.headers.get('user-agent') || 'unknown',
     });
 
-    // Points are now awarded on delivery, not creation (prevents fraud)
+    // If assigned to a specific user (not Alliance Shipping), log as direct assignment transfer
+    if (targetUserId && targetUserId !== asUserId) {
+      await db.insert(packageTransfers).values({
+        packageId: newPackage.id,
+        fromUserId: asUserId || targetUserId, // Alliance Shipping or fallback to target user
+        toUserId: targetUserId,
+        requestId: null,
+        oldServiceFee: '5.00', // Default fees before assignment
+        oldWeightCost: (parseFloat(weight) * 4.0).toFixed(2),
+        oldTotalCost: (5.0 + parseFloat(weight) * 4.0).toFixed(2),
+        newServiceFee: fees.serviceFee.toFixed(2),
+        newWeightCost: fees.weightCost.toFixed(2),
+        newTotalCost: fees.totalCost.toFixed(2),
+        oldCity: null,
+        newCity: owner?.city || 'Unknown',
+        transferType: 'admin_assigned',
+        transferredBy: session.adminId,
+        notes: 'Direct assignment on package creation',
+      });
+    }
 
-    return NextResponse.json({ package: newPackage }, { status: 201 });
+    // Check if a user has a pending request for this tracking number (auto-transfer)
+    let transferMessage: string | null = null;
+    if (externalTrackingNumber && !targetUserId) {
+      const pendingReq = await findPendingRequest(externalTrackingNumber.trim());
+      if (pendingReq) {
+        const transferResult = await autoTransferPackage({
+          packageId: newPackage.id,
+          newUserId: pendingReq.userId,
+          requestId: pendingReq.id,
+        });
+        if (transferResult.success) {
+          transferMessage = `Un utilisateur (${pendingReq.userName} - ${pendingReq.userEmail}) avait deja fait une requete pour ce colis. Le colis a ete automatiquement transfere.`;
+        }
+      }
+    }
+
+    // If package was created for a specific user (from user card), send notification
+    if (targetUserId) {
+      sendPushNotification({
+        userId: targetUserId,
+        templateKey: 'package_received',
+        variables: { tracking: trackingNumber },
+        packageId: newPackage.id,
+      }).catch(() => {});
+    }
+
+    return NextResponse.json({
+      package: newPackage,
+      transferMessage,
+    }, { status: 201 });
   } catch (error) {
     console.error('Error creating package:', error);
     return NextResponse.json(
@@ -348,7 +411,6 @@ export async function PATCH(request: NextRequest) {
 
     if (weight !== undefined) {
       updateData.weight = weight;
-      // Recalculate fees
       updateData.shippingFee = weight * 4.0;
       updateData.totalFee = (updateData.serviceFee || 5.0) + updateData.shippingFee;
     }
@@ -374,10 +436,9 @@ export async function PATCH(request: NextRequest) {
       });
     }
 
-    // Log admin activity - Package updated
-    const adminId = session.adminId;
+    // Log admin activity
     await db.insert(adminActivityLogs).values({
-      adminId: adminId,
+      adminId: session.adminId,
       action: 'updated',
       targetType: 'package',
       targetId: id,
@@ -413,7 +474,6 @@ export async function PATCH(request: NextRequest) {
     // Award loyalty credits and points when package is delivered
     if (status === 'delivered') {
       try {
-        // Look up loyalty config values
         const [shipmentCreditConfig] = await db
           .select()
           .from(loyaltyConfig)
@@ -435,7 +495,6 @@ export async function PATCH(request: NextRequest) {
         const totalCost = parseFloat(String(updatedPackage.totalCost)) || 0;
         const pointsEarned = Math.floor(totalCost * pointsPerDollar);
 
-        // Insert shipment credit
         await db.insert(loyaltyCredits).values({
           userId: updatedPackage.userId,
           amount: creditPerShipment.toFixed(2),
@@ -445,7 +504,6 @@ export async function PATCH(request: NextRequest) {
           referenceId: updatedPackage.id,
         });
 
-        // Insert weight credit
         if (packageWeight > 0) {
           const weightCredit = creditPerLb * packageWeight;
           await db.insert(loyaltyCredits).values({
@@ -458,7 +516,6 @@ export async function PATCH(request: NextRequest) {
           });
         }
 
-        // Award points for spending
         if (pointsEarned > 0) {
           await db.insert(loyaltyCredits).values({
             userId: updatedPackage.userId,
@@ -471,7 +528,6 @@ export async function PATCH(request: NextRequest) {
         }
       } catch (loyaltyError) {
         console.error('Error awarding loyalty credits:', loyaltyError);
-        // Don't fail the main request if loyalty credits fail
       }
     }
 
@@ -502,7 +558,6 @@ export async function DELETE(request: NextRequest) {
 
     const packageId = parseInt(id);
 
-    // Get package info before deletion for logging
     const [pkg] = await db
       .select()
       .from(packages)
@@ -512,20 +567,16 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Package not found' }, { status: 404 });
     }
 
-    // Delete package (cascade will handle related records)
     await db.delete(packages).where(eq(packages.id, packageId));
 
-    // Log admin activity - Package deleted
-    const adminId = session.adminId;
     await db.insert(adminActivityLogs).values({
-      adminId: adminId,
+      adminId: session.adminId,
       action: 'deleted',
       targetType: 'package',
       targetId: packageId,
       details: {
         trackingNumber: pkg.trackingNumber,
         status: pkg.status,
-        recipientCity: pkg.recipientCity,
         totalCost: pkg.totalCost,
         deletedAt: new Date().toISOString(),
       },
