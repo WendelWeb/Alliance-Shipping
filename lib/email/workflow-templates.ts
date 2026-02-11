@@ -110,7 +110,7 @@ export const sendRequestSubmittedSuccessEmail = async (
 
             <div class="footer">
               <p>Alliance Shipping - Reliable Shipping from USA to Haiti</p>
-              <p>Questions? Contact us at support@allianceshipping.com</p>
+              <p>Questions? Contact us at allianceshipping26@gmail.com</p>
             </div>
           </div>
         </div>
@@ -748,7 +748,7 @@ export const sendInfoUpdatedConfirmationEmail = async (
 
             <div class="footer">
               <p>Alliance Shipping - Reliable Shipping from USA to Haiti</p>
-              <p>Questions? Contact us at support@allianceshipping.com</p>
+              <p>Questions? Contact us at allianceshipping26@gmail.com</p>
             </div>
           </div>
         </div>
@@ -845,7 +845,7 @@ export const sendFirstPackageEmail = async (
 
             <div class="footer">
               <p>Alliance Shipping - Reliable Shipping from USA to Haiti</p>
-              <p>Need help? We're here! support@allianceshipping.com</p>
+              <p>Need help? We're here! allianceshipping26@gmail.com</p>
             </div>
           </div>
         </div>
@@ -936,7 +936,7 @@ export const sendInspectionCompleteEmail = async (
 
             <div class="footer">
               <p>Alliance Shipping - Reliable Shipping from USA to Haiti</p>
-              <p>Questions? Contact us at support@allianceshipping.com</p>
+              <p>Questions? Contact us at allianceshipping26@gmail.com</p>
             </div>
           </div>
         </div>

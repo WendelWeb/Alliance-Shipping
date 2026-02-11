@@ -8,9 +8,9 @@ export const COMPANY_INFO = {
     ht: 'Transpò Rapid USA pou Okap',
     es: 'Envío Rápido de USA a Cabo Haitiano',
   },
-  phone: '+1 (305) 555-0100',
-  email: 'info@allianceshipping.com',
-  whatsapp: '+15055550100',
+  phone: '+509 4881 26-52',
+  email: 'allianceshipping26@gmail.com',
+  whatsapp: '+50948812652',
 };
 
 export const LOCATIONS: Location[] = [
@@ -59,7 +59,7 @@ export const PRICING: PricingInfo = {
 };
 
 export const SOCIAL_LINKS: SocialLink[] = [
-  { name: 'Facebook', href: 'https://facebook.com/allianceshipping', icon: 'Facebook' },
+  { name: 'Facebook', href: 'https://www.facebook.com/share/17t6aDphzg/?mibextid=wwXIfr', icon: 'Facebook' },
   { name: 'Instagram', href: 'https://instagram.com/allianceshipping', icon: 'Instagram' },
   { name: 'Twitter', href: 'https://twitter.com/allianceshipping', icon: 'Twitter' },
   { name: 'LinkedIn', href: 'https://linkedin.com/company/allianceshipping', icon: 'Linkedin' },

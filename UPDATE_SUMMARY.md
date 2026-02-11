@@ -85,9 +85,9 @@ sections/DeliveryTimeline.tsx   - Complete redesign
 
 ### 📞 Current Contact Info
 
-- **Phone**: +1 (305) 555-0100
-- **Email**: info@allianceshipping.com
-- **WhatsApp**: +1 505 555 0100
+- **Phone**: +509 4881 26-52
+- **Email**: allianceshipping26@gmail.com
+- **WhatsApp**:+509 4881 26-52
 - **Active Route**: Miami → Cap-Haïtien only
 
 ---

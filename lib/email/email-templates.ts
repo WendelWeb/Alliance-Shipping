@@ -744,8 +744,8 @@ export const sendPackageIssueEmail = async (
             <div class="card">
               <h3>Need Help?</h3>
               <p>Our support team is here to assist you. Please contact us if you have any questions or concerns.</p>
-              <p><strong>📞 Phone:</strong> +1 (305) 555-0100</p>
-              <p><strong>📧 Email:</strong> support@allianceshipping.com</p>
+              <p><strong>📞 Phone:</strong> (+509) 4881-2652</p>
+              <p><strong>📧 Email:</strong> allianceshipping26@gmail.com</p>
             </div>
 
             <div style="text-align: center;">
@@ -934,9 +934,9 @@ export const sendWelcomeEmail = async (
 
             <p style="margin-top: 30px;">If you have any questions, our support team is here to help!</p>
             <p>
-              📞 <strong>Phone:</strong> +1 (305) 555-0100<br>
-              📧 <strong>Email:</strong> support@allianceshipping.com<br>
-              💬 <strong>WhatsApp:</strong> +1 (505) 555-0100
+              📞 <strong>Phone:</strong> +509 4881-2652<br>
+              📧 <strong>Email:</strong> allianceshipping26@gmail.com<br>
+              💬 <strong>WhatsApp:</strong> +509 4881 26-52
             </p>
 
             <div class="footer">

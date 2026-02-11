@@ -76,7 +76,7 @@ export default function SupportPage() {
           {/* Contact Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <motion.a
-              href="tel:+15555551234"
+              href="tel:+50948812652"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="theme-card rounded-xl shadow-sm p-6 hover:shadow-md transition-all text-center"
@@ -85,12 +85,12 @@ export default function SupportPage() {
                 <Phone className="h-6 w-6 text-white" />
               </div>
               <h3 className="font-bold text-gray-900 mb-1">{t.profile.support.phone}</h3>
-              <p className="text-sm text-gray-600">+1 (555) 555-1234</p>
+              <p className="text-sm text-gray-600">+509 4881 26-52</p>
               <p className="text-xs text-gray-500 mt-2">{t.profile.support.phoneHours}</p>
             </motion.a>
 
             <motion.a
-              href="mailto:support@allianceshipping.com"
+              href="mailto:allianceshipping26.com"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
@@ -100,12 +100,12 @@ export default function SupportPage() {
                 <Mail className="h-6 w-6 text-white" />
               </div>
               <h3 className="font-bold text-gray-900 mb-1">{t.profile.support.email}</h3>
-              <p className="text-sm text-gray-600 break-all">support@allianceshipping.com</p>
+              <p className="text-sm text-gray-600 break-all">allianceshipping26.com</p>
               <p className="text-xs text-gray-500 mt-2">{t.profile.support.emailResponse}</p>
             </motion.a>
 
             <motion.a
-              href="https://wa.me/15555551234"
+              href="https://wa.me/50948812652"
               target="_blank"
               rel="noopener noreferrer"
               initial={{ opacity: 0, y: 20 }}
@@ -117,7 +117,7 @@ export default function SupportPage() {
                 <MessageSquare className="h-6 w-6 text-white" />
               </div>
               <h3 className="font-bold text-gray-900 mb-1">{t.profile.support.whatsApp}</h3>
-              <p className="text-sm text-gray-600">+1 (555) 555-1234</p>
+              <p className="text-sm text-gray-600">+509 4881 26-52</p>
               <p className="text-xs text-gray-500 mt-2">{t.profile.support.liveChat}</p>
             </motion.a>
           </div>

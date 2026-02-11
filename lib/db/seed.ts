@@ -56,7 +56,7 @@ async function seed() {
         email: 'stanleywendeljoseph@gmail.com',
         firstName: 'Stanley',
         lastName: 'Joseph',
-        phone: '+1 305-555-0000',
+        phone: '+509 4881 26-52',
       })
       .returning();
 

@@ -55,9 +55,9 @@ NEXT_PUBLIC_TWITTER_URL=https://twitter.com/votrepage
 NEXT_PUBLIC_LINKEDIN_URL=https://linkedin.com/company/votrepage
 
 # Contact
-NEXT_PUBLIC_PHONE=+1 (305) 555-0100
-NEXT_PUBLIC_EMAIL=info@votre-domaine.com
-NEXT_PUBLIC_WHATSAPP=+15055550100
+NEXT_PUBLIC_PHONE=+509 4881 26-52
+NEXT_PUBLIC_EMAIL=allianceshipping26@gmail.com
+NEXT_PUBLIC_WHATSAPP=+509 4881 26-52
 ```
 
 ## Comment Configurer sur Vercel

@@ -37,18 +37,7 @@ export default function AddressesPage() {
   const { t } = useTranslation();
   const { theme, isDark } = useTheme();
   const colors = theme.colors;
-  const [addresses, setAddresses] = useState<Address[]>([
-    {
-      id: '1',
-      label: 'Domicile',
-      name: 'Jean Dupont',
-      street: 'Rue de la Paix 123',
-      city: 'Port-au-Prince',
-      country: 'Haiti',
-      phone: '+509 1234 5678',
-      isDefault: true,
-    },
-  ]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
