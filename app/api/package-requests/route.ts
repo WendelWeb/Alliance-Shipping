@@ -160,16 +160,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the package request
-    const [packageRequest] = await db.insert(packageRequests).values({
+    const insertValues: any = {
       userId: dbUser.id,
       externalTrackingNumber: externalTrackingNumber.trim(),
       description: description.trim(),
       customerNotes: customerNotes?.trim() || null,
       estimatedWeight: null,
       category: category || 'general',
-      specialItemId: specialItemId || null,
       status: 'pending',
-    }).returning();
+    };
+    // Only include specialItemId if provided (column may not exist in older DBs)
+    if (specialItemId) {
+      insertValues.specialItemId = specialItemId;
+    }
+    const [packageRequest] = await db.insert(packageRequests).values(insertValues).returning();
 
     // Check if there's an unclaimed package matching this tracking number
     const unclaimedPackage = await findUnclaimedPackage(externalTrackingNumber.trim());
@@ -235,10 +239,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-  } catch (error) {
-    console.error('Error creating package request:', error);
+  } catch (error: any) {
+    console.error('Error creating package request:', error?.message || error);
+    console.error('Stack:', error?.stack);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error?.message || 'Unknown error' },
       { status: 500 }
     );
   }

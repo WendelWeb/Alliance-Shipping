@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { packages, users, packageRequests, trackingHistory, cityPricing, warehouses, packageTransfers } from '@/lib/db/schema';
+import { packages, users, packageRequests, trackingHistory, cityPricing, warehouses, packageTransfers, specialItemFees } from '@/lib/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
 import { sendPackageApprovedEmail } from '@/lib/email/service';
 import { sendPushNotification } from '@/lib/notifications/push';
@@ -117,6 +117,9 @@ export async function autoTransferPackage(params: {
         serviceFee: packages.serviceFee,
         weightCost: packages.weightCost,
         totalCost: packages.totalCost,
+        specialItemId: packages.specialItemId,
+        chargeByWeight: packages.chargeByWeight,
+        customsFees: packages.customsFees,
       })
       .from(packages)
       .where(eq(packages.id, packageId))
@@ -144,7 +147,41 @@ export async function autoTransferPackage(params: {
 
     // Recalculate fees based on new user's city
     const weight = parseFloat(String(pkg.weight)) || 0;
-    const fees = await calculateFeesForCity(user.city, weight);
+    const cityFees = await calculateFeesForCity(user.city, weight);
+    const existingCustomsFees = parseFloat(String(pkg.customsFees)) || 0;
+
+    // If special item, preserve the fixed fee in the total
+    let fees: { serviceFee: number; weightCost: number; totalCost: number };
+    if (pkg.specialItemId) {
+      // Get the special item's fixed fee
+      const [specialItem] = await db
+        .select({ fixedFee: specialItemFees.fixedFee })
+        .from(specialItemFees)
+        .where(eq(specialItemFees.id, pkg.specialItemId))
+        .limit(1);
+
+      const fixedFee = specialItem ? parseFloat(specialItem.fixedFee) : 0;
+
+      if (pkg.chargeByWeight) {
+        fees = {
+          serviceFee: cityFees.serviceFee,
+          weightCost: cityFees.weightCost,
+          totalCost: fixedFee + cityFees.serviceFee + cityFees.weightCost + existingCustomsFees,
+        };
+      } else {
+        fees = {
+          serviceFee: cityFees.serviceFee,
+          weightCost: 0,
+          totalCost: fixedFee + cityFees.serviceFee + existingCustomsFees,
+        };
+      }
+    } else {
+      fees = {
+        serviceFee: cityFees.serviceFee,
+        weightCost: cityFees.weightCost,
+        totalCost: cityFees.totalCost + existingCustomsFees,
+      };
+    }
 
     // Transfer ownership + update fees
     await db

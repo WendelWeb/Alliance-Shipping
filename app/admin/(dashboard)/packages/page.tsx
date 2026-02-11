@@ -644,7 +644,7 @@ export default function AllPackagesPage() {
                           <div className="flex justify-between text-purple-700 bg-purple-100 -mx-1 px-1 py-1 rounded">
                             <span className="font-semibold flex items-center gap-1">
                               <Smartphone className="h-3 w-3" />
-                              Article Special (Prix Fixe):
+                              {pkg.specialItemName ? `${pkg.specialItemBrand || ''} ${pkg.specialItemName}`.trim() : 'Article Special'} (Fixe):
                             </span>
                             <span className="font-bold">
                               ${(() => {

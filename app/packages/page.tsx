@@ -417,7 +417,7 @@ export default function PackagesPage() {
                           color: isDark ? '#e9d5ff' : '#7c3aed'
                         }}>
                           <Smartphone className="w-3.5 h-3.5" />
-                          {(t as any).packages?.specialItem || 'Article Special'}
+                          {pkg.specialItemBrand ? `${pkg.specialItemBrand} ` : ''}{pkg.specialItemName || (t as any).packages?.specialItem || 'Article Special'}
                         </div>
                       )}
 
@@ -495,7 +495,7 @@ export default function PackagesPage() {
                             }}>
                               <span className="font-semibold flex items-center gap-1">
                                 <Smartphone className="w-3 h-3" />
-                                Article Special (Prix Fixe):
+                                {pkg.specialItemName ? `${pkg.specialItemBrand || ''} ${pkg.specialItemName}`.trim() : 'Article Special'} (Fixe):
                               </span>
                               <span className="font-bold">
                                 ${(() => {
