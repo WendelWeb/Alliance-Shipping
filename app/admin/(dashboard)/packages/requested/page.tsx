@@ -74,6 +74,14 @@ interface ActiveSpecialItem {
   category: string;
 }
 
+// City pricing from database
+interface CityPricingData {
+  id: number;
+  city: string;
+  serviceFee: string;
+  pricePerLb: string;
+}
+
 function nameToColor(name: string): { bg: string; text: string } {
   const colors = [
     { bg: 'bg-blue-600', text: 'text-white' },
@@ -97,6 +105,7 @@ export default function RequestedPackagesPage() {
   const [validationStates, setValidationStates] = useState<Record<number, ValidationState>>({});
   const [processingId, setProcessingId] = useState<number | null>(null);
   const [allSpecialItems, setAllSpecialItems] = useState<ActiveSpecialItem[]>([]);
+  const [cityPricingMap, setCityPricingMap] = useState<Record<string, { serviceFee: number; pricePerLb: number }>>({});
 
   // Fetch all active special items for admin dropdown
   useEffect(() => {
@@ -105,6 +114,24 @@ export default function RequestedPackagesPage() {
       .then((data) => {
         const items = data?.items || data || [];
         setAllSpecialItems(items.filter((i: any) => i.isActive));
+      })
+      .catch(() => {});
+  }, []);
+
+  // Fetch city pricing from database
+  useEffect(() => {
+    fetch('/api/pricing/all')
+      .then((res) => res.json())
+      .then((data) => {
+        const cities: CityPricingData[] = data?.cities || [];
+        const map: Record<string, { serviceFee: number; pricePerLb: number }> = {};
+        cities.forEach((c) => {
+          map[c.city] = {
+            serviceFee: parseFloat(c.serviceFee),
+            pricePerLb: parseFloat(c.pricePerLb),
+          };
+        });
+        setCityPricingMap(map);
       })
       .catch(() => {});
   }, []);
@@ -260,13 +287,15 @@ export default function RequestedPackagesPage() {
 
   const calculatePreviewFees = (requestId: number, request: PackageRequest) => {
     const state = validationStates[requestId];
-    if (!state) return { serviceFee: 0, weightCost: 0, specialItemFee: 0, customsFees: 0, total: 0 };
+    if (!state) return { serviceFee: 0, weightCost: 0, specialItemFee: 0, customsFees: 0, total: 0, pricePerLb: 0 };
 
-    // Approximate fees (exact calculation happens server-side)
     const weight = parseFloat(state.weight) || 0;
-    const serviceFee = 5; // Approximate
-    const pricePerLb = 4; // Approximate
     const customsFees = parseFloat(state.customsFees) || 0;
+
+    // Lookup pricing from DB by user's city
+    const cityPricing = cityPricingMap[request.userCity];
+    const serviceFee = cityPricing?.serviceFee ?? 0;
+    const pricePerLb = cityPricing?.pricePerLb ?? 0;
 
     let specialItemFee = 0;
     if (state.specialItemId) {
@@ -280,7 +309,7 @@ export default function RequestedPackagesPage() {
     }
 
     const total = serviceFee + weightCost + specialItemFee + customsFees;
-    return { serviceFee, weightCost, specialItemFee, customsFees, total };
+    return { serviceFee, weightCost, specialItemFee, customsFees, total, pricePerLb };
   };
 
   // ── Actions ──
@@ -748,7 +777,17 @@ export default function RequestedPackagesPage() {
 
                         {/* Fee Summary */}
                         <div className="rounded-lg p-4 border border-blue-200 bg-blue-50">
-                          <h5 className="text-sm font-bold text-blue-900 mb-3">Resume des frais (estimation)</h5>
+                          <h5 className="text-sm font-bold text-blue-900 mb-3">
+                            Resume des frais
+                            <span className="text-xs font-normal text-blue-600 ml-2">
+                              ({request.userCity} — ${fees.pricePerLb.toFixed(2)}/lb)
+                            </span>
+                          </h5>
+                          {!cityPricingMap[request.userCity] && (
+                            <div className="bg-orange-100 border border-orange-300 text-orange-800 text-xs p-2 rounded mb-2">
+                              Tarif introuvable pour &quot;{request.userCity}&quot; — configurez cette ville dans les tarifs
+                            </div>
+                          )}
                           <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
                               <span className="text-blue-700">Service Fee</span>
@@ -756,7 +795,7 @@ export default function RequestedPackagesPage() {
                             </div>
                             {(!hasSpecialItem || state.chargeByWeight) && (
                               <div className="flex justify-between">
-                                <span className="text-blue-700">Poids ({state.weight || '0'} lbs)</span>
+                                <span className="text-blue-700">Poids ({state.weight || '0'} lbs x ${fees.pricePerLb.toFixed(2)})</span>
                                 <span className="font-mono text-blue-900">${fees.weightCost.toFixed(2)}</span>
                               </div>
                             )}
