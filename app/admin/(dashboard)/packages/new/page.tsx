@@ -309,12 +309,12 @@ export default function NewPackagePage() {
   const fees = calculateFees();
 
   const categoryOptions = [
-    { value: 'general', label: 'General' },
-    { value: 'clothing', label: 'Vetements' },
-    { value: 'electronics', label: 'Electronique' },
-    { value: 'food', label: 'Nourriture' },
-    { value: 'documents', label: 'Documents' },
-    { value: 'other', label: 'Autre' },
+    { value: 'general', label: 'General', emoji: '📦', color: '#6366f1', bg: '#eef2ff' },
+    { value: 'clothing', label: 'Vêtements', emoji: '👕', color: '#ec4899', bg: '#fdf2f8' },
+    { value: 'electronics', label: 'Électronique', emoji: '💻', color: '#3b82f6', bg: '#eff6ff' },
+    { value: 'food', label: 'Nourriture', emoji: '🍽️', color: '#f59e0b', bg: '#fffbeb' },
+    { value: 'documents', label: 'Documents', emoji: '📄', color: '#8b5cf6', bg: '#f5f3ff' },
+    { value: 'other', label: 'Autre', emoji: '🏷️', color: '#6b7280', bg: '#f9fafb' },
   ];
 
   const statusOptions = [
@@ -538,20 +538,43 @@ export default function NewPackagePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Categorie *
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Catégorie *
                   </label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    {categoryOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
+                  <div className="grid grid-cols-3 gap-2">
+                    {categoryOptions.map(opt => {
+                      const isSelected = formData.category === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, category: opt.value }))}
+                          className="relative flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border-2 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]"
+                          style={{
+                            borderColor: isSelected ? opt.color : '#e5e7eb',
+                            backgroundColor: isSelected ? opt.bg : 'transparent',
+                            boxShadow: isSelected ? `0 0 0 1px ${opt.color}20, 0 2px 8px ${opt.color}15` : 'none',
+                          }}
+                        >
+                          {isSelected && (
+                            <span
+                              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                              style={{ backgroundColor: opt.color }}
+                            >
+                              ✓
+                            </span>
+                          )}
+                          <span className="text-2xl leading-none">{opt.emoji}</span>
+                          <span
+                            className="text-xs font-semibold text-center leading-tight"
+                            style={{ color: isSelected ? opt.color : '#4b5563' }}
+                          >
+                            {opt.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </motion.div>

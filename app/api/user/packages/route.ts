@@ -77,6 +77,7 @@ export async function GET(request: NextRequest) {
         specialItemId: packages.specialItemId,
         specialItemName: specialItemFees.itemName,
         specialItemBrand: specialItemFees.brand,
+        specialItemFixedFee: specialItemFees.fixedFee,
         chargeByWeight: packages.chargeByWeight,
         currency: packages.currency,
         status: packages.status,

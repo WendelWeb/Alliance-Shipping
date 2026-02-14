@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { packages, users, adminActivityLogs } from '@/lib/db/schema';
+import { packages, users, adminActivityLogs, specialItemFees } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
 import { eq } from 'drizzle-orm';
 import { sendCustomsFeesEmail } from '@/lib/email/service';
@@ -40,12 +40,26 @@ export async function POST(
     }
 
     // ⭐ RECALCUL COMPLET (pas accumulation)
-    // TOTAL = serviceFee + weightCost + customsFees
+    // TOTAL = serviceFee + weightCost + customsFees + specialItemFixedFee
     const customsFeesAmount = parseFloat(customsFees);
     const serviceFee = parseFloat(pkg.serviceFee);
     const weightCost = parseFloat(pkg.weightCost);
     const oldTotal = parseFloat(pkg.totalCost);
-    const newTotal = serviceFee + weightCost + customsFeesAmount;
+
+    // Include special item fixed fee if package has one
+    let specialItemFixedFee = 0;
+    if (pkg.specialItemId) {
+      const [specialItem] = await db
+        .select({ fixedFee: specialItemFees.fixedFee })
+        .from(specialItemFees)
+        .where(eq(specialItemFees.id, pkg.specialItemId))
+        .limit(1);
+      if (specialItem) {
+        specialItemFixedFee = parseFloat(specialItem.fixedFee);
+      }
+    }
+
+    const newTotal = serviceFee + weightCost + customsFeesAmount + specialItemFixedFee;
 
     // Update package
     await db

@@ -142,6 +142,7 @@ function transformPackage(pkg: any) {
     specialItemId: pkg.specialItemId || null,
     specialItemName: pkg.specialItemName || null,
     specialItemBrand: pkg.specialItemBrand || null,
+    specialItemFixedFee: pkg.specialItemFixedFee || '0.00',
     category: pkg.category || null,
     chargeByWeight: pkg.chargeByWeight || false,
     createdAt: new Date(pkg.createdAt).toISOString().split('T')[0],
@@ -647,14 +648,7 @@ export default function AllPackagesPage() {
                               {pkg.specialItemName ? `${pkg.specialItemBrand || ''} ${pkg.specialItemName}`.trim() : 'Article Special'} (Fixe):
                             </span>
                             <span className="font-bold">
-                              ${(() => {
-                                const total = pkg.totalCost || 0;
-                                const service = pkg.serviceFee || 0;
-                                const wt = pkg.weightCost || 0;
-                                const customs = parseFloat(pkg.customsFees || '0');
-                                const fixedPrice = total - service - wt - customs;
-                                return fixedPrice > 0 ? fixedPrice.toFixed(2) : '0.00';
-                              })()}
+                              ${parseFloat(pkg.specialItemFixedFee || '0').toFixed(2)}
                             </span>
                           </div>
                         )}
@@ -671,7 +665,13 @@ export default function AllPackagesPage() {
                         <div className="flex justify-between pt-1.5 border-t-2 border-blue-400">
                           <span className="font-bold text-gray-900 text-sm">TOTAL:</span>
                           <span className="font-bold text-primary-600 text-base">
-                            ${(pkg.totalCost || 0).toFixed(2)}
+                            ${(() => {
+                              const svc = pkg.serviceFee || 0;
+                              const wc = pkg.weightCost || 0;
+                              const cf = parseFloat(pkg.customsFees || '0');
+                              const ff = parseFloat(pkg.specialItemFixedFee || '0');
+                              return (svc + wc + cf + ff).toFixed(2);
+                            })()}
                           </span>
                         </div>
                       </div>
@@ -1093,7 +1093,13 @@ export default function AllPackagesPage() {
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-semibold text-gray-900">Coût total</p>
                         <p className="text-2xl font-bold text-primary-600">
-                          ${selectedPackageDetails.totalFee.toFixed(2)}
+                          ${(() => {
+                            const svc = selectedPackageDetails.serviceFee || 0;
+                            const wc = selectedPackageDetails.weightCost || 0;
+                            const cf = parseFloat(selectedPackageDetails.customsFees || '0');
+                            const ff = parseFloat(selectedPackageDetails.specialItemFixedFee || '0');
+                            return (svc + wc + cf + ff).toFixed(2);
+                          })()}
                         </p>
                       </div>
                     </div>

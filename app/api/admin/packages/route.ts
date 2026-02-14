@@ -72,6 +72,7 @@ export async function GET(request: NextRequest) {
         specialItemId: packages.specialItemId, // ⭐ Special item ID
         specialItemName: specialItemFees.itemName, // ⭐ Special item name
         specialItemBrand: specialItemFees.brand, // ⭐ Special item brand
+        specialItemFixedFee: specialItemFees.fixedFee, // ⭐ Actual fixed fee from DB
         chargeByWeight: packages.chargeByWeight, // ⭐ Charge by weight flag
         currency: packages.currency,
         status: packages.status,
@@ -289,26 +290,31 @@ export async function POST(request: NextRequest) {
       // Get city pricing for service fee
       const cityFees = await calculateFeesForCity(owner?.city || null, parseFloat(weight) || 0);
       const fixedFee = parseFloat(specialItem.fixedFee);
+      const customsFeesValue = customsFees ? parseFloat(customsFees) : 0;
 
       // Calculate based on chargeByWeight checkbox
       if (chargeByWeight) {
-        // Special item price + service fee + weight cost
+        // Special item price + service fee + weight cost + customs fees
         fees = {
           serviceFee: cityFees.serviceFee,
           weightCost: cityFees.weightCost,
-          totalCost: fixedFee + cityFees.serviceFee + cityFees.weightCost,
+          totalCost: fixedFee + cityFees.serviceFee + cityFees.weightCost + customsFeesValue,
         };
       } else {
-        // Special item price + service fee only (no weight charge)
+        // Special item price + service fee + customs fees only (no weight charge)
         fees = {
           serviceFee: cityFees.serviceFee,
           weightCost: 0,
-          totalCost: fixedFee + cityFees.serviceFee,
+          totalCost: fixedFee + cityFees.serviceFee + customsFeesValue,
         };
       }
     } else {
       // Normal package: calculate by weight
       fees = await calculateFeesForCity(owner?.city || null, parseFloat(weight) || 0);
+      // Include customs fees in total if provided
+      if (customsFees) {
+        fees.totalCost += parseFloat(customsFees);
+      }
     }
 
     // Check for duplicate external tracking number

@@ -23,18 +23,21 @@ export function UserInfoGate({ children }: { children: React.ReactNode }) {
         const response = await fetch('/api/user/profile');
         if (response.ok) {
           const data = await response.json();
-          // Check if phone exists AND is properly formatted (with country code)
+          // Check if phone AND whatsapp exist AND are properly formatted (with country code)
           const phoneValue = data.user?.phone;
+          const whatsappValue = data.user?.whatsappPhone;
           const hasValidPhone = !!(phoneValue && phoneValue.startsWith('+'));
+          const hasValidWhatsapp = !!(whatsappValue && whatsappValue.startsWith('+'));
+          const phoneMissing = !hasValidPhone || !hasValidWhatsapp;
           const hasCity = !!data.user?.city;
           const hasWarehouse = !!data.user?.warehouseId;
 
-          setMissingPhone(!hasValidPhone);
+          setMissingPhone(phoneMissing);
           setMissingCity(!hasCity);
           setMissingWarehouse(!hasWarehouse);
 
           // BLOCK app if any is missing
-          if (!hasValidPhone || !hasCity || !hasWarehouse) {
+          if (phoneMissing || !hasCity || !hasWarehouse) {
             console.log('🚫 UserInfoGate: BLOCKING APP - Phone:', !hasValidPhone, 'City:', !hasCity, 'Warehouse:', !hasWarehouse);
             setIsBlocked(true);
           } else {
@@ -60,11 +63,13 @@ export function UserInfoGate({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         const phoneValue = data.user?.phone;
+        const whatsappValue = data.user?.whatsappPhone;
         const hasValidPhone = !!(phoneValue && phoneValue.startsWith('+'));
+        const hasValidWhatsapp = !!(whatsappValue && whatsappValue.startsWith('+'));
         const hasCity = !!data.user?.city;
         const hasWarehouse = !!data.user?.warehouseId;
 
-        if (hasValidPhone && hasCity && hasWarehouse) {
+        if (hasValidPhone && hasValidWhatsapp && hasCity && hasWarehouse) {
           console.log('✅ All info completed! Unblocking app...');
           setIsBlocked(false);
           setMissingPhone(false);

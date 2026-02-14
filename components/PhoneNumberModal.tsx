@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, MapPin, Building2, Loader2, ExternalLink, Check, ChevronRight } from 'lucide-react';
+import { Phone, MapPin, Building2, Loader2, ExternalLink, Check, ChevronRight, MessageCircle } from 'lucide-react';
 import { COUNTRIES, getCountryName, Country } from '@/lib/countries';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useTheme } from '@/lib/themes/ThemeProvider';
@@ -26,19 +26,6 @@ interface Warehouse {
   openingHours?: string;
 }
 
-const HAITI_CITIES = [
-  'Port-au-Prince',
-  'Cap-Haïtien',
-  'Port-de-Paix',
-  'Gonaïves',
-  'Saint-Marc',
-  'Les Cayes',
-  'Pétion-Ville',
-  'Delmas',
-  'Carrefour',
-  'Jacmel',
-];
-
 export function PhoneNumberModal({
   isOpen,
   onSuccess,
@@ -51,12 +38,36 @@ export function PhoneNumberModal({
   const colors = theme.colors;
   const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [whatsappCountry, setWhatsappCountry] = useState<Country>(COUNTRIES[0]);
+  const [whatsappNumber, setWhatsappNumber] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState<number | null>(null);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingWarehouses, setIsLoadingWarehouses] = useState(false);
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Load cities from API
+  useEffect(() => {
+    if (!missingCity) return;
+    const loadCities = async () => {
+      setIsLoadingCities(true);
+      try {
+        const response = await fetch('/api/pricing/all');
+        if (!response.ok) throw new Error('Failed to fetch cities');
+        const data = await response.json();
+        const cityNames = (data.cities || []).map((c: any) => c.city);
+        setCities(cityNames);
+      } catch (err) {
+        console.error('Error loading cities:', err);
+      } finally {
+        setIsLoadingCities(false);
+      }
+    };
+    loadCities();
+  }, [missingCity]);
 
   // Calculate step info
   const steps = [
@@ -116,6 +127,12 @@ export function PhoneNumberModal({
         updateData.countryCode = selectedCountry.code;
       }
 
+      if (missingPhone && whatsappNumber) {
+        const waDigits = whatsappNumber.replace(/\D/g, '');
+        updateData.whatsappPhone = whatsappCountry.dial + waDigits;
+        updateData.whatsappCountryCode = whatsappCountry.code;
+      }
+
       if (missingCity && selectedCity) {
         updateData.city = selectedCity;
       }
@@ -147,6 +164,7 @@ export function PhoneNumberModal({
     isLoading ||
     isLoadingWarehouses ||
     (missingPhone && !phoneNumber) ||
+    (missingPhone && !whatsappNumber) ||
     (missingCity && !selectedCity) ||
     (missingWarehouse && !selectedWarehouse);
 
@@ -308,9 +326,83 @@ export function PhoneNumberModal({
                     autoFocus
                   />
                 </div>
-                {phoneNumber && (
+
+                {/* WhatsApp Number */}
+                <label className="flex items-center gap-2 text-sm font-bold mt-4" style={{ color: colors.gray[800] }}>
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center"
+                    style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}
+                  >
+                    <MessageCircle className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  WhatsApp
+                  <span
+                    className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
+                    style={{ backgroundColor: '#ef4444' }}
+                  >
+                    {(t.phoneModal as any).required || 'REQUIS'}
+                  </span>
+                </label>
+
+                <select
+                  value={whatsappCountry.code}
+                  onChange={(e) => {
+                    const country = COUNTRIES.find(c => c.code === e.target.value);
+                    if (country) setWhatsappCountry(country);
+                  }}
+                  className="w-full px-4 py-3.5 border-2 rounded-xl focus:ring-4 outline-none transition-all text-base"
+                  style={{
+                    borderColor: colors.gray[200],
+                    backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+                    color: colors.gray[900],
+                  }}
+                >
+                  {COUNTRIES.map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {country.flag} {getCountryName(country, locale)} ({country.dial})
+                    </option>
+                  ))}
+                </select>
+
+                <div className="flex gap-2">
+                  <div
+                    className="flex items-center px-4 py-3.5 border-2 rounded-xl font-bold text-base"
+                    style={{
+                      borderColor: colors.gray[200],
+                      backgroundColor: isDark ? colors.gray[800] : colors.gray[100],
+                      color: colors.gray[700],
+                    }}
+                  >
+                    {whatsappCountry.dial}
+                  </div>
+                  <input
+                    type="tel"
+                    value={whatsappNumber}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, '');
+                      let formatted = '';
+                      if (digits.length <= 4) {
+                        formatted = digits;
+                      } else if (digits.length <= 8) {
+                        formatted = `${digits.slice(0, 4)} ${digits.slice(4)}`;
+                      } else {
+                        formatted = `${digits.slice(0, 4)} ${digits.slice(4, 8)}`;
+                      }
+                      setWhatsappNumber(formatted);
+                    }}
+                    placeholder="WhatsApp"
+                    className="flex-1 px-4 py-3.5 border-2 rounded-xl focus:ring-4 outline-none transition-all text-base"
+                    style={{
+                      borderColor: colors.gray[200],
+                      backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+                      color: colors.gray[900],
+                    }}
+                  />
+                </div>
+
+                {whatsappNumber && (
                   <a
-                    href={`https://wa.me/${selectedCountry.dial}${phoneNumber.replace(/\s/g, '')}`}
+                    href={`https://wa.me/${whatsappCountry.dial.replace('+', '')}${whatsappNumber.replace(/\s/g, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs font-semibold"
@@ -344,44 +436,53 @@ export function PhoneNumberModal({
                   <span className="text-red-500">*</span>
                 </label>
 
-                {/* City Grid */}
-                <div className="grid grid-cols-2 gap-2">
-                  {HAITI_CITIES.map((city) => (
-                    <button
-                      key={city}
-                      onClick={() => setSelectedCity(city)}
-                      className="flex items-center gap-2 px-3 py-3 rounded-xl border-2 transition-all text-left text-sm"
-                      style={{
-                        borderColor: selectedCity === city ? colors.primary[500] : colors.gray[200],
-                        backgroundColor: selectedCity === city
-                          ? (isDark ? colors.primary[900] : colors.primary[50])
-                          : 'transparent',
-                      }}
-                    >
-                      {selectedCity === city ? (
-                        <div
-                          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: colors.primary[600] }}
-                        >
-                          <Check className="w-3 h-3 text-white" />
-                        </div>
-                      ) : (
-                        <div
-                          className="w-5 h-5 rounded-full border-2 flex-shrink-0"
-                          style={{ borderColor: colors.gray[300] }}
-                        />
-                      )}
-                      <span
-                        className="font-medium"
+                {/* City Grid - loaded from API */}
+                {isLoadingCities ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: colors.primary[600] }} />
+                    <span className="ml-2 text-sm" style={{ color: colors.gray[600] }}>
+                      Chargement des villes...
+                    </span>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {cities.map((city) => (
+                      <button
+                        key={city}
+                        onClick={() => setSelectedCity(city)}
+                        className="flex items-center gap-2 px-3 py-3 rounded-xl border-2 transition-all text-left text-sm"
                         style={{
-                          color: selectedCity === city ? colors.primary[700] : colors.gray[700],
+                          borderColor: selectedCity === city ? colors.primary[500] : colors.gray[200],
+                          backgroundColor: selectedCity === city
+                            ? (isDark ? colors.primary[900] : colors.primary[50])
+                            : 'transparent',
                         }}
                       >
-                        {city}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+                        {selectedCity === city ? (
+                          <div
+                            className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: colors.primary[600] }}
+                          >
+                            <Check className="w-3 h-3 text-white" />
+                          </div>
+                        ) : (
+                          <div
+                            className="w-5 h-5 rounded-full border-2 flex-shrink-0"
+                            style={{ borderColor: colors.gray[300] }}
+                          />
+                        )}
+                        <span
+                          className="font-medium"
+                          style={{
+                            color: selectedCity === city ? colors.primary[700] : colors.gray[700],
+                          }}
+                        >
+                          {city}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             )}
 
