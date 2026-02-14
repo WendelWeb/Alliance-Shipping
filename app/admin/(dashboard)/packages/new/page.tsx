@@ -367,7 +367,9 @@ export default function NewPackagePage() {
                   onClick={() => {
                     setPackageType('normal');
                     setSelectedSpecialItem(null);
-                    setChargeByWeight(false); // ⭐ Reset charge by weight
+                    setChargeByWeight(false);
+                    // Clear forced electronics category
+                    setFormData(prev => ({ ...prev, category: prev.category === 'electronics' ? 'general' : prev.category }));
                   }}
                   className={`p-4 border-2 rounded-xl transition-all ${
                     packageType === 'normal'
@@ -413,7 +415,10 @@ export default function NewPackagePage() {
                       <motion.div
                         key={item.id}
                         whileHover={{ scale: 1.02 }}
-                        onClick={() => setSelectedSpecialItem(item.id)}
+                        onClick={() => {
+                          setSelectedSpecialItem(item.id);
+                          setFormData(prev => ({ ...prev, category: 'electronics' }));
+                        }}
                         className={`p-3 border-2 rounded-xl cursor-pointer transition-all ${
                           selectedSpecialItem === item.id
                             ? 'border-primary-500 bg-primary-50'
@@ -540,8 +545,13 @@ export default function NewPackagePage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     Catégorie *
+                    {packageType === 'special' && selectedSpecialItem && (
+                      <span className="ml-2 inline-flex items-center gap-1 text-xs font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
+                        Auto : Électronique
+                      </span>
+                    )}
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className={`grid grid-cols-3 gap-2 ${packageType === 'special' && selectedSpecialItem ? 'opacity-50 pointer-events-none' : ''}`}>
                     {categoryOptions.map(opt => {
                       const isSelected = formData.category === opt.value;
                       return (
@@ -549,7 +559,8 @@ export default function NewPackagePage() {
                           key={opt.value}
                           type="button"
                           onClick={() => setFormData(prev => ({ ...prev, category: opt.value }))}
-                          className="relative flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border-2 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]"
+                          disabled={packageType === 'special' && selectedSpecialItem !== null}
+                          className="relative flex flex-col items-center gap-1.5 px-3 py-3 rounded-xl border-2 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97] disabled:cursor-not-allowed"
                           style={{
                             borderColor: isSelected ? opt.color : '#e5e7eb',
                             backgroundColor: isSelected ? opt.bg : 'transparent',

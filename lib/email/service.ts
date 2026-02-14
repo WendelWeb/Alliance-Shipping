@@ -289,77 +289,260 @@ export const sendPackageRequestEmail = async (userEmail: string, userName: strin
   return sendEmail({ to: userEmail, subject: s.subject, html });
 };
 
+// ==================== APPROVED EMAIL TRANSLATIONS ====================
+
+interface ApprovedStrings {
+  subject: string;
+  headerTitle: string;
+  greeting: string;
+  body: string;
+  trackingLabel: string;
+  totalCostLabel: string;
+  feeBreakdownTitle: string;
+  serviceFeeLabel: string;
+  weightCostLabel: string;
+  specialItemLabel: string;
+  customsFeesLabel: string;
+  totalLabel: string;
+  weightInfo: string;
+  cityInfo: string;
+  nextStepsTitle: string;
+  nextSteps: string[];
+  buttonLabel: string;
+  thanks: string;
+  footer: string;
+  automated: string;
+}
+
+const approvedStrings: Record<Locale, ApprovedStrings> = {
+  ht: {
+    subject: 'Demann Koli Apwouve - Alliance Shipping',
+    headerTitle: 'Demann Koli Apwouve!',
+    greeting: 'B\u00f2n nouv\u00e8l',
+    body: 'Demann koli ou a apwouve epi konfime. Koli ou an ap trete kounye a.',
+    trackingLabel: 'Nimewo Tracking:',
+    totalCostLabel: 'Ko\u00fbt Total:',
+    feeBreakdownTitle: 'Detay Fr\u00e8',
+    serviceFeeLabel: 'Fr\u00e8 s\u00e8vis:',
+    weightCostLabel: 'Fr\u00e8 pwa:',
+    specialItemLabel: 'Atik espesyal:',
+    customsFeesLabel: 'Fr\u00e8 dwan:',
+    totalLabel: 'TOTAL:',
+    weightInfo: 'Pwa',
+    cityInfo: 'Vil livrezon',
+    nextStepsTitle: 'Ki sa k ap pase apr\u00e8 sa?',
+    nextSteps: [
+      'Koli ou ap prepare pou transp\u00f2te',
+      'W ap resevwa mizajou l\u00e8 estati a chanje',
+      'Swiv koli ou an tan rey\u00e8l nan tableau de bord ou',
+      'N ap av\u00e8ti ou l\u00e8 li pr\u00e8 pou pran',
+    ],
+    buttonLabel: 'Swiv Koli Ou',
+    thanks: 'M\u00e8si paske ou chwazi Alliance Shipping!',
+    footer: 'Alliance Shipping - Livrezon Fyab soti nan USA pou ale an Ayiti',
+    automated: 'Sa a se yon mesaj otomatik, tanpri pa reponn im\u00e8l sa a.',
+  },
+  fr: {
+    subject: 'Demande de Colis Approuv\u00e9e - Alliance Shipping',
+    headerTitle: 'Demande de Colis Approuv\u00e9e !',
+    greeting: 'Excellente nouvelle',
+    body: 'Votre demande de colis a \u00e9t\u00e9 approuv\u00e9e et confirm\u00e9e. Votre colis est maintenant en cours de traitement.',
+    trackingLabel: 'Num\u00e9ro de Suivi :',
+    totalCostLabel: 'Co\u00fbt Total :',
+    feeBreakdownTitle: 'D\u00e9tail des Frais',
+    serviceFeeLabel: 'Frais de service :',
+    weightCostLabel: 'Frais de poids :',
+    specialItemLabel: 'Article sp\u00e9cial :',
+    customsFeesLabel: 'Frais de douane :',
+    totalLabel: 'TOTAL :',
+    weightInfo: 'Poids',
+    cityInfo: 'Ville de livraison',
+    nextStepsTitle: 'Prochaines \u00c9tapes',
+    nextSteps: [
+      'Votre colis sera pr\u00e9par\u00e9 pour le transit',
+      'Vous recevrez des mises \u00e0 jour lors des changements de statut',
+      'Suivez votre colis en temps r\u00e9el depuis votre tableau de bord',
+      'Nous vous avertirons quand il sera pr\u00eat pour le retrait',
+    ],
+    buttonLabel: 'Suivre Mon Colis',
+    thanks: 'Merci d\'avoir choisi Alliance Shipping !',
+    footer: 'Alliance Shipping - Exp\u00e9dition Fiable des USA vers Ha\u00efti',
+    automated: 'Ceci est un message automatique, merci de ne pas r\u00e9pondre.',
+  },
+  en: {
+    subject: 'Package Request Approved - Alliance Shipping',
+    headerTitle: 'Package Request Approved!',
+    greeting: 'Great news',
+    body: 'Your package request has been approved and confirmed. Your package is now being processed.',
+    trackingLabel: 'Tracking Number:',
+    totalCostLabel: 'Total Cost:',
+    feeBreakdownTitle: 'Fee Breakdown',
+    serviceFeeLabel: 'Service fee:',
+    weightCostLabel: 'Weight cost:',
+    specialItemLabel: 'Special item:',
+    customsFeesLabel: 'Customs fees:',
+    totalLabel: 'TOTAL:',
+    weightInfo: 'Weight',
+    cityInfo: 'Delivery city',
+    nextStepsTitle: 'Next Steps',
+    nextSteps: [
+      'Your package will be prepared for transit',
+      'You\'ll receive updates as the status changes',
+      'Track your package in real-time from your dashboard',
+      'You\'ll be notified when it\'s ready for pickup',
+    ],
+    buttonLabel: 'Track My Package',
+    thanks: 'Thank you for choosing Alliance Shipping!',
+    footer: 'Alliance Shipping - Reliable Shipping from USA to Haiti',
+    automated: 'This is an automated message, please do not reply to this email.',
+  },
+  es: {
+    subject: 'Solicitud de Paquete Aprobada - Alliance Shipping',
+    headerTitle: '\u00a1Solicitud de Paquete Aprobada!',
+    greeting: '\u00a1Excelente noticia',
+    body: 'Su solicitud de paquete ha sido aprobada y confirmada. Su paquete est\u00e1 siendo procesado.',
+    trackingLabel: 'N\u00famero de Seguimiento:',
+    totalCostLabel: 'Costo Total:',
+    feeBreakdownTitle: 'Desglose de Tarifas',
+    serviceFeeLabel: 'Tarifa de servicio:',
+    weightCostLabel: 'Costo por peso:',
+    specialItemLabel: 'Art\u00edculo especial:',
+    customsFeesLabel: 'Tasas aduaneras:',
+    totalLabel: 'TOTAL:',
+    weightInfo: 'Peso',
+    cityInfo: 'Ciudad de entrega',
+    nextStepsTitle: 'Pr\u00f3ximos Pasos',
+    nextSteps: [
+      'Su paquete ser\u00e1 preparado para el tr\u00e1nsito',
+      'Recibir\u00e1 actualizaciones cuando cambie el estado',
+      'Rastree su paquete en tiempo real desde su panel',
+      'Le notificaremos cuando est\u00e9 listo para recoger',
+    ],
+    buttonLabel: 'Rastrear Mi Paquete',
+    thanks: '\u00a1Gracias por elegir Alliance Shipping!',
+    footer: 'Alliance Shipping - Env\u00edos Confiables de USA a Hait\u00ed',
+    automated: 'Este es un mensaje autom\u00e1tico, por favor no responda.',
+  },
+};
+
 // Template: Package Request Approved
 export const sendPackageApprovedEmail = async (
   userEmail: string,
   userName: string,
   trackingNumber: string,
-  totalCost: number
+  totalCost: number,
+  locale: string = 'fr',
+  feeBreakdown?: {
+    serviceFee: number;
+    weightCost: number;
+    specialItemFee: number;
+    customsFees: number;
+    weight: number;
+    city: string;
+  }
 ) => {
-  const subject = 'Package Request Approved - Alliance Shipping';
+  const lang = (['ht', 'fr', 'en', 'es'].includes(locale) ? locale : 'fr') as Locale;
+  const s = approvedStrings[lang];
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+  // Build fee breakdown HTML if provided
+  let feeBreakdownHtml = '';
+  if (feeBreakdown) {
+    const rows: string[] = [];
+    if (feeBreakdown.serviceFee > 0) {
+      rows.push(`<tr><td style="padding:8px 12px;color:#6b7280;">${s.serviceFeeLabel}</td><td style="padding:8px 12px;text-align:right;font-weight:600;">$${feeBreakdown.serviceFee.toFixed(2)}</td></tr>`);
+    }
+    if (feeBreakdown.weightCost > 0) {
+      rows.push(`<tr><td style="padding:8px 12px;color:#6b7280;">${s.weightCostLabel}</td><td style="padding:8px 12px;text-align:right;font-weight:600;">$${feeBreakdown.weightCost.toFixed(2)}</td></tr>`);
+    }
+    if (feeBreakdown.specialItemFee > 0) {
+      rows.push(`<tr style="background:#faf5ff;"><td style="padding:8px 12px;color:#7c3aed;font-weight:600;">${s.specialItemLabel}</td><td style="padding:8px 12px;text-align:right;color:#7c3aed;font-weight:700;">$${feeBreakdown.specialItemFee.toFixed(2)}</td></tr>`);
+    }
+    if (feeBreakdown.customsFees > 0) {
+      rows.push(`<tr style="background:#fef2f2;"><td style="padding:8px 12px;color:#dc2626;font-weight:600;">${s.customsFeesLabel}</td><td style="padding:8px 12px;text-align:right;color:#dc2626;font-weight:700;">$${feeBreakdown.customsFees.toFixed(2)}</td></tr>`);
+    }
+    rows.push(`<tr style="border-top:2px solid #10b981;background:#ecfdf5;"><td style="padding:10px 12px;font-weight:800;color:#059669;font-size:16px;">${s.totalLabel}</td><td style="padding:10px 12px;text-align:right;font-weight:800;color:#059669;font-size:18px;">$${totalCost.toFixed(2)}</td></tr>`);
+
+    const infoItems: string[] = [];
+    if (feeBreakdown.weight) infoItems.push(`${s.weightInfo}: ${feeBreakdown.weight} lbs`);
+    if (feeBreakdown.city) infoItems.push(`${s.cityInfo}: ${feeBreakdown.city}`);
+
+    feeBreakdownHtml = `
+              <div class="card">
+                <h3>${s.feeBreakdownTitle}</h3>
+                ${infoItems.length > 0 ? `<p style="color:#6b7280;font-size:13px;margin:0 0 12px;">${infoItems.join(' &bull; ')}</p>` : ''}
+                <table width="100%" cellpadding="0" cellspacing="0" style="border-radius:8px;overflow:hidden;border:1px solid #e5e7eb;">
+                  ${rows.join('')}
+                </table>
+              </div>`;
+  }
+
   const html = `
     <!DOCTYPE html>
-    <html>
+    <html lang="${lang}">
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
-          .card { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-          .tracking { font-size: 24px; font-weight: bold; color: #10b981; text-align: center; padding: 15px; background: #f3f4f6; border-radius: 8px; }
-          .cost { font-size: 28px; font-weight: bold; color: #059669; text-align: center; }
-          .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
-          .button { display: inline-block; padding: 12px 24px; background: #10b981; color: white; text-decoration: none; border-radius: 6px; margin: 10px 0; }
-          .success-badge { background: #d1fae5; color: #065f46; padding: 8px 16px; border-radius: 20px; display: inline-block; font-weight: bold; }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #1f2937; margin: 0; padding: 0; background: #f3f4f6; }
+          .wrapper { padding: 20px; }
+          .container { max-width: 600px; margin: 0 auto; }
+          .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 32px 24px; text-align: center; border-radius: 12px 12px 0 0; }
+          .header h1 { margin: 0; font-size: 22px; font-weight: 700; }
+          .content { background: #ffffff; padding: 32px 24px; border-radius: 0 0 12px 12px; }
+          .card { background: #f9fafb; padding: 20px; border-radius: 10px; margin: 20px 0; border: 1px solid #e5e7eb; }
+          .tracking { font-size: 26px; font-weight: 800; color: #10b981; text-align: center; padding: 16px; background: #ecfdf5; border-radius: 8px; letter-spacing: 1px; font-family: 'Courier New', monospace; }
+          .total-cost { font-size: 32px; font-weight: 800; color: #059669; text-align: center; margin: 12px 0; }
+          .steps { padding-left: 0; list-style: none; }
+          .steps li { padding: 8px 0 8px 28px; position: relative; color: #374151; }
+          .steps li:before { content: '\u2713'; position: absolute; left: 0; color: #10b981; font-weight: bold; }
+          .btn-container { text-align: center; margin: 24px 0; }
+          .button { display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; }
+          .footer { text-align: center; padding: 24px; color: #9ca3af; font-size: 12px; }
+          .footer p { margin: 4px 0; }
+          .divider { height: 1px; background: #e5e7eb; margin: 24px 0; }
+          h3 { color: #1f2937; font-size: 15px; margin: 0 0 12px; }
         </style>
       </head>
       <body>
-        <div class="container">
-          <div class="header">
-            <h1>✅ Package Request Approved!</h1>
-          </div>
-          <div class="content">
-            <p>Great news, <strong>${userName}</strong>!</p>
-            <p>Your package request has been approved and confirmed. Your package is now being processed.</p>
-
-            <div class="card">
-              <h3>Tracking Number:</h3>
-              <div class="tracking">${trackingNumber}</div>
-
-              <h3 style="margin-top: 20px;">Total Cost:</h3>
-              <div class="cost">$${totalCost.toFixed(2)}</div>
+        <div class="wrapper">
+          <div class="container">
+            <div class="header">
+              <h1>\u2705 ${s.headerTitle}</h1>
             </div>
+            <div class="content">
+              <p>${s.greeting}, <strong>${userName}</strong>!</p>
+              <p>${s.body}</p>
 
-            <div class="card">
-              <h3>Package Status:</h3>
-              <p><span class="success-badge">RECEIVED</span></p>
-              <p style="margin-top: 15px;">Your package has been received at our warehouse and will be processed for shipping to Haiti.</p>
+              <div class="card">
+                <h3>${s.trackingLabel}</h3>
+                <div class="tracking">${trackingNumber}</div>
+              </div>
+
+              <div class="card" style="text-align: center;">
+                <h3>${s.totalCostLabel}</h3>
+                <div class="total-cost">$${totalCost.toFixed(2)}</div>
+              </div>
+
+              ${feeBreakdownHtml}
+
+              <div class="card">
+                <h3>${s.nextStepsTitle}</h3>
+                <ul class="steps">
+                  ${s.nextSteps.map(step => `<li>${step}</li>`).join('')}
+                </ul>
+              </div>
+
+              <div class="btn-container">
+                <a href="${appUrl}/packages" class="button">${s.buttonLabel}</a>
+              </div>
+
+              <div class="divider"></div>
+              <p style="color: #6b7280; font-size: 14px;">${s.thanks}</p>
             </div>
-
-            <div class="card">
-              <h3>Next Steps:</h3>
-              <ul>
-                <li>Your package will be prepared for transit</li>
-                <li>You'll receive updates as the status changes</li>
-                <li>Track your package in real-time from your dashboard</li>
-                <li>You'll be notified when it's ready for pickup</li>
-              </ul>
-            </div>
-
-            <div style="text-align: center;">
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/packages" class="button">
-                Track Your Package
-              </a>
-            </div>
-
-            <p style="margin-top: 30px;">Thank you for choosing Alliance Shipping!</p>
-
             <div class="footer">
-              <p>Alliance Shipping - Reliable Shipping from USA to Haiti</p>
-              <p>This is an automated message, please do not reply to this email.</p>
+              <p><strong>${s.footer}</strong></p>
+              <p>${s.automated}</p>
             </div>
           </div>
         </div>
@@ -367,7 +550,103 @@ export const sendPackageApprovedEmail = async (
     </html>
   `;
 
-  return sendEmail({ to: userEmail, subject, html });
+  return sendEmail({ to: userEmail, subject: s.subject, html });
+};
+
+// ==================== REJECTED EMAIL TRANSLATIONS ====================
+
+interface RejectedStrings {
+  subject: string;
+  headerTitle: string;
+  greeting: string;
+  body: string;
+  trackingLabel: string;
+  reasonTitle: string;
+  whatNextTitle: string;
+  whatNextItems: string[];
+  buttonLabel: string;
+  questions: string;
+  footer: string;
+  automated: string;
+}
+
+const rejectedStrings: Record<Locale, RejectedStrings> = {
+  ht: {
+    subject: 'Mizajou Demann Koli - Alliance Shipping',
+    headerTitle: 'Demann Koli Rejte',
+    greeting: 'Bonjou',
+    body: 'Nou regr\u00e8t enf\u00f2me ou ke demann koli ou a te rejte.',
+    trackingLabel: 'Nimewo Tracking:',
+    reasonTitle: 'Rezon Rej\u00e8:',
+    whatNextTitle: 'Ki sa ou ka f\u00e8?',
+    whatNextItems: [
+      'Revize rezon rej\u00e8 a anl\u00e8 a',
+      'Kontakte ekip sip\u00f2 nou an pou plis enf\u00f2masyon',
+      'Soum\u00e8t yon nouvo demann ak enf\u00f2masyon kor\u00e8k',
+      'Asire ou tout detay koli yo egzak',
+    ],
+    buttonLabel: 'W\u00e8 Tableau de Bord',
+    questions: 'Si ou gen kesyon oswa enkyetid, tanpri kontakte ekip sip\u00f2 nou an.',
+    footer: 'Alliance Shipping - Livrezon Fyab soti nan USA pou ale an Ayiti',
+    automated: 'Sa a se yon mesaj otomatik, tanpri pa reponn im\u00e8l sa a.',
+  },
+  fr: {
+    subject: 'Mise \u00e0 jour Demande de Colis - Alliance Shipping',
+    headerTitle: 'Demande de Colis Rejet\u00e9e',
+    greeting: 'Bonjour',
+    body: 'Nous avons le regret de vous informer que votre demande de colis a \u00e9t\u00e9 rejet\u00e9e.',
+    trackingLabel: 'Num\u00e9ro de Suivi :',
+    reasonTitle: 'Raison du Rejet :',
+    whatNextTitle: 'Que pouvez-vous faire ?',
+    whatNextItems: [
+      'Consultez la raison du rejet ci-dessus',
+      'Contactez notre \u00e9quipe de support pour plus d\'informations',
+      'Soumettez une nouvelle demande avec les informations correctes',
+      'Assurez-vous que tous les d\u00e9tails du colis sont exacts',
+    ],
+    buttonLabel: 'Voir le Tableau de Bord',
+    questions: 'Si vous avez des questions ou pr\u00e9occupations, veuillez contacter notre \u00e9quipe de support.',
+    footer: 'Alliance Shipping - Exp\u00e9dition Fiable des USA vers Ha\u00efti',
+    automated: 'Ceci est un message automatique, merci de ne pas r\u00e9pondre.',
+  },
+  en: {
+    subject: 'Package Request Update - Alliance Shipping',
+    headerTitle: 'Package Request Rejected',
+    greeting: 'Hello',
+    body: 'We regret to inform you that your package request has been rejected.',
+    trackingLabel: 'Tracking Number:',
+    reasonTitle: 'Reason for Rejection:',
+    whatNextTitle: 'What Can You Do?',
+    whatNextItems: [
+      'Review the reason for rejection above',
+      'Contact our support team for more information',
+      'Submit a new request with the correct information',
+      'Ensure all package details are accurate',
+    ],
+    buttonLabel: 'View Dashboard',
+    questions: 'If you have any questions or concerns, please contact our support team.',
+    footer: 'Alliance Shipping - Reliable Shipping from USA to Haiti',
+    automated: 'This is an automated message, please do not reply to this email.',
+  },
+  es: {
+    subject: 'Actualizaci\u00f3n de Solicitud de Paquete - Alliance Shipping',
+    headerTitle: 'Solicitud de Paquete Rechazada',
+    greeting: 'Hola',
+    body: 'Lamentamos informarle que su solicitud de paquete ha sido rechazada.',
+    trackingLabel: 'N\u00famero de Seguimiento:',
+    reasonTitle: 'Raz\u00f3n del Rechazo:',
+    whatNextTitle: '\u00bfQu\u00e9 puede hacer?',
+    whatNextItems: [
+      'Revise la raz\u00f3n del rechazo arriba',
+      'Contacte a nuestro equipo de soporte para m\u00e1s informaci\u00f3n',
+      'Env\u00ede una nueva solicitud con la informaci\u00f3n correcta',
+      'Aseg\u00farese de que todos los detalles del paquete sean exactos',
+    ],
+    buttonLabel: 'Ver Panel',
+    questions: 'Si tiene alguna pregunta o inquietud, por favor contacte a nuestro equipo de soporte.',
+    footer: 'Alliance Shipping - Env\u00edos Confiables de USA a Hait\u00ed',
+    automated: 'Este es un mensaje autom\u00e1tico, por favor no responda.',
+  },
 };
 
 // Template: Package Request Rejected
@@ -375,71 +654,79 @@ export const sendPackageRejectedEmail = async (
   userEmail: string,
   userName: string,
   trackingNumber: string,
-  reason?: string
+  reason?: string,
+  locale: string = 'fr'
 ) => {
-  const subject = 'Package Request Update - Alliance Shipping';
+  const lang = (['ht', 'fr', 'en', 'es'].includes(locale) ? locale : 'fr') as Locale;
+  const s = rejectedStrings[lang];
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
   const html = `
     <!DOCTYPE html>
-    <html>
+    <html lang="${lang}">
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
-          .card { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-          .tracking { font-size: 20px; font-weight: bold; color: #ef4444; text-align: center; padding: 15px; background: #fee2e2; border-radius: 8px; }
-          .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
-          .button { display: inline-block; padding: 12px 24px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; margin: 10px 0; }
-          .reason-box { background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 15px 0; }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #1f2937; margin: 0; padding: 0; background: #f3f4f6; }
+          .wrapper { padding: 20px; }
+          .container { max-width: 600px; margin: 0 auto; }
+          .header { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 32px 24px; text-align: center; border-radius: 12px 12px 0 0; }
+          .header h1 { margin: 0; font-size: 22px; font-weight: 700; }
+          .content { background: #ffffff; padding: 32px 24px; border-radius: 0 0 12px 12px; }
+          .card { background: #f9fafb; padding: 20px; border-radius: 10px; margin: 20px 0; border: 1px solid #e5e7eb; }
+          .tracking { font-size: 24px; font-weight: 800; color: #ef4444; text-align: center; padding: 16px; background: #fef2f2; border-radius: 8px; font-family: 'Courier New', monospace; letter-spacing: 1px; }
+          .reason-box { background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; color: #991b1b; }
+          .steps { padding-left: 0; list-style: none; }
+          .steps li { padding: 8px 0 8px 28px; position: relative; color: #374151; }
+          .steps li:before { content: '\u2192'; position: absolute; left: 0; color: #6366f1; font-weight: bold; }
+          .btn-container { text-align: center; margin: 24px 0; }
+          .button { display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; }
+          .footer { text-align: center; padding: 24px; color: #9ca3af; font-size: 12px; }
+          .footer p { margin: 4px 0; }
+          .divider { height: 1px; background: #e5e7eb; margin: 24px 0; }
+          h3 { color: #1f2937; font-size: 15px; margin: 0 0 12px; }
         </style>
       </head>
       <body>
-        <div class="container">
-          <div class="header">
-            <h1>❌ Package Request Rejected</h1>
-          </div>
-          <div class="content">
-            <p>Hello <strong>${userName}</strong>,</p>
-            <p>We regret to inform you that your package request has been rejected.</p>
-
-            <div class="card">
-              <h3>Tracking Number:</h3>
-              <div class="tracking">${trackingNumber}</div>
+        <div class="wrapper">
+          <div class="container">
+            <div class="header">
+              <h1>\u274c ${s.headerTitle}</h1>
             </div>
+            <div class="content">
+              <p>${s.greeting} <strong>${userName}</strong>,</p>
+              <p>${s.body}</p>
 
-            ${reason ? `
-            <div class="card">
-              <h3>Reason for Rejection:</h3>
-              <div class="reason-box">
-                ${reason}
+              <div class="card">
+                <h3>${s.trackingLabel}</h3>
+                <div class="tracking">${trackingNumber}</div>
               </div>
+
+              ${reason ? `
+              <div class="card">
+                <h3>${s.reasonTitle}</h3>
+                <div class="reason-box">${reason}</div>
+              </div>
+              ` : ''}
+
+              <div class="card">
+                <h3>${s.whatNextTitle}</h3>
+                <ul class="steps">
+                  ${s.whatNextItems.map(item => `<li>${item}</li>`).join('')}
+                </ul>
+              </div>
+
+              <div class="btn-container">
+                <a href="${appUrl}/packages" class="button">${s.buttonLabel}</a>
+              </div>
+
+              <div class="divider"></div>
+              <p style="color: #6b7280; font-size: 14px;">${s.questions}</p>
             </div>
-            ` : ''}
-
-            <div class="card">
-              <h3>What Can You Do?</h3>
-              <ul>
-                <li>Review the reason for rejection above</li>
-                <li>Contact our support team for more information</li>
-                <li>Submit a new request with the correct information</li>
-                <li>Ensure all package details are accurate</li>
-              </ul>
-            </div>
-
-            <div style="text-align: center;">
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/packages" class="button">
-                View Dashboard
-              </a>
-            </div>
-
-            <p style="margin-top: 30px;">If you have any questions or concerns, please contact our support team.</p>
-
             <div class="footer">
-              <p>Alliance Shipping - Reliable Shipping from USA to Haiti</p>
-              <p>This is an automated message, please do not reply to this email.</p>
+              <p><strong>${s.footer}</strong></p>
+              <p>${s.automated}</p>
             </div>
           </div>
         </div>
@@ -447,7 +734,7 @@ export const sendPackageRejectedEmail = async (
     </html>
   `;
 
-  return sendEmail({ to: userEmail, subject, html });
+  return sendEmail({ to: userEmail, subject: s.subject, html });
 };
 
 // ==================== STATUS CHANGE EMAIL TRANSLATIONS ====================

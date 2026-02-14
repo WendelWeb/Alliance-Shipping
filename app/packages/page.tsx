@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useUser } from '@clerk/nextjs';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
@@ -18,13 +18,13 @@ import {
   AlertCircle,
   Plane,
   ChevronDown,
-  ChevronUp,
   DollarSign,
   Scale,
   AlertTriangle,
   Smartphone,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useTheme } from '@/lib/themes/ThemeProvider';
 
@@ -42,6 +42,7 @@ interface PackageData {
   specialItemId?: number;
   specialItemName?: string;
   specialItemBrand?: string;
+  specialItemFixedFee?: string;
   chargeByWeight?: boolean;
   totalCost: string;
   currentLocation: string;
@@ -75,7 +76,7 @@ export default function PackagesPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [packages, setPackages] = useState<PackageData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const webRouter = useRouter();
 
   // Helper function to translate text (handles both translation keys and regular text)
   const translateText = (text: string): string => {
@@ -352,10 +353,11 @@ export default function PackagesPage() {
             {!loading && filteredAndSortedPackages.map((pkg, index) => {
               const statusInfo = statusConfig[pkg.status] || statusConfig.pending;
               const StatusIcon = statusInfo?.icon || Clock;
-              const isExpanded = expandedId === pkg.id;
               const serviceFee = pkg.serviceFee ? parseFloat(pkg.serviceFee) : 0;
               const weightCost = pkg.weightCost ? parseFloat(pkg.weightCost) : 0;
-              const customsFees = pkg.customsFees ? parseFloat(pkg.customsFees) : 0; // ⭐ Parse customs fees
+              const customsFees = pkg.customsFees ? parseFloat(pkg.customsFees) : 0;
+              const specialItemFixedFee = pkg.specialItemFixedFee ? parseFloat(pkg.specialItemFixedFee) : 0;
+              const totalCost = serviceFee + weightCost + customsFees + specialItemFixedFee;
 
               return (
                 <motion.div
@@ -366,16 +368,17 @@ export default function PackagesPage() {
                   className="col-span-1"
                 >
                   <Card
-                    className="overflow-hidden bg-theme-surface-solid border transition-all"
+                    className="overflow-hidden bg-theme-surface-solid border transition-all cursor-pointer hover:shadow-lg"
                     style={{
-                      borderColor: isExpanded ? statusInfo.border : colors.gray[100],
-                      boxShadow: isExpanded ? theme.shadow.lg : theme.shadow.sm
+                      borderColor: colors.gray[100],
+                      boxShadow: theme.shadow.sm,
                     }}
+                    hover
                   >
                     {/* Status bar at top */}
                     <div className="h-1" style={{ backgroundColor: statusInfo.dot }} />
 
-                    <div className="p-4 sm:p-5">
+                    <div className="p-4 sm:p-5" onClick={() => webRouter.push(`/packages/${pkg.id}`)}>
                       {/* Header: Status badge + tracking */}
                       <div className="flex items-start justify-between mb-3">
                         <div>
@@ -401,7 +404,7 @@ export default function PackagesPage() {
                           )}
                         </div>
                         <p className="text-lg font-bold" style={{ color: colors.gray[900] }}>
-                          ${parseFloat(pkg.totalCost).toFixed(2)}
+                          ${totalCost.toFixed(2)}
                         </p>
                       </div>
 
@@ -498,14 +501,7 @@ export default function PackagesPage() {
                                 {pkg.specialItemName ? `${pkg.specialItemBrand || ''} ${pkg.specialItemName}`.trim() : 'Article Special'} (Fixe):
                               </span>
                               <span className="font-bold">
-                                ${(() => {
-                                  const total = parseFloat(pkg.totalCost) || 0;
-                                  const s = serviceFee;
-                                  const w = weightCost;
-                                  const c = customsFees;
-                                  const fixed = total - s - w - c;
-                                  return fixed > 0 ? fixed.toFixed(2) : '0.00';
-                                })()}
+                                ${parseFloat(pkg.specialItemFixedFee || '0').toFixed(2)}
                               </span>
                             </div>
                           )}
@@ -518,7 +514,7 @@ export default function PackagesPage() {
                           <div className="flex justify-between pt-1.5 mt-1" style={{ borderTop: `2px solid ${isDark ? colors.gray[600] : '#93b4fd'}` }}>
                             <span className="font-bold text-sm" style={{ color: colors.gray[900] }}>TOTAL:</span>
                             <span className="font-bold text-sm" style={{ color: colors.primary[600] }}>
-                              ${parseFloat(pkg.totalCost).toFixed(2)}
+                              ${totalCost.toFixed(2)}
                             </span>
                           </div>
                         </div>
@@ -530,73 +526,16 @@ export default function PackagesPage() {
                         <span className="truncate">{translateText(pkg.currentLocation)}</span>
                       </div>
 
-                      {/* Expand button */}
-                      <button
-                        onClick={() => setExpandedId(isExpanded ? null : pkg.id)}
-                        className="w-full flex items-center justify-center gap-1 pt-2 text-xs transition-colors"
-                        style={{ color: colors.gray[500] }}
+                      {/* View Details indicator */}
+                      <div
+                        className="flex items-center justify-between pt-2 mt-1 border-t"
+                        style={{ borderColor: colors.gray[100] }}
                       >
-                        {isExpanded ? (
-                          <>
-                            <ChevronUp className="w-3.5 h-3.5" />
-                            {t.packages.details.timeline ? `${t.packages.details.timeline}` : 'Timeline'}
-                          </>
-                        ) : (
-                          <>
-                            <ChevronDown className="w-3.5 h-3.5" />
-                            {t.packages.details.timeline || 'Timeline'}
-                          </>
-                        )}
-                      </button>
-
-                      {/* Timeline (Expanded) */}
-                      <AnimatePresence>
-                        {isExpanded && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="mt-4 pt-4 border-t" style={{ borderColor: colors.gray[100] }}>
-                              <h4 className="font-semibold mb-4 text-sm" style={{ color: colors.gray[900] }}>{t.packages.details.timeline}</h4>
-                              <div className="space-y-0">
-                                {pkg.timeline.map((event, idx) => {
-                                  const eventStatusInfo = statusConfig[event.status?.toLowerCase()] || statusConfig.pending;
-                                  return (
-                                    <div key={idx} className="flex gap-3">
-                                      <div className="relative flex flex-col items-center">
-                                        <div
-                                          className="w-2.5 h-2.5 rounded-full ring-4 ring-white dark:ring-gray-50 z-10"
-                                          style={{
-                                            backgroundColor: event.pending ? colors.gray[300] : eventStatusInfo.dot
-                                          }}
-                                        />
-                                        {idx < pkg.timeline.length - 1 && (
-                                          <div className="w-px flex-1 min-h-[24px]" style={{ backgroundColor: colors.gray[200] }} />
-                                        )}
-                                      </div>
-                                      <div className="flex-1 pb-4">
-                                        <div className="font-medium text-sm" style={{ color: event.pending ? colors.gray[400] : colors.gray[900] }}>
-                                          {translateText(event.status)}
-                                        </div>
-                                        <div className="text-xs" style={{ color: colors.gray[500] }}>{translateText(event.location)}</div>
-                                        {event.description && (
-                                          <div className="text-xs mt-0.5" style={{ color: colors.gray[400] }}>{translateText(event.description)}</div>
-                                        )}
-                                        <div className="text-[10px] mt-0.5" style={{ color: colors.gray[400] }}>
-                                          {new Date(event.date).toLocaleString()}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                        <span className="text-xs font-medium" style={{ color: colors.primary[600] }}>
+                          {(t as any).packageDetail?.viewDetails || 'View details'}
+                        </span>
+                        <ChevronDown className="w-3.5 h-3.5 -rotate-90" style={{ color: colors.primary[600] }} />
+                      </div>
                     </div>
                   </Card>
                 </motion.div>

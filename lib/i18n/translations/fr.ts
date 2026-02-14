@@ -341,6 +341,14 @@ export const fr = {
       allianceTracking: 'Après validation, vous recevrez un tracking Alliance Shipping (AS-XXXXXXXXXX)',
     },
     fields: {
+      packageType: {
+        label: 'Type de Colis',
+        required: 'Veuillez sélectionner le type de colis',
+      },
+      specialItem: {
+        label: 'Sélectionnez un Article',
+        required: 'Veuillez sélectionner un article spécial',
+      },
       trackingNumber: {
         label: 'Tracking Number',
         placeholder: 'Ex: 1Z999AA10123456784',
@@ -376,6 +384,7 @@ export const fr = {
         documents: 'Documents',
         other: 'Autre',
         required: 'Veuillez sélectionner une catégorie',
+        lockedBySpecialItem: 'Auto : Électronique',
         otherDescription: {
           label: 'Décrivez la catégorie',
           placeholder: 'Ex: Jouets, Cosmétiques, etc.',
@@ -390,6 +399,12 @@ export const fr = {
         required: 'Le poids estimé est obligatoire',
         minValue: 'Le poids doit être d\'au moins 1 lb',
       },
+    },
+    types: {
+      normal: 'Colis Normal',
+      normalDesc: 'Calculé par poids',
+      special: 'Article Spécial',
+      specialDesc: 'Prix fixe',
     },
     buttons: {
       cancel: 'Annuler',
@@ -706,6 +721,39 @@ export const fr = {
     title: 'Articles Spéciaux',
     subtitle: 'Prix fixes pour certains articles',
     priceFixed: 'Prix Fixe',
+  },
+  packageDetail: {
+    title: 'Détails du Colis',
+    viewDetails: 'Voir détails',
+    copyTracking: 'Copier',
+    trackingCopied: 'Copié !',
+    packageInfo: 'Informations du Colis',
+    description: 'Description',
+    weight: 'Poids',
+    category: 'Catégorie',
+    externalTracking: 'Suivi Externe',
+    currentLocation: 'Localisation',
+    estimatedDelivery: 'Livraison',
+    createdAt: 'Créé le',
+    updatedAt: 'Mis à jour',
+    specialItem: 'Article Spécial',
+    fixedFee: 'Frais Fixe',
+    feeBreakdown: 'Détail des Frais',
+    serviceFee: 'Frais de service',
+    weightFee: 'Frais de poids',
+    customsFee: 'Taxes de douane',
+    total: 'TOTAL',
+    timeline: 'Suivi du Colis',
+    backToPackages: 'Mes Colis',
+    notFound: 'Colis introuvable',
+    statusProgress: {
+      received: 'Reçu',
+      inTransit: 'En Transit',
+      available: 'Disponible',
+      delivered: 'Livré',
+      pending: 'En attente',
+      rejected: 'Rejeté',
+    },
   },
 };
 

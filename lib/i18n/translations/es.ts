@@ -341,6 +341,14 @@ export const es = {
       allianceTracking: 'Después de la validación, recibirás un seguimiento de Alliance Shipping (AS-XXXXXXXXXX)',
     },
     fields: {
+      packageType: {
+        label: 'Tipo de Paquete',
+        required: 'Por favor selecciona el tipo de paquete',
+      },
+      specialItem: {
+        label: 'Selecciona un Artículo',
+        required: 'Por favor selecciona un artículo especial',
+      },
       trackingNumber: {
         label: 'Número de Seguimiento',
         placeholder: 'Ej: 1Z999AA10123456784',
@@ -376,6 +384,7 @@ export const es = {
         documents: 'Documentos',
         other: 'Otro',
         required: 'Por favor selecciona una categoría',
+        lockedBySpecialItem: 'Auto: Electrónica',
         otherDescription: {
           label: 'Describe la categoría',
           placeholder: 'Ej: Juguetes, Cosméticos, etc.',
@@ -390,6 +399,12 @@ export const es = {
         required: 'El peso estimado es obligatorio',
         minValue: 'El peso debe ser de al menos 1 lb',
       },
+    },
+    types: {
+      normal: 'Paquete Normal',
+      normalDesc: 'Calculado por peso',
+      special: 'Artículo Especial',
+      specialDesc: 'Precio fijo',
     },
     buttons: {
       cancel: 'Cancelar',
@@ -706,6 +721,39 @@ export const es = {
     title: 'Artículos Especiales',
     subtitle: 'Precios fijos para ciertos artículos',
     priceFixed: 'Precio Fijo',
+  },
+  packageDetail: {
+    title: 'Detalles del Paquete',
+    viewDetails: 'Ver detalles',
+    copyTracking: 'Copiar',
+    trackingCopied: 'Copiado!',
+    packageInfo: 'Información del Paquete',
+    description: 'Descripción',
+    weight: 'Peso',
+    category: 'Categoría',
+    externalTracking: 'Seguimiento Externo',
+    currentLocation: 'Ubicación',
+    estimatedDelivery: 'Entrega',
+    createdAt: 'Creado',
+    updatedAt: 'Actualizado',
+    specialItem: 'Artículo Especial',
+    fixedFee: 'Tarifa Fija',
+    feeBreakdown: 'Desglose de Tarifas',
+    serviceFee: 'Tarifa de servicio',
+    weightFee: 'Tarifa por peso',
+    customsFee: 'Impuestos de aduana',
+    total: 'TOTAL',
+    timeline: 'Seguimiento del Paquete',
+    backToPackages: 'Mis Paquetes',
+    notFound: 'Paquete no encontrado',
+    statusProgress: {
+      received: 'Recibido',
+      inTransit: 'En Tránsito',
+      available: 'Disponible',
+      delivered: 'Entregado',
+      pending: 'Pendiente',
+      rejected: 'Rechazado',
+    },
   },
 };
 

@@ -14,13 +14,96 @@ export const sendWeightModifiedEmail = async (
   oldWeight: number,
   newWeight: number,
   oldCost: number,
-  newCost: number
+  newCost: number,
+  locale: string = 'fr'
 ) => {
   const costDiff = newCost - oldCost;
-  const subject = '⚖️ Package Weight Updated - Alliance Shipping';
+  const weightDiff = Math.abs(newWeight - oldWeight);
+
+  const translations: Record<string, any> = {
+    fr: {
+      subject: `⚖️ Poids du colis mis à jour - Alliance Shipping`,
+      title: 'Poids du Colis Mis à Jour',
+      greeting: `Bonjour ${userName},`,
+      message: 'Le poids de votre colis a été mis à jour après vérification dans notre entrepôt.',
+      trackingLabel: 'Numéro de Suivi :',
+      weightChangeLabel: 'Changement de Poids :',
+      weightIncreased: `Le poids a augmenté de ${weightDiff} lbs`,
+      weightDecreased: `Le poids a diminué de ${weightDiff} lbs`,
+      costUpdateLabel: 'Mise à Jour du Coût :',
+      additionalCharge: '(Frais supplémentaires)',
+      creditApplied: '(Crédit appliqué)',
+      whyAdjustedTitle: 'Pourquoi cet ajustement ?',
+      whyAdjustedText: 'Nous vérifions le poids de tous les colis dans notre entrepôt pour garantir des frais d\'expédition précis. Le poids réel peut différer de l\'estimation initiale.',
+      buttonLabel: 'Voir les Détails',
+      questionsText: 'Si vous avez des questions concernant cet ajustement, veuillez nous contacter.',
+      companyFooter: 'Alliance Shipping - Expédition Fiable des USA vers Haïti',
+      automated: 'Ceci est un message automatique, merci de ne pas répondre.',
+    },
+    en: {
+      subject: `⚖️ Package Weight Updated - Alliance Shipping`,
+      title: 'Package Weight Updated',
+      greeting: `Hello ${userName},`,
+      message: 'The weight of your package has been updated after inspection at our warehouse.',
+      trackingLabel: 'Tracking Number:',
+      weightChangeLabel: 'Weight Change:',
+      weightIncreased: `Weight increased by ${weightDiff} lbs`,
+      weightDecreased: `Weight decreased by ${weightDiff} lbs`,
+      costUpdateLabel: 'Cost Update:',
+      additionalCharge: '(Additional charge)',
+      creditApplied: '(Credit applied)',
+      whyAdjustedTitle: 'Why was this adjusted?',
+      whyAdjustedText: 'We verify all package weights at our warehouse to ensure accurate shipping costs. The actual weight may differ from the initial estimate.',
+      buttonLabel: 'View Package Details',
+      questionsText: 'If you have any questions about this adjustment, please contact us.',
+      companyFooter: 'Alliance Shipping - Reliable Shipping from USA to Haiti',
+      automated: 'This is an automated message, please do not reply to this email.',
+    },
+    ht: {
+      subject: `⚖️ Pwa koli a mete ajou - Alliance Shipping`,
+      title: 'Pwa Koli a Mete Ajou',
+      greeting: `Bonjou ${userName},`,
+      message: 'Pwa koli w la mete ajou apre verifikasyon nan depo nou an.',
+      trackingLabel: 'Nimewo Tracking :',
+      weightChangeLabel: 'Chanjman Pwa :',
+      weightIncreased: `Pwa a ogmante de ${weightDiff} lbs`,
+      weightDecreased: `Pwa a diminye de ${weightDiff} lbs`,
+      costUpdateLabel: 'Miz Ajou Koût :',
+      additionalCharge: '(Frè anplis)',
+      creditApplied: '(Kredi aplike)',
+      whyAdjustedTitle: 'Poukisa ajisteman sa a ?',
+      whyAdjustedText: 'Nou verifye pwa tout koli nan depo nou an pou asire frè ekspedisyon yo kòrèk. Pwa reyèl la ka diferan de estimasyon inisyal la.',
+      buttonLabel: 'Wè Detay Koli',
+      questionsText: 'Si w gen kesyon sou ajisteman sa a, tanpri kontakte nou.',
+      companyFooter: 'Alliance Shipping - Livrezon Fyab soti nan USA pou ale an Ayiti',
+      automated: 'Sa a se yon mesaj otomatik, tanpri pa reponn imèl sa a.',
+    },
+    es: {
+      subject: `⚖️ Peso del paquete actualizado - Alliance Shipping`,
+      title: 'Peso del Paquete Actualizado',
+      greeting: `Hola ${userName},`,
+      message: 'El peso de su paquete ha sido actualizado después de la inspección en nuestro almacén.',
+      trackingLabel: 'Número de Seguimiento:',
+      weightChangeLabel: 'Cambio de Peso:',
+      weightIncreased: `El peso aumentó en ${weightDiff} lbs`,
+      weightDecreased: `El peso disminuyó en ${weightDiff} lbs`,
+      costUpdateLabel: 'Actualización de Costo:',
+      additionalCharge: '(Cargo adicional)',
+      creditApplied: '(Crédito aplicado)',
+      whyAdjustedTitle: '¿Por qué se ajustó?',
+      whyAdjustedText: 'Verificamos el peso de todos los paquetes en nuestro almacén para garantizar costos de envío precisos. El peso real puede diferir de la estimación inicial.',
+      buttonLabel: 'Ver Detalles del Paquete',
+      questionsText: 'Si tiene alguna pregunta sobre este ajuste, por favor contáctenos.',
+      companyFooter: 'Alliance Shipping - Envíos Confiables de USA a Haití',
+      automated: 'Este es un mensaje automático, por favor no responda.',
+    },
+  };
+
+  const t = translations[locale] || translations.fr;
+  const subject = t.subject;
   const html = `
     <!DOCTYPE html>
-    <html>
+    <html lang="${locale}">
       <head>
         <meta charset="utf-8">
         <style>
@@ -42,19 +125,19 @@ export const sendWeightModifiedEmail = async (
       <body>
         <div class="container">
           <div class="header">
-            <h1>⚖️ Package Weight Updated</h1>
+            <h1>⚖️ ${t.title}</h1>
           </div>
           <div class="content">
-            <p>Hello <strong>${userName}</strong>,</p>
-            <p>The weight of your package has been updated after inspection at our warehouse.</p>
+            <p>${t.greeting}</p>
+            <p>${t.message}</p>
 
             <div class="card">
-              <h3>Tracking Number:</h3>
+              <h3>${t.trackingLabel}</h3>
               <div class="tracking">${trackingNumber}</div>
             </div>
 
             <div class="card">
-              <h3>Weight Change:</h3>
+              <h3>${t.weightChangeLabel}</h3>
               <div style="text-align: center; margin: 20px 0;">
                 <div style="margin-bottom: 10px;">
                   <span class="old-value" style="font-size: 18px;">${oldWeight} lbs</span>
@@ -62,13 +145,13 @@ export const sendWeightModifiedEmail = async (
                   <span class="new-value">${newWeight} lbs</span>
                 </div>
                 <p style="color: #6b7280; font-size: 14px;">
-                  ${newWeight > oldWeight ? 'Weight increased' : 'Weight decreased'} by ${Math.abs(newWeight - oldWeight)} lbs
+                  ${newWeight > oldWeight ? t.weightIncreased : t.weightDecreased}
                 </p>
               </div>
             </div>
 
             <div class="card">
-              <h3>Cost Update:</h3>
+              <h3>${t.costUpdateLabel}</h3>
               <div style="text-align: center; margin: 20px 0;">
                 <div style="margin-bottom: 10px;">
                   <span class="old-value" style="font-size: 18px;">$${oldCost.toFixed(2)}</span>
@@ -78,28 +161,28 @@ export const sendWeightModifiedEmail = async (
                 ${costDiff !== 0 ? `
                 <p class="${costDiff > 0 ? 'cost-increase' : 'cost-decrease'}" style="font-size: 16px;">
                   ${costDiff > 0 ? '+' : ''}$${costDiff.toFixed(2)}
-                  ${costDiff > 0 ? '(Additional charge)' : '(Credit applied)'}
+                  ${costDiff > 0 ? t.additionalCharge : t.creditApplied}
                 </p>
                 ` : ''}
               </div>
             </div>
 
             <div class="card">
-              <h3>Why was this adjusted?</h3>
-              <p>We verify all package weights at our warehouse to ensure accurate shipping costs. The actual weight may differ from the initial estimate.</p>
+              <h3>${t.whyAdjustedTitle}</h3>
+              <p>${t.whyAdjustedText}</p>
             </div>
 
             <div style="text-align: center;">
               <a href="${APP_URL}/dashboard/packages" class="button">
-                View Package Details
+                ${t.buttonLabel}
               </a>
             </div>
 
-            <p style="margin-top: 30px;">If you have any questions about this adjustment, please contact us.</p>
+            <p style="margin-top: 30px;">${t.questionsText}</p>
 
             <div class="footer">
-              <p>Alliance Shipping - Reliable Shipping from USA to Haiti</p>
-              <p>This is an automated message, please do not reply to this email.</p>
+              <p>${t.companyFooter}</p>
+              <p>${t.automated}</p>
             </div>
           </div>
         </div>
@@ -117,13 +200,79 @@ export const sendFeesModifiedEmail = async (
   trackingNumber: string,
   oldTotal: number,
   newTotal: number,
-  reason: string
+  reason: string,
+  locale: string = 'fr'
 ) => {
   const costDiff = newTotal - oldTotal;
-  const subject = '💰 Package Fees Updated - Alliance Shipping';
+
+  const translations: Record<string, any> = {
+    fr: {
+      subject: '💰 Frais du colis mis à jour - Alliance Shipping',
+      title: 'Frais du Colis Mis à Jour',
+      greeting: `Bonjour ${userName},`,
+      message: 'Les frais de votre colis ont été mis à jour.',
+      trackingLabel: 'Numéro de Suivi :',
+      costUpdateLabel: 'Mise à Jour du Coût Total :',
+      additional: 'Supplément :',
+      discount: 'Réduction :',
+      reasonLabel: 'Raison de l\'Ajustement :',
+      buttonLabel: 'Voir la Facture Mise à Jour',
+      questionsText: 'Si vous avez des questions concernant cet ajustement de frais, veuillez contacter notre équipe de support.',
+      companyFooter: 'Alliance Shipping - Expédition Fiable des USA vers Haïti',
+      automated: 'Ceci est un message automatique, merci de ne pas répondre.',
+    },
+    en: {
+      subject: '💰 Package Fees Updated - Alliance Shipping',
+      title: 'Package Fees Updated',
+      greeting: `Hello ${userName},`,
+      message: 'The fees for your package have been updated.',
+      trackingLabel: 'Tracking Number:',
+      costUpdateLabel: 'Total Cost Update:',
+      additional: 'Additional:',
+      discount: 'Discount:',
+      reasonLabel: 'Reason for Adjustment:',
+      buttonLabel: 'View Updated Invoice',
+      questionsText: 'If you have questions about this fee adjustment, please contact our support team.',
+      companyFooter: 'Alliance Shipping - Reliable Shipping from USA to Haiti',
+      automated: 'This is an automated message, please do not reply to this email.',
+    },
+    ht: {
+      subject: '💰 Frè koli a mete ajou - Alliance Shipping',
+      title: 'Frè Koli a Mete Ajou',
+      greeting: `Bonjou ${userName},`,
+      message: 'Frè koli w la mete ajou.',
+      trackingLabel: 'Nimewo Tracking :',
+      costUpdateLabel: 'Miz Ajou Koût Total :',
+      additional: 'Anplis :',
+      discount: 'Rabè :',
+      reasonLabel: 'Rezon pou Ajisteman an :',
+      buttonLabel: 'Wè Fakti Mete Ajou',
+      questionsText: 'Si w gen kesyon sou ajisteman frè sa a, tanpri kontakte ekip sipò nou an.',
+      companyFooter: 'Alliance Shipping - Livrezon Fyab soti nan USA pou ale an Ayiti',
+      automated: 'Sa a se yon mesaj otomatik, tanpri pa reponn imèl sa a.',
+    },
+    es: {
+      subject: '💰 Tarifas del paquete actualizadas - Alliance Shipping',
+      title: 'Tarifas del Paquete Actualizadas',
+      greeting: `Hola ${userName},`,
+      message: 'Las tarifas de su paquete han sido actualizadas.',
+      trackingLabel: 'Número de Seguimiento:',
+      costUpdateLabel: 'Actualización del Costo Total:',
+      additional: 'Adicional:',
+      discount: 'Descuento:',
+      reasonLabel: 'Razón del Ajuste:',
+      buttonLabel: 'Ver Factura Actualizada',
+      questionsText: 'Si tiene preguntas sobre este ajuste de tarifas, por favor contacte a nuestro equipo de soporte.',
+      companyFooter: 'Alliance Shipping - Envíos Confiables de USA a Haití',
+      automated: 'Este es un mensaje automático, por favor no responda.',
+    },
+  };
+
+  const t = translations[locale] || translations.fr;
+  const subject = t.subject;
   const html = `
     <!DOCTYPE html>
-    <html>
+    <html lang="${locale}">
       <head>
         <meta charset="utf-8">
         <style>
@@ -145,19 +294,19 @@ export const sendFeesModifiedEmail = async (
       <body>
         <div class="container">
           <div class="header">
-            <h1>💰 Package Fees Updated</h1>
+            <h1>💰 ${t.title}</h1>
           </div>
           <div class="content">
-            <p>Hello <strong>${userName}</strong>,</p>
-            <p>The fees for your package have been updated.</p>
+            <p>${t.greeting}</p>
+            <p>${t.message}</p>
 
             <div class="card">
-              <h3>Tracking Number:</h3>
+              <h3>${t.trackingLabel}</h3>
               <div class="tracking">${trackingNumber}</div>
             </div>
 
             <div class="card">
-              <h3>Total Cost Update:</h3>
+              <h3>${t.costUpdateLabel}</h3>
               <div style="text-align: center; margin: 20px 0;">
                 <div style="margin-bottom: 10px;">
                   <span class="old-value">$${oldTotal.toFixed(2)}</span>
@@ -166,14 +315,14 @@ export const sendFeesModifiedEmail = async (
                 </div>
                 ${costDiff !== 0 ? `
                 <p class="${costDiff > 0 ? 'cost-increase' : 'cost-decrease'}" style="font-size: 18px; margin-top: 15px;">
-                  ${costDiff > 0 ? 'Additional:' : 'Discount:'} ${costDiff > 0 ? '+' : ''}$${Math.abs(costDiff).toFixed(2)}
+                  ${costDiff > 0 ? t.additional : t.discount} ${costDiff > 0 ? '+' : ''}$${Math.abs(costDiff).toFixed(2)}
                 </p>
                 ` : ''}
               </div>
             </div>
 
             <div class="card">
-              <h3>Reason for Adjustment:</h3>
+              <h3>${t.reasonLabel}</h3>
               <div class="reason-box">
                 ${reason}
               </div>
@@ -181,15 +330,15 @@ export const sendFeesModifiedEmail = async (
 
             <div style="text-align: center;">
               <a href="${APP_URL}/dashboard/packages" class="button">
-                View Updated Invoice
+                ${t.buttonLabel}
               </a>
             </div>
 
-            <p style="margin-top: 30px;">If you have questions about this fee adjustment, please contact our support team.</p>
+            <p style="margin-top: 30px;">${t.questionsText}</p>
 
             <div class="footer">
-              <p>Alliance Shipping - Reliable Shipping from USA to Haiti</p>
-              <p>This is an automated message, please do not reply to this email.</p>
+              <p>${t.companyFooter}</p>
+              <p>${t.automated}</p>
             </div>
           </div>
         </div>
@@ -205,12 +354,73 @@ export const sendPackageInfoModifiedEmail = async (
   userEmail: string,
   userName: string,
   trackingNumber: string,
-  modifiedFields: string[]
+  modifiedFields: string[],
+  locale: string = 'fr'
 ) => {
-  const subject = '📝 Package Information Updated - Alliance Shipping';
+  const translations: Record<string, any> = {
+    fr: {
+      subject: '📝 Informations du colis mises à jour - Alliance Shipping',
+      title: 'Informations du Colis Mises à Jour',
+      greeting: `Bonjour ${userName},`,
+      message: 'Certaines informations de votre colis ont été mises à jour par notre équipe.',
+      trackingLabel: 'Numéro de Suivi :',
+      updatedFieldsLabel: 'Champs Mis à Jour :',
+      whatsNextTitle: 'Quelle est la suite ?',
+      whatsNextText1: 'Veuillez vérifier les informations mises à jour dans votre tableau de bord pour vous assurer que tout est correct.',
+      whatsNextText2: 'Si vous remarquez des erreurs, veuillez nous contacter immédiatement.',
+      buttonLabel: 'Voir les Détails Mis à Jour',
+      companyFooter: 'Alliance Shipping - Expédition Fiable des USA vers Haïti',
+      automated: 'Ceci est un message automatique, merci de ne pas répondre.',
+    },
+    en: {
+      subject: '📝 Package Information Updated - Alliance Shipping',
+      title: 'Package Information Updated',
+      greeting: `Hello ${userName},`,
+      message: 'Some information about your package has been updated by our team.',
+      trackingLabel: 'Tracking Number:',
+      updatedFieldsLabel: 'Updated Fields:',
+      whatsNextTitle: 'What\'s Next?',
+      whatsNextText1: 'Please review the updated information in your dashboard to ensure everything is correct.',
+      whatsNextText2: 'If you notice any discrepancies, please contact us immediately.',
+      buttonLabel: 'View Updated Details',
+      companyFooter: 'Alliance Shipping - Reliable Shipping from USA to Haiti',
+      automated: 'This is an automated message, please do not reply to this email.',
+    },
+    ht: {
+      subject: '📝 Enfòmasyon koli a mete ajou - Alliance Shipping',
+      title: 'Enfòmasyon Koli a Mete Ajou',
+      greeting: `Bonjou ${userName},`,
+      message: 'Kèk enfòmasyon sou koli w la mete ajou pa ekip nou an.',
+      trackingLabel: 'Nimewo Tracking :',
+      updatedFieldsLabel: 'Chan ki Mete Ajou :',
+      whatsNextTitle: 'Kisa ki swiv ?',
+      whatsNextText1: 'Tanpri verifye enfòmasyon ki mete ajou yo nan tablo bò w la pou asire tout bagay kòrèk.',
+      whatsNextText2: 'Si w wè yon erè, tanpri kontakte nou imedyatman.',
+      buttonLabel: 'Wè Detay Mete Ajou',
+      companyFooter: 'Alliance Shipping - Livrezon Fyab soti nan USA pou ale an Ayiti',
+      automated: 'Sa a se yon mesaj otomatik, tanpri pa reponn imèl sa a.',
+    },
+    es: {
+      subject: '📝 Información del paquete actualizada - Alliance Shipping',
+      title: 'Información del Paquete Actualizada',
+      greeting: `Hola ${userName},`,
+      message: 'Alguna información de su paquete ha sido actualizada por nuestro equipo.',
+      trackingLabel: 'Número de Seguimiento:',
+      updatedFieldsLabel: 'Campos Actualizados:',
+      whatsNextTitle: '¿Qué sigue?',
+      whatsNextText1: 'Por favor revise la información actualizada en su panel de control para asegurarse de que todo esté correcto.',
+      whatsNextText2: 'Si nota alguna discrepancia, por favor contáctenos de inmediato.',
+      buttonLabel: 'Ver Detalles Actualizados',
+      companyFooter: 'Alliance Shipping - Envíos Confiables de USA a Haití',
+      automated: 'Este es un mensaje automático, por favor no responda.',
+    },
+  };
+
+  const t = translations[locale] || translations.fr;
+  const subject = t.subject;
   const html = `
     <!DOCTYPE html>
-    <html>
+    <html lang="${locale}">
       <head>
         <meta charset="utf-8">
         <style>
@@ -230,39 +440,39 @@ export const sendPackageInfoModifiedEmail = async (
       <body>
         <div class="container">
           <div class="header">
-            <h1>📝 Package Information Updated</h1>
+            <h1>📝 ${t.title}</h1>
           </div>
           <div class="content">
-            <p>Hello <strong>${userName}</strong>,</p>
-            <p>Some information about your package has been updated by our team.</p>
+            <p>${t.greeting}</p>
+            <p>${t.message}</p>
 
             <div class="card">
-              <h3>Tracking Number:</h3>
+              <h3>${t.trackingLabel}</h3>
               <div class="tracking">${trackingNumber}</div>
             </div>
 
             <div class="card">
-              <h3>Updated Fields:</h3>
+              <h3>${t.updatedFieldsLabel}</h3>
               <ul class="field-list">
                 ${modifiedFields.map(field => `<li>${field}</li>`).join('')}
               </ul>
             </div>
 
             <div class="card">
-              <h3>What's Next?</h3>
-              <p>Please review the updated information in your dashboard to ensure everything is correct.</p>
-              <p>If you notice any discrepancies, please contact us immediately.</p>
+              <h3>${t.whatsNextTitle}</h3>
+              <p>${t.whatsNextText1}</p>
+              <p>${t.whatsNextText2}</p>
             </div>
 
             <div style="text-align: center;">
               <a href="${APP_URL}/dashboard/packages" class="button">
-                View Updated Details
+                ${t.buttonLabel}
               </a>
             </div>
 
             <div class="footer">
-              <p>Alliance Shipping - Reliable Shipping from USA to Haiti</p>
-              <p>This is an automated message, please do not reply to this email.</p>
+              <p>${t.companyFooter}</p>
+              <p>${t.automated}</p>
             </div>
           </div>
         </div>
@@ -284,12 +494,73 @@ export const sendSpecialItemAddedEmail = async (
   trackingNumber: string,
   itemName: string,
   itemFee: number,
-  newTotal: number
+  newTotal: number,
+  locale: string = 'fr'
 ) => {
-  const subject = '🎁 Special Item Added to Package - Alliance Shipping';
+  const translations: Record<string, any> = {
+    fr: {
+      subject: '🎁 Article spécial ajouté au colis - Alliance Shipping',
+      title: 'Article Spécial Ajouté',
+      greeting: `Bonjour ${userName},`,
+      message: 'Un article spécial a été ajouté à votre colis.',
+      trackingLabel: 'Numéro de Suivi :',
+      addedItemLabel: 'Article Ajouté :',
+      additionalFee: 'Frais supplémentaires :',
+      newTotalLabel: 'Nouveau Coût Total :',
+      includesNote: 'Ce montant inclut les frais de l\'article spécial',
+      buttonLabel: 'Voir les Détails',
+      companyFooter: 'Alliance Shipping - Expédition Fiable des USA vers Haïti',
+      automated: 'Ceci est un message automatique, merci de ne pas répondre.',
+    },
+    en: {
+      subject: '🎁 Special Item Added to Package - Alliance Shipping',
+      title: 'Special Item Added',
+      greeting: `Hello ${userName},`,
+      message: 'A special item has been added to your package.',
+      trackingLabel: 'Tracking Number:',
+      addedItemLabel: 'Added Item:',
+      additionalFee: 'Additional Fee:',
+      newTotalLabel: 'New Total Cost:',
+      includesNote: 'This includes the special item fee',
+      buttonLabel: 'View Package Details',
+      companyFooter: 'Alliance Shipping - Reliable Shipping from USA to Haiti',
+      automated: 'This is an automated message, please do not reply to this email.',
+    },
+    ht: {
+      subject: '🎁 Atik espesyal ajoute nan koli - Alliance Shipping',
+      title: 'Atik Espesyal Ajoute',
+      greeting: `Bonjou ${userName},`,
+      message: 'Yo ajoute yon atik espesyal nan koli w la.',
+      trackingLabel: 'Nimewo Tracking :',
+      addedItemLabel: 'Atik Ajoute :',
+      additionalFee: 'Frè anplis :',
+      newTotalLabel: 'Nouvo Koût Total :',
+      includesNote: 'Sa a enkli frè atik espesyal la',
+      buttonLabel: 'Wè Detay Koli',
+      companyFooter: 'Alliance Shipping - Livrezon Fyab soti nan USA pou ale an Ayiti',
+      automated: 'Sa a se yon mesaj otomatik, tanpri pa reponn imèl sa a.',
+    },
+    es: {
+      subject: '🎁 Artículo especial agregado al paquete - Alliance Shipping',
+      title: 'Artículo Especial Agregado',
+      greeting: `Hola ${userName},`,
+      message: 'Se ha agregado un artículo especial a su paquete.',
+      trackingLabel: 'Número de Seguimiento:',
+      addedItemLabel: 'Artículo Agregado:',
+      additionalFee: 'Tarifa adicional:',
+      newTotalLabel: 'Nuevo Costo Total:',
+      includesNote: 'Esto incluye la tarifa del artículo especial',
+      buttonLabel: 'Ver Detalles del Paquete',
+      companyFooter: 'Alliance Shipping - Envíos Confiables de USA a Haití',
+      automated: 'Este es un mensaje automático, por favor no responda.',
+    },
+  };
+
+  const t = translations[locale] || translations.fr;
+  const subject = t.subject;
   const html = `
     <!DOCTYPE html>
-    <html>
+    <html lang="${locale}">
       <head>
         <meta charset="utf-8">
         <style>
@@ -308,42 +579,42 @@ export const sendSpecialItemAddedEmail = async (
       <body>
         <div class="container">
           <div class="header">
-            <h1>🎁 Special Item Added</h1>
+            <h1>🎁 ${t.title}</h1>
           </div>
           <div class="content">
-            <p>Hello <strong>${userName}</strong>,</p>
-            <p>A special item has been added to your package.</p>
+            <p>${t.greeting}</p>
+            <p>${t.message}</p>
 
             <div class="card">
-              <h3>Tracking Number:</h3>
+              <h3>${t.trackingLabel}</h3>
               <div class="tracking">${trackingNumber}</div>
             </div>
 
             <div class="card" style="text-align: center;">
-              <h3>Added Item:</h3>
+              <h3>${t.addedItemLabel}</h3>
               <div class="item-badge">${itemName}</div>
               <p style="font-size: 18px; color: #6b7280; margin-top: 10px;">
-                Additional Fee: <strong>$${itemFee.toFixed(2)}</strong>
+                ${t.additionalFee} <strong>$${itemFee.toFixed(2)}</strong>
               </p>
             </div>
 
             <div class="card">
-              <h3>New Total Cost:</h3>
+              <h3>${t.newTotalLabel}</h3>
               <div class="total">$${newTotal.toFixed(2)}</div>
               <p style="text-align: center; color: #6b7280; font-size: 14px;">
-                This includes the special item fee
+                ${t.includesNote}
               </p>
             </div>
 
             <div style="text-align: center;">
               <a href="${APP_URL}/dashboard/packages" class="button">
-                View Package Details
+                ${t.buttonLabel}
               </a>
             </div>
 
             <div class="footer">
-              <p>Alliance Shipping - Reliable Shipping from USA to Haiti</p>
-              <p>This is an automated message, please do not reply to this email.</p>
+              <p>${t.companyFooter}</p>
+              <p>${t.automated}</p>
             </div>
           </div>
         </div>
@@ -361,12 +632,73 @@ export const sendSpecialItemRemovedEmail = async (
   trackingNumber: string,
   itemName: string,
   refundAmount: number,
-  newTotal: number
+  newTotal: number,
+  locale: string = 'fr'
 ) => {
-  const subject = '🔄 Special Item Removed from Package - Alliance Shipping';
+  const translations: Record<string, any> = {
+    fr: {
+      subject: '🔄 Article spécial retiré du colis - Alliance Shipping',
+      title: 'Article Spécial Retiré',
+      greeting: `Bonjour ${userName},`,
+      message: 'Un article spécial a été retiré de votre colis.',
+      trackingLabel: 'Numéro de Suivi :',
+      removedItemLabel: 'Article Retiré :',
+      refunded: 'Remboursé',
+      newTotalLabel: 'Nouveau Coût Total :',
+      deductedNote: 'Les frais de l\'article ont été déduits',
+      buttonLabel: 'Voir les Détails',
+      companyFooter: 'Alliance Shipping - Expédition Fiable des USA vers Haïti',
+      automated: 'Ceci est un message automatique, merci de ne pas répondre.',
+    },
+    en: {
+      subject: '🔄 Special Item Removed from Package - Alliance Shipping',
+      title: 'Special Item Removed',
+      greeting: `Hello ${userName},`,
+      message: 'A special item has been removed from your package.',
+      trackingLabel: 'Tracking Number:',
+      removedItemLabel: 'Removed Item:',
+      refunded: 'Refunded',
+      newTotalLabel: 'New Total Cost:',
+      deductedNote: 'The item fee has been deducted',
+      buttonLabel: 'View Package Details',
+      companyFooter: 'Alliance Shipping - Reliable Shipping from USA to Haiti',
+      automated: 'This is an automated message, please do not reply to this email.',
+    },
+    ht: {
+      subject: '🔄 Atik espesyal retire nan koli - Alliance Shipping',
+      title: 'Atik Espesyal Retire',
+      greeting: `Bonjou ${userName},`,
+      message: 'Yo retire yon atik espesyal nan koli w la.',
+      trackingLabel: 'Nimewo Tracking :',
+      removedItemLabel: 'Atik Retire :',
+      refunded: 'Ranbouse',
+      newTotalLabel: 'Nouvo Koût Total :',
+      deductedNote: 'Frè atik la dedui',
+      buttonLabel: 'Wè Detay Koli',
+      companyFooter: 'Alliance Shipping - Livrezon Fyab soti nan USA pou ale an Ayiti',
+      automated: 'Sa a se yon mesaj otomatik, tanpri pa reponn imèl sa a.',
+    },
+    es: {
+      subject: '🔄 Artículo especial removido del paquete - Alliance Shipping',
+      title: 'Artículo Especial Removido',
+      greeting: `Hola ${userName},`,
+      message: 'Se ha removido un artículo especial de su paquete.',
+      trackingLabel: 'Número de Seguimiento:',
+      removedItemLabel: 'Artículo Removido:',
+      refunded: 'Reembolsado',
+      newTotalLabel: 'Nuevo Costo Total:',
+      deductedNote: 'La tarifa del artículo ha sido deducida',
+      buttonLabel: 'Ver Detalles del Paquete',
+      companyFooter: 'Alliance Shipping - Envíos Confiables de USA a Haití',
+      automated: 'Este es un mensaje automático, por favor no responda.',
+    },
+  };
+
+  const t = translations[locale] || translations.fr;
+  const subject = t.subject;
   const html = `
     <!DOCTYPE html>
-    <html>
+    <html lang="${locale}">
       <head>
         <meta charset="utf-8">
         <style>
@@ -385,40 +717,40 @@ export const sendSpecialItemRemovedEmail = async (
       <body>
         <div class="container">
           <div class="header">
-            <h1>🔄 Special Item Removed</h1>
+            <h1>🔄 ${t.title}</h1>
           </div>
           <div class="content">
-            <p>Hello <strong>${userName}</strong>,</p>
-            <p>A special item has been removed from your package.</p>
+            <p>${t.greeting}</p>
+            <p>${t.message}</p>
 
             <div class="card">
-              <h3>Tracking Number:</h3>
+              <h3>${t.trackingLabel}</h3>
               <div class="tracking">${trackingNumber}</div>
             </div>
 
             <div class="card" style="text-align: center;">
-              <h3>Removed Item:</h3>
+              <h3>${t.removedItemLabel}</h3>
               <p style="font-size: 18px; color: #6b7280;">${itemName}</p>
-              <div class="refund">-$${refundAmount.toFixed(2)} Refunded</div>
+              <div class="refund">-$${refundAmount.toFixed(2)} ${t.refunded}</div>
             </div>
 
             <div class="card">
-              <h3>New Total Cost:</h3>
+              <h3>${t.newTotalLabel}</h3>
               <div class="total">$${newTotal.toFixed(2)}</div>
               <p style="text-align: center; color: #6b7280; font-size: 14px;">
-                The item fee has been deducted
+                ${t.deductedNote}
               </p>
             </div>
 
             <div style="text-align: center;">
               <a href="${APP_URL}/dashboard/packages" class="button">
-                View Package Details
+                ${t.buttonLabel}
               </a>
             </div>
 
             <div class="footer">
-              <p>Alliance Shipping - Reliable Shipping from USA to Haiti</p>
-              <p>This is an automated message, please do not reply to this email.</p>
+              <p>${t.companyFooter}</p>
+              <p>${t.automated}</p>
             </div>
           </div>
         </div>
@@ -439,63 +771,127 @@ export const sendAdminMessageEmail = async (
   userName: string,
   trackingNumber: string,
   message: string,
-  adminName: string
+  adminName: string,
+  locale: string = 'fr'
 ) => {
-  const subject = '💬 Message from Alliance Shipping Team';
+  const translations: Record<string, any> = {
+    fr: {
+      subject: 'Message de l\'\u00e9quipe Alliance Shipping',
+      title: 'Message de Notre \u00c9quipe',
+      greeting: `Bonjour ${userName},`,
+      body: 'Notre \u00e9quipe vous a envoy\u00e9 un message concernant votre colis.',
+      packageLabel: 'Colis :',
+      messageLabel: 'Message :',
+      teamSuffix: '\u00c9quipe Alliance Shipping',
+      respondTitle: 'Besoin de r\u00e9pondre ?',
+      respondBody: 'Veuillez r\u00e9pondre \u00e0 cet e-mail ou nous contacter via votre tableau de bord.',
+      buttonLabel: 'Voir le Colis',
+      footer: 'Alliance Shipping - Exp\u00e9dition Fiable des USA vers Ha\u00efti',
+      replyNote: 'Vous pouvez r\u00e9pondre \u00e0 cet e-mail pour contacter notre \u00e9quipe.',
+    },
+    en: {
+      subject: 'Message from Alliance Shipping Team',
+      title: 'Message from Our Team',
+      greeting: `Hello ${userName},`,
+      body: 'Our team has sent you a message regarding your package.',
+      packageLabel: 'Package:',
+      messageLabel: 'Message:',
+      teamSuffix: 'Alliance Shipping Team',
+      respondTitle: 'Need to respond?',
+      respondBody: 'Please reply to this email or contact us through your dashboard.',
+      buttonLabel: 'View Package',
+      footer: 'Alliance Shipping - Reliable Shipping from USA to Haiti',
+      replyNote: 'You can reply to this email to contact our team.',
+    },
+    ht: {
+      subject: 'Mesaj Ekip Alliance Shipping',
+      title: 'Mesaj Ekip Nou An',
+      greeting: `Bonjou ${userName},`,
+      body: 'Ekip nou an voye yon mesaj ba ou konsènan kolis ou.',
+      packageLabel: 'Kolis :',
+      messageLabel: 'Mesaj :',
+      teamSuffix: 'Ekip Alliance Shipping',
+      respondTitle: 'Bezwen reponn ?',
+      respondBody: 'Tanpri reponn im\u00e8l sa a oswa kontakte nou nan tableau de bord ou.',
+      buttonLabel: 'W\u00e8 Kolis',
+      footer: 'Alliance Shipping - Livrezon Fyab soti nan USA pou ale an Ayiti',
+      replyNote: 'Ou ka reponn im\u00e8l sa a pou kontakte ekip nou an.',
+    },
+    es: {
+      subject: 'Mensaje del Equipo Alliance Shipping',
+      title: 'Mensaje de Nuestro Equipo',
+      greeting: `Hola ${userName},`,
+      body: 'Nuestro equipo le ha enviado un mensaje sobre su paquete.',
+      packageLabel: 'Paquete:',
+      messageLabel: 'Mensaje:',
+      teamSuffix: 'Equipo Alliance Shipping',
+      respondTitle: '\u00bfNecesita responder?',
+      respondBody: 'Por favor responda a este correo o cont\u00e1ctenos a trav\u00e9s de su panel.',
+      buttonLabel: 'Ver Paquete',
+      footer: 'Alliance Shipping - Env\u00edos Confiables de USA a Hait\u00ed',
+      replyNote: 'Puede responder a este correo para contactar a nuestro equipo.',
+    },
+  };
+  const t = translations[locale] || translations.fr;
+
   const html = `
     <!DOCTYPE html>
-    <html>
+    <html lang="${locale}">
       <head>
         <meta charset="utf-8">
         <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
-          .card { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-          .tracking { font-size: 18px; font-weight: bold; color: #06b6d4; text-align: center; padding: 12px; background: #cffafe; border-radius: 8px; }
-          .message-box { background: #f0fdfa; border-left: 4px solid #06b6d4; padding: 20px; margin: 20px 0; font-size: 16px; line-height: 1.8; }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #1f2937; margin: 0; padding: 0; background: #f3f4f6; }
+          .wrapper { padding: 20px; }
+          .container { max-width: 600px; margin: 0 auto; }
+          .header { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; padding: 32px 24px; text-align: center; border-radius: 12px 12px 0 0; }
+          .header h1 { margin: 0; font-size: 22px; font-weight: 700; }
+          .content { background: #ffffff; padding: 32px 24px; border-radius: 0 0 12px 12px; }
+          .card { background: #f9fafb; padding: 20px; border-radius: 10px; margin: 20px 0; border: 1px solid #e5e7eb; }
+          .tracking { font-size: 18px; font-weight: bold; color: #06b6d4; text-align: center; padding: 12px; background: #cffafe; border-radius: 8px; font-family: 'Courier New', monospace; }
+          .message-box { background: #f0fdfa; border-left: 4px solid #06b6d4; padding: 20px; margin: 12px 0; font-size: 16px; line-height: 1.8; }
           .signature { text-align: right; color: #6b7280; font-style: italic; margin-top: 15px; }
-          .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
-          .button { display: inline-block; padding: 12px 24px; background: #06b6d4; color: white; text-decoration: none; border-radius: 6px; }
+          .btn-container { text-align: center; margin: 24px 0; }
+          .button { display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; }
+          .footer { text-align: center; padding: 24px; color: #9ca3af; font-size: 12px; }
+          .footer p { margin: 4px 0; }
+          h3 { color: #1f2937; font-size: 15px; margin: 0 0 12px; }
         </style>
       </head>
       <body>
-        <div class="container">
-          <div class="header">
-            <h1>💬 Message from Our Team</h1>
-          </div>
-          <div class="content">
-            <p>Hello <strong>${userName}</strong>,</p>
-            <p>Our team has sent you a message regarding your package.</p>
-
-            <div class="card">
-              <h3>Package:</h3>
-              <div class="tracking">${trackingNumber}</div>
+        <div class="wrapper">
+          <div class="container">
+            <div class="header">
+              <h1>\u{1F4AC} ${t.title}</h1>
             </div>
+            <div class="content">
+              <p>${t.greeting}</p>
+              <p>${t.body}</p>
 
-            <div class="card">
-              <h3>Message:</h3>
-              <div class="message-box">
-                ${message.replace(/\n/g, '<br>')}
-                <div class="signature">- ${adminName}, Alliance Shipping Team</div>
+              <div class="card">
+                <h3>${t.packageLabel}</h3>
+                <div class="tracking">${trackingNumber}</div>
+              </div>
+
+              <div class="card">
+                <h3>${t.messageLabel}</h3>
+                <div class="message-box">
+                  ${message.replace(/\n/g, '<br>')}
+                  <div class="signature">- ${adminName}, ${t.teamSuffix}</div>
+                </div>
+              </div>
+
+              <div class="card">
+                <p><strong>${t.respondTitle}</strong></p>
+                <p>${t.respondBody}</p>
+              </div>
+
+              <div class="btn-container">
+                <a href="${APP_URL}/packages" class="button">${t.buttonLabel}</a>
               </div>
             </div>
-
-            <div class="card">
-              <p><strong>Need to respond?</strong></p>
-              <p>Please reply to this email or contact us through your dashboard.</p>
-            </div>
-
-            <div style="text-align: center;">
-              <a href="${APP_URL}/dashboard/packages" class="button">
-                View Package
-              </a>
-            </div>
-
             <div class="footer">
-              <p>Alliance Shipping - Reliable Shipping from USA to Haiti</p>
-              <p>You can reply to this email to contact our team.</p>
+              <p><strong>${t.footer}</strong></p>
+              <p>${t.replyNote}</p>
             </div>
           </div>
         </div>
@@ -503,7 +899,7 @@ export const sendAdminMessageEmail = async (
     </html>
   `;
 
-  return sendEmail({ to: userEmail, subject, html });
+  return sendEmail({ to: userEmail, subject: '\u{1F4AC} ' + t.subject, html });
 };
 
 // Template: Important Notification

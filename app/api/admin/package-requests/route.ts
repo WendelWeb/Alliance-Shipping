@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { packageRequests, users, packages, trackingHistory, adminActivityLogs } from '@/lib/db/schema';
+import { packageRequests, users, packages, trackingHistory, adminActivityLogs, specialItemFees } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
 import { eq, desc } from 'drizzle-orm';
 import { sendPackageApprovedEmail, sendPackageRejectedEmail } from '@/lib/email/service';
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get('status') || 'pending';
 
-    // Get package requests with user info
+    // Get package requests with user info + special item info
     const requests = await db
       .select({
         id: packageRequests.id,
@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
         reviewedBy: packageRequests.reviewedBy,
         reviewedAt: packageRequests.reviewedAt,
         packageId: packageRequests.packageId,
+        specialItemId: packageRequests.specialItemId,
         createdAt: packageRequests.createdAt,
         updatedAt: packageRequests.updatedAt,
         user: {
@@ -44,10 +45,22 @@ export async function GET(request: NextRequest) {
           phone: users.phone,
           city: users.city,
           warehouseId: users.warehouseId,
+          preferredLanguage: users.preferredLanguage,
+        },
+        specialItem: {
+          id: specialItemFees.id,
+          itemName: specialItemFees.itemName,
+          itemName_fr: specialItemFees.itemName_fr,
+          itemName_ht: specialItemFees.itemName_ht,
+          itemName_es: specialItemFees.itemName_es,
+          brand: specialItemFees.brand,
+          fixedFee: specialItemFees.fixedFee,
+          category: specialItemFees.category,
         },
       })
       .from(packageRequests)
       .leftJoin(users, eq(packageRequests.userId, users.id))
+      .leftJoin(specialItemFees, eq(packageRequests.specialItemId, specialItemFees.id))
       .where(eq(packageRequests.status, status))
       .orderBy(desc(packageRequests.createdAt));
 
@@ -72,7 +85,7 @@ export async function PATCH(request: NextRequest) {
     const adminId = session.adminId;
 
     const body = await request.json();
-    const { id, action, weight, category, initialStatus } = body;
+    const { id, action, weight, category, initialStatus, specialItemId, chargeByWeight, customsFees } = body;
 
     if (!id || !action) {
       return NextResponse.json(
@@ -107,7 +120,46 @@ export async function PATCH(request: NextRequest) {
 
       // Calculate fees based on user's city
       const packageWeight = parseFloat(weight);
-      const fees = await calculateFeesForCity(userInfo?.city || null, packageWeight);
+      const cityFees = await calculateFeesForCity(userInfo?.city || null, packageWeight);
+      const parsedCustomsFees = customsFees ? parseFloat(customsFees) : 0;
+
+      // Calculate total with special item if applicable
+      let fees: { serviceFee: number; weightCost: number; totalCost: number };
+      let specialItemFixedFee = 0;
+
+      if (specialItemId) {
+        // Fetch special item fixed fee
+        const [specialItem] = await db
+          .select({ fixedFee: specialItemFees.fixedFee })
+          .from(specialItemFees)
+          .where(eq(specialItemFees.id, specialItemId))
+          .limit(1);
+
+        specialItemFixedFee = specialItem ? parseFloat(specialItem.fixedFee) : 0;
+
+        if (chargeByWeight) {
+          // Special item + weight: fixedFee + serviceFee + weightCost + customsFees
+          fees = {
+            serviceFee: cityFees.serviceFee,
+            weightCost: cityFees.weightCost,
+            totalCost: specialItemFixedFee + cityFees.serviceFee + cityFees.weightCost + parsedCustomsFees,
+          };
+        } else {
+          // Special item only: fixedFee + serviceFee + customsFees (no weight cost)
+          fees = {
+            serviceFee: cityFees.serviceFee,
+            weightCost: 0,
+            totalCost: specialItemFixedFee + cityFees.serviceFee + parsedCustomsFees,
+          };
+        }
+      } else {
+        // Normal package: serviceFee + weightCost + customsFees
+        fees = {
+          serviceFee: cityFees.serviceFee,
+          weightCost: cityFees.weightCost,
+          totalCost: cityFees.totalCost + parsedCustomsFees,
+        };
+      }
 
       // Generate Alliance Shipping tracking number
       const asTrackingNumber = generateASTrackingNumber();
@@ -138,7 +190,7 @@ export async function PATCH(request: NextRequest) {
         'delivered': userCity,
       };
 
-      // Create actual package (no sender/recipient fields)
+      // Create actual package with special item + customs data
       const [newPackage] = await db
         .insert(packages)
         .values({
@@ -156,6 +208,9 @@ export async function PATCH(request: NextRequest) {
           status: initialStatus,
           currentLocation: locationMap[initialStatus],
           assignedToAdmin: adminId,
+          specialItemId: specialItemId || null,
+          chargeByWeight: chargeByWeight || false,
+          customsFees: parsedCustomsFees.toFixed(2),
           actualDelivery: initialStatus === 'delivered' ? new Date() : null,
         })
         .returning();
@@ -209,29 +264,42 @@ export async function PATCH(request: NextRequest) {
           weight: packageWeight,
           totalCost: fees.totalCost,
           userCity: userCity,
+          specialItemId: specialItemId || null,
+          chargeByWeight: chargeByWeight || false,
+          customsFees: parsedCustomsFees,
         },
         ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
         userAgent: request.headers.get('user-agent') || 'unknown',
       });
 
-      // Send approval email
+      // Send approval email with locale + fee breakdown
       if (userInfo?.email) {
         const userName = `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || userInfo.email;
+        const userLocale = userInfo.preferredLanguage || 'fr';
         await sendPackageApprovedEmail(
           userInfo.email,
           userName,
           asTrackingNumber,
-          fees.totalCost
+          fees.totalCost,
+          userLocale,
+          {
+            serviceFee: fees.serviceFee,
+            weightCost: fees.weightCost,
+            specialItemFee: specialItemFixedFee,
+            customsFees: parsedCustomsFees,
+            weight: packageWeight,
+            city: userCity,
+          }
         ).catch(error => {
           console.error('Failed to send approval email:', error);
         });
       }
 
-      // Send push notification
+      // Send push notification with total
       sendPushNotification({
         userId: packageRequest.userId,
         templateKey: 'request_approved',
-        variables: { tracking: asTrackingNumber },
+        variables: { tracking: asTrackingNumber, total: fees.totalCost.toFixed(2) },
         packageId: newPackage.id,
       }).catch(() => {});
 
@@ -270,11 +338,13 @@ export async function PATCH(request: NextRequest) {
 
       if (userInfo?.email) {
         const userName = `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || userInfo.email;
+        const userLocale = userInfo.preferredLanguage || 'fr';
         await sendPackageRejectedEmail(
           userInfo.email,
           userName,
           packageRequest.externalTrackingNumber,
-          packageRequest.adminNotes || undefined
+          packageRequest.adminNotes || undefined,
+          userLocale
         ).catch(error => {
           console.error('Failed to send rejection email:', error);
         });

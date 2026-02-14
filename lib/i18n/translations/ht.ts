@@ -341,6 +341,14 @@ export const ht = {
       allianceTracking: 'Apre validasyon, w ap resevwa yon nimewo swivi Alliance Shipping (AS-XXXXXXXXXX)',
     },
     fields: {
+      packageType: {
+        label: 'Tip Koli',
+        required: 'Tanpri chwazi tip koli a',
+      },
+      specialItem: {
+        label: 'Chwazi yon Atik',
+        required: 'Tanpri chwazi yon atik espesyal',
+      },
       trackingNumber: {
         label: 'Nimewo Swivi',
         placeholder: 'Egzanp: 1Z999AA10123456784',
@@ -376,6 +384,7 @@ export const ht = {
         documents: 'Dokiman',
         other: 'Lòt',
         required: 'Tanpri chwazi yon kategori',
+        lockedBySpecialItem: 'Oto: Elektwonik',
         otherDescription: {
           label: 'Dekri kategori a',
           placeholder: 'Egzanp: Jwèt, Kosmetik, elatriye',
@@ -390,6 +399,12 @@ export const ht = {
         required: 'Pwa estime obligatwa',
         minValue: 'Pwa dwe omwen 1 lb',
       },
+    },
+    types: {
+      normal: 'Koli Nòmal',
+      normalDesc: 'Kalkile pa pwa',
+      special: 'Atik Espesyal',
+      specialDesc: 'Pri fiks',
     },
     buttons: {
       cancel: 'Anile',
@@ -706,6 +721,39 @@ export const ht = {
     title: 'Atik Espesyal',
     subtitle: 'Pri fiks pou sèten atik',
     priceFixed: 'Pri Fiks',
+  },
+  packageDetail: {
+    title: 'Detay Koli a',
+    viewDetails: 'Wè detay',
+    copyTracking: 'Kopye',
+    trackingCopied: 'Kopye!',
+    packageInfo: 'Enfòmasyon Koli a',
+    description: 'Deskripsyon',
+    weight: 'Pwa',
+    category: 'Kategori',
+    externalTracking: 'Nimewo Swivi Ekstèn',
+    currentLocation: 'Kote li ye',
+    estimatedDelivery: 'Livrezon',
+    createdAt: 'Kreye',
+    updatedAt: 'Dènye mizajou',
+    specialItem: 'Atik Espesyal',
+    fixedFee: 'Frè Fiks',
+    feeBreakdown: 'Detay Frè yo',
+    serviceFee: 'Frè sèvis',
+    weightFee: 'Frè pwa',
+    customsFee: 'Taks ladwann',
+    total: 'TOTAL',
+    timeline: 'Swivi Koli a',
+    backToPackages: 'Koli Mwen yo',
+    notFound: 'Koli a pa jwenn',
+    statusProgress: {
+      received: 'Resevwa',
+      inTransit: 'An Wout',
+      available: 'Disponib',
+      delivered: 'Livre',
+      pending: 'An Atant',
+      rejected: 'Rejte',
+    },
   },
 };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -17,7 +17,23 @@ import {
   FileText,
   Box,
   Tag,
+  Lock,
 } from 'lucide-react';
+
+interface SpecialItem {
+  id: number;
+  category: string;
+  brand: string;
+  itemName: string;
+  itemName_fr?: string;
+  itemName_en?: string;
+  itemName_es?: string;
+  itemName_ht?: string;
+  fixedFee: string;
+  minModel?: string;
+  maxModel?: string;
+  isActive: boolean;
+}
 
 export default function RequestPackagePage() {
   const router = useRouter();
@@ -25,13 +41,24 @@ export default function RequestPackagePage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [packageType, setPackageType] = useState<'normal' | 'special' | null>(null);
+  const [selectedSpecialItem, setSelectedSpecialItem] = useState<number | null>(null);
+  const [specialItems, setSpecialItems] = useState<SpecialItem[]>([]);
   const [formData, setFormData] = useState({
     externalTrackingNumber: '',
     description: '',
     customerNotes: '',
     category: '',
-    otherCategoryDescription: '', // Pour la catégorie "Autre"
+    otherCategoryDescription: '',
   });
+
+  // Fetch special items on mount
+  useEffect(() => {
+    fetch('/api/special-items/public')
+      .then((res) => res.json())
+      .then((data) => setSpecialItems(data?.items || data || []))
+      .catch(() => {});
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -42,14 +69,16 @@ export default function RequestPackagePage() {
     }
   };
 
+  // Auto-force category to electronics when special item is selected
+  const isCategoryLocked = packageType === 'special' && selectedSpecialItem !== null;
+
   const handleCategoryChange = (category: string) => {
+    if (isCategoryLocked) return; // Category locked when special item selected
     setFormData(prev => ({
       ...prev,
       category,
-      // Réinitialiser otherCategoryDescription si on ne sélectionne pas "other"
       otherCategoryDescription: category === 'other' ? prev.otherCategoryDescription : ''
     }));
-    // Clear errors
     if (errors.category) {
       setErrors(prev => ({ ...prev, category: '' }));
     }
@@ -58,8 +87,46 @@ export default function RequestPackagePage() {
     }
   };
 
+  const handlePackageTypeChange = (type: 'normal' | 'special') => {
+    setPackageType(type);
+    setSelectedSpecialItem(null);
+    if (type === 'normal') {
+      // Unlock category
+      setFormData(prev => ({ ...prev, category: prev.category === 'electronics' ? '' : prev.category }));
+    }
+    if (errors.packageType) setErrors(prev => ({ ...prev, packageType: '' }));
+    if (errors.specialItem) setErrors(prev => ({ ...prev, specialItem: '' }));
+  };
+
+  const handleSpecialItemSelect = (itemId: number) => {
+    setSelectedSpecialItem(itemId);
+    // Auto-force category to electronics
+    setFormData(prev => ({ ...prev, category: 'electronics', otherCategoryDescription: '' }));
+    if (errors.specialItem) setErrors(prev => ({ ...prev, specialItem: '' }));
+    if (errors.category) setErrors(prev => ({ ...prev, category: '' }));
+  };
+
+  const getLocalizedItemName = (item: SpecialItem) => {
+    const key = `itemName_${locale}` as keyof SpecialItem;
+    const localizedName = (item[key] as string) || item.itemName;
+    if (item.minModel && item.maxModel) {
+      return `${localizedName} ${item.minModel}-${item.maxModel}`;
+    } else if (item.minModel) {
+      return `${localizedName} ${item.minModel}+`;
+    }
+    return localizedName;
+  };
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
+
+    if (!packageType) {
+      newErrors.packageType = t.requestPackage.fields.packageType.required;
+    }
+
+    if (packageType === 'special' && !selectedSpecialItem) {
+      newErrors.specialItem = t.requestPackage.fields.specialItem.required;
+    }
 
     if (!formData.externalTrackingNumber.trim()) {
       newErrors.externalTrackingNumber = t.requestPackage.fields.trackingNumber.required;
@@ -77,7 +144,6 @@ export default function RequestPackagePage() {
       newErrors.category = t.requestPackage.fields.category.required;
     }
 
-    // Si catégorie "Autre", description obligatoire
     if (formData.category === 'other' && !formData.otherCategoryDescription.trim()) {
       newErrors.otherCategoryDescription = t.requestPackage.fields.category.otherDescription.required;
     } else if (formData.category === 'other' && formData.otherCategoryDescription.trim().length < 5) {
@@ -108,7 +174,11 @@ export default function RequestPackagePage() {
       const response = await fetch('/api/package-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, locale }),
+        body: JSON.stringify({
+          ...formData,
+          locale,
+          specialItemId: packageType === 'special' ? selectedSpecialItem : null,
+        }),
       });
 
       if (!response.ok) {
@@ -212,6 +282,155 @@ export default function RequestPackagePage() {
         </motion.div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Package Type Selection */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="theme-card rounded-2xl shadow-lg p-6"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <Package className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  {t.requestPackage.fields.packageType.label} <span className="text-red-600">*</span>
+                </h2>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <motion.button
+                type="button"
+                onClick={() => handlePackageTypeChange('normal')}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`relative p-6 rounded-xl border-2 transition-all text-center ${
+                  packageType === 'normal'
+                    ? 'border-primary-500 bg-primary-50 shadow-md'
+                    : 'border-gray-200 hover:border-primary-300'
+                }`}
+              >
+                <Package className={`h-8 w-8 mx-auto mb-2 ${packageType === 'normal' ? 'text-primary-600' : 'text-gray-400'}`} />
+                <span className={`block text-sm font-semibold ${packageType === 'normal' ? 'text-primary-900' : 'text-gray-700'}`}>
+                  {t.requestPackage.types.normal}
+                </span>
+                <span className="block text-xs text-gray-500 mt-1">
+                  {t.requestPackage.types.normalDesc}
+                </span>
+                {packageType === 'normal' && (
+                  <div className="absolute top-2 right-2 w-5 h-5 bg-primary-600 rounded-full flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+              </motion.button>
+
+              <motion.button
+                type="button"
+                onClick={() => handlePackageTypeChange('special')}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`relative p-6 rounded-xl border-2 transition-all text-center ${
+                  packageType === 'special'
+                    ? 'border-purple-500 bg-purple-50 shadow-md'
+                    : 'border-gray-200 hover:border-purple-300'
+                }`}
+              >
+                <Smartphone className={`h-8 w-8 mx-auto mb-2 ${packageType === 'special' ? 'text-purple-600' : 'text-gray-400'}`} />
+                <span className={`block text-sm font-semibold ${packageType === 'special' ? 'text-purple-900' : 'text-gray-700'}`}>
+                  {t.requestPackage.types.special}
+                </span>
+                <span className="block text-xs text-gray-500 mt-1">
+                  {t.requestPackage.types.specialDesc}
+                </span>
+                {packageType === 'special' && (
+                  <div className="absolute top-2 right-2 w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )}
+              </motion.button>
+            </div>
+
+            {errors.packageType && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-sm text-red-600 mt-3 flex items-center gap-2"
+              >
+                <AlertCircle className="h-4 w-4" />
+                {errors.packageType}
+              </motion.p>
+            )}
+          </motion.div>
+
+          {/* Special Items Grid */}
+          {packageType === 'special' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="theme-card rounded-2xl shadow-lg p-6"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-purple-50 rounded-lg">
+                  <Smartphone className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {t.requestPackage.fields.specialItem.label} <span className="text-red-600">*</span>
+                  </h2>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {specialItems.filter((item) => item.isActive).map((item) => (
+                  <motion.button
+                    key={item.id}
+                    type="button"
+                    onClick={() => handleSpecialItemSelect(item.id)}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className={`relative p-4 rounded-xl border-2 transition-all text-center ${
+                      selectedSpecialItem === item.id
+                        ? 'border-purple-500 bg-purple-50 shadow-md'
+                        : 'border-gray-200 hover:border-purple-300'
+                    }`}
+                  >
+                    <span className={`block text-sm font-semibold ${selectedSpecialItem === item.id ? 'text-purple-900' : 'text-gray-800'}`}>
+                      {getLocalizedItemName(item)}
+                    </span>
+                    <span className="block text-xs text-gray-500 mt-1">{item.brand}</span>
+                    <span className={`block text-xs font-bold mt-2 ${selectedSpecialItem === item.id ? 'text-purple-700' : 'text-gray-600'}`}>
+                      ${parseFloat(item.fixedFee).toFixed(2)}
+                    </span>
+                    {selectedSpecialItem === item.id && (
+                      <div className="absolute top-2 right-2 w-4 h-4 bg-purple-600 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                  </motion.button>
+                ))}
+              </div>
+
+              {errors.specialItem && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-sm text-red-600 mt-3 flex items-center gap-2"
+                >
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.specialItem}
+                </motion.p>
+              )}
+            </motion.div>
+          )}
+
           {/* Tracking Number - TRÈS IMPORTANT */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -308,9 +527,15 @@ export default function RequestPackagePage() {
             <div className="mt-6">
               <label className="block text-sm font-semibold text-gray-900 mb-3">
                 {t.requestPackage.fields.category.label} <span className="text-red-600">*</span>
+                {isCategoryLocked && (
+                  <span className="ml-2 inline-flex items-center gap-1 text-xs font-medium text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
+                    <Lock className="h-3 w-3" />
+                    {t.requestPackage.fields.category.lockedBySpecialItem}
+                  </span>
+                )}
               </label>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className={`grid grid-cols-2 md:grid-cols-3 gap-3 ${isCategoryLocked ? 'opacity-60 pointer-events-none' : ''}`}>
                 {/* Général */}
                 <motion.button
                   type="button"

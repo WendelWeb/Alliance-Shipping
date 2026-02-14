@@ -341,6 +341,14 @@ export const en = {
       allianceTracking: 'After validation, you will receive an Alliance Shipping tracking (AS-XXXXXXXXXX)',
     },
     fields: {
+      packageType: {
+        label: 'Package Type',
+        required: 'Please select a package type',
+      },
+      specialItem: {
+        label: 'Select an Item',
+        required: 'Please select a special item',
+      },
       trackingNumber: {
         label: 'Tracking Number',
         placeholder: 'Ex: 1Z999AA10123456784',
@@ -376,6 +384,7 @@ export const en = {
         documents: 'Documents',
         other: 'Other',
         required: 'Please select a category',
+        lockedBySpecialItem: 'Auto: Electronics',
         otherDescription: {
           label: 'Describe the category',
           placeholder: 'Ex: Toys, Cosmetics, etc.',
@@ -390,6 +399,12 @@ export const en = {
         required: 'Estimated weight is required',
         minValue: 'Weight must be at least 1 lb',
       },
+    },
+    types: {
+      normal: 'Normal Package',
+      normalDesc: 'Calculated by weight',
+      special: 'Special Item',
+      specialDesc: 'Fixed price',
     },
     buttons: {
       cancel: 'Cancel',
@@ -706,6 +721,39 @@ export const en = {
     title: 'Special Items',
     subtitle: 'Fixed pricing for certain items',
     priceFixed: 'Fixed Price',
+  },
+  packageDetail: {
+    title: 'Package Details',
+    viewDetails: 'View details',
+    copyTracking: 'Copy',
+    trackingCopied: 'Copied!',
+    packageInfo: 'Package Information',
+    description: 'Description',
+    weight: 'Weight',
+    category: 'Category',
+    externalTracking: 'External Tracking',
+    currentLocation: 'Location',
+    estimatedDelivery: 'Delivery',
+    createdAt: 'Created',
+    updatedAt: 'Updated',
+    specialItem: 'Special Item',
+    fixedFee: 'Fixed Fee',
+    feeBreakdown: 'Fee Breakdown',
+    serviceFee: 'Service fee',
+    weightFee: 'Weight fee',
+    customsFee: 'Customs fee',
+    total: 'TOTAL',
+    timeline: 'Tracking Timeline',
+    backToPackages: 'My Packages',
+    notFound: 'Package not found',
+    statusProgress: {
+      received: 'Received',
+      inTransit: 'In Transit',
+      available: 'Available',
+      delivered: 'Delivered',
+      pending: 'Pending',
+      rejected: 'Rejected',
+    },
   },
 };
 
