@@ -33,8 +33,9 @@ interface PricingData {
  * const { pricing, cities, loading } = usePricing();
  * const cityData = cities.find(c => c.city === selectedCity);
  */
-export function usePricing() {
+export function usePricing(defaultCity: string = 'Cap-Haïtien') {
   const [cities, setCities] = useState<CityPricing[]>([]);
+  const [primaryCity, setPrimaryCity] = useState<CityPricing | null>(null);
   const [pricing, setPricing] = useState<PricingData>({
     serviceFee: PRICING.serviceFee,
     pricePerLb: PRICING.pricePerLb,
@@ -54,17 +55,18 @@ export function usePricing() {
         const fetchedCities: CityPricing[] = data.cities || [];
         setCities(fetchedCities);
 
-        // Use first city as default pricing (or lowest serviceFee)
-        if (fetchedCities.length > 0) {
-          const first = fetchedCities[0];
+        // Use defaultCity (Cap-Haïtien) as primary, fallback to first city
+        const primary = fetchedCities.find(c => c.city === defaultCity) || fetchedCities[0];
+        if (primary) {
+          setPrimaryCity(primary);
           setPricing({
-            serviceFee: first.serviceFee,
-            pricePerLb: first.pricePerLb,
+            serviceFee: primary.serviceFee,
+            pricePerLb: primary.pricePerLb,
             standardDelivery: {
-              min: first.deliveryDaysMin,
-              max: first.deliveryDaysMax,
+              min: primary.deliveryDaysMin,
+              max: primary.deliveryDaysMax,
             },
-            perfumeDelay: first.perfumeDaysMax - first.deliveryDaysMax,
+            perfumeDelay: primary.perfumeDaysMax - primary.deliveryDaysMax,
           });
         }
         setError(null);
@@ -76,7 +78,7 @@ export function usePricing() {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [defaultCity]);
 
-  return { pricing, cities, loading, error };
+  return { pricing, cities, primaryCity, loading, error };
 }

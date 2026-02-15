@@ -122,11 +122,33 @@ export async function POST(request: NextRequest) {
       let packageCreditsEarned = 0;
       let emailSent = false;
 
+      // Use i18n keys so mobile/web can translate them
+      const statusDescriptionKeys: Record<string, string> = {
+        'received': 'packages.messages.receivedAtWarehouse',
+        'in-transit': 'packages.messages.inTransitToHaiti',
+        'available': 'packages.messages.availableForPickup',
+        'delivered': 'packages.messages.deliveredSuccessfully',
+      };
+
+      const statusTitleKeys: Record<string, string> = {
+        'received': 'packages.timeline.received',
+        'in-transit': 'packages.timeline.inTransit',
+        'available': 'packages.timeline.available',
+        'delivered': 'packages.timeline.delivered',
+      };
+
+      const locationKeys: Record<string, string> = {
+        'received': 'packages.locations.miamiWarehouse',
+        'in-transit': 'packages.locations.enRouteToHaiti',
+        'available': 'packages.locations.office',
+        'delivered': 'packages.locations.delivered',
+      };
+
       await db.insert(trackingHistory).values({
         packageId: pkg.id,
-        status: status,
-        location: locationMap[status] || 'Unknown',
-        description: `Status updated to ${status} by admin`,
+        status: statusTitleKeys[status] || status,
+        location: locationKeys[status] || locationMap[status] || 'Unknown',
+        description: statusDescriptionKeys[status] || 'packages.messages.statusUpdated',
         timestamp: new Date(),
       });
 
@@ -204,7 +226,12 @@ export async function POST(request: NextRequest) {
           sendPushNotification({
             userId: updated.userId,
             templateKey: pushTemplate,
-            variables: { tracking: updated.trackingNumber },
+            variables: {
+              tracking: updated.trackingNumber,
+              weight: String(updated.weight || '0'),
+              location: locationMap[status] || officeLocation,
+              total: parseFloat(String(updated.totalCost || '0')).toFixed(2),
+            },
             packageId: updated.id,
           }).catch(() => {});
         }

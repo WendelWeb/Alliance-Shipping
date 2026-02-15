@@ -1,179 +1,141 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { MapPin, Plane, Clock, Sparkles } from 'lucide-react';
+import { MapPin, Plane, Clock, DollarSign } from 'lucide-react';
 import { Container } from '@/components/Container';
 import { SectionTitle } from '@/components/SectionTitle';
-import { Card } from '@/components/Card';
 import { ImageGallery } from '@/components/ImageGallery';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { LOCATIONS, COMING_SOON_LOCATIONS } from '@/constants';
+import { usePricing } from '@/hooks/usePricing';
+import { LOCATIONS } from '@/constants';
 
 export function DeliveryTimeline() {
   const { t } = useTranslation();
+  const { cities } = usePricing();
+
+  const routeKeys = ['capHaitien', 'portAuPrince', 'portDePaix'] as const;
+  const routeColors = [
+    { bg: 'bg-[var(--primary-600)]', light: 'bg-[var(--primary-50)]', border: 'border-[var(--primary-200)]' },
+    { bg: 'bg-emerald-600', light: 'bg-emerald-50', border: 'border-emerald-200' },
+    { bg: 'bg-violet-600', light: 'bg-violet-50', border: 'border-violet-200' },
+  ];
+
+  // Map route keys to city names for pricing lookup
+  const routeCityMap: Record<string, string> = {
+    capHaitien: 'Cap-Haïtien',
+    portAuPrince: 'Port-au-Prince',
+    portDePaix: 'Port-de-Paix',
+  };
 
   return (
-    <section id="locations" className="section-padding bg-theme-surface-solid">
+    <section id="locations" className="py-20 bg-[var(--theme-surface)]">
       <Container>
         <SectionTitle
           title={t.delivery.title}
           subtitle={t.delivery.subtitle}
         />
 
-        {/* Current Active Route */}
-        <div className="mb-12">
-          <div className="text-center mb-6">
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              {t.delivery.standard}
-            </span>
-          </div>
+        {/* Active Routes */}
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          {routeKeys.map((key, index) => {
+            const route = (t.delivery as any).routes?.[key];
+            const color = routeColors[index];
+            const cityPricing = cities.find(c => c.city === routeCityMap[key]);
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="max-w-2xl mx-auto"
-          >
-            <Card hover padding="lg" className="text-center border-2 border-primary-200 bg-theme-bg">
-              <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Plane className="w-10 h-10 text-white" />
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">From</div>
-                  <div className="text-xl font-bold text-gray-900">{t.delivery.currentRoute.from}</div>
-                </div>
-
-                <div className="text-3xl font-bold text-primary-600">↓</div>
-
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">To</div>
-                  <div className="text-xl font-bold text-gray-900">{t.delivery.currentRoute.to}</div>
-                </div>
-
-                <div className="flex items-center justify-center gap-2 text-primary-600 font-bold text-lg pt-4 border-t border-gray-200">
-                  <Clock className="w-6 h-6" />
-                  <span>{t.delivery.currentRoute.duration}</span>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
-        </div>
-
-        {/* Coming Soon Routes */}
-        <div className="mb-12">
-          <div className="text-center mb-6">
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-800 rounded-full text-sm font-semibold">
-              <Sparkles className="w-4 h-4" />
-              {t.delivery.comingSoon}
-            </span>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {t.delivery.comingSoonRoutes.map((route, index) => (
+            return (
               <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
+                key={key}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+                transition={{ duration: 0.5, delay: index * 0.15 }}
+                className={`relative bg-[var(--theme-surface)] rounded-2xl border-2 ${color.border} overflow-hidden hover:shadow-xl transition-all duration-300`}
               >
-                <Card padding="lg" className="text-center bg-gray-50 border-dashed border-2 border-gray-300 opacity-75">
-                  <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Plane className="w-8 h-8 text-gray-400" />
+                {/* Active Badge */}
+                <div className="absolute top-4 right-4">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
+                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                    {t.delivery.active || 'Active'}
+                  </span>
+                </div>
+
+                {/* Route Icon */}
+                <div className="p-6 pb-0">
+                  <div className={`w-14 h-14 ${color.bg} rounded-2xl flex items-center justify-center mb-4`}>
+                    <Plane className="w-7 h-7 text-white" />
                   </div>
-                  <div className="text-sm text-gray-600 mb-2">{route.from}</div>
-                  <div className="text-2xl font-bold text-gray-400 mb-2">↓</div>
-                  <div className="text-sm text-gray-600 mb-4">{route.to}</div>
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
-                    <Sparkles className="w-3 h-3" />
-                    {t.delivery.comingSoon}
+                </div>
+
+                {/* Route Details */}
+                <div className="p-6 pt-3">
+                  <div className="text-xs text-[var(--gray-500)] mb-1">{t.delivery.from || 'From'}</div>
+                  <div className="text-base font-bold text-[var(--gray-900)] mb-3">{t.delivery.fromCity || 'Miami, USA'}</div>
+
+                  <div className="flex items-center gap-2 my-2">
+                    <div className={`h-0.5 flex-1 ${color.bg} opacity-30`} />
+                    <Plane className={`w-4 h-4 text-[var(--gray-400)] rotate-90`} />
+                    <div className={`h-0.5 flex-1 ${color.bg} opacity-30`} />
                   </div>
-                </Card>
+
+                  <div className="text-xs text-[var(--gray-500)] mb-1">{t.delivery.to || 'To'}</div>
+                  <div className="text-base font-bold text-[var(--gray-900)]">{route?.to || key}</div>
+
+                  {/* Delivery Time & Price */}
+                  <div className="mt-4 pt-4 border-t border-[var(--gray-100)] space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="w-4 h-4 text-[var(--gray-400)]" />
+                      <span className="text-[var(--gray-600)]">{route?.duration || '3-6 days'}</span>
+                    </div>
+                    {cityPricing && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <DollarSign className="w-4 h-4 text-green-500" />
+                        <span className="text-[var(--gray-600)]">
+                          ${cityPricing.serviceFee} + ${cityPricing.pricePerLb}/lb
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </motion.div>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
-        {/* Locations */}
+        {/* Locations Grid */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
+          className="bg-[var(--theme-surface)] rounded-2xl border border-[var(--gray-200)] p-8"
         >
-          <Card padding="lg">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-              Our Locations
-            </h3>
-
-            {/* Active Locations */}
-            <div className="grid md:grid-cols-2 gap-6 mb-6">
-              {LOCATIONS.map((location, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-4 p-4 bg-green-50 border-2 border-green-200 rounded-lg"
-                >
-                  <div className="flex-shrink-0 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                    <MapPin className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-bold text-gray-900">
-                        {location.city}, {location.country}
-                      </h4>
-                      <span className="px-2 py-0.5 bg-green-500 text-white text-xs rounded-full font-semibold">
-                        Active
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600">{location.address}</p>
-                  </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {LOCATIONS.map((location, index) => (
+              <div
+                key={index}
+                className="flex items-start gap-3 p-4 bg-[var(--theme-bg)] rounded-xl border border-[var(--gray-200)]"
+              >
+                <div className="flex-shrink-0 w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-white" />
                 </div>
-              ))}
-            </div>
-
-            {/* Coming Soon Locations */}
-            {COMING_SOON_LOCATIONS.length > 0 && (
-              <>
-                <div className="border-t border-gray-200 my-6" />
-                <div className="grid md:grid-cols-2 gap-6">
-                  {COMING_SOON_LOCATIONS.map((location, index) => (
-                    <div
-                      key={index}
-                      className="flex items-start gap-4 p-4 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg opacity-75"
-                    >
-                      <div className="flex-shrink-0 w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
-                        <MapPin className="w-6 h-6 text-gray-500" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-bold text-gray-700">
-                            {location.city}, {location.country}
-                          </h4>
-                          <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full font-semibold">
-                            {t.delivery.comingSoon}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-500">{location.address}</p>
-                      </div>
-                    </div>
-                  ))}
+                <div>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h4 className="font-bold text-sm text-[var(--gray-900)]">{location.city}</h4>
+                  </div>
+                  <p className="text-xs text-[var(--gray-500)]">{location.country}</p>
                 </div>
-              </>
-            )}
+              </div>
+            ))}
+          </div>
 
-            {/* Delivery Route Map */}
-            <div className="relative w-full h-64 md:h-80 mt-8">
-              <ImageGallery
-                section="delivery"
-                className="w-full h-full"
-                imageClassName="object-contain"
-              />
-            </div>
-          </Card>
+          {/* Map Image */}
+          <div className="relative w-full h-48 md:h-64 rounded-xl overflow-hidden">
+            <ImageGallery
+              section="delivery"
+              className="w-full h-full"
+              imageClassName="object-contain"
+            />
+          </div>
         </motion.div>
       </Container>
     </section>

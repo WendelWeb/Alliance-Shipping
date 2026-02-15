@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { Menu, X } from 'lucide-react';
 import { Container } from './Container';
-import { Button } from './Button';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils/cn';
@@ -23,7 +22,7 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 theme-surface-solid backdrop-blur-sm border-b border-gray-200 w-full">
+    <header className="sticky top-0 z-50 theme-surface-solid backdrop-blur-sm border-b border-[var(--gray-200)] w-full">
       <Container>
         <nav className="flex items-center justify-between h-16 lg:h-20 w-full">
           {/* Logo */}
@@ -38,10 +37,10 @@ export function Header() {
               />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-base sm:text-xl font-bold text-gray-900 font-display whitespace-nowrap">
+              <span className="text-base sm:text-xl font-bold text-[var(--gray-900)] font-display whitespace-nowrap">
                 Alliance Shipping
               </span>
-              <span className="text-xs text-gray-500 hidden sm:block">USA • Haïti</span>
+              <span className="text-xs text-[var(--gray-500)] hidden sm:block">USA • Haïti</span>
             </div>
           </a>
 
@@ -51,7 +50,7 @@ export function Header() {
               <a
                 key={item.href}
                 href={item.href}
-                className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors"
+                className="text-sm font-medium text-[var(--gray-700)] hover:text-primary-600 transition-colors"
               >
                 {item.label}
               </a>
@@ -61,14 +60,17 @@ export function Header() {
           {/* Right Side */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <LanguageSwitcher />
-            <Button size="sm" className="hidden sm:inline-flex">
+            <a
+              href="/dashboard/request-package"
+              className="hidden sm:inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 bg-[var(--primary-600)] text-white hover:bg-[var(--primary-700)] px-3 py-1.5 text-sm"
+            >
               {t.nav.sendPackage}
-            </Button>
+            </a>
 
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-1.5 text-gray-700 hover:bg-gray-100 rounded-lg flex-shrink-0"
+              className="lg:hidden p-1.5 text-[var(--gray-700)] hover:bg-[var(--gray-100)] rounded-lg flex-shrink-0"
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? (
@@ -87,20 +89,23 @@ export function Header() {
             mobileMenuOpen ? 'max-h-96 pb-4' : 'max-h-0'
           )}
         >
-          <div className="flex flex-col gap-2 pt-4 border-t border-gray-200">
+          <div className="flex flex-col gap-2 pt-4 border-t border-[var(--gray-200)]">
             {navItems.map((item) => (
               <a
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-[var(--gray-700)] hover:bg-[var(--gray-50)] rounded-lg transition-colors"
               >
                 {item.label}
               </a>
             ))}
-            <Button fullWidth className="mt-2">
+            <a
+              href="/dashboard/request-package"
+              className="mt-2 w-full inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 bg-[var(--primary-600)] text-white hover:bg-[var(--primary-700)] px-5 py-2.5 text-base"
+            >
               {t.nav.sendPackage}
-            </Button>
+            </a>
           </div>
         </div>
       </Container>

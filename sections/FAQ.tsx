@@ -1,10 +1,9 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown, HelpCircle } from 'lucide-react';
 import { Container } from '@/components/Container';
 import { SectionTitle } from '@/components/SectionTitle';
-import { ImageGallery } from '@/components/ImageGallery';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useState } from 'react';
 import { cn } from '@/lib/utils/cn';
@@ -14,68 +13,73 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="section-padding bg-theme-surface-solid">
+    <section id="faq" className="py-20 bg-[var(--theme-surface)]">
       <Container size="lg">
         <SectionTitle
           title={t.faq.title}
           subtitle={t.faq.subtitle}
         />
 
-        <div className="max-w-3xl mx-auto space-y-4">
+        <div className="max-w-3xl mx-auto space-y-3">
           {t.faq.items.map((item, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.05 }}
-              className="border border-gray-200 rounded-xl overflow-hidden hover:border-primary-300 transition-colors"
+              transition={{ duration: 0.4, delay: index * 0.03 }}
+              className={cn(
+                'border rounded-xl overflow-hidden transition-all duration-300',
+                openIndex === index
+                  ? 'border-[var(--primary-300)] shadow-md'
+                  : 'border-[var(--gray-200)] hover:border-[var(--primary-200)]'
+              )}
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full px-6 py-5 flex items-center justify-between text-left bg-theme-surface-solid hover:bg-gray-50 transition-colors"
+                className="w-full px-6 py-4 flex items-center gap-3 text-left bg-[var(--theme-surface)] hover:bg-[var(--theme-bg)] transition-colors"
               >
-                <span className="font-semibold text-gray-900 pr-4">
+                <div className={cn(
+                  'flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors',
+                  openIndex === index
+                    ? 'bg-[var(--primary-100)] text-[var(--primary-600)]'
+                    : 'bg-[var(--gray-100)] text-[var(--gray-400)]'
+                )}>
+                  <HelpCircle className="w-4 h-4" />
+                </div>
+                <span className={cn(
+                  'font-semibold flex-1 transition-colors',
+                  openIndex === index ? 'text-[var(--primary-700)]' : 'text-[var(--gray-900)]'
+                )}>
                   {item.question}
                 </span>
                 <ChevronDown
                   className={cn(
-                    'w-5 h-5 text-gray-500 flex-shrink-0 transition-transform duration-300',
-                    openIndex === index && 'transform rotate-180'
+                    'w-5 h-5 text-[var(--gray-400)] flex-shrink-0 transition-transform duration-300',
+                    openIndex === index && 'transform rotate-180 text-[var(--primary-500)]'
                   )}
                 />
               </button>
 
-              <div
-                className={cn(
-                  'overflow-hidden transition-all duration-300',
-                  openIndex === index ? 'max-h-96' : 'max-h-0'
+              <AnimatePresence>
+                {openIndex === index && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="px-6 py-4 bg-[var(--theme-bg)] border-t border-[var(--gray-100)]">
+                      <p className="text-[var(--gray-700)] leading-relaxed text-sm pl-11">
+                        {item.answer}
+                      </p>
+                    </div>
+                  </motion.div>
                 )}
-              >
-                <div className="px-6 py-5 bg-gray-50 border-t border-gray-200">
-                  <p className="text-gray-700 leading-relaxed">{item.answer}</p>
-                </div>
-              </div>
+              </AnimatePresence>
             </motion.div>
           ))}
         </div>
-
-        {/* Customer Support Illustration */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mt-12"
-        >
-          <div className="relative w-full h-64 md:h-80 rounded-2xl overflow-hidden bg-theme-bg">
-            <ImageGallery
-              section="faq"
-              className="w-full h-full"
-              imageClassName="object-contain"
-            />
-          </div>
-        </motion.div>
       </Container>
     </section>
   );

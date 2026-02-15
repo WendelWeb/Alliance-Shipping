@@ -20,12 +20,12 @@ export default function Home() {
       <main className="pb-24 md:pb-32">
         <Hero />
         <HowItWorks />
+        <Tracking />
         <Pricing />
         <DeliveryTimeline />
         <Trust />
         <FAQ />
         <News />
-        <Tracking />
         <Contact />
       </main>
       <Footer />

@@ -1,205 +1,142 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import {
-  Mail,
-  Phone,
-  MessageCircle,
-  Clock,
-  Facebook,
-  Instagram,
-  Twitter,
-  Linkedin,
-  Youtube,
-  Send,
-} from 'lucide-react';
+import { Mail, Phone, MessageCircle, Clock, MapPin } from 'lucide-react';
 import { Container } from '@/components/Container';
 import { SectionTitle } from '@/components/SectionTitle';
-import { Card } from '@/components/Card';
-import { Button } from '@/components/Button';
-import { ImageGallery } from '@/components/ImageGallery';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { COMPANY_INFO, SOCIAL_LINKS } from '@/constants';
-import { useState } from 'react';
+import { COMPANY_INFO } from '@/constants';
 
 export function Contact() {
   const { t } = useTranslation();
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    subject: '',
-    message: '',
-  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle form submission
-    console.log('Form submitted:', formData);
-  };
-
-  const contactInfo = [
-    { icon: Phone, label: t.contact.info.phone, value: COMPANY_INFO.phone },
-    { icon: Mail, label: t.contact.info.email, value: COMPANY_INFO.email },
-    { icon: MessageCircle, label: t.contact.info.whatsapp, value: COMPANY_INFO.whatsapp },
-    { icon: Clock, label: t.contact.info.hours, value: t.contact.info.hoursValue },
+  const contactCards = [
+    {
+      icon: Phone,
+      label: t.contact.info.phone,
+      value: COMPANY_INFO.phone,
+      action: t.contact.callUs || 'Call us',
+      href: `tel:${COMPANY_INFO.phone.replace(/\s/g, '')}`,
+      color: 'bg-blue-50 border-blue-200',
+      iconColor: 'bg-blue-100 text-blue-600',
+    },
+    {
+      icon: Mail,
+      label: t.contact.info.email,
+      value: COMPANY_INFO.email,
+      action: t.contact.emailUs || 'Email us',
+      href: `mailto:${COMPANY_INFO.email}`,
+      color: 'bg-red-50 border-red-200',
+      iconColor: 'bg-red-100 text-red-600',
+    },
+    {
+      icon: MessageCircle,
+      label: t.contact.info.whatsapp,
+      value: COMPANY_INFO.whatsapp,
+      action: t.contact.chatWhatsApp || 'Chat on WhatsApp',
+      href: `https://wa.me/${COMPANY_INFO.whatsapp}`,
+      color: 'bg-green-50 border-green-200',
+      iconColor: 'bg-green-100 text-green-600',
+    },
+    {
+      icon: Clock,
+      label: t.contact.info.hours,
+      value: t.contact.info.hoursValue,
+      action: null,
+      href: null,
+      color: 'bg-purple-50 border-purple-200',
+      iconColor: 'bg-purple-100 text-purple-600',
+    },
   ];
 
-  const socialIcons: Record<string, any> = {
-    Facebook,
-    Instagram,
-    Twitter,
-    Linkedin,
-    Youtube,
-    MessageCircle,
-    Send,
-  };
+  const offices = [
+    {
+      title: t.contact.info.miami?.title || 'Miami Office',
+      address: t.contact.info.miami?.address || '8298 Northwest 68th Street, Miami, FL 33195',
+      country: 'USA',
+    },
+    {
+      title: t.contact.info.capHaitien?.title || 'Cap-Haïtien Office',
+      address: t.contact.info.capHaitien?.address || 'Cap-Haïtien, Nord, Haïti',
+      country: 'Haiti',
+    },
+  ];
 
   return (
-    <section id="contact" className="section-padding bg-theme-surface-solid">
+    <section id="contact" className="py-20 bg-[var(--theme-surface)]">
       <Container>
         <SectionTitle
           title={t.contact.title}
           subtitle={t.contact.subtitle}
         />
 
-        <div className="grid lg:grid-cols-2 gap-12">
-          {/* Contact Form */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <Card padding="lg">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t.contact.form.name}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t.contact.form.email}
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t.contact.form.phone}
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t.contact.form.subject}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t.contact.form.message}
-                  </label>
-                  <textarea
-                    required
-                    rows={5}
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all resize-none"
-                  />
-                </div>
-
-                <Button type="submit" size="lg" fullWidth>
-                  {t.contact.form.send}
-                </Button>
-              </form>
-            </Card>
-          </motion.div>
-
-          {/* Contact Info & Social */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="space-y-6"
-          >
-            {/* Contact Info Cards */}
-            {contactInfo.map((info, index) => (
-              <Card key={index} hover padding="lg">
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                    <info.icon className="w-6 h-6 text-primary-600" />
+        {/* Contact Cards Grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+          {contactCards.map((card, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+            >
+              {card.href ? (
+                <a
+                  href={card.href}
+                  target={card.icon === MessageCircle ? '_blank' : undefined}
+                  rel={card.icon === MessageCircle ? 'noopener noreferrer' : undefined}
+                  className={`block p-5 rounded-2xl border ${card.color} hover:shadow-lg transition-all duration-300 h-full`}
+                >
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${card.iconColor}`}>
+                    <card.icon className="w-6 h-6" />
                   </div>
-                  <div>
-                    <div className="text-sm text-gray-600 mb-1">{info.label}</div>
-                    <div className="font-semibold text-gray-900">{info.value}</div>
+                  <div className="text-xs text-[var(--gray-500)] mb-1">{card.label}</div>
+                  <div className="text-sm font-bold text-[var(--gray-900)] mb-2">{card.value}</div>
+                  {card.action && (
+                    <div className="text-xs font-medium text-[var(--primary-600)]">{card.action} &rarr;</div>
+                  )}
+                </a>
+              ) : (
+                <div className={`p-5 rounded-2xl border ${card.color} h-full`}>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${card.iconColor}`}>
+                    <card.icon className="w-6 h-6" />
                   </div>
+                  <div className="text-xs text-[var(--gray-500)] mb-1">{card.label}</div>
+                  <div className="text-sm font-bold text-[var(--gray-900)]">{card.value}</div>
                 </div>
-              </Card>
-            ))}
+              )}
+            </motion.div>
+          ))}
+        </div>
 
-            {/* Social Media Links */}
-            <Card padding="lg">
-              <h3 className="font-bold text-gray-900 mb-4">{t.footer.followUs}</h3>
-              <div className="grid grid-cols-5 gap-3">
-                {SOCIAL_LINKS.slice(0, 10).map((social, index) => {
-                  const Icon = socialIcons[social.icon] || MessageCircle;
-                  return (
-                    <a
-                      key={index}
-                      href={social.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-12 h-12 bg-gray-100 hover:bg-primary-600 rounded-lg flex items-center justify-center transition-colors group"
-                      aria-label={social.name}
-                    >
-                      <Icon className="w-5 h-5 text-gray-600 group-hover:text-white transition-colors" />
-                    </a>
-                  );
-                })}
+        {/* Office Addresses */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto"
+        >
+          {offices.map((office, index) => (
+            <div
+              key={index}
+              className="flex items-start gap-3 p-5 bg-[var(--theme-bg)] rounded-2xl border border-[var(--gray-200)]"
+            >
+              <div className="flex-shrink-0 w-10 h-10 bg-[var(--primary-100)] rounded-xl flex items-center justify-center">
+                <MapPin className="w-5 h-5 text-[var(--primary-600)]" />
               </div>
-            </Card>
+              <div>
+                <div className="text-sm font-bold text-[var(--gray-900)]">{office.title}</div>
+                <div className="text-xs text-[var(--gray-500)] mt-1">{office.address}</div>
+              </div>
+            </div>
+          ))}
+        </motion.div>
 
-            {/* Contact Team Illustration */}
-            <Card padding="lg" className="mt-6">
-              <div className="relative w-full h-64 rounded-xl overflow-hidden">
-                <ImageGallery
-                  section="contact"
-                  className="w-full h-full"
-                  imageClassName="object-cover"
-                />
-              </div>
-            </Card>
-          </motion.div>
+        {/* Response time note */}
+        <div className="text-center mt-8">
+          <p className="text-sm text-[var(--gray-500)]">
+            {t.contact.responseTime || 'We respond within 24 hours'}
+          </p>
         </div>
       </Container>
     </section>

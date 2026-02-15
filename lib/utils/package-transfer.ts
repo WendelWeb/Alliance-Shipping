@@ -217,9 +217,9 @@ export async function autoTransferPackage(params: {
     // Add tracking history entry
     await db.insert(trackingHistory).values({
       packageId,
-      status: 'claimed',
+      status: 'packages.messages.packageClaimed',
       location: 'Alliance Shipping',
-      description: `Package claimed by ${user.firstName || ''} ${user.lastName || ''}`.trim(),
+      description: 'packages.messages.packageClaimed',
     });
 
     // If there's a linked request, approve it

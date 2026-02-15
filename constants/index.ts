@@ -32,21 +32,28 @@ export const LOCATIONS: Location[] = [
       lng: -72.2015,
     },
   },
-];
-
-// Coming Soon Locations
-export const COMING_SOON_LOCATIONS = [
   {
     city: 'Port-au-Prince',
     address: 'Port-au-Prince, Ouest, Haïti',
     country: 'Haiti',
+    coordinates: {
+      lat: 18.5944,
+      lng: -72.3074,
+    },
   },
   {
     city: 'Port-de-Paix',
     address: 'Port-de-Paix, Nord-Ouest, Haïti',
     country: 'Haiti',
+    coordinates: {
+      lat: 19.9408,
+      lng: -72.8303,
+    },
   },
 ];
+
+// No more coming soon - all locations are now active
+export const COMING_SOON_LOCATIONS: Location[] = [];
 
 export const PRICING: PricingInfo = {
   serviceFee: 5,

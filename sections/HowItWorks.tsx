@@ -1,11 +1,9 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Package, Scale, Truck, CheckCircle } from 'lucide-react';
+import { UserPlus, FileText, Warehouse, Truck } from 'lucide-react';
 import { Container } from '@/components/Container';
 import { SectionTitle } from '@/components/SectionTitle';
-import { Card } from '@/components/Card';
-import { ImageGallery } from '@/components/ImageGallery';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
 export function HowItWorks() {
@@ -13,108 +11,82 @@ export function HowItWorks() {
 
   const steps = [
     {
-      icon: Package,
+      icon: UserPlus,
       title: t.howItWorks.steps[0].title,
       description: t.howItWorks.steps[0].description,
       color: 'from-blue-500 to-blue-600',
+      lightBg: 'bg-blue-50',
     },
     {
-      icon: Scale,
+      icon: FileText,
       title: t.howItWorks.steps[1].title,
       description: t.howItWorks.steps[1].description,
       color: 'from-purple-500 to-purple-600',
+      lightBg: 'bg-purple-50',
     },
     {
-      icon: Truck,
+      icon: Warehouse,
       title: t.howItWorks.steps[2].title,
       description: t.howItWorks.steps[2].description,
       color: 'from-orange-500 to-orange-600',
+      lightBg: 'bg-orange-50',
     },
     {
-      icon: CheckCircle,
+      icon: Truck,
       title: t.howItWorks.steps[3].title,
       description: t.howItWorks.steps[3].description,
       color: 'from-green-500 to-green-600',
+      lightBg: 'bg-green-50',
     },
   ];
 
   return (
-    <section id="services" className="section-padding bg-theme-surface-solid">
+    <section id="services" className="py-20 bg-[var(--theme-surface)]">
       <Container>
         <SectionTitle
           title={t.howItWorks.title}
           subtitle={t.howItWorks.subtitle}
         />
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {steps.map((step, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
+              transition={{ duration: 0.5, delay: index * 0.12 }}
+              className="relative"
             >
-              <Card hover className="relative h-full">
+              <div className="bg-[var(--theme-surface)] rounded-2xl border border-[var(--gray-200)] p-6 h-full hover:shadow-lg hover:border-[var(--primary-200)] transition-all duration-300">
                 {/* Step Number */}
-                <div className="absolute -top-4 -left-4 w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                <div className="absolute -top-3 -left-1 w-8 h-8 bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
                   {index + 1}
                 </div>
 
                 {/* Icon */}
-                <div
-                  className={`w-16 h-16 bg-gradient-to-br ${step.color} rounded-xl flex items-center justify-center mb-4 shadow-lg`}
-                >
-                  <step.icon className="w-8 h-8 text-white" />
+                <div className={`w-14 h-14 bg-gradient-to-br ${step.color} rounded-2xl flex items-center justify-center mb-4 shadow-md`}>
+                  <step.icon className="w-7 h-7 text-white" />
                 </div>
 
                 {/* Content */}
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
+                <h3 className="text-lg font-bold text-[var(--gray-900)] mb-2">
                   {step.title}
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-sm text-[var(--gray-600)] leading-relaxed">
                   {step.description}
                 </p>
 
-                {/* Arrow connector (hidden on last item and mobile) */}
+                {/* Connector line (desktop only) */}
                 {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-4 transform -translate-y-1/2">
-                    <svg
-                      className="w-8 h-8 text-primary-300"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
+                  <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
+                    <div className="w-6 h-0.5 bg-[var(--primary-300)]" />
                   </div>
                 )}
-              </Card>
+              </div>
             </motion.div>
           ))}
         </div>
-
-        {/* Process Illustration Carousel */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="mt-16"
-        >
-          <div className="relative w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-xl bg-theme-bg">
-            <ImageGallery
-              section="howItWorks"
-              className="w-full h-full"
-              imageClassName="object-contain"
-            />
-          </div>
-        </motion.div>
       </Container>
     </section>
   );

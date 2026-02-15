@@ -67,9 +67,9 @@ export async function POST(
     // Add tracking history
     await db.insert(trackingHistory).values({
       packageId: transfer.packageId,
-      status: 'cancelled_transfer',
+      status: 'packages.messages.transferCancelled',
       location: 'Alliance Shipping',
-      description: `Transfer cancelled - Package returned to Alliance Shipping pool`,
+      description: 'packages.messages.transferCancelledDesc',
     });
 
     // Log the reverse transfer

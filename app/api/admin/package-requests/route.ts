@@ -234,10 +234,17 @@ export async function PATCH(request: NextRequest) {
         'delivered': 'packages.timeline.delivered',
       };
 
+      const locationKeys: Record<string, string> = {
+        'received': 'packages.locations.miamiWarehouse',
+        'in-transit': 'packages.locations.enRouteToHaiti',
+        'available': 'packages.locations.office',
+        'delivered': 'packages.locations.delivered',
+      };
+
       await db.insert(trackingHistory).values({
         packageId: newPackage.id,
         status: 'packages.timeline.requestSubmitted',
-        location: 'packages.timeline.online',
+        location: 'packages.locations.online',
         description: 'packages.messages.requestCreated',
         timestamp: packageRequest.createdAt,
       });
@@ -245,7 +252,7 @@ export async function PATCH(request: NextRequest) {
       await db.insert(trackingHistory).values({
         packageId: newPackage.id,
         status: statusDescriptions[initialStatus] || 'packages.timeline.requestApproved',
-        location: locationMap[initialStatus],
+        location: locationKeys[initialStatus] || locationMap[initialStatus],
         description: statusDescriptions[initialStatus] || 'packages.messages.requestApproved',
       });
 

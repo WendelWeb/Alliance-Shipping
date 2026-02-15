@@ -393,12 +393,24 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    // Create tracking history entry
+    // Create tracking history entry with i18n keys
+    const statusTitleKeys: Record<string, string> = {
+      'received': 'packages.timeline.received',
+      'in-transit': 'packages.timeline.inTransit',
+      'available': 'packages.timeline.available',
+      'delivered': 'packages.timeline.delivered',
+    };
+    const locationKeys: Record<string, string> = {
+      'received': 'packages.locations.miamiWarehouse',
+      'in-transit': 'packages.locations.enRouteToHaiti',
+      'available': 'packages.locations.office',
+      'delivered': 'packages.locations.delivered',
+    };
     await db.insert(trackingHistory).values({
       packageId: newPackage.id,
-      status: pkgStatus,
-      location: locationMap[pkgStatus] || 'Miami Warehouse',
-      description: `Package created with status: ${pkgStatus}`,
+      status: statusTitleKeys[pkgStatus] || pkgStatus,
+      location: locationKeys[pkgStatus] || 'packages.locations.miamiWarehouse',
+      description: 'packages.messages.packageCreatedByAdmin',
     });
 
     // Log admin activity
@@ -567,11 +579,24 @@ export async function PATCH(request: NextRequest) {
 
     // Add tracking history if status or location changed
     if (status || currentLocation) {
+      const statusTitleKeysUpdate: Record<string, string> = {
+        'received': 'packages.timeline.received',
+        'in-transit': 'packages.timeline.inTransit',
+        'available': 'packages.timeline.available',
+        'delivered': 'packages.timeline.delivered',
+      };
+      const locationKeysUpdate: Record<string, string> = {
+        'received': 'packages.locations.miamiWarehouse',
+        'in-transit': 'packages.locations.enRouteToHaiti',
+        'available': 'packages.locations.office',
+        'delivered': 'packages.locations.delivered',
+      };
+      const effectiveStatus = status || updatedPackage.status;
       await db.insert(trackingHistory).values({
         packageId: id,
-        status: status || updatedPackage.status,
-        location: currentLocation || updatedPackage.currentLocation,
-        description: `Status updated to ${status || updatedPackage.status}`,
+        status: statusTitleKeysUpdate[effectiveStatus] || effectiveStatus,
+        location: locationKeysUpdate[effectiveStatus] || currentLocation || updatedPackage.currentLocation,
+        description: 'packages.messages.statusUpdated',
       });
     }
 
