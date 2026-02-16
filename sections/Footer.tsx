@@ -49,8 +49,8 @@ export function Footer() {
   return (
     <footer className="bg-gray-900 text-gray-300">
       <Container>
-        <div className="py-12 md:py-16">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+        <div className="py-8 md:py-12">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {/* Company Info */}
             <div className="lg:col-span-2">
               <a href="#" className="flex items-center gap-2 mb-4 group">
@@ -135,8 +135,8 @@ export function Footer() {
           </div>
 
           {/* Social Media */}
-          <div className="border-t border-gray-800 pt-8 mb-8">
-            <h3 className="text-white font-bold mb-4 text-center">{t.footer.followUs}</h3>
+          <div className="border-t border-gray-800 pt-6 mb-6">
+            <h3 className="text-white font-bold mb-3 text-center text-sm sm:text-base">{t.footer.followUs}</h3>
             <div className="flex flex-wrap justify-center gap-3">
               {SOCIAL_LINKS.map((social, index) => {
                 const Icon = socialIcons[social.icon] || MessageCircle;
@@ -158,7 +158,7 @@ export function Footer() {
           </div>
 
           {/* Copyright */}
-          <div className="border-t border-gray-800 pt-8 text-center">
+          <div className="border-t border-gray-800 pt-6 text-center">
             <p className="text-sm text-gray-400">
               © {new Date().getFullYear()} Alliance Shipping. {t.footer.allRightsReserved}
             </p>

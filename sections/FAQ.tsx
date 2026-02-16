@@ -13,7 +13,7 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="py-20 bg-[var(--theme-surface)]">
+    <section id="faq" className="py-10 md:py-16 bg-[var(--theme-surface)]">
       <Container size="lg">
         <SectionTitle
           title={t.faq.title}
@@ -37,7 +37,7 @@ export function FAQ() {
             >
               <button
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full px-6 py-4 flex items-center gap-3 text-left bg-[var(--theme-surface)] hover:bg-[var(--theme-bg)] transition-colors"
+                className="w-full px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-2.5 sm:gap-3 text-left bg-[var(--theme-surface)] hover:bg-[var(--theme-bg)] transition-colors"
               >
                 <div className={cn(
                   'flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors',
@@ -48,7 +48,7 @@ export function FAQ() {
                   <HelpCircle className="w-4 h-4" />
                 </div>
                 <span className={cn(
-                  'font-semibold flex-1 transition-colors',
+                  'text-sm sm:text-base font-semibold flex-1 transition-colors',
                   openIndex === index ? 'text-primary-700' : 'text-gray-900'
                 )}>
                   {item.question}
@@ -69,8 +69,8 @@ export function FAQ() {
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div className="px-6 py-4 bg-[var(--theme-bg)] border-t border-gray-100">
-                      <p className="text-gray-700 leading-relaxed text-sm pl-11">
+                    <div className="px-4 sm:px-6 py-3 sm:py-4 bg-[var(--theme-bg)] border-t border-gray-100">
+                      <p className="text-gray-700 leading-relaxed text-sm pl-0 sm:pl-11">
                         {item.answer}
                       </p>
                     </div>

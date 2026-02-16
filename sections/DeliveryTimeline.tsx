@@ -28,7 +28,7 @@ export function DeliveryTimeline() {
   };
 
   return (
-    <section id="locations" className="py-20 bg-[var(--theme-surface)]">
+    <section id="locations" className="py-10 md:py-16 bg-[var(--theme-surface)]">
       <Container>
         <SectionTitle
           title={t.delivery.title}
@@ -36,7 +36,7 @@ export function DeliveryTimeline() {
         />
 
         {/* Active Routes */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 mb-8 sm:mb-12">
           {routeKeys.map((key, index) => {
             const route = (t.delivery as any).routes?.[key];
             const color = routeColors[index];
@@ -60,14 +60,14 @@ export function DeliveryTimeline() {
                 </div>
 
                 {/* Route Icon */}
-                <div className="p-6 pb-0">
-                  <div className={`w-14 h-14 ${color.bg} rounded-2xl flex items-center justify-center mb-4`}>
-                    <Plane className="w-7 h-7 text-white" />
+                <div className="p-4 sm:p-6 pb-0">
+                  <div className={`w-11 h-11 sm:w-14 sm:h-14 ${color.bg} rounded-xl sm:rounded-2xl flex items-center justify-center mb-3`}>
+                    <Plane className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                   </div>
                 </div>
 
                 {/* Route Details */}
-                <div className="p-6 pt-3">
+                <div className="p-4 sm:p-6 pt-2 sm:pt-3">
                   <div className="text-xs text-gray-500 mb-1">{t.delivery.from || 'From'}</div>
                   <div className="text-base font-bold text-gray-900 mb-3">{t.delivery.fromCity || 'Miami, USA'}</div>
 
@@ -107,35 +107,33 @@ export function DeliveryTimeline() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="bg-[var(--theme-surface)] rounded-2xl border border-gray-200 p-8"
+          className="bg-[var(--theme-surface)] rounded-2xl border border-gray-200 p-4 sm:p-6 lg:p-8"
         >
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
             {LOCATIONS.map((location, index) => (
               <div
                 key={index}
                 className="flex items-start gap-3 p-4 bg-[var(--theme-bg)] rounded-xl border border-gray-200"
               >
-                <div className="flex-shrink-0 w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
-                  <MapPin className="w-5 h-5 text-white" />
+                <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-green-500 rounded-lg sm:rounded-xl flex items-center justify-center">
+                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <h4 className="font-bold text-sm text-gray-900">{location.city}</h4>
-                  </div>
-                  <p className="text-xs text-gray-500">{location.country}</p>
+                  <h4 className="font-bold text-xs sm:text-sm text-gray-900">{location.city}</h4>
+                  <p className="text-[11px] sm:text-xs text-gray-500">{location.country}</p>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Map Image */}
-          <div className="relative w-full h-48 md:h-64 rounded-xl overflow-hidden">
+          {/* <div className="relative w-full h-48 md:h-64 rounded-xl overflow-hidden">
             <ImageGallery
               section="delivery"
               className="w-full h-full"
               imageClassName="object-contain"
             />
-          </div>
+          </div> */}
         </motion.div>
       </Container>
     </section>

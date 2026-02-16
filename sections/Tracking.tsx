@@ -80,7 +80,7 @@ export function Tracking() {
   };
 
   return (
-    <section id="tracking" className="py-20 bg-[var(--theme-bg)]">
+    <section id="tracking" className="py-6 md:py-16 bg-[var(--theme-bg)]">
       <Container size="lg">
         <SectionTitle
           title={t.tracking.title}
@@ -96,9 +96,9 @@ export function Tracking() {
         >
           {/* Search Form */}
           <div className="bg-[var(--theme-surface)] rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <form onSubmit={handleTrack}>
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3">
                   <div className="flex-1 relative">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
@@ -133,9 +133,9 @@ export function Tracking() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="border-t border-gray-200 p-6"
+                  className="border-t border-gray-200 p-4 sm:p-6"
                 >
-                  <div className="flex items-center gap-3 p-4 bg-red-50 rounded-xl border border-red-200">
+                  <div className="flex items-center gap-3 p-3 sm:p-4 bg-red-50 rounded-xl border border-red-200">
                     <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
                     <p className="text-sm text-red-700">{error}</p>
                   </div>
@@ -148,9 +148,9 @@ export function Tracking() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="border-t border-gray-200 p-6"
+                  className="border-t border-gray-200 p-4 sm:p-6"
                 >
-                  <div className="flex items-center gap-3 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
+                  <div className="flex items-center gap-3 p-3 sm:p-4 bg-yellow-50 rounded-xl border border-yellow-200">
                     <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
                     <p className="text-sm text-yellow-800">{t.tracking.noResults}</p>
                   </div>
@@ -166,7 +166,7 @@ export function Tracking() {
                   className="border-t border-gray-200"
                 >
                   {/* Package Info */}
-                  <div className="p-6 space-y-4">
+                  <div className="p-4 sm:p-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <h4 className="font-bold text-gray-900">
                         {t.tracking.result?.title || 'Package Found'}
@@ -261,9 +261,9 @@ export function Tracking() {
 
             {/* Empty State */}
             {!result && !error && !isSearching && (
-              <div className="border-t border-gray-200 p-8 text-center">
-                <div className="w-16 h-16 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Package className="w-8 h-8 text-primary-400" />
+              <div className="border-t border-gray-200 p-5 sm:p-8 text-center">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <Package className="w-6 h-6 sm:w-8 sm:h-8 text-primary-400" />
                 </div>
                 <p className="text-sm text-gray-500">
                   {t.tracking.subtitle}

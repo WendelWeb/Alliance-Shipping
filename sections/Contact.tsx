@@ -78,7 +78,7 @@ export function Contact() {
   ];
 
   return (
-    <section id="contact" className="py-20 bg-[var(--theme-surface)]">
+    <section id="contact" className="py-10 md:py-16 bg-[var(--theme-surface)]">
       <Container>
         <SectionTitle
           title={t.contact.title}
@@ -86,7 +86,7 @@ export function Contact() {
         />
 
         {/* Contact Cards Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-14">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8 sm:mb-10">
           {contactCards.map((card, index) => (
             <motion.div
               key={index}
@@ -100,24 +100,24 @@ export function Contact() {
                   href={card.href}
                   target={card.icon === MessageCircle ? '_blank' : undefined}
                   rel={card.icon === MessageCircle ? 'noopener noreferrer' : undefined}
-                  className={`block p-5 rounded-2xl border ${card.color} hover:shadow-lg transition-all duration-300 h-full`}
+                  className={`block p-3 sm:p-4 rounded-xl sm:rounded-2xl border ${card.color} hover:shadow-lg transition-all duration-300 h-full`}
                 >
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${card.iconColor}`}>
-                    <card.icon className="w-6 h-6" />
+                  <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3 ${card.iconColor}`}>
+                    <card.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
-                  <div className="text-xs text-gray-500 mb-1">{card.label}</div>
-                  <div className="text-sm font-bold text-gray-900 mb-2">{card.value}</div>
+                  <div className="text-[10px] sm:text-xs text-gray-500 mb-0.5">{card.label}</div>
+                  <div className="text-xs sm:text-sm font-bold text-gray-900 mb-1 break-all sm:break-normal">{card.value}</div>
                   {card.action && (
-                    <div className="text-xs font-medium text-primary-600">{card.action} &rarr;</div>
+                    <div className="text-[10px] sm:text-xs font-medium text-primary-600">{card.action} &rarr;</div>
                   )}
                 </a>
               ) : (
-                <div className={`p-5 rounded-2xl border ${card.color} h-full`}>
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${card.iconColor}`}>
-                    <card.icon className="w-6 h-6" />
+                <div className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border ${card.color} h-full`}>
+                  <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3 ${card.iconColor}`}>
+                    <card.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
-                  <div className="text-xs text-gray-500 mb-1">{card.label}</div>
-                  <div className="text-sm font-bold text-gray-900">{card.value}</div>
+                  <div className="text-[10px] sm:text-xs text-gray-500 mb-0.5">{card.label}</div>
+                  <div className="text-xs sm:text-sm font-bold text-gray-900">{card.value}</div>
                 </div>
               )}
             </motion.div>
@@ -132,12 +132,12 @@ export function Contact() {
           className="bg-[var(--theme-bg)] rounded-3xl border border-gray-200 overflow-hidden shadow-sm"
         >
           {/* Section Header */}
-          <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-6 sm:px-8 py-5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-white" />
+          <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-4 sm:px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                <Building2 className="w-4 h-4 text-white" />
               </div>
-              <h3 className="text-lg font-bold text-white">
+              <h3 className="text-base sm:text-lg font-bold text-white">
                 {off.title || 'Our Offices'}
               </h3>
             </div>
@@ -150,9 +150,9 @@ export function Contact() {
             )}
           </div>
 
-          <div className="p-6 sm:p-8">
+          <div className="p-4 sm:p-6">
             {/* Miami Warehouse */}
-            <div className="mb-8">
+            <div className="mb-6">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-2 h-2 rounded-full bg-blue-500" />
                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
@@ -160,14 +160,14 @@ export function Contact() {
                 </span>
               </div>
 
-              <div className="bg-gradient-to-br from-blue-50 via-indigo-50/50 to-white rounded-2xl border border-blue-100 p-5 sm:p-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
-                    <Warehouse className="w-6 h-6 text-white" />
+              <div className="bg-gradient-to-br from-blue-50 via-indigo-50/50 to-white rounded-xl sm:rounded-2xl border border-blue-100 p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20">
+                    <Warehouse className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="text-lg font-bold text-gray-900">
+                      <h4 className="text-base sm:text-lg font-bold text-gray-900">
                         {t.contact.info.miami?.title || 'Miami Office'}
                       </h4>
                       <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
@@ -205,7 +205,7 @@ export function Contact() {
               ) : haitiDepots.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-8">{off.noDepots || 'No depots available'}</p>
               ) : (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {haitiDepots.map((depot, index) => (
                     <motion.div
                       key={depot.id}
@@ -269,7 +269,7 @@ export function Contact() {
         </motion.div>
 
         {/* Response time note */}
-        <div className="text-center mt-8">
+        <div className="text-center mt-6">
           <p className="text-sm text-gray-500">
             {t.contact.responseTime || 'We respond within 24 hours'}
           </p>

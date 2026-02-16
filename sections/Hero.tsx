@@ -40,7 +40,7 @@ export function Hero() {
   ];
 
   return (
-    <section className="relative pt-2 pb-16 md:pt-6 md:pb-24 overflow-hidden">
+    <section className="relative pt-0.5 pb-10 md:pt-6 md:pb-20 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-[var(--theme-bg)] -z-10" />
 
@@ -49,7 +49,7 @@ export function Hero() {
       <div className="absolute bottom-20 -left-20 md:left-10 w-72 h-72 bg-secondary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-75" />
 
       <Container>
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Left Content */}
           <div>
             <motion.div
@@ -57,7 +57,7 @@ export function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--theme-surface)] rounded-full shadow-sm border border-gray-200 mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--theme-surface)] rounded-full shadow-sm border border-gray-200 mb-2 sm:mb-4 mt-0">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                 <span className="text-sm font-medium text-gray-700">
                   {t.hero.trustBadge}
@@ -108,7 +108,7 @@ export function Hero() {
                     <div className="text-lg sm:text-2xl font-bold text-gray-900">
                       <AnimatedCounter target={stat.value} suffix={stat.suffix} />
                     </div>
-                    <div className="text-[10px] sm:text-xs text-gray-600 leading-tight">{stat.label}</div>
+                    <div className="text-xs text-gray-600 leading-tight">{stat.label}</div>
                   </motion.div>
                 ))}
               </div>
@@ -135,7 +135,7 @@ export function Hero() {
               <motion.div
                 animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 3, repeat: Infinity, delay: 2 }}
-                className="absolute top-4 left-4 md:top-8 md:left-8 bg-[var(--theme-surface)] p-3 md:p-4 rounded-xl shadow-lg border border-gray-100"
+                className="absolute top-3 left-3 sm:top-4 sm:left-4 md:top-8 md:left-8 bg-[var(--theme-surface)] p-2 sm:p-2.5 md:p-4 rounded-lg sm:rounded-xl shadow-lg border border-gray-100"
               >
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-green-600" />
@@ -143,10 +143,10 @@ export function Hero() {
                     {t.hero.floatingCards?.warehouseLabel || 'Miami Warehouse'}
                   </div>
                 </div>
-                <div className="text-[10px] md:text-xs text-primary-600 font-bold mt-1">
+                <div className="text-xs text-primary-600 font-bold mt-1">
                   PQ-068508
                 </div>
-                <div className="text-[10px] md:text-xs text-gray-500 mt-0.5">
+                <div className="text-xs text-gray-500 mt-0.5">
                   8298 NW 68th St, FL 33195
                 </div>
               </motion.div>
@@ -155,13 +155,13 @@ export function Hero() {
               <motion.div
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity }}
-                className="absolute top-4 right-4 md:top-8 md:right-8 bg-[var(--theme-surface)] p-3 md:p-4 rounded-xl shadow-lg border border-gray-100"
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 md:top-8 md:right-8 bg-[var(--theme-surface)] p-2.5 md:p-4 rounded-xl shadow-lg border border-gray-100"
               >
                 <div className="flex items-center gap-2">
                   <Truck className="w-4 h-4 text-primary-600" />
                   <div className="text-xs md:text-sm font-semibold text-gray-900">Miami → Haiti</div>
                 </div>
-                <div className="text-[10px] md:text-xs text-gray-500 mt-1">
+                <div className="text-xs text-gray-500 mt-1">
                   {t.hero.floatingCards?.fastDelivery || 'Fast Delivery'} • 3-6 {t.pricing.days}
                 </div>
               </motion.div>
@@ -170,7 +170,7 @@ export function Hero() {
               <motion.div
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-                className="absolute bottom-4 left-4 md:bottom-8 md:left-8 bg-[var(--theme-surface)] p-3 md:p-4 rounded-xl shadow-lg border border-gray-100"
+                className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 md:bottom-8 md:left-8 bg-[var(--theme-surface)] p-2.5 md:p-4 rounded-xl shadow-lg border border-gray-100"
               >
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-green-600" />
@@ -178,7 +178,7 @@ export function Hero() {
                     {loading ? '...' : `$${pricing.pricePerLb}`}{t.hero.floatingCards?.perLb || '/lb'}
                   </div>
                 </div>
-                <div className="text-[10px] md:text-xs text-gray-500 mt-1">
+                <div className="text-xs text-gray-500 mt-1">
                   {t.hero.floatingCards?.startingAt || 'Starting at'} • {primaryCity?.city || 'Cap-Haïtien'}
                 </div>
               </motion.div>

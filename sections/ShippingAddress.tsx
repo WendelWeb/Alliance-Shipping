@@ -51,7 +51,7 @@ export function ShippingAddress() {
   ];
 
   return (
-    <section id="shipping-address" className="py-16 md:py-20 relative overflow-hidden">
+    <section id="shipping-address" className="py-6 md:py-16 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-primary-50/80 via-blue-50/40 to-transparent -z-10" />
       <div className="absolute inset-0 bg-[var(--theme-bg)] -z-20" />
@@ -67,25 +67,23 @@ export function ShippingAddress() {
           <div className="bg-[var(--theme-surface)] rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
 
             {/* Header Banner */}
-            <div className="bg-gradient-to-r from-primary-600 via-primary-500 to-blue-500 px-6 sm:px-10 py-6 sm:py-8">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+            <div className="bg-gradient-to-r from-primary-600 via-primary-500 to-blue-500 px-4 sm:px-8 py-4 sm:py-6">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
                   <Warehouse className="w-5 h-5 text-white" />
                 </div>
-                <div>
-                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
-                    {sa.title}
-                  </h2>
-                </div>
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
+                  {sa.title}
+                </h2>
               </div>
-              <p className="text-sm sm:text-base text-white/80 max-w-2xl">
+              <p className="text-sm text-white/80 max-w-2xl">
                 {sa.subtitle}
               </p>
             </div>
 
             {/* Content */}
-            <div className="p-6 sm:p-10">
-              <div className="grid lg:grid-cols-5 gap-8 lg:gap-10">
+            <div className="p-4 sm:p-6 lg:p-8">
+              <div className="grid lg:grid-cols-5 gap-6 lg:gap-8">
 
                 {/* Left: Code + Warning (2 cols) */}
                 <div className="lg:col-span-2 space-y-6">
@@ -98,12 +96,12 @@ export function ShippingAddress() {
                     className="text-center"
                   >
                     {/* Code */}
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-3">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-2">
                       {sa.codeTitle}
                     </p>
                     <div className="relative inline-block">
-                      <div className="bg-gradient-to-br from-primary-50 to-blue-50 border-2 border-dashed border-primary-300 rounded-2xl px-8 py-5 sm:px-10 sm:py-6">
-                        <p className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-600 tracking-[0.15em] font-mono">
+                      <div className="bg-gradient-to-br from-primary-50 to-blue-50 border-2 border-dashed border-primary-300 rounded-2xl px-6 py-4 sm:px-8 sm:py-5">
+                        <p className="text-2xl sm:text-3xl lg:text-4xl font-black text-primary-600 tracking-[0.15em] font-mono">
                           {WAREHOUSE_CODE}
                         </p>
                       </div>
@@ -114,7 +112,7 @@ export function ShippingAddress() {
                     </div>
 
                     {/* Address */}
-                    <div className="mt-5 bg-gray-50 border border-gray-200 rounded-xl px-5 py-4">
+                    <div className="mt-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
                       <div className="flex items-center justify-center gap-2 mb-2">
                         <MapPin className="w-4 h-4 text-primary-600" />
                         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Miami, Florida</span>
@@ -127,7 +125,7 @@ export function ShippingAddress() {
                       </p>
                     </div>
 
-                    <p className="text-sm text-gray-500 mt-4 max-w-xs mx-auto">
+                    <p className="text-sm text-gray-500 mt-3 max-w-xs mx-auto">
                       {sa.codeExplanation}
                     </p>
                     <button
@@ -228,7 +226,7 @@ export function ShippingAddress() {
             </div>
 
             {/* Footer — Delivery Cities + CTA */}
-            <div className="border-t border-gray-100 bg-gray-50/50 px-6 sm:px-10 py-5 sm:py-6">
+            <div className="border-t border-gray-100 bg-gray-50/50 px-4 sm:px-8 py-4 sm:py-5">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 {/* Cities */}
                 <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">

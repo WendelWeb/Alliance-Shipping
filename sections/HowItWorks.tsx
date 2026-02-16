@@ -41,14 +41,14 @@ export function HowItWorks() {
   ];
 
   return (
-    <section id="services" className="py-20 bg-[var(--theme-surface)]">
+    <section id="services" className="py-6 md:py-16 bg-[var(--theme-surface)]">
       <Container>
         <SectionTitle
           title={t.howItWorks.title}
           subtitle={t.howItWorks.subtitle}
         />
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           {steps.map((step, index) => (
             <motion.div
               key={index}
@@ -58,22 +58,22 @@ export function HowItWorks() {
               transition={{ duration: 0.5, delay: index * 0.12 }}
               className="relative"
             >
-              <div className="bg-[var(--theme-surface)] rounded-2xl border border-gray-200 p-6 h-full hover:shadow-lg hover:border-primary-200 transition-all duration-300">
+              <div className="bg-[var(--theme-surface)] rounded-2xl border border-gray-200 p-4 sm:p-5 lg:p-6 h-full hover:shadow-lg hover:border-primary-200 transition-all duration-300">
                 {/* Step Number */}
-                <div className="absolute -top-3 -left-1 w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                <div className="absolute -top-2.5 -left-1 w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow-lg">
                   {index + 1}
                 </div>
 
                 {/* Icon */}
-                <div className={`w-14 h-14 bg-gradient-to-br ${step.color} rounded-2xl flex items-center justify-center mb-4 shadow-md`}>
-                  <step.icon className="w-7 h-7 text-white" />
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-gradient-to-br ${step.color} rounded-xl sm:rounded-2xl flex items-center justify-center mb-3 shadow-md`}>
+                  <step.icon className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-white" />
                 </div>
 
                 {/* Content */}
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                <h3 className="text-sm sm:text-base lg:text-lg font-bold text-gray-900 mb-1 sm:mb-2">
                   {step.title}
                 </h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
                   {step.description}
                 </p>
 
