@@ -57,7 +57,13 @@ export default function CalculatorPage() {
   useEffect(() => {
     fetch('/api/special-items/public')
       .then((res) => res.json())
-      .then((data) => setSpecialItems(data.items || []))
+      .then((data) => {
+        const items = (data.items || []).map((item: any) => ({
+          ...item,
+          fixedFee: typeof item.fixedFee === 'string' ? parseFloat(item.fixedFee) : (item.fixedFee || 0),
+        }));
+        setSpecialItems(items);
+      })
       .catch(() => setSpecialItems([]))
       .finally(() => setLoadingSpecial(false));
   }, []);

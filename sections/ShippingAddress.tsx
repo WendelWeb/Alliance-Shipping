@@ -97,21 +97,36 @@ export function ShippingAddress() {
                     transition={{ duration: 0.4, delay: 0.2 }}
                     className="text-center"
                   >
+                    {/* Code */}
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-3">
                       {sa.codeTitle}
                     </p>
                     <div className="relative inline-block">
-                      <div className="bg-gradient-to-br from-primary-50 to-blue-50 border-2 border-dashed border-primary-300 rounded-2xl px-8 py-6 sm:px-10 sm:py-7">
+                      <div className="bg-gradient-to-br from-primary-50 to-blue-50 border-2 border-dashed border-primary-300 rounded-2xl px-8 py-5 sm:px-10 sm:py-6">
                         <p className="text-3xl sm:text-4xl lg:text-5xl font-black text-primary-600 tracking-[0.15em] font-mono">
                           {WAREHOUSE_CODE}
                         </p>
                       </div>
-                      {/* Decorative corner dots */}
                       <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-primary-400 rounded-full" />
                       <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-primary-400 rounded-full" />
                       <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-primary-400 rounded-full" />
                       <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-primary-400 rounded-full" />
                     </div>
+
+                    {/* Address */}
+                    <div className="mt-5 bg-gray-50 border border-gray-200 rounded-xl px-5 py-4">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <MapPin className="w-4 h-4 text-primary-600" />
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Miami, Florida</span>
+                      </div>
+                      <p className="text-base sm:text-lg font-bold text-gray-900 leading-snug">
+                        {WAREHOUSE_ADDRESS}
+                      </p>
+                      <p className="text-sm font-semibold text-gray-600 mt-0.5">
+                        {WAREHOUSE_CITY}, {WAREHOUSE_STATE} {WAREHOUSE_ZIP}
+                      </p>
+                    </div>
+
                     <p className="text-sm text-gray-500 mt-4 max-w-xs mx-auto">
                       {sa.codeExplanation}
                     </p>

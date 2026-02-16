@@ -192,6 +192,10 @@ export const en = {
     subtitle: 'Everything you need to know',
     items: [
       {
+        question: 'How does Alliance Shipping work from A to Z?',
+        answer: '1) Create your free account on our website or mobile app. 2) Order your items online (Amazon, Walmart, Shein, etc.) using our Miami address: 8298 Northwest 68th Street, Apt PQ-068508, Miami, Florida 33195. The code PQ-068508 must appear in your first name or the Apt/Suite field. 3) Submit a package request on Alliance Shipping with your carrier tracking number (UPS, USPS, FedEx). 4) Your package arrives at our Miami warehouse — we receive it, weigh it, and assign you an Alliance Shipping tracking number. 5) You receive an email with the cost breakdown (service fee + weight + customs if applicable). 6) Your package is shipped to your city in Haiti (Cap-Haïtien, Port-au-Prince, or Port-de-Paix) in 3 to 7 days. 7) Track your package in real-time and receive a notification when it is available for pickup.',
+      },
+      {
         question: 'How do I send a package?',
         answer: 'You must create an account, then submit a package request with your carrier tracking number (UPS, USPS, FedEx, etc.). Our team reviews the request, weighs the package at our Miami warehouse, and assigns you an Alliance Shipping tracking number (AS-XXXXXXXXXX). This is mandatory for all shipments.',
       },
@@ -246,6 +250,10 @@ export const en = {
       {
         question: 'How do I contact support?',
         answer: 'You can reach us by phone, email, or WhatsApp. Our team is available Monday to Saturday from 8AM to 6PM. Check the contact section below for all our details.',
+      },
+      {
+        question: 'What is the Miami shipping address and the PQ code?',
+        answer: 'When you order online from a US store (Amazon, Walmart, Shein, etc.), use our Miami warehouse address as the shipping address: 8298 Northwest 68th Street, Miami, Florida 33195. You must include the code PQ-068508 in either your First Name field or the Apt/Suite field. This code identifies your packages at our warehouse. Without it, your package may be delayed or lost.',
       },
     ],
   },
@@ -796,6 +804,10 @@ export const en = {
       faq9a: 'Special items (phones, tablets, laptops, Starlink, etc.) have a fixed shipping fee instead of per-pound pricing. You can check the exact price for each special item in our calculator before sending.',
       faq10q: 'Are there customs fees?',
       faq10a: 'Yes, Haitian customs may apply fees on certain items. These fees are separate from our shipping costs and are determined by customs authorities. We display any known customs charges on your package details.',
+      faq11q: 'What is the Miami shipping address and the PQ code?',
+      faq11a: 'When ordering online from a US store (Amazon, Walmart, Shein, etc.), use our Miami warehouse address: 8298 Northwest 68th Street, Miami, Florida 33195. Include the code PQ-068508 in your First Name or Apt/Suite field so we can identify your package. Without this code, your package may be delayed or lost.',
+      faq12q: 'How does Alliance Shipping work from A to Z?',
+      faq12a: '1) Create your free account. 2) Order online (Amazon, Walmart, Shein, etc.) using our Miami address: 8298 NW 68th St, Apt PQ-068508, Miami FL 33195. 3) Submit a package request with your carrier tracking number. 4) We receive and weigh your package in Miami. 5) You get an email with the cost breakdown. 6) Your package ships to your city in Haiti in 3 to 7 days. 7) Track in real-time and get notified when available for pickup.',
     },
   },
   auth: {

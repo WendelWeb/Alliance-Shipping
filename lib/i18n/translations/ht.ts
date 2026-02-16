@@ -192,6 +192,10 @@ export const ht = {
     subtitle: 'Tout sa ou bezwen konnen',
     items: [
       {
+        question: 'Kijan Alliance Shipping fonksyone de A a Z?',
+        answer: '1) Kreye kont gratis ou sou sit wèb nou oswa aplikasyon mobil la. 2) Kòmande atik ou sou entènèt (Amazon, Walmart, Shein, elatriye) ak adrès Miami nou an : 8298 Northwest 68th Street, Apt PQ-068508, Miami, Florida 33195. Kòd PQ-068508 dwe parèt nan prenon ou oswa nan chan Apt/Suite. 3) Soumèt yon demann koli sou Alliance Shipping ak nimewo swivi transpòtè a (UPS, USPS, FedEx). 4) Koli ou rive nan depo Miami nou an — nou resevwa li, nou peze li, epi nou ba ou yon nimewo swivi Alliance Shipping. 5) Ou resevwa yon imèl ak detay frè yo (sèvis + pwa + ladwàn si aplikab). 6) Koli ou voye nan vil ou an Ayiti (Okap, Pòtoprens oswa Pòdpè) nan 3 a 7 jou. 7) Swiv koli ou an tan reyèl epi resevwa yon notifikasyon lè li disponib pou retire.',
+      },
+      {
         question: 'Kijan pou m voye yon koli?',
         answer: 'Ou dwe kreye yon kont, epi soumèt yon demann koli ak nimewo swivi transpòtè ou (UPS, USPS, FedEx, elatriye). Ekip nou egzamine demann nan, peze koli a nan depo Miami nou an, epi ba ou yon nimewo swivi Alliance Shipping (AS-XXXXXXXXXX). Sa obligatwa pou tout anvwa.',
       },
@@ -246,6 +250,10 @@ export const ht = {
       {
         question: 'Kijan pou m kontakte sipò?',
         answer: 'Ou kapab jwenn nou pa telefòn, imèl oswa WhatsApp. Ekip nou disponib lendi a samdi de 8è a 6è. Tcheke seksyon kontak la pi ba a pou tout enfòmasyon nou.',
+      },
+      {
+        question: 'Ki adrès ekspedisyon Miami a ak kòd PQ a?',
+        answer: 'Lè w ap kòmande sou entènèt nan yon sit ameriken (Amazon, Walmart, Shein, elatriye), itilize adrès depo Miami nou an : 8298 Northwest 68th Street, Miami, Florida 33195. Ou dwe mete kòd PQ-068508 nan chan Prenon oswa nan chan Apt/Suite. Kòd sa a idantifye koli ou nan depo nou an. San kòd sa a, koli ou ka an reta oswa pèdi.',
       },
     ],
   },
@@ -796,6 +804,10 @@ export const ht = {
       faq9a: 'Atik espesyal yo (telefòn, tablèt, laptop, Starlink, elatriye) gen frè transpò fiks olye pri pa liv. Ou ka tcheke pri egzak pou chak atik espesyal nan kalkilatè nou an anvan ou voye.',
       faq10q: 'Èske gen frè ladwàn?',
       faq10a: 'Wi, ladwàn ayisyen an ka aplike frè sou sèten atik. Frè sa yo separe de frè transpò nou yo e se otorite ladwàn yo ki detèmine yo. Nou afiche frè ladwàn yo sou detay koli ou.',
+      faq11q: 'Ki adrès ekspedisyon Miami a ak kòd PQ a?',
+      faq11a: 'Lè w ap kòmande sou entènèt nan yon sit ameriken (Amazon, Walmart, Shein, elatriye), itilize adrès depo Miami nou an : 8298 Northwest 68th Street, Miami, Florida 33195. Mete kòd PQ-068508 nan Prenon ou oswa nan chan Apt/Suite pou nou ka idantifye koli ou. San kòd sa a, koli ou ka an reta oswa pèdi.',
+      faq12q: 'Kijan Alliance Shipping fonksyone de A a Z?',
+      faq12a: '1) Kreye kont gratis ou. 2) Kòmande sou entènèt (Amazon, Walmart, Shein, elatriye) ak adrès Miami nou an : 8298 NW 68th St, Apt PQ-068508, Miami FL 33195. 3) Soumèt yon demann koli ak nimewo swivi transpòtè a. 4) Nou resevwa epi peze koli ou nan Miami. 5) Ou resevwa yon imèl ak detay frè yo. 6) Koli ou voye nan vil ou an Ayiti nan 3 a 7 jou. 7) Swiv an tan reyèl epi resevwa notifikasyon lè li disponib.',
     },
   },
   auth: {
