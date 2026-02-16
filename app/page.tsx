@@ -2,13 +2,14 @@
 
 import { Header } from '@/components/Header';
 import { Hero } from '@/sections/Hero';
+import { ShippingAddress } from '@/sections/ShippingAddress';
 import { HowItWorks } from '@/sections/HowItWorks';
+import { Tracking } from '@/sections/Tracking';
 import { Pricing } from '@/sections/Pricing';
 import { DeliveryTimeline } from '@/sections/DeliveryTimeline';
 import { Trust } from '@/sections/Trust';
 import { FAQ } from '@/sections/FAQ';
 import { News } from '@/sections/News';
-import { Tracking } from '@/sections/Tracking';
 import { Contact } from '@/sections/Contact';
 import { Footer } from '@/sections/Footer';
 import { BottomNav } from '@/components/BottomNav';
@@ -19,6 +20,7 @@ export default function Home() {
       <Header />
       <main className="pb-24 md:pb-32">
         <Hero />
+        <ShippingAddress />
         <HowItWorks />
         <Tracking />
         <Pricing />

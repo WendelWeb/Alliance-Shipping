@@ -267,15 +267,21 @@ export default function ProfilePage() {
                       <h3 className="font-bold text-sm" style={{ color: colors.gray[900] }}>
                         {t.profile.shippingAddress.cardTitle}
                       </h3>
-                      <p className="text-xs mt-0.5" style={{ color: colors.gray[500] }}>
-                        {t.profile.shippingAddress.cardSubtitle}
-                      </p>
                       <p className="text-lg font-bold tracking-widest mt-1" style={{ color: colors.primary[600] }}>
                         PQ-068508
+                      </p>
+                      <p className="text-xs mt-0.5 truncate max-w-[220px] sm:max-w-none" style={{ color: colors.gray[500] }}>
+                        8298 NW 68th St, Miami FL 33195
                       </p>
                     </div>
                   </div>
                   <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" style={{ color: colors.gray[400] }} />
+                </div>
+                <div className="flex items-center gap-2 mt-3 pt-3 justify-center" style={{ borderTopWidth: 1, borderTopStyle: 'solid', borderTopColor: colors.gray[200] }}>
+                  <Copy className="w-3.5 h-3.5" style={{ color: colors.primary[600] }} />
+                  <span className="text-sm font-semibold" style={{ color: colors.primary[600] }}>
+                    {t.profile.shippingAddress.viewTemplate}
+                  </span>
                 </div>
               </Card>
             </Link>

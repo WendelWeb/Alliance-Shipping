@@ -131,6 +131,26 @@ export function Hero() {
 
               <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-secondary-600/20 pointer-events-none" />
 
+              {/* Floating card - Warehouse Address */}
+              <motion.div
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 3, repeat: Infinity, delay: 2 }}
+                className="absolute top-4 left-4 md:top-8 md:left-8 bg-[var(--theme-surface)] p-3 md:p-4 rounded-xl shadow-lg border border-gray-100"
+              >
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-green-600" />
+                  <div className="text-xs md:text-sm font-semibold text-gray-900">
+                    {t.hero.floatingCards?.warehouseLabel || 'Miami Warehouse'}
+                  </div>
+                </div>
+                <div className="text-[10px] md:text-xs text-primary-600 font-bold mt-1">
+                  PQ-068508
+                </div>
+                <div className="text-[10px] md:text-xs text-gray-500 mt-0.5">
+                  8298 NW 68th St, FL 33195
+                </div>
+              </motion.div>
+
               {/* Floating card - Route */}
               <motion.div
                 animate={{ y: [0, -10, 0] }}
