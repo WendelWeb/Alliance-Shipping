@@ -237,7 +237,7 @@ export function ShippingAddress() {
                   {DELIVERY_CITIES.map((city) => (
                     <span
                       key={city.name}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-gray-200 text-gray-700"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--theme-surface-solid)] border border-gray-200 text-gray-700"
                     >
                       <span className={`w-2 h-2 ${city.dot} rounded-full animate-pulse`} />
                       {city.name}

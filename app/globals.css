@@ -149,3 +149,144 @@ html.no-transition,
 html.no-transition * {
   transition: none !important;
 }
+
+/* ==================== DARK MODE OVERRIDES ==================== */
+/* Fix hardcoded colors that don't adapt to dark themes */
+
+[data-dark="true"] .bg-white {
+  background-color: var(--theme-surface-solid) !important;
+}
+
+[data-dark="true"] .bg-gray-50 {
+  background-color: rgb(var(--gray-100)) !important;
+}
+
+[data-dark="true"] .bg-gray-100 {
+  background-color: rgb(var(--gray-200)) !important;
+}
+
+/* Accent colored backgrounds → semi-transparent in dark mode */
+[data-dark="true"] .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+[data-dark="true"] .bg-blue-100 {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+[data-dark="true"] .bg-amber-50,
+[data-dark="true"] .bg-orange-50 {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+}
+[data-dark="true"] .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+[data-dark="true"] .bg-green-50 {
+  background-color: rgba(34, 197, 94, 0.1) !important;
+}
+[data-dark="true"] .bg-green-100 {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+}
+[data-dark="true"] .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+[data-dark="true"] .bg-red-100 {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+}
+[data-dark="true"] .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+[data-dark="true"] .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+}
+[data-dark="true"] .bg-purple-50 {
+  background-color: rgba(139, 92, 246, 0.1) !important;
+}
+[data-dark="true"] .bg-purple-100 {
+  background-color: rgba(139, 92, 246, 0.15) !important;
+}
+[data-dark="true"] .bg-yellow-50 {
+  background-color: rgba(234, 179, 8, 0.1) !important;
+}
+[data-dark="true"] .bg-yellow-100 {
+  background-color: rgba(234, 179, 8, 0.15) !important;
+}
+[data-dark="true"] .bg-violet-50 {
+  background-color: rgba(139, 92, 246, 0.1) !important;
+}
+[data-dark="true"] .bg-indigo-50 {
+  background-color: rgba(99, 102, 241, 0.1) !important;
+}
+[data-dark="true"] .bg-primary-50 {
+  background-color: rgb(var(--primary-50) / 0.15) !important;
+}
+
+/* Hardcoded text colors for dark mode readability */
+[data-dark="true"] .text-amber-700,
+[data-dark="true"] .text-amber-800 {
+  color: rgba(245, 158, 11, 0.9) !important;
+}
+[data-dark="true"] .text-blue-800 {
+  color: rgba(96, 165, 250, 0.9) !important;
+}
+[data-dark="true"] .text-green-700 {
+  color: rgba(74, 222, 128, 0.9) !important;
+}
+[data-dark="true"] .text-red-600,
+[data-dark="true"] .text-red-700 {
+  color: rgba(248, 113, 113, 0.9) !important;
+}
+[data-dark="true"] .text-yellow-800 {
+  color: rgba(250, 204, 21, 0.9) !important;
+}
+
+/* Border colors */
+[data-dark="true"] .border-amber-200,
+[data-dark="true"] .border-amber-300 {
+  border-color: rgba(245, 158, 11, 0.25) !important;
+}
+[data-dark="true"] .border-blue-100,
+[data-dark="true"] .border-blue-200 {
+  border-color: rgba(59, 130, 246, 0.2) !important;
+}
+[data-dark="true"] .border-green-200 {
+  border-color: rgba(34, 197, 94, 0.2) !important;
+}
+[data-dark="true"] .border-red-200 {
+  border-color: rgba(239, 68, 68, 0.2) !important;
+}
+[data-dark="true"] .border-emerald-200,
+[data-dark="true"] .border-emerald-300 {
+  border-color: rgba(16, 185, 129, 0.2) !important;
+}
+[data-dark="true"] .border-purple-200 {
+  border-color: rgba(139, 92, 246, 0.2) !important;
+}
+[data-dark="true"] .border-yellow-200 {
+  border-color: rgba(234, 179, 8, 0.2) !important;
+}
+
+/* Gradient backgrounds that use hardcoded gray */
+[data-dark="true"] .from-gray-900 {
+  --tw-gradient-from: #111827 !important;
+}
+[data-dark="true"] .to-gray-800 {
+  --tw-gradient-to: #1f2937 !important;
+}
+
+/* Gradient accent backgrounds in dark mode */
+[data-dark="true"] .from-primary-50\/80 {
+  --tw-gradient-from: rgb(var(--primary-50) / 0.1) !important;
+}
+[data-dark="true"] .from-blue-50\/40,
+[data-dark="true"] .via-blue-50\/40 {
+  --tw-gradient-via: rgba(59, 130, 246, 0.05) !important;
+}
+[data-dark="true"] .from-amber-50,
+[data-dark="true"] .via-orange-50 {
+  --tw-gradient-from: rgba(245, 158, 11, 0.08) !important;
+}
+[data-dark="true"] .to-yellow-50 {
+  --tw-gradient-to: rgba(234, 179, 8, 0.05) !important;
+}
+[data-dark="true"] .from-blue-50 {
+  --tw-gradient-from: rgba(59, 130, 246, 0.08) !important;
+}

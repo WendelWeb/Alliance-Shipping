@@ -28,7 +28,7 @@ export function DeliveryTimeline() {
   };
 
   return (
-    <section id="locations" className="py-10 md:py-16 bg-[var(--theme-surface)]">
+    <section id="locations" className="py-6 md:py-16 bg-[var(--theme-surface)]">
       <Container>
         <SectionTitle
           title={t.delivery.title}

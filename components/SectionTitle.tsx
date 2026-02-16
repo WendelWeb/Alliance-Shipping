@@ -23,7 +23,7 @@ export function SectionTitle({
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
       className={cn(
-        'mb-8 md:mb-12',
+        'mb-5 md:mb-10',
         {
           'text-left': align === 'left',
           'text-center': align === 'center',

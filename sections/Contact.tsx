@@ -132,18 +132,18 @@ export function Contact() {
           className="bg-[var(--theme-bg)] rounded-3xl border border-gray-200 overflow-hidden shadow-sm"
         >
           {/* Section Header */}
-          <div className="bg-gradient-to-r from-gray-900 to-gray-800 px-4 sm:px-6 py-4 flex items-center justify-between">
+          <div className="bg-gradient-to-r from-[#111827] to-[#1f2937] px-4 sm:px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <Building2 className="w-4 h-4 text-white" />
+                <Building2 className="w-4 h-4 text-[#ffffff]" />
               </div>
-              <h3 className="text-base sm:text-lg font-bold text-white">
+              <h3 className="text-base sm:text-lg font-bold text-[#ffffff]">
                 {off.title || 'Our Offices'}
               </h3>
             </div>
             {!loadingDepots && (
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-gray-300 bg-white/10 px-3 py-1 rounded-full">
+                <span className="text-xs font-semibold text-[#d1d5db] bg-white/10 px-3 py-1 rounded-full">
                   {1 + haitiDepots.length} locations
                 </span>
               </div>
@@ -213,7 +213,7 @@ export function Contact() {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
                       transition={{ delay: index * 0.08 }}
-                      className="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:border-emerald-300 hover:shadow-lg transition-all duration-300"
+                      className="group bg-[var(--theme-surface-solid)] rounded-2xl border border-gray-200 overflow-hidden hover:border-emerald-300 hover:shadow-lg transition-all duration-300"
                     >
                       {/* Depot Header */}
                       <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3">

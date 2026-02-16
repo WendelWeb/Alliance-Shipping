@@ -80,7 +80,7 @@ export function Tracking() {
   };
 
   return (
-    <section id="tracking" className="py-6 md:py-16 bg-[var(--theme-bg)]">
+    <section id="tracking" className="pt-6 pb-4 md:py-16 bg-[var(--theme-bg)]">
       <Container size="lg">
         <SectionTitle
           title={t.tracking.title}

@@ -62,7 +62,7 @@ export function Pricing() {
   ];
 
   return (
-    <section id="pricing" className="py-6 md:py-16 bg-[var(--theme-bg)]">
+    <section id="pricing" className="pt-4 pb-6 md:py-16 bg-[var(--theme-bg)]">
       <Container>
         <SectionTitle
           title={t.pricing.title}
@@ -262,7 +262,7 @@ export function Pricing() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="space-y-8"
+            className="space-y-4 sm:space-y-6"
           >
             {/* What's Included */}
             <div>
@@ -321,7 +321,7 @@ export function Pricing() {
                     { icon: Package, text: t.pricing.loyalty?.pointsPerLb || '$0.10 per lb shipped' },
                     { icon: Coins, text: t.pricing.loyalty?.redemption || '1,000 points = $1 discount' },
                   ].map((item, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-white rounded-xl p-2.5 sm:p-3 border border-amber-100 shadow-sm">
+                    <div key={index} className="flex items-center gap-2 bg-[var(--theme-surface-solid)] rounded-xl p-2.5 sm:p-3 border border-amber-100 shadow-sm">
                       <div className="w-7 h-7 sm:w-8 sm:h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
                         <item.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600" />
                       </div>
@@ -351,7 +351,7 @@ export function Pricing() {
                   const ex = (t.pricing.loyalty as any)?.example;
 
                   return (
-                    <div className="bg-white rounded-xl border-2 border-dashed border-amber-300 overflow-hidden">
+                    <div className="bg-[var(--theme-surface-solid)] rounded-xl border-2 border-dashed border-amber-300 overflow-hidden">
                       {/* Example Header */}
                       <div className="bg-amber-50 px-3 sm:px-5 py-2.5 border-b border-amber-200 flex items-center gap-2">
                         <Zap className="w-4 h-4 text-amber-600 flex-shrink-0" />
@@ -429,7 +429,7 @@ export function Pricing() {
                   );
                 })()}
 
-                <p className="text-sm text-amber-700 font-semibold text-center">
+                <p className="text-sm text-amber-700 font-semibold text-center bg-amber-100/50 rounded-lg px-3 py-2">
                   {t.pricing.loyalty?.program || 'The more you ship, the more you save!'}
                 </p>
               </div>

@@ -47,7 +47,7 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-gray-900 text-gray-300">
+    <footer className="bg-[#111827] text-[#d1d5db]">
       <Container>
         <div className="py-8 md:py-12">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -55,28 +55,28 @@ export function Footer() {
             <div className="lg:col-span-2">
               <a href="#" className="flex items-center gap-2 mb-4 group">
                 <div className="bg-gradient-primary p-2 rounded-lg group-hover:scale-105 transition-transform">
-                  <Package className="w-6 h-6 text-white" />
+                  <Package className="w-6 h-6 text-[#ffffff]" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xl font-bold text-white font-display">
+                  <span className="text-xl font-bold text-[#ffffff] font-display">
                     Alliance Shipping
                   </span>
-                  <span className="text-xs text-gray-400">USA • Haïti</span>
+                  <span className="text-xs text-[#9ca3af]">USA • Haïti</span>
                 </div>
               </a>
-              <p className="text-gray-400 mb-6 max-w-md">
+              <p className="text-[#9ca3af] mb-6 max-w-md">
                 {t.footer.description}
               </p>
               <div className="space-y-2">
                 <p className="text-sm">
-                  <span className="text-gray-500">Email:</span>{' '}
-                  <a href={`mailto:${COMPANY_INFO.email}`} className="hover:text-primary-400 transition-colors">
+                  <span className="text-[#6b7280]">Email:</span>{' '}
+                  <a href={`mailto:${COMPANY_INFO.email}`} className="hover:text-[#60a5fa] transition-colors">
                     {COMPANY_INFO.email}
                   </a>
                 </p>
                 <p className="text-sm">
-                  <span className="text-gray-500">Phone:</span>{' '}
-                  <a href={`tel:${COMPANY_INFO.phone}`} className="hover:text-primary-400 transition-colors">
+                  <span className="text-[#6b7280]">Phone:</span>{' '}
+                  <a href={`tel:${COMPANY_INFO.phone}`} className="hover:text-[#60a5fa] transition-colors">
                     {COMPANY_INFO.phone}
                   </a>
                 </p>
@@ -85,13 +85,13 @@ export function Footer() {
 
             {/* Quick Links */}
             <div>
-              <h3 className="text-white font-bold mb-4">{t.footer.quickLinks}</h3>
+              <h3 className="text-[#ffffff] font-bold mb-4">{t.footer.quickLinks}</h3>
               <ul className="space-y-2">
                 {quickLinks.map((link, index) => (
                   <li key={index}>
                     <a
                       href={link.href}
-                      className="text-gray-400 hover:text-primary-400 transition-colors text-sm"
+                      className="text-[#9ca3af] hover:text-[#60a5fa] transition-colors text-sm"
                     >
                       {link.label}
                     </a>
@@ -100,7 +100,7 @@ export function Footer() {
                 <li>
                   <a
                     href="#faq"
-                    className="text-gray-400 hover:text-primary-400 transition-colors text-sm"
+                    className="text-[#9ca3af] hover:text-[#60a5fa] transition-colors text-sm"
                   >
                     {t.nav.faq}
                   </a>
@@ -108,7 +108,7 @@ export function Footer() {
                 <li>
                   <a
                     href="#contact"
-                    className="text-gray-400 hover:text-primary-400 transition-colors text-sm"
+                    className="text-[#9ca3af] hover:text-[#60a5fa] transition-colors text-sm"
                   >
                     {t.nav.contact}
                   </a>
@@ -118,13 +118,13 @@ export function Footer() {
 
             {/* Legal */}
             <div>
-              <h3 className="text-white font-bold mb-4">{t.footer.legal}</h3>
+              <h3 className="text-[#ffffff] font-bold mb-4">{t.footer.legal}</h3>
               <ul className="space-y-2">
                 {legalLinks.map((link, index) => (
                   <li key={index}>
                     <a
                       href={link.href}
-                      className="text-gray-400 hover:text-primary-400 transition-colors text-sm"
+                      className="text-[#9ca3af] hover:text-[#60a5fa] transition-colors text-sm"
                     >
                       {link.label}
                     </a>
@@ -136,7 +136,7 @@ export function Footer() {
 
           {/* Social Media */}
           <div className="border-t border-gray-800 pt-6 mb-6">
-            <h3 className="text-white font-bold mb-3 text-center text-sm sm:text-base">{t.footer.followUs}</h3>
+            <h3 className="text-[#ffffff] font-bold mb-3 text-center text-sm sm:text-base">{t.footer.followUs}</h3>
             <div className="flex flex-wrap justify-center gap-3">
               {SOCIAL_LINKS.map((social, index) => {
                 const Icon = socialIcons[social.icon] || MessageCircle;
@@ -146,11 +146,11 @@ export function Footer() {
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-10 h-10 bg-gray-800 hover:bg-primary-600 rounded-lg flex items-center justify-center transition-colors group"
+                    className="w-10 h-10 bg-[#1f2937] hover:bg-[#2563eb] rounded-lg flex items-center justify-center transition-colors group"
                     aria-label={social.name}
                     title={social.name}
                   >
-                    <Icon className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+                    <Icon className="w-5 h-5 text-[#9ca3af] group-hover:text-[#ffffff] transition-colors" />
                   </a>
                 );
               })}
@@ -159,7 +159,7 @@ export function Footer() {
 
           {/* Copyright */}
           <div className="border-t border-gray-800 pt-6 text-center">
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-[#9ca3af]">
               © {new Date().getFullYear()} Alliance Shipping. {t.footer.allRightsReserved}
             </p>
           </div>
