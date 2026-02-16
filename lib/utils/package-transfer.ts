@@ -80,13 +80,16 @@ export async function autoTransferPackage(params: {
   transferType?: 'user_claimed' | 'admin_assigned';
   transferredBy?: number; // Admin ID if manually assigned
   notes?: string;
+  locale?: string; // User's preferred locale for email
 }): Promise<{
   success: boolean;
   userName?: string;
   trackingNumber?: string;
   error?: string;
+  emailSent?: boolean;
+  emailError?: string;
 }> {
-  const { packageId, newUserId, requestId, transferType = 'user_claimed', transferredBy, notes } = params;
+  const { packageId, newUserId, requestId, transferType = 'user_claimed', transferredBy, notes, locale } = params;
 
   try {
     // Get the user's info
@@ -234,17 +237,49 @@ export async function autoTransferPackage(params: {
         .where(eq(packageRequests.id, requestId));
     }
 
-    // Send approval email
+    // Send approval email with locale and fee breakdown
     const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+    const emailLocale = locale || user.preferredLanguage || 'fr';
+
+    // Build special item fee for breakdown
+    let specialItemFee = 0;
+    if (pkg.specialItemId) {
+      const [specialItem] = await db
+        .select({ fixedFee: specialItemFees.fixedFee })
+        .from(specialItemFees)
+        .where(eq(specialItemFees.id, pkg.specialItemId))
+        .limit(1);
+      specialItemFee = specialItem ? parseFloat(specialItem.fixedFee) : 0;
+    }
+
+    let emailSent = false;
+    let emailError: string | undefined;
     try {
-      await sendPackageApprovedEmail(
+      const emailResult = await sendPackageApprovedEmail(
         user.email,
         userName,
         pkg.trackingNumber,
-        fees.totalCost
+        fees.totalCost,
+        emailLocale,
+        {
+          serviceFee: fees.serviceFee,
+          weightCost: fees.weightCost,
+          specialItemFee,
+          customsFees: existingCustomsFees,
+          weight,
+          city: user.city || 'N/A',
+        }
       );
-    } catch (emailErr) {
-      console.error('[AUTO-TRANSFER] Email send failed:', emailErr);
+      emailSent = emailResult?.success || false;
+      if (!emailSent) {
+        emailError = emailResult?.error?.message || emailResult?.error?.toString() || 'Unknown email error';
+        console.error('[AUTO-TRANSFER] Email failed:', emailError);
+      } else {
+        console.log('[AUTO-TRANSFER] Approval email sent to:', user.email, '| Locale:', emailLocale);
+      }
+    } catch (emailErr: any) {
+      emailError = emailErr?.message || 'Email exception';
+      console.error('[AUTO-TRANSFER] Email exception:', emailErr);
     }
 
     // Send push notification
@@ -263,6 +298,8 @@ export async function autoTransferPackage(params: {
       success: true,
       userName,
       trackingNumber: pkg.trackingNumber,
+      emailSent,
+      emailError,
     };
   } catch (error) {
     console.error('[AUTO-TRANSFER] Error:', error);

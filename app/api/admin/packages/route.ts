@@ -465,6 +465,7 @@ export async function POST(request: NextRequest) {
           packageId: newPackage.id,
           newUserId: pendingReq.userId,
           requestId: pendingReq.id,
+          locale: 'fr', // Admin context, user will get email in their preferred language via package-transfer
         });
         if (transferResult.success) {
           transferMessage = `Un utilisateur (${pendingReq.userName} - ${pendingReq.userEmail}) avait deja fait une requete pour ce colis. Le colis a ete automatiquement transfere.`;

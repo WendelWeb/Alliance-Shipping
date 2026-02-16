@@ -180,14 +180,16 @@ export async function POST(request: NextRequest) {
 
     if (unclaimedPackage) {
       // Auto-transfer the package to this user
+      const emailLocale = locale || dbUser.preferredLanguage || 'fr';
       const transferResult = await autoTransferPackage({
         packageId: unclaimedPackage.id,
         newUserId: dbUser.id,
         requestId: packageRequest.id,
+        locale: emailLocale,
       });
 
       if (transferResult.success) {
-        console.log('[PACKAGE-REQUEST] Auto-transfer successful:', transferResult.trackingNumber, '→', userName);
+        console.log('[PACKAGE-REQUEST] Auto-transfer successful:', transferResult.trackingNumber, '→', userName, '| Email sent:', transferResult.emailSent);
         return NextResponse.json({
           success: true,
           autoTransferred: true,
@@ -199,6 +201,11 @@ export async function POST(request: NextRequest) {
           package: {
             trackingNumber: transferResult.trackingNumber,
             status: unclaimedPackage.status,
+          },
+          email: {
+            sent: transferResult.emailSent || false,
+            to: clerkUser.emailAddresses[0]?.emailAddress || null,
+            error: transferResult.emailError || null,
           },
         });
       }
