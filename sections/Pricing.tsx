@@ -62,7 +62,7 @@ export function Pricing() {
   ];
 
   return (
-    <section id="pricing" className="py-10 md:py-16 bg-[var(--theme-bg)]">
+    <section id="pricing" className="py-6 md:py-16 bg-[var(--theme-bg)]">
       <Container>
         <SectionTitle
           title={t.pricing.title}
