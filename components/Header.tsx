@@ -22,7 +22,8 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 theme-surface-solid backdrop-blur-sm border-b border-gray-200 w-full">
+    <>
+    <header className="fixed top-0 left-0 right-0 z-50 theme-surface-solid backdrop-blur-sm border-b border-gray-200 w-full">
       <Container>
         <nav className="flex items-center justify-between h-16 lg:h-20 w-full">
           {/* Logo */}
@@ -110,5 +111,8 @@ export function Header() {
         </div>
       </Container>
     </header>
+    {/* Spacer to compensate for fixed header height */}
+    <div className="h-16 lg:h-20" />
+    </>
   );
 }

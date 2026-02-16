@@ -51,8 +51,6 @@ export default function CalculatorPage() {
     deliveryDays: string;
   } | null>(null);
 
-  const specialT = (t as any).specialItems || {};
-
   // Fetch special items
   useEffect(() => {
     fetch('/api/special-items/public')
@@ -75,7 +73,7 @@ export default function CalculatorPage() {
 
   const calculatePrice = () => {
     if (!selectedCity) {
-      alert('Please select a destination city first');
+      alert(t.calculator.selectCityFirst);
       return;
     }
 
@@ -144,7 +142,7 @@ export default function CalculatorPage() {
                   <div className="p-3 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl shadow-lg shadow-primary-500/30">
                     <MapPin className="w-6 h-6 text-white" />
                   </div>
-                  <h2 className="text-2xl font-bold" style={{ color: colors.gray[900] }}>Select Destination City</h2>
+                  <h2 className="text-2xl font-bold" style={{ color: colors.gray[900] }}>{t.calculator.selectCityTitle}</h2>
                 </div>
 
                 {pricingLoading ? (
@@ -316,7 +314,7 @@ export default function CalculatorPage() {
                       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-4">
                         <div className="flex items-center gap-2 text-white/90">
                           <MapPin className="w-5 h-5" />
-                          <span className="font-semibold">Destination: {selectedCity}</span>
+                          <span className="font-semibold">{t.calculator.destination}: {selectedCity}</span>
                         </div>
                       </div>
 
@@ -365,7 +363,7 @@ export default function CalculatorPage() {
                         <>
                           <MapPin className="w-16 h-16 text-white/30 mx-auto mb-4" />
                           <p className="text-white/60">
-                            Select a destination city to start
+                            {t.calculator.selectCityToStart}
                           </p>
                         </>
                       ) : (
@@ -403,10 +401,10 @@ export default function CalculatorPage() {
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold" style={{ color: colors.gray[900] }}>
-                      {specialT.title || 'Special Items'}
+                      {t.calculator.specialItemsTitle}
                     </h3>
                     <p className="text-sm" style={{ color: colors.gray[500] }}>
-                      {specialT.subtitle || 'Fixed pricing for certain items'}
+                      {t.calculator.specialItemsSubtitle}
                     </p>
                   </div>
                 </div>
@@ -443,9 +441,11 @@ export default function CalculatorPage() {
                                 <p className="font-semibold text-sm" style={{ color: colors.gray[900] }}>
                                   {item.itemName}
                                 </p>
-                                {item.minModel && item.maxModel && (
-                                  <p className="text-xs" style={{ color: colors.gray[500] }}>
-                                    {item.minModel} - {item.maxModel}
+                                {(item.minModel || item.maxModel) && (
+                                  <p className="text-xs font-medium" style={{ color: colors.primary[600] }}>
+                                    {item.minModel && item.maxModel
+                                      ? `${item.minModel} - ${item.maxModel}`
+                                      : item.minModel || item.maxModel}
                                   </p>
                                 )}
                                 {item.description && (

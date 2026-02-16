@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { DollarSign, Check, Shield, MapPin, Package, Star, Gift, Smartphone, Calculator } from 'lucide-react';
+import { DollarSign, Check, Shield, MapPin, Package, Star, Gift, Smartphone, Calculator, TrendingUp, Zap, Coins } from 'lucide-react';
 import { Container } from '@/components/Container';
 import { SectionTitle } from '@/components/SectionTitle';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -293,39 +293,146 @@ export function Pricing() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200"
+              className="bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 rounded-2xl border border-amber-200 overflow-hidden"
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
-                  <Gift className="w-5 h-5 text-amber-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">
-                    {t.pricing.loyalty?.title || 'Loyalty Program'}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {t.pricing.loyalty?.description || 'Earn rewards with every shipment'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { icon: Star, text: t.pricing.loyalty?.pointsPerDollar || '50 points per $1 spent' },
-                  { icon: DollarSign, text: t.pricing.loyalty?.creditPerShipment || '$1 credit per shipment' },
-                  { icon: Package, text: t.pricing.loyalty?.pointsPerLb || '$0.10 per lb shipped' },
-                  { icon: Gift, text: t.pricing.loyalty?.redemption || '1,000 points = $1 discount' },
-                ].map((item, index) => (
-                  <div key={index} className="flex items-center gap-2 bg-white/80 rounded-lg p-3">
-                    <item.icon className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                    <span className="text-xs font-medium text-gray-700">{item.text}</span>
+              {/* Header */}
+              <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                    <Gift className="w-5 h-5 text-white" />
                   </div>
-                ))}
+                  <div>
+                    <h3 className="text-lg font-bold text-white">
+                      {t.pricing.loyalty?.title || 'Loyalty Program'}
+                    </h3>
+                    <p className="text-sm text-white/80">
+                      {t.pricing.loyalty?.description || 'Earn rewards with every shipment'}
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <p className="text-sm text-amber-700 font-medium mt-4 text-center">
-                {t.pricing.loyalty?.program || 'The more you ship, the more you save!'}
-              </p>
+              <div className="p-6 space-y-5">
+                {/* How you earn - 2x2 grid */}
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { icon: Star, text: t.pricing.loyalty?.pointsPerDollar || '50 points per $1 spent' },
+                    { icon: DollarSign, text: t.pricing.loyalty?.creditPerShipment || '$1 credit per shipment' },
+                    { icon: Package, text: t.pricing.loyalty?.pointsPerLb || '$0.10 per lb shipped' },
+                    { icon: Coins, text: t.pricing.loyalty?.redemption || '1,000 points = $1 discount' },
+                  ].map((item, index) => (
+                    <div key={index} className="flex items-center gap-2.5 bg-white rounded-xl p-3 border border-amber-100 shadow-sm">
+                      <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <item.icon className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-700 leading-tight">{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Dynamic Example */}
+                {(() => {
+                  const exampleWeight = 20;
+                  const capHaitien = cities.find(c => c.city === 'Cap-Haïtien');
+                  if (!capHaitien) return null;
+
+                  const exServiceFee = capHaitien.serviceFee;
+                  const exPricePerLb = capHaitien.pricePerLb;
+                  const exWeightCost = exampleWeight * exPricePerLb;
+                  const exTotal = exServiceFee + exWeightCost;
+
+                  // Rewards calculation
+                  const creditPerShipment = 1;
+                  const weightBonus = exampleWeight * 0.10;
+                  const pointsEarned = Math.floor(exTotal * 50);
+                  const pointsValue = pointsEarned / 1000;
+                  const totalRewards = creditPerShipment + weightBonus + pointsValue;
+
+                  const ex = (t.pricing.loyalty as any)?.example;
+
+                  return (
+                    <div className="bg-white rounded-xl border-2 border-dashed border-amber-300 overflow-hidden">
+                      {/* Example Header */}
+                      <div className="bg-amber-50 px-5 py-3 border-b border-amber-200 flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-amber-600" />
+                        <span className="text-sm font-bold text-amber-800">
+                          {ex?.title || 'Concrete Example'}: {exampleWeight} lbs {ex?.to || 'to'} Cap-Haïtien
+                        </span>
+                      </div>
+
+                      <div className="p-5 grid grid-cols-2 gap-4">
+                        {/* Left: Shipping Cost */}
+                        <div>
+                          <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                            {ex?.shippingCost || 'Shipping Cost'}
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-500">{ex?.serviceFee || 'Service fee'}</span>
+                              <span className="font-semibold text-gray-800">${exServiceFee.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-500">{ex?.weightFee || 'Weight fee'}</span>
+                              <span className="font-semibold text-gray-800">${exWeightCost.toFixed(2)}</span>
+                            </div>
+                            <div className="text-[10px] text-gray-400">
+                              {exampleWeight} lbs × ${exPricePerLb.toFixed(2)}
+                            </div>
+                            <div className="border-t border-gray-200 pt-2">
+                              <div className="flex justify-between">
+                                <span className="font-bold text-gray-900">{ex?.total || 'Total'}</span>
+                                <span className="font-bold text-lg text-gray-900">${exTotal.toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right: Rewards */}
+                        <div className="border-l border-amber-200 pl-4">
+                          <div className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-3 flex items-center gap-1">
+                            <TrendingUp className="w-3.5 h-3.5" />
+                            {ex?.yourRewards || 'Your Rewards'}
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-500">{ex?.creditShipment || 'Shipment credit'}</span>
+                              <span className="font-semibold text-green-600">+${creditPerShipment.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-500">{ex?.weightBonus || 'Weight bonus'}</span>
+                              <span className="font-semibold text-green-600">+${weightBonus.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-500">{ex?.pointsEarned || 'Points earned'}</span>
+                              <span className="font-semibold text-amber-600">{pointsEarned.toLocaleString()} pts</span>
+                            </div>
+                            <div className="text-[10px] text-gray-400">
+                              {pointsEarned.toLocaleString()} pts ÷ 1000 = ${pointsValue.toFixed(2)} {ex?.pointsConversion || '= in discounts'}
+                            </div>
+                            <div className="border-t border-amber-200 pt-2">
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-amber-800">{ex?.totalRewards || 'Total earned'}</span>
+                                <span className="font-bold text-lg text-green-600">${totalRewards.toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Footer */}
+                      <div className="bg-green-50 px-5 py-2.5 border-t border-green-200 text-center">
+                        <span className="text-sm font-bold text-green-700">
+                          💰 ${totalRewards.toFixed(2)} {ex?.perShipment || 'earned on this shipment'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <p className="text-sm text-amber-700 font-semibold text-center">
+                  {t.pricing.loyalty?.program || 'The more you ship, the more you save!'}
+                </p>
+              </div>
             </motion.div>
 
             {/* Perfume Note */}
