@@ -31,8 +31,8 @@ export function FAQ() {
               className={cn(
                 'border rounded-xl overflow-hidden transition-all duration-300',
                 openIndex === index
-                  ? 'border-[var(--primary-300)] shadow-md'
-                  : 'border-[var(--gray-200)] hover:border-[var(--primary-200)]'
+                  ? 'border-primary-300 shadow-md'
+                  : 'border-gray-200 hover:border-primary-200'
               )}
             >
               <button
@@ -42,21 +42,21 @@ export function FAQ() {
                 <div className={cn(
                   'flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-colors',
                   openIndex === index
-                    ? 'bg-[var(--primary-100)] text-[var(--primary-600)]'
-                    : 'bg-[var(--gray-100)] text-[var(--gray-400)]'
+                    ? 'bg-primary-100 text-primary-600'
+                    : 'bg-gray-100 text-gray-400'
                 )}>
                   <HelpCircle className="w-4 h-4" />
                 </div>
                 <span className={cn(
                   'font-semibold flex-1 transition-colors',
-                  openIndex === index ? 'text-[var(--primary-700)]' : 'text-[var(--gray-900)]'
+                  openIndex === index ? 'text-primary-700' : 'text-gray-900'
                 )}>
                   {item.question}
                 </span>
                 <ChevronDown
                   className={cn(
-                    'w-5 h-5 text-[var(--gray-400)] flex-shrink-0 transition-transform duration-300',
-                    openIndex === index && 'transform rotate-180 text-[var(--primary-500)]'
+                    'w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-300',
+                    openIndex === index && 'transform rotate-180 text-primary-500'
                   )}
                 />
               </button>
@@ -69,8 +69,8 @@ export function FAQ() {
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div className="px-6 py-4 bg-[var(--theme-bg)] border-t border-[var(--gray-100)]">
-                      <p className="text-[var(--gray-700)] leading-relaxed text-sm pl-11">
+                    <div className="px-6 py-4 bg-[var(--theme-bg)] border-t border-gray-100">
+                      <p className="text-gray-700 leading-relaxed text-sm pl-11">
                         {item.answer}
                       </p>
                     </div>

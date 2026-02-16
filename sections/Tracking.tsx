@@ -95,24 +95,24 @@ export function Tracking() {
           className="max-w-2xl mx-auto"
         >
           {/* Search Form */}
-          <div className="bg-[var(--theme-surface)] rounded-2xl shadow-xl border border-[var(--gray-200)] overflow-hidden">
+          <div className="bg-[var(--theme-surface)] rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
             <div className="p-6">
               <form onSubmit={handleTrack}>
                 <div className="flex gap-3">
                   <div className="flex-1 relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--gray-400)]" />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="text"
                       placeholder={t.tracking.placeholder}
                       value={trackingNumber}
                       onChange={(e) => setTrackingNumber(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3.5 border-2 border-[var(--gray-200)] rounded-xl bg-[var(--theme-bg)] text-[var(--gray-900)] focus:border-[var(--primary-500)] focus:outline-none transition-colors placeholder:text-[var(--gray-400)]"
+                      className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl bg-[var(--theme-bg)] text-gray-900 focus:border-primary-500 focus:outline-none transition-colors placeholder:text-gray-400"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={isSearching || !trackingNumber.trim()}
-                    className="px-6 py-3.5 bg-[var(--primary-600)] text-white rounded-xl font-medium hover:bg-[var(--primary-700)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-6 py-3.5 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {isSearching ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
@@ -133,7 +133,7 @@ export function Tracking() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="border-t border-[var(--gray-200)] p-6"
+                  className="border-t border-gray-200 p-6"
                 >
                   <div className="flex items-center gap-3 p-4 bg-red-50 rounded-xl border border-red-200">
                     <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -148,7 +148,7 @@ export function Tracking() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="border-t border-[var(--gray-200)] p-6"
+                  className="border-t border-gray-200 p-6"
                 >
                   <div className="flex items-center gap-3 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
                     <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
@@ -163,12 +163,12 @@ export function Tracking() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="border-t border-[var(--gray-200)]"
+                  className="border-t border-gray-200"
                 >
                   {/* Package Info */}
                   <div className="p-6 space-y-4">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-bold text-[var(--gray-900)]">
+                      <h4 className="font-bold text-gray-900">
                         {t.tracking.result?.title || 'Package Found'}
                       </h4>
                       {(() => {
@@ -185,24 +185,24 @@ export function Tracking() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="p-3 bg-[var(--theme-bg)] rounded-lg">
-                        <div className="text-xs text-[var(--gray-500)]">{t.tracking.result?.trackingNumber || 'Tracking'}</div>
-                        <div className="text-sm font-bold text-[var(--gray-900)] mt-0.5">{result.package.trackingNumber}</div>
+                        <div className="text-xs text-gray-500">{t.tracking.result?.trackingNumber || 'Tracking'}</div>
+                        <div className="text-sm font-bold text-gray-900 mt-0.5">{result.package.trackingNumber}</div>
                       </div>
                       {result.package.weight && (
                         <div className="p-3 bg-[var(--theme-bg)] rounded-lg">
-                          <div className="text-xs text-[var(--gray-500)]">{t.tracking.result?.weight || 'Weight'}</div>
-                          <div className="text-sm font-bold text-[var(--gray-900)] mt-0.5">{result.package.weight} {t.tracking.result?.lbs || 'lbs'}</div>
+                          <div className="text-xs text-gray-500">{t.tracking.result?.weight || 'Weight'}</div>
+                          <div className="text-sm font-bold text-gray-900 mt-0.5">{result.package.weight} {t.tracking.result?.lbs || 'lbs'}</div>
                         </div>
                       )}
                       {result.package.city && (
                         <div className="p-3 bg-[var(--theme-bg)] rounded-lg">
-                          <div className="text-xs text-[var(--gray-500)]">{t.tracking.result?.city || 'Destination'}</div>
-                          <div className="text-sm font-bold text-[var(--gray-900)] mt-0.5">{result.package.city}</div>
+                          <div className="text-xs text-gray-500">{t.tracking.result?.city || 'Destination'}</div>
+                          <div className="text-sm font-bold text-gray-900 mt-0.5">{result.package.city}</div>
                         </div>
                       )}
                       <div className="p-3 bg-[var(--theme-bg)] rounded-lg">
-                        <div className="text-xs text-[var(--gray-500)]">{t.tracking.result?.createdAt || 'Shipped on'}</div>
-                        <div className="text-sm font-bold text-[var(--gray-900)] mt-0.5">
+                        <div className="text-xs text-gray-500">{t.tracking.result?.createdAt || 'Shipped on'}</div>
+                        <div className="text-sm font-bold text-gray-900 mt-0.5">
                           {new Date(result.package.createdAt).toLocaleDateString()}
                         </div>
                       </div>
@@ -211,7 +211,7 @@ export function Tracking() {
                     {/* Tracking History Timeline */}
                     {result.history && result.history.length > 0 && (
                       <div className="pt-4">
-                        <h5 className="text-sm font-semibold text-[var(--gray-700)] mb-4">
+                        <h5 className="text-sm font-semibold text-gray-700 mb-4">
                           {t.tracking.result?.history || 'Tracking History'}
                         </h5>
                         <div className="space-y-0">
@@ -228,23 +228,23 @@ export function Tracking() {
                               >
                                 {/* Timeline line */}
                                 {index < result.history!.length - 1 && (
-                                  <div className="absolute left-[18px] top-10 bottom-0 w-0.5 bg-[var(--gray-200)]" />
+                                  <div className="absolute left-[18px] top-10 bottom-0 w-0.5 bg-gray-200" />
                                 )}
                                 {/* Icon */}
                                 <div className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center z-10 ${
-                                  isFirst ? 'bg-[var(--primary-600)] text-white' : 'bg-[var(--gray-100)] text-[var(--gray-400)]'
+                                  isFirst ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-400'
                                 }`}>
                                   <StatusIcon className="w-4 h-4" />
                                 </div>
                                 {/* Content */}
                                 <div className="pb-6 flex-1">
-                                  <div className={`text-sm font-medium ${isFirst ? 'text-[var(--gray-900)]' : 'text-[var(--gray-600)]'}`}>
+                                  <div className={`text-sm font-medium ${isFirst ? 'text-gray-900' : 'text-gray-600'}`}>
                                     {getStatusLabel(entry.status)}
                                   </div>
                                   {entry.location && (
-                                    <div className="text-xs text-[var(--gray-500)] mt-0.5">{entry.location}</div>
+                                    <div className="text-xs text-gray-500 mt-0.5">{entry.location}</div>
                                   )}
-                                  <div className="text-xs text-[var(--gray-400)] mt-0.5">
+                                  <div className="text-xs text-gray-400 mt-0.5">
                                     {new Date(entry.timestamp).toLocaleString()}
                                   </div>
                                 </div>
@@ -261,11 +261,11 @@ export function Tracking() {
 
             {/* Empty State */}
             {!result && !error && !isSearching && (
-              <div className="border-t border-[var(--gray-200)] p-8 text-center">
-                <div className="w-16 h-16 bg-[var(--primary-50)] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Package className="w-8 h-8 text-[var(--primary-400)]" />
+              <div className="border-t border-gray-200 p-8 text-center">
+                <div className="w-16 h-16 bg-primary-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Package className="w-8 h-8 text-primary-400" />
                 </div>
-                <p className="text-sm text-[var(--gray-500)]">
+                <p className="text-sm text-gray-500">
                   {t.tracking.subtitle}
                 </p>
               </div>

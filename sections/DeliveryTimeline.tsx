@@ -15,7 +15,7 @@ export function DeliveryTimeline() {
 
   const routeKeys = ['capHaitien', 'portAuPrince', 'portDePaix'] as const;
   const routeColors = [
-    { bg: 'bg-[var(--primary-600)]', light: 'bg-[var(--primary-50)]', border: 'border-[var(--primary-200)]' },
+    { bg: 'bg-primary-600', light: 'bg-primary-50', border: 'border-primary-200' },
     { bg: 'bg-emerald-600', light: 'bg-emerald-50', border: 'border-emerald-200' },
     { bg: 'bg-violet-600', light: 'bg-violet-50', border: 'border-violet-200' },
   ];
@@ -68,28 +68,28 @@ export function DeliveryTimeline() {
 
                 {/* Route Details */}
                 <div className="p-6 pt-3">
-                  <div className="text-xs text-[var(--gray-500)] mb-1">{t.delivery.from || 'From'}</div>
-                  <div className="text-base font-bold text-[var(--gray-900)] mb-3">{t.delivery.fromCity || 'Miami, USA'}</div>
+                  <div className="text-xs text-gray-500 mb-1">{t.delivery.from || 'From'}</div>
+                  <div className="text-base font-bold text-gray-900 mb-3">{t.delivery.fromCity || 'Miami, USA'}</div>
 
                   <div className="flex items-center gap-2 my-2">
                     <div className={`h-0.5 flex-1 ${color.bg} opacity-30`} />
-                    <Plane className={`w-4 h-4 text-[var(--gray-400)] rotate-90`} />
+                    <Plane className={`w-4 h-4 text-gray-400 rotate-90`} />
                     <div className={`h-0.5 flex-1 ${color.bg} opacity-30`} />
                   </div>
 
-                  <div className="text-xs text-[var(--gray-500)] mb-1">{t.delivery.to || 'To'}</div>
-                  <div className="text-base font-bold text-[var(--gray-900)]">{route?.to || key}</div>
+                  <div className="text-xs text-gray-500 mb-1">{t.delivery.to || 'To'}</div>
+                  <div className="text-base font-bold text-gray-900">{route?.to || key}</div>
 
                   {/* Delivery Time & Price */}
-                  <div className="mt-4 pt-4 border-t border-[var(--gray-100)] space-y-2">
+                  <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
                     <div className="flex items-center gap-2 text-sm">
-                      <Clock className="w-4 h-4 text-[var(--gray-400)]" />
-                      <span className="text-[var(--gray-600)]">{route?.duration || '3-6 days'}</span>
+                      <Clock className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-600">{route?.duration || '3-6 days'}</span>
                     </div>
                     {cityPricing && (
                       <div className="flex items-center gap-2 text-sm">
                         <DollarSign className="w-4 h-4 text-green-500" />
-                        <span className="text-[var(--gray-600)]">
+                        <span className="text-gray-600">
                           ${cityPricing.serviceFee} + ${cityPricing.pricePerLb}/lb
                         </span>
                       </div>
@@ -107,22 +107,22 @@ export function DeliveryTimeline() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="bg-[var(--theme-surface)] rounded-2xl border border-[var(--gray-200)] p-8"
+          className="bg-[var(--theme-surface)] rounded-2xl border border-gray-200 p-8"
         >
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {LOCATIONS.map((location, index) => (
               <div
                 key={index}
-                className="flex items-start gap-3 p-4 bg-[var(--theme-bg)] rounded-xl border border-[var(--gray-200)]"
+                className="flex items-start gap-3 p-4 bg-[var(--theme-bg)] rounded-xl border border-gray-200"
               >
                 <div className="flex-shrink-0 w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
                   <MapPin className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-0.5">
-                    <h4 className="font-bold text-sm text-[var(--gray-900)]">{location.city}</h4>
+                    <h4 className="font-bold text-sm text-gray-900">{location.city}</h4>
                   </div>
-                  <p className="text-xs text-[var(--gray-500)]">{location.country}</p>
+                  <p className="text-xs text-gray-500">{location.country}</p>
                 </div>
               </div>
             ))}

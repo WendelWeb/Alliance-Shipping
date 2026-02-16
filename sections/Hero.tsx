@@ -45,8 +45,8 @@ export function Hero() {
       <div className="absolute inset-0 bg-[var(--theme-bg)] -z-10" />
 
       {/* Decorative blobs */}
-      <div className="absolute top-20 -right-20 md:right-10 w-72 h-72 bg-[var(--primary-200)] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
-      <div className="absolute bottom-20 -left-20 md:left-10 w-72 h-72 bg-[var(--secondary-200)] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-75" />
+      <div className="absolute top-20 -right-20 md:right-10 w-72 h-72 bg-primary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
+      <div className="absolute bottom-20 -left-20 md:left-10 w-72 h-72 bg-secondary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-75" />
 
       <Container>
         <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -57,14 +57,14 @@ export function Hero() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--theme-surface)] rounded-full shadow-sm border border-[var(--gray-200)] mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--theme-surface)] rounded-full shadow-sm border border-gray-200 mb-6">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-sm font-medium text-[var(--gray-700)]">
+                <span className="text-sm font-medium text-gray-700">
                   {t.hero.trustBadge}
                 </span>
               </div>
 
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-[var(--gray-900)] mb-4 sm:mb-6 font-display leading-tight">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 sm:mb-6 font-display leading-tight">
                 {t.hero.title}
                 <br />
                 <span className="gradient-primary bg-clip-text text-transparent">
@@ -72,21 +72,21 @@ export function Hero() {
                 </span>
               </h1>
 
-              <p className="text-base sm:text-lg lg:text-xl text-[var(--gray-600)] mb-6 sm:mb-8 leading-relaxed">
+              <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 leading-relaxed">
                 {t.hero.description}
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8 sm:mb-12">
                 <a
                   href="/dashboard/request-package"
-                  className="group inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 bg-[var(--primary-600)] text-white hover:bg-[var(--primary-700)] sm:text-lg px-7 py-3.5"
+                  className="group inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 bg-primary-600 text-white hover:bg-primary-700 sm:text-lg px-7 py-3.5"
                 >
                   {t.hero.ctaPrimary}
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </a>
                 <a
                   href="#tracking"
-                  className="inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 border-2 border-[var(--primary-600)] text-[var(--primary-600)] hover:bg-[var(--primary-50)] sm:text-lg px-7 py-3.5"
+                  className="inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 border-2 border-primary-600 text-primary-600 hover:bg-primary-50 sm:text-lg px-7 py-3.5"
                 >
                   {t.hero.ctaSecondary}
                 </a>
@@ -103,12 +103,12 @@ export function Hero() {
                     className="text-center"
                   >
                     <div className="flex justify-center mb-1 sm:mb-2">
-                      <stat.icon className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--primary-600)]" />
+                      <stat.icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
                     </div>
-                    <div className="text-lg sm:text-2xl font-bold text-[var(--gray-900)]">
+                    <div className="text-lg sm:text-2xl font-bold text-gray-900">
                       <AnimatedCounter target={stat.value} suffix={stat.suffix} />
                     </div>
-                    <div className="text-[10px] sm:text-xs text-[var(--gray-600)] leading-tight">{stat.label}</div>
+                    <div className="text-[10px] sm:text-xs text-gray-600 leading-tight">{stat.label}</div>
                   </motion.div>
                 ))}
               </div>
@@ -129,19 +129,19 @@ export function Hero() {
                 imageClassName="object-cover"
               />
 
-              <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary-600)]/20 to-[var(--secondary-600)]/20 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-600/20 to-secondary-600/20 pointer-events-none" />
 
               {/* Floating card - Route */}
               <motion.div
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity }}
-                className="absolute top-4 right-4 md:top-8 md:right-8 bg-[var(--theme-surface)] p-3 md:p-4 rounded-xl shadow-lg border border-[var(--gray-100)]"
+                className="absolute top-4 right-4 md:top-8 md:right-8 bg-[var(--theme-surface)] p-3 md:p-4 rounded-xl shadow-lg border border-gray-100"
               >
                 <div className="flex items-center gap-2">
-                  <Truck className="w-4 h-4 text-[var(--primary-600)]" />
-                  <div className="text-xs md:text-sm font-semibold text-[var(--gray-900)]">Miami → Haiti</div>
+                  <Truck className="w-4 h-4 text-primary-600" />
+                  <div className="text-xs md:text-sm font-semibold text-gray-900">Miami → Haiti</div>
                 </div>
-                <div className="text-[10px] md:text-xs text-[var(--gray-500)] mt-1">
+                <div className="text-[10px] md:text-xs text-gray-500 mt-1">
                   {t.hero.floatingCards?.fastDelivery || 'Fast Delivery'} • 3-6 {t.pricing.days}
                 </div>
               </motion.div>
@@ -150,15 +150,15 @@ export function Hero() {
               <motion.div
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-                className="absolute bottom-4 left-4 md:bottom-8 md:left-8 bg-[var(--theme-surface)] p-3 md:p-4 rounded-xl shadow-lg border border-[var(--gray-100)]"
+                className="absolute bottom-4 left-4 md:bottom-8 md:left-8 bg-[var(--theme-surface)] p-3 md:p-4 rounded-xl shadow-lg border border-gray-100"
               >
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-green-600" />
-                  <div className="text-xs md:text-sm font-semibold text-[var(--gray-900)]">
+                  <div className="text-xs md:text-sm font-semibold text-gray-900">
                     {loading ? '...' : `$${pricing.pricePerLb}`}{t.hero.floatingCards?.perLb || '/lb'}
                   </div>
                 </div>
-                <div className="text-[10px] md:text-xs text-[var(--gray-500)] mt-1">
+                <div className="text-[10px] md:text-xs text-gray-500 mt-1">
                   {t.hero.floatingCards?.startingAt || 'Starting at'} • {primaryCity?.city || 'Cap-Haïtien'}
                 </div>
               </motion.div>

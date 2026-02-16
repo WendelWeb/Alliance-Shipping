@@ -58,9 +58,9 @@ export function HowItWorks() {
               transition={{ duration: 0.5, delay: index * 0.12 }}
               className="relative"
             >
-              <div className="bg-[var(--theme-surface)] rounded-2xl border border-[var(--gray-200)] p-6 h-full hover:shadow-lg hover:border-[var(--primary-200)] transition-all duration-300">
+              <div className="bg-[var(--theme-surface)] rounded-2xl border border-gray-200 p-6 h-full hover:shadow-lg hover:border-primary-200 transition-all duration-300">
                 {/* Step Number */}
-                <div className="absolute -top-3 -left-1 w-8 h-8 bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                <div className="absolute -top-3 -left-1 w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
                   {index + 1}
                 </div>
 
@@ -70,17 +70,17 @@ export function HowItWorks() {
                 </div>
 
                 {/* Content */}
-                <h3 className="text-lg font-bold text-[var(--gray-900)] mb-2">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
                   {step.title}
                 </h3>
-                <p className="text-sm text-[var(--gray-600)] leading-relaxed">
+                <p className="text-sm text-gray-600 leading-relaxed">
                   {step.description}
                 </p>
 
                 {/* Connector line (desktop only) */}
                 {index < steps.length - 1 && (
                   <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
-                    <div className="w-6 h-0.5 bg-[var(--primary-300)]" />
+                    <div className="w-6 h-0.5 bg-primary-300" />
                   </div>
                 )}
               </div>

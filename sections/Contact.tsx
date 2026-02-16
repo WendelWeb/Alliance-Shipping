@@ -90,10 +90,10 @@ export function Contact() {
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${card.iconColor}`}>
                     <card.icon className="w-6 h-6" />
                   </div>
-                  <div className="text-xs text-[var(--gray-500)] mb-1">{card.label}</div>
-                  <div className="text-sm font-bold text-[var(--gray-900)] mb-2">{card.value}</div>
+                  <div className="text-xs text-gray-500 mb-1">{card.label}</div>
+                  <div className="text-sm font-bold text-gray-900 mb-2">{card.value}</div>
                   {card.action && (
-                    <div className="text-xs font-medium text-[var(--primary-600)]">{card.action} &rarr;</div>
+                    <div className="text-xs font-medium text-primary-600">{card.action} &rarr;</div>
                   )}
                 </a>
               ) : (
@@ -101,8 +101,8 @@ export function Contact() {
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${card.iconColor}`}>
                     <card.icon className="w-6 h-6" />
                   </div>
-                  <div className="text-xs text-[var(--gray-500)] mb-1">{card.label}</div>
-                  <div className="text-sm font-bold text-[var(--gray-900)]">{card.value}</div>
+                  <div className="text-xs text-gray-500 mb-1">{card.label}</div>
+                  <div className="text-sm font-bold text-gray-900">{card.value}</div>
                 </div>
               )}
             </motion.div>
@@ -119,14 +119,14 @@ export function Contact() {
           {offices.map((office, index) => (
             <div
               key={index}
-              className="flex items-start gap-3 p-5 bg-[var(--theme-bg)] rounded-2xl border border-[var(--gray-200)]"
+              className="flex items-start gap-3 p-5 bg-[var(--theme-bg)] rounded-2xl border border-gray-200"
             >
-              <div className="flex-shrink-0 w-10 h-10 bg-[var(--primary-100)] rounded-xl flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-[var(--primary-600)]" />
+              <div className="flex-shrink-0 w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
+                <MapPin className="w-5 h-5 text-primary-600" />
               </div>
               <div>
-                <div className="text-sm font-bold text-[var(--gray-900)]">{office.title}</div>
-                <div className="text-xs text-[var(--gray-500)] mt-1">{office.address}</div>
+                <div className="text-sm font-bold text-gray-900">{office.title}</div>
+                <div className="text-xs text-gray-500 mt-1">{office.address}</div>
               </div>
             </div>
           ))}
@@ -134,7 +134,7 @@ export function Contact() {
 
         {/* Response time note */}
         <div className="text-center mt-8">
-          <p className="text-sm text-[var(--gray-500)]">
+          <p className="text-sm text-gray-500">
             {t.contact.responseTime || 'We respond within 24 hours'}
           </p>
         </div>

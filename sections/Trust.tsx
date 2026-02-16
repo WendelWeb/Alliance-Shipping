@@ -64,8 +64,8 @@ export function Trust() {
                 <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <stat.icon className="w-6 h-6 text-primary-600" />
                 </div>
-                <div className="text-3xl font-bold text-[var(--gray-900)] mb-2">{stat.value}</div>
-                <div className="text-sm text-[var(--gray-600)]">{stat.label}</div>
+                <div className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</div>
+                <div className="text-sm text-gray-600">{stat.label}</div>
               </Card>
             </motion.div>
           ))}
@@ -87,10 +87,10 @@ export function Trust() {
                     <feature.icon className="w-7 h-7 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-[var(--gray-900)] mb-2">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
                       {feature.title}
                     </h3>
-                    <p className="text-[var(--gray-600)] leading-relaxed">
+                    <p className="text-gray-600 leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
@@ -102,7 +102,7 @@ export function Trust() {
 
         {/* Testimonials */}
         <div>
-          <h3 className="text-2xl font-bold text-[var(--gray-900)] text-center mb-8">
+          <h3 className="text-2xl font-bold text-gray-900 text-center mb-8">
             {t.trust.testimonials.title}
           </h3>
           <div className="grid md:grid-cols-3 gap-6">
@@ -123,13 +123,13 @@ export function Trust() {
                     ))}
                   </div>
 
-                  <p className="text-[var(--gray-700)] mb-6 leading-relaxed">
+                  <p className="text-gray-700 mb-6 leading-relaxed">
                     "{testimonial.comment}"
                   </p>
 
                   <div className="border-t pt-4">
-                    <div className="font-bold text-[var(--gray-900)]">{testimonial.name}</div>
-                    <div className="text-sm text-[var(--gray-500)]">{testimonial.location}</div>
+                    <div className="font-bold text-gray-900">{testimonial.name}</div>
+                    <div className="text-sm text-gray-500">{testimonial.location}</div>
                   </div>
                 </Card>
               </motion.div>

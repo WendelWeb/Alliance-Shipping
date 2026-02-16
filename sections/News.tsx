@@ -106,8 +106,8 @@ export function News() {
         <Container>
           <SectionTitle title={t.news.title} subtitle={t.news.subtitle} />
           <div className="text-center py-12">
-            <Bell className="mx-auto h-16 w-16 text-[var(--gray-300)] mb-4" />
-            <p className="text-[var(--gray-500)]">{t.news.noNews}</p>
+            <Bell className="mx-auto h-16 w-16 text-gray-300 mb-4" />
+            <p className="text-gray-500">{t.news.noNews}</p>
           </div>
         </Container>
       </section>
@@ -146,18 +146,18 @@ export function News() {
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-xl font-bold text-[var(--gray-900)] mb-3 line-clamp-2">
+                  <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
                     {cleanTitle(announcement.title)}
                   </h3>
 
                   {/* Date */}
-                  <div className="flex items-center gap-2 text-sm text-[var(--gray-500)] mb-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
                     <Calendar className="h-4 w-4" />
                     <span>{formatDate(announcement.publishDate)}</span>
                   </div>
 
                   {/* Content preview */}
-                  <p className="text-[var(--gray-600)] mb-4 flex-grow line-clamp-3">
+                  <p className="text-gray-600 mb-4 flex-grow line-clamp-3">
                     {truncateContent(announcement.content)}
                   </p>
 

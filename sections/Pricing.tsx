@@ -77,9 +77,9 @@ export function Pricing() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <div className="bg-[var(--theme-surface)] rounded-2xl shadow-xl border border-[var(--gray-200)] overflow-hidden">
+            <div className="bg-[var(--theme-surface)] rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
               {/* Calculator Header */}
-              <div className="bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-700)] p-6 text-white">
+              <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 text-white">
                 <div className="flex items-center gap-3 mb-2">
                   <Calculator className="w-6 h-6" />
                   <h3 className="text-xl font-bold">{t.pricing.calculator?.title || 'Shipping Calculator'}</h3>
@@ -90,7 +90,7 @@ export function Pricing() {
               <div className="p-6 space-y-5">
                 {/* City Selector */}
                 <div>
-                  <label className="block text-sm font-medium text-[var(--gray-700)] mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t.pricing.calculator?.city || 'Destination City'}
                   </label>
                   <div className="grid grid-cols-3 gap-2">
@@ -100,12 +100,12 @@ export function Pricing() {
                         onClick={() => setSelectedCity(city.city)}
                         className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-all border ${
                           selectedCity === city.city
-                            ? 'bg-[var(--primary-600)] text-white border-[var(--primary-600)] shadow-md'
-                            : 'bg-[var(--theme-bg)] text-[var(--gray-700)] border-[var(--gray-200)] hover:border-[var(--primary-300)]'
+                            ? 'bg-primary-600 text-white border-primary-600 shadow-md'
+                            : 'bg-[var(--theme-bg)] text-gray-700 border-gray-200 hover:border-primary-300'
                         }`}
                       >
                         <div>{city.city.split(',')[0]}</div>
-                        <div className={`text-xs mt-0.5 ${selectedCity === city.city ? 'text-white/80' : 'text-[var(--gray-500)]'}`}>
+                        <div className={`text-xs mt-0.5 ${selectedCity === city.city ? 'text-white/80' : 'text-gray-500'}`}>
                           ${city.pricePerLb}{t.pricing.calculator?.lbs ? `/${t.pricing.calculator.lbs}` : '/lb'}
                         </div>
                       </button>
@@ -115,7 +115,7 @@ export function Pricing() {
 
                 {/* Weight Input */}
                 <div>
-                  <label className="block text-sm font-medium text-[var(--gray-700)] mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t.pricing.calculator?.weight || 'Package Weight (lbs)'}
                   </label>
                   <div className="flex items-center gap-4">
@@ -125,18 +125,18 @@ export function Pricing() {
                       max="100"
                       value={weight}
                       onChange={(e) => setWeight(Number(e.target.value))}
-                      className="flex-1 h-2 bg-[var(--gray-200)] rounded-lg appearance-none cursor-pointer accent-[var(--primary-600)]"
+                      className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
                     />
-                    <div className="flex items-center gap-1 bg-[var(--theme-bg)] border border-[var(--gray-200)] rounded-lg px-3 py-2 min-w-[80px]">
+                    <div className="flex items-center gap-1 bg-[var(--theme-bg)] border border-gray-200 rounded-lg px-3 py-2 min-w-[80px]">
                       <input
                         type="number"
                         min="1"
                         max="500"
                         value={weight}
                         onChange={(e) => setWeight(Math.max(1, Number(e.target.value)))}
-                        className="w-12 text-center font-bold text-[var(--gray-900)] bg-transparent outline-none"
+                        className="w-12 text-center font-bold text-gray-900 bg-transparent outline-none"
                       />
-                      <span className="text-xs text-[var(--gray-500)]">lbs</span>
+                      <span className="text-xs text-gray-500">lbs</span>
                     </div>
                   </div>
                 </div>
@@ -144,7 +144,7 @@ export function Pricing() {
                 {/* Special Item */}
                 {specialItems.length > 0 && (
                   <div>
-                    <label className="block text-sm font-medium text-[var(--gray-700)] mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       <Smartphone className="w-4 h-4 inline mr-1" />
                       {t.pricing.calculator?.specialItem || 'Special Item (optional)'}
                     </label>
@@ -155,7 +155,7 @@ export function Pricing() {
                         setSelectedSpecialItem(val);
                         if (!val) setChargeByWeight(false);
                       }}
-                      className="w-full px-4 py-2.5 rounded-lg border border-[var(--gray-200)] bg-[var(--theme-bg)] text-[var(--gray-900)] outline-none focus:border-[var(--primary-400)] transition-colors"
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-200 bg-[var(--theme-bg)] text-gray-900 outline-none focus:border-primary-400 transition-colors"
                     >
                       <option value="">{t.pricing.calculator?.noSpecialItem || 'No special item'}</option>
                       {specialItems.map(item => (
@@ -166,12 +166,12 @@ export function Pricing() {
                     </select>
 
                     {selectedSpecialItem && (
-                      <label className="flex items-center gap-2 mt-3 text-sm text-[var(--gray-600)] cursor-pointer">
+                      <label className="flex items-center gap-2 mt-3 text-sm text-gray-600 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={chargeByWeight}
                           onChange={(e) => setChargeByWeight(e.target.checked)}
-                          className="rounded border-[var(--gray-300)] accent-[var(--primary-600)]"
+                          className="rounded border-gray-300 accent-primary-600"
                         />
                         {t.pricing.calculator?.chargeByWeight || 'Also charge by weight'}
                       </label>
@@ -180,21 +180,21 @@ export function Pricing() {
                 )}
 
                 {/* Result Breakdown */}
-                <div className="bg-[var(--theme-bg)] rounded-xl p-5 border border-[var(--gray-200)]">
-                  <h4 className="text-sm font-semibold text-[var(--gray-700)] mb-3">
+                <div className="bg-[var(--theme-bg)] rounded-xl p-5 border border-gray-200">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3">
                     {t.pricing.calculator?.result || 'Estimated Cost'}
                   </h4>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-[var(--gray-600)]">{t.pricing.calculator?.breakdown?.service || 'Service Fee'}</span>
-                      <span className="font-medium text-[var(--gray-900)]">${serviceFee.toFixed(2)}</span>
+                      <span className="text-gray-600">{t.pricing.calculator?.breakdown?.service || 'Service Fee'}</span>
+                      <span className="font-medium text-gray-900">${serviceFee.toFixed(2)}</span>
                     </div>
                     {(!selectedSpecialItem || chargeByWeight) && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-[var(--gray-600)]">
+                        <span className="text-gray-600">
                           {t.pricing.calculator?.breakdown?.weight || 'Weight Fee'} ({weight} lbs x ${pricePerLb})
                         </span>
-                        <span className="font-medium text-[var(--gray-900)]">${weightCost.toFixed(2)}</span>
+                        <span className="font-medium text-gray-900">${weightCost.toFixed(2)}</span>
                       </div>
                     )}
                     {specialItem && (
@@ -203,12 +203,12 @@ export function Pricing() {
                         <span className="font-medium text-purple-600">${specialFee.toFixed(2)}</span>
                       </div>
                     )}
-                    <div className="border-t border-[var(--gray-200)] pt-2 mt-2">
+                    <div className="border-t border-gray-200 pt-2 mt-2">
                       <div className="flex justify-between">
-                        <span className="text-lg font-bold text-[var(--gray-900)]">
+                        <span className="text-lg font-bold text-gray-900">
                           {t.pricing.calculator?.breakdown?.total || 'Total'}
                         </span>
-                        <span className="text-2xl font-bold text-[var(--primary-600)]">
+                        <span className="text-2xl font-bold text-primary-600">
                           ${totalCost.toFixed(2)}
                         </span>
                       </div>
@@ -219,7 +219,7 @@ export function Pricing() {
                 {/* CTA */}
                 <a
                   href="/dashboard/request-package"
-                  className="w-full inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 bg-[var(--primary-600)] text-white hover:bg-[var(--primary-700)] px-5 py-3 text-base"
+                  className="w-full inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 bg-primary-600 text-white hover:bg-primary-700 px-5 py-3 text-base"
                 >
                   {t.hero.ctaPrimary}
                 </a>
@@ -229,7 +229,7 @@ export function Pricing() {
             {/* City Pricing Cards */}
             {cities.length > 0 && (
               <div className="mt-8">
-                <h4 className="text-lg font-bold text-[var(--gray-900)] mb-4">
+                <h4 className="text-lg font-bold text-gray-900 mb-4">
                   {t.pricing.cityPricing?.title || 'Pricing by City'}
                 </h4>
                 <div className="grid grid-cols-3 gap-3">
@@ -239,14 +239,14 @@ export function Pricing() {
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
-                      className="bg-[var(--theme-surface)] rounded-xl p-4 border border-[var(--gray-200)] text-center hover:shadow-md transition-shadow"
+                      className="bg-[var(--theme-surface)] rounded-xl p-4 border border-gray-200 text-center hover:shadow-md transition-shadow"
                     >
-                      <MapPin className="w-5 h-5 text-[var(--primary-600)] mx-auto mb-2" />
-                      <div className="text-sm font-semibold text-[var(--gray-900)]">{city.city.split(',')[0]}</div>
-                      <div className="text-xl font-bold text-[var(--primary-600)] mt-1">
+                      <MapPin className="w-5 h-5 text-primary-600 mx-auto mb-2" />
+                      <div className="text-sm font-semibold text-gray-900">{city.city.split(',')[0]}</div>
+                      <div className="text-xl font-bold text-primary-600 mt-1">
                         ${city.pricePerLb}{t.pricing.cityPricing?.perLb || '/lb'}
                       </div>
-                      <div className="text-xs text-[var(--gray-500)] mt-0.5">
+                      <div className="text-xs text-gray-500 mt-0.5">
                         ${city.serviceFee} {t.pricing.cityPricing?.service || 'service fee'}
                       </div>
                     </motion.div>
@@ -266,7 +266,7 @@ export function Pricing() {
           >
             {/* What's Included */}
             <div>
-              <h3 className="text-2xl font-bold text-[var(--gray-900)] mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">
                 {t.pricing.included?.title || "What's Included"}
               </h3>
               <div className="grid gap-3">
@@ -277,12 +277,12 @@ export function Pricing() {
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.4, delay: index * 0.08 }}
-                    className="flex items-center gap-3 p-4 bg-[var(--theme-surface)] rounded-xl border border-[var(--gray-200)] hover:border-[var(--primary-300)] hover:shadow-md transition-all"
+                    className="flex items-center gap-3 p-4 bg-[var(--theme-surface)] rounded-xl border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all"
                   >
                     <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                       <item.icon className="w-4 h-4 text-green-600" />
                     </div>
-                    <span className="text-[var(--gray-700)] font-medium">{item.label}</span>
+                    <span className="text-gray-700 font-medium">{item.label}</span>
                   </motion.div>
                 ))}
               </div>
@@ -300,10 +300,10 @@ export function Pricing() {
                   <Gift className="w-5 h-5 text-amber-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-[var(--gray-900)]">
+                  <h3 className="text-lg font-bold text-gray-900">
                     {t.pricing.loyalty?.title || 'Loyalty Program'}
                   </h3>
-                  <p className="text-sm text-[var(--gray-600)]">
+                  <p className="text-sm text-gray-600">
                     {t.pricing.loyalty?.description || 'Earn rewards with every shipment'}
                   </p>
                 </div>
@@ -318,7 +318,7 @@ export function Pricing() {
                 ].map((item, index) => (
                   <div key={index} className="flex items-center gap-2 bg-white/80 rounded-lg p-3">
                     <item.icon className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                    <span className="text-xs font-medium text-[var(--gray-700)]">{item.text}</span>
+                    <span className="text-xs font-medium text-gray-700">{item.text}</span>
                   </div>
                 ))}
               </div>
