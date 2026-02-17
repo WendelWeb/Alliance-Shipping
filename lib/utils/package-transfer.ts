@@ -284,15 +284,15 @@ export async function autoTransferPackage(params: {
 
     // Send push notification
     try {
-      // Get warehouse name for depot variable
-      let depotName = user.city ? `${user.city} Office` : 'Port-au-Prince Office';
+      // Get real warehouse name for depot variable
+      let depotName = user.city || 'Alliance Shipping';
       if (user.warehouseId) {
         const [wh] = await db
-          .select({ city: warehouses.city })
+          .select({ name: warehouses.name })
           .from(warehouses)
           .where(eq(warehouses.id, user.warehouseId))
           .limit(1);
-        if (wh) depotName = `${wh.city} Office`;
+        if (wh) depotName = wh.name;
       }
 
       // Get external tracking number

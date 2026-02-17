@@ -175,7 +175,7 @@ export async function PATCH(request: NextRequest) {
           .limit(1);
 
         if (warehouse) {
-          warehouseName = `${warehouse.city} Office`;
+          warehouseName = warehouse.name;
         }
       }
 

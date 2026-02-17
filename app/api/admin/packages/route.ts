@@ -265,15 +265,17 @@ export async function POST(request: NextRequest) {
 
     // If user has a warehouse, get its details
     let warehouseName: string | null = null;
+    let warehouseAddress: string | null = null;
     if (owner?.warehouseId) {
       const [warehouse] = await db
-        .select({ name: warehouses.name, city: warehouses.city })
+        .select({ name: warehouses.name, city: warehouses.city, address: warehouses.address })
         .from(warehouses)
         .where(eq(warehouses.id, owner.warehouseId))
         .limit(1);
 
       if (warehouse) {
-        warehouseName = `${warehouse.city} Office`; // Format pour correspondre aux traductions
+        warehouseName = warehouse.name;
+        warehouseAddress = warehouse.address;
       }
     }
 
@@ -366,7 +368,7 @@ export async function POST(request: NextRequest) {
 
     // Determine status and location (use warehouse if available, otherwise fallback to city)
     const pkgStatus = initialStatus || 'received';
-    const officeLocation = warehouseName || (owner?.city ? `${owner.city} Office` : 'Port-au-Prince Office');
+    const officeLocation = warehouseName || (owner?.city || 'Port-au-Prince');
     const deliveryLocation = owner?.city || 'Port-au-Prince';
 
     const locationMap: Record<string, string> = {
@@ -489,7 +491,7 @@ export async function POST(request: NextRequest) {
         variables: {
           tracking: trackingNumber,
           externalTracking: externalTrackingNumber?.trim() || 'N/A',
-          depot: warehouseName || (owner?.city ? `${owner.city} Office` : 'Port-au-Prince Office'),
+          depot: warehouseName || (owner?.city || 'Alliance Shipping'),
           weight: weight ? String(weight) : '0',
           city: owner?.city || 'Haiti',
           total: fees.totalCost.toFixed(2),
@@ -680,17 +682,19 @@ export async function PATCH(request: NextRequest) {
         .where(eq(users.id, updatedPackage.userId))
         .limit(1);
 
-      // Get warehouse/office location and hours
-      let officeLocation = updatedPackage.currentLocation || 'Port-au-Prince Office';
+      // Get warehouse/office location, address, and hours
+      let depotName = updatedPackage.currentLocation || 'Alliance Shipping';
+      let depotAddress = '';
       let officeHours = 'Lun-Sam 8h-17h';
       if (pkgUser?.warehouseId) {
         const [wh] = await db
-          .select({ city: warehouses.city, name: warehouses.name, openingHours: warehouses.openingHours })
+          .select({ city: warehouses.city, name: warehouses.name, address: warehouses.address, openingHours: warehouses.openingHours })
           .from(warehouses)
           .where(eq(warehouses.id, pkgUser.warehouseId))
           .limit(1);
         if (wh) {
-          officeLocation = `${wh.city} Office`;
+          depotName = wh.name;
+          depotAddress = wh.address;
           if (wh.openingHours) officeHours = wh.openingHours;
         }
       }
@@ -722,11 +726,11 @@ export async function PATCH(request: NextRequest) {
       const pushVars: Record<string, string> = {
         tracking: updatedPackage.trackingNumber,
         externalTracking: updatedPackage.externalTrackingNumber || 'N/A',
-        depot: officeLocation,
+        depot: depotName,
         weight: String(updatedPackage.weight || '0'),
         total: parseFloat(String(updatedPackage.totalCost || '0')).toFixed(2),
         city: pkgUser?.city || 'Haiti',
-        location: officeLocation,
+        location: depotAddress || depotName,
         hours: officeHours,
         days: deliveryDays,
         points: pointsEarned,
@@ -758,7 +762,7 @@ export async function PATCH(request: NextRequest) {
             pkgUser.email,
             userName,
             updatedPackage.trackingNumber,
-            officeLocation,
+            depotAddress ? `${depotName} — ${depotAddress}` : depotName,
             userLocale
           ).catch(error => {
             console.error('Failed to send available email:', error);

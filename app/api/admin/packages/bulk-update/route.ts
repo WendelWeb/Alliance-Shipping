@@ -79,22 +79,23 @@ export async function POST(request: NextRequest) {
 
     for (const { pkg, user } of packagesToUpdate) {
       // Get user's warehouse if available
-      let warehouseName: string | null = null;
+      let depotName: string | null = null;
+      let depotAddress: string | null = null;
       if (user?.warehouseId) {
-        const { warehouses } = await import('@/lib/db/schema');
         const [warehouse] = await db
-          .select({ name: warehouses.name, city: warehouses.city })
+          .select({ name: warehouses.name, city: warehouses.city, address: warehouses.address })
           .from(warehouses)
           .where(eq(warehouses.id, user.warehouseId))
           .limit(1);
 
         if (warehouse) {
-          warehouseName = `${warehouse.city} Office`;
+          depotName = warehouse.name;
+          depotAddress = warehouse.address;
         }
       }
 
       // Dynamic location based on user's city/warehouse
-      const officeLocation = warehouseName || (user?.city ? `${user.city} Office` : 'Port-au-Prince Office');
+      const officeLocation = depotName || (user?.city || 'Port-au-Prince');
       const deliveryLocation = user?.city || 'Port-au-Prince';
 
       const locationMap: Record<string, string> = {
@@ -168,15 +169,15 @@ export async function POST(request: NextRequest) {
         userAgent: request.headers.get('user-agent') || 'unknown',
       });
 
-      // Get warehouse hours for push notification
+      // Get warehouse hours (already have depotName/depotAddress from above)
       let officeHours = 'Lun-Sam 8h-17h';
       if (user?.warehouseId) {
-        const [wh] = await db
+        const [whHours] = await db
           .select({ openingHours: warehouses.openingHours })
           .from(warehouses)
           .where(eq(warehouses.id, user.warehouseId))
           .limit(1);
-        if (wh?.openingHours) officeHours = wh.openingHours;
+        if (whHours?.openingHours) officeHours = whHours.openingHours;
       }
 
       // Get delivery days from city pricing
@@ -217,11 +218,11 @@ export async function POST(request: NextRequest) {
           variables: {
             tracking: updated.trackingNumber,
             externalTracking: updated.externalTrackingNumber || 'N/A',
-            depot: officeLocation,
+            depot: depotName || 'Alliance Shipping',
             weight: String(updated.weight || '0'),
             total: parseFloat(String(updated.totalCost || '0')).toFixed(2),
             city: user?.city || 'Haiti',
-            location: officeLocation,
+            location: depotAddress || depotName || 'Alliance Shipping',
             hours: officeHours,
             days: deliveryDays,
             points: pointsEarned,
@@ -241,7 +242,7 @@ export async function POST(request: NextRequest) {
             user.email,
             userName,
             updated.trackingNumber,
-            officeLocation,
+            depotAddress ? `${depotName} — ${depotAddress}` : (depotName || 'Alliance Shipping'),
             userLocale
           ).catch(error => {
             console.error('Failed to send available email:', error);
