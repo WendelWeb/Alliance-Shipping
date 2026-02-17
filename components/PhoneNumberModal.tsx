@@ -192,7 +192,7 @@ export function PhoneNumberModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         className="relative w-full max-w-lg rounded-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden"
-        style={{ backgroundColor: isDark ? colors.gray[900] : '#ffffff' }}
+        style={{ backgroundColor: isDark ? colors.gray[100] : '#ffffff' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Gradient Header */}
@@ -278,7 +278,7 @@ export function PhoneNumberModal({
                   className="w-full px-4 py-3.5 border-2 rounded-xl focus:ring-4 outline-none transition-all text-base"
                   style={{
                     borderColor: colors.gray[200],
-                    backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+                    backgroundColor: isDark ? colors.gray[200] : colors.gray[50],
                     color: colors.gray[900],
                   }}
                 >
@@ -295,7 +295,7 @@ export function PhoneNumberModal({
                     className="flex items-center px-4 py-3.5 border-2 rounded-xl font-bold text-base"
                     style={{
                       borderColor: colors.gray[200],
-                      backgroundColor: isDark ? colors.gray[800] : colors.gray[100],
+                      backgroundColor: isDark ? colors.gray[200] : colors.gray[100],
                       color: colors.gray[700],
                     }}
                   >
@@ -320,7 +320,7 @@ export function PhoneNumberModal({
                     className="flex-1 px-4 py-3.5 border-2 rounded-xl focus:ring-4 outline-none transition-all text-base"
                     style={{
                       borderColor: colors.gray[200],
-                      backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+                      backgroundColor: isDark ? colors.gray[200] : colors.gray[50],
                       color: colors.gray[900],
                     }}
                     autoFocus
@@ -353,7 +353,7 @@ export function PhoneNumberModal({
                   className="w-full px-4 py-3.5 border-2 rounded-xl focus:ring-4 outline-none transition-all text-base"
                   style={{
                     borderColor: colors.gray[200],
-                    backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+                    backgroundColor: isDark ? colors.gray[200] : colors.gray[50],
                     color: colors.gray[900],
                   }}
                 >
@@ -369,7 +369,7 @@ export function PhoneNumberModal({
                     className="flex items-center px-4 py-3.5 border-2 rounded-xl font-bold text-base"
                     style={{
                       borderColor: colors.gray[200],
-                      backgroundColor: isDark ? colors.gray[800] : colors.gray[100],
+                      backgroundColor: isDark ? colors.gray[200] : colors.gray[100],
                       color: colors.gray[700],
                     }}
                   >
@@ -394,7 +394,7 @@ export function PhoneNumberModal({
                     className="flex-1 px-4 py-3.5 border-2 rounded-xl focus:ring-4 outline-none transition-all text-base"
                     style={{
                       borderColor: colors.gray[200],
-                      backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+                      backgroundColor: isDark ? colors.gray[200] : colors.gray[50],
                       color: colors.gray[900],
                     }}
                   />
@@ -642,7 +642,7 @@ export function PhoneNumberModal({
         <div
           className="px-6 py-4 border-t flex-shrink-0"
           style={{
-            backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+            backgroundColor: isDark ? colors.gray[200] : colors.gray[50],
             borderColor: colors.gray[200],
           }}
         >

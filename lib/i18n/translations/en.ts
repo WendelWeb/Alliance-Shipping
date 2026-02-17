@@ -398,6 +398,7 @@ export const en = {
       announcements: 'Announcements',
     },
     readMore: 'Read more',
+    readLess: 'Read less',
     viewAll: 'View all news',
     noNews: 'No news available at the moment',
   },

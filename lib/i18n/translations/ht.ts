@@ -398,6 +398,7 @@ export const ht = {
       announcements: 'Anons',
     },
     readMore: 'Li plis',
+    readLess: 'Li mwens',
     viewAll: 'Gade tout nouvèl yo',
     noNews: 'Pa gen nouvèl pou kounye a',
   },

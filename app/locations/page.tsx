@@ -125,7 +125,7 @@ export default function LocationsPage() {
                 className="w-full pl-12 pr-12 py-4 border-2 rounded-2xl focus:ring-4 transition-all outline-none text-base"
                 style={{
                   borderColor: colors.gray[200],
-                  backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+                  backgroundColor: isDark ? colors.gray[200] : colors.gray[50],
                   color: colors.gray[900],
                 }}
               />
@@ -153,7 +153,7 @@ export default function LocationsPage() {
                         selectedCity === city
                           ? colors.primary[600]
                           : isDark
-                          ? colors.gray[800]
+                          ? colors.gray[200]
                           : colors.gray[100],
                       color:
                         selectedCity === city
@@ -228,7 +228,7 @@ export default function LocationsPage() {
                       className="relative h-40 flex items-center justify-center overflow-hidden"
                       style={{
                         background: isDark
-                          ? `linear-gradient(135deg, ${colors.gray[800]}, ${colors.gray[700]})`
+                          ? `linear-gradient(135deg, ${colors.gray[100]}, ${colors.gray[200]})`
                           : `linear-gradient(135deg, ${colors.primary[50]}, ${colors.primary[100]})`,
                       }}
                     >

@@ -271,7 +271,7 @@ export default function PaymentPage() {
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               className="relative rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
-              style={{ backgroundColor: isDark ? colors.gray[900] : '#ffffff' }}
+              style={{ backgroundColor: isDark ? colors.gray[100] : '#ffffff' }}
             >
               {/* Gradient Header */}
               <div
@@ -377,7 +377,7 @@ export default function PaymentPage() {
                     className="w-full px-4 py-3.5 border-2 rounded-xl focus:outline-none focus:ring-4 transition-all"
                     style={{
                       borderColor: colors.gray[200],
-                      backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+                      backgroundColor: isDark ? colors.gray[200] : colors.gray[50],
                       color: colors.gray[900],
                     }}
                   />

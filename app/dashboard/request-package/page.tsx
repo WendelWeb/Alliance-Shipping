@@ -456,7 +456,7 @@ export default function RequestPackagePage() {
               value={formData.externalTrackingNumber}
               onChange={handleChange}
               required
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 text-lg font-mono transition-colors ${
+              className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 text-lg font-mono transition-colors bg-[var(--theme-surface-solid)] text-gray-900 ${
                 errors.externalTrackingNumber
                   ? 'border-red-400 focus:ring-red-500 focus:border-red-500'
                   : 'border-gray-300 focus:ring-primary-500 focus:border-transparent'
@@ -505,7 +505,7 @@ export default function RequestPackagePage() {
               onChange={handleChange}
               required
               rows={6}
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 transition-colors resize-none ${
+              className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 transition-colors resize-none bg-[var(--theme-surface-solid)] text-gray-900 ${
                 errors.description
                   ? 'border-red-400 focus:ring-red-500 focus:border-red-500'
                   : 'border-gray-300 focus:ring-primary-500 focus:border-transparent'
@@ -715,7 +715,7 @@ export default function RequestPackagePage() {
                     name="otherCategoryDescription"
                     value={formData.otherCategoryDescription}
                     onChange={handleChange}
-                    className={`w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:ring-2 transition-colors ${
+                    className={`w-full px-4 py-2 border-2 rounded-lg focus:outline-none focus:ring-2 transition-colors bg-[var(--theme-surface-solid)] text-gray-900 ${
                       errors.otherCategoryDescription
                         ? 'border-red-400 focus:ring-red-500 focus:border-red-500'
                         : 'border-gray-300 focus:ring-primary-500 focus:border-transparent'

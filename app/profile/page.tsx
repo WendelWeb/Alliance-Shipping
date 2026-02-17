@@ -161,8 +161,7 @@ export default function ProfilePage() {
   }
 
   const menuItems = [
-    { label: t.profile.menuItems.myPackages, icon: Package, href: '/packages' },
-    { label: t.profile.menuItems.requestPackage, icon: MapPin, href: '/dashboard/request-package' },
+    { label: t.profile.menuItems.profileSettings, icon: Settings, href: '/profile/settings' },
     { label: t.profile.menuItems.shippingAddress, icon: Warehouse, href: '/profile/shipping-address' },
     { label: t.profile.menuItems.rewards, icon: Gift, href: '/profile/rewards' },
     { label: t.profile.menuItems.priceCalculator, icon: CreditCard, href: '/calculator' },
@@ -171,7 +170,8 @@ export default function ProfilePage() {
     { label: t.profile.menuItems.history, icon: Clock, href: '/profile/history' },
     { label: t.profile.menuItems.notifications, icon: Bell, href: '/profile/notifications' },
     { label: t.profile.menuItems.support, icon: HelpCircle, href: '/profile/support' },
-    { label: t.profile.menuItems.profileSettings, icon: Settings, href: '/profile/settings' },
+    { label: t.profile.menuItems.myPackages, icon: Package, href: '/packages' },
+    { label: t.profile.menuItems.requestPackage, icon: MapPin, href: '/dashboard/request-package' },
   ];
 
   return (
@@ -217,16 +217,16 @@ export default function ProfilePage() {
                         <span>{dbPhone}</span>
                       </div>
                     )}
-                    {(whatsappPhone || dbPhone) && (
+                    {whatsappPhone && (
                       <a
-                        href={`https://wa.me/${(whatsappPhone || dbPhone || '').replace(/\D/g, '')}`}
+                        href={`https://wa.me/${whatsappPhone.replace(/\D/g, '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 hover:text-white transition-colors"
                         title="WhatsApp"
                       >
                         <MessageCircle className="w-4 h-4" />
-                        <span>{whatsappPhone || dbPhone}</span>
+                        <span>{whatsappPhone}</span>
                       </a>
                     )}
                     {userCity && (

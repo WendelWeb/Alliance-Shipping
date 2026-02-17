@@ -28,9 +28,9 @@ export function Footer() {
   ];
 
   const legalLinks = [
-    { label: t.footer.privacyPolicy, href: '#' },
-    { label: t.footer.termsOfService, href: '#' },
-    { label: t.footer.shippingPolicy, href: '#' },
+    { label: t.footer.privacyPolicy, href: '/privacy-policy' },
+    { label: t.footer.termsOfService, href: '/terms-of-service' },
+    { label: t.footer.shippingPolicy, href: '/shipping-policy' },
   ];
 
   const socialIcons: Record<string, any> = {

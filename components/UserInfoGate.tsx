@@ -1,63 +1,77 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useUser } from '@clerk/nextjs';
+import { usePathname } from 'next/navigation';
 import { PhoneNumberModal } from './PhoneNumberModal';
 
 export function UserInfoGate({ children }: { children: React.ReactNode }) {
   const { user, isLoaded } = useUser();
-  const [isBlocked, setIsBlocked] = useState(false);
+  const pathname = usePathname();
+  const [showModal, setShowModal] = useState(false);
   const [missingPhone, setMissingPhone] = useState(false);
   const [missingCity, setMissingCity] = useState(false);
   const [missingWarehouse, setMissingWarehouse] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
+  const lastPathname = useRef(pathname);
 
-  useEffect(() => {
-    const checkUserInfo = async () => {
-      if (!isLoaded || !user) {
-        setIsChecking(false);
-        return;
-      }
+  const checkUserInfo = async () => {
+    if (!isLoaded || !user) return;
 
-      try {
-        const response = await fetch('/api/user/profile');
-        if (response.ok) {
-          const data = await response.json();
-          // Check if phone AND whatsapp exist AND are properly formatted (with country code)
-          const phoneValue = data.user?.phone;
-          const whatsappValue = data.user?.whatsappPhone;
-          const hasValidPhone = !!(phoneValue && phoneValue.startsWith('+'));
-          const hasValidWhatsapp = !!(whatsappValue && whatsappValue.startsWith('+'));
-          const phoneMissing = !hasValidPhone || !hasValidWhatsapp;
-          const hasCity = !!data.user?.city;
-          const hasWarehouse = !!data.user?.warehouseId;
+    try {
+      const response = await fetch('/api/user/profile');
+      if (response.ok) {
+        const data = await response.json();
+        const phoneValue = data.user?.phone;
+        const whatsappValue = data.user?.whatsappPhone;
+        const hasValidPhone = !!(phoneValue && phoneValue.startsWith('+'));
+        const hasValidWhatsapp = !!(whatsappValue && whatsappValue.startsWith('+'));
+        const phoneMissing = !hasValidPhone || !hasValidWhatsapp;
+        const hasCity = !!data.user?.city;
+        const hasWarehouse = !!data.user?.warehouseId;
 
-          setMissingPhone(phoneMissing);
-          setMissingCity(!hasCity);
-          setMissingWarehouse(!hasWarehouse);
+        setMissingPhone(phoneMissing);
+        setMissingCity(!hasCity);
+        setMissingWarehouse(!hasWarehouse);
 
-          // BLOCK app if any is missing
-          if (phoneMissing || !hasCity || !hasWarehouse) {
-            console.log('🚫 UserInfoGate: BLOCKING APP - Phone:', !hasValidPhone, 'City:', !hasCity, 'Warehouse:', !hasWarehouse);
-            setIsBlocked(true);
-          } else {
-            console.log('✅ UserInfoGate: User has all required info');
-            setIsBlocked(false);
-          }
+        if (phoneMissing || !hasCity || !hasWarehouse) {
+          console.log('UserInfoGate: Missing info - Phone:', phoneMissing, 'City:', !hasCity, 'Warehouse:', !hasWarehouse);
+          setShowModal(true);
+        } else {
+          setShowModal(false);
         }
-      } catch (error) {
-        console.error('Error checking user info:', error);
-      } finally {
-        setIsChecking(false);
+      }
+    } catch (error) {
+      console.error('Error checking user info:', error);
+    }
+  };
+
+  // Check on mount (non-blocking)
+  useEffect(() => {
+    if (isLoaded && user) {
+      checkUserInfo();
+    }
+  }, [isLoaded, user]);
+
+  // Re-check on navigation
+  useEffect(() => {
+    if (lastPathname.current !== pathname && isLoaded && user) {
+      checkUserInfo();
+    }
+    lastPathname.current = pathname;
+  }, [pathname, isLoaded, user]);
+
+  // Re-check on window focus (like mobile app foreground)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (isLoaded && user) {
+        checkUserInfo();
       }
     };
-
-    checkUserInfo();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, [isLoaded, user]);
 
   const handleSuccess = async () => {
-    // Re-check user info after saving
-    setIsChecking(true);
     try {
       const response = await fetch('/api/user/profile');
       if (response.ok) {
@@ -70,47 +84,30 @@ export function UserInfoGate({ children }: { children: React.ReactNode }) {
         const hasWarehouse = !!data.user?.warehouseId;
 
         if (hasValidPhone && hasValidWhatsapp && hasCity && hasWarehouse) {
-          console.log('✅ All info completed! Unblocking app...');
-          setIsBlocked(false);
+          setShowModal(false);
           setMissingPhone(false);
           setMissingCity(false);
           setMissingWarehouse(false);
-        } else {
-          console.log('⚠️ Info still incomplete, keeping blocked');
         }
       }
     } catch (error) {
       console.error('Error re-checking user info:', error);
-    } finally {
-      setIsChecking(false);
     }
   };
 
-  // Show loading while checking
-  if (isChecking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-gray-600">Chargement...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If blocked, show ONLY the modal (hide app completely)
-  if (isBlocked) {
-    return (
-      <PhoneNumberModal
-        isOpen={true}
-        onSuccess={handleSuccess}
-        missingPhone={missingPhone}
-        missingCity={missingCity}
-        missingWarehouse={missingWarehouse}
-      />
-    );
-  }
-
-  // Otherwise, render app normally
-  return <>{children}</>;
+  // Don't block startup - render children always, show modal as overlay
+  return (
+    <>
+      {children}
+      {showModal && (
+        <PhoneNumberModal
+          isOpen={true}
+          onSuccess={handleSuccess}
+          missingPhone={missingPhone}
+          missingCity={missingCity}
+          missingWarehouse={missingWarehouse}
+        />
+      )}
+    </>
+  );
 }

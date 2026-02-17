@@ -33,6 +33,7 @@ export default function NewsPage() {
   const { t, locale } = useTranslation();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   useEffect(() => {
     fetch(`/api/announcements/public?lang=${locale}&limit=50`)
@@ -116,6 +117,7 @@ export default function NewsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: index * 0.07 }}
                   >
+                    <div onClick={() => setExpandedId(expandedId === article.id ? null : article.id)}>
                     <Card
                       hover
                       className="h-full overflow-hidden group cursor-pointer backdrop-blur-xl theme-surface border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col"
@@ -148,19 +150,24 @@ export default function NewsPage() {
                         <span>{formatDate(article.publishDate || article.createdAt)}</span>
                       </div>
 
-                      {/* Content preview */}
-                      <p className="text-sm sm:text-base text-gray-600 mb-4 line-clamp-4 flex-grow whitespace-pre-line">
-                        {article.content.length > 200
-                          ? article.content.substring(0, 200).trim() + '...'
-                          : article.content}
+                      {/* Content */}
+                      <p className={`text-sm sm:text-base text-gray-600 mb-4 flex-grow whitespace-pre-line ${expandedId === article.id ? '' : 'line-clamp-4'}`}>
+                        {expandedId === article.id ? article.content : (
+                          article.content.length > 200
+                            ? article.content.substring(0, 200).trim() + '...'
+                            : article.content
+                        )}
                       </p>
 
-                      {/* Read More */}
-                      <div className={`flex items-center gap-2 ${config.textColor} font-semibold group-hover:gap-3 transition-all mt-auto`}>
-                        {t.news.readMore}
-                        <ArrowRight className="w-4 h-4" />
-                      </div>
+                      {/* Read More / Less */}
+                      {article.content.length > 200 && (
+                        <div className={`flex items-center gap-2 ${config.textColor} font-semibold group-hover:gap-3 transition-all mt-auto`}>
+                          {expandedId === article.id ? (t.news.readLess || 'Read less') : t.news.readMore}
+                          <ArrowRight className={`w-4 h-4 transition-transform ${expandedId === article.id ? 'rotate-[-90deg]' : ''}`} />
+                        </div>
+                      )}
                     </Card>
+                    </div>
                   </motion.div>
                 );
               })}

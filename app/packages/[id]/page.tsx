@@ -450,7 +450,7 @@ export default function PackageDetailPage() {
 
                 {/* Description */}
                 {pkg.description && (
-                  <div className="rounded-xl p-4 mb-5" style={{ backgroundColor: isDark ? colors.gray[800] : colors.gray[50] }}>
+                  <div className="rounded-xl p-4 mb-5" style={{ backgroundColor: isDark ? colors.gray[200] : colors.gray[50] }}>
                     <p className="text-sm leading-relaxed" style={{ color: colors.gray[700] }}>
                       {pkg.description}
                     </p>
@@ -598,7 +598,7 @@ export default function PackageDetailPage() {
                                 className="w-[30px] h-[30px] rounded-full flex items-center justify-center border-[3px]"
                                 style={{
                                   borderColor: event.pending ? colors.gray[300] : eventColor.dot,
-                                  backgroundColor: isDark ? colors.gray[800] : '#fff',
+                                  backgroundColor: isDark ? colors.gray[100] : '#fff',
                                 }}
                               >
                                 <div
@@ -645,9 +645,9 @@ export default function PackageDetailPage() {
                 className="rounded-2xl border p-5 sm:p-6"
                 style={{
                   background: isDark
-                    ? `linear-gradient(135deg, ${colors.gray[800]}, ${colors.gray[900]})`
+                    ? `linear-gradient(135deg, ${colors.gray[100]}, ${colors.gray[50]})`
                     : 'linear-gradient(135deg, #eff6ff, #f5f3ff)',
-                  borderColor: isDark ? colors.gray[700] : '#c7d2fe',
+                  borderColor: isDark ? colors.gray[300] : '#c7d2fe',
                   boxShadow: theme.shadow.md,
                 }}
               >
@@ -736,7 +736,7 @@ export default function PackageDetailPage() {
                     {pd.currentLocation || 'Location'}
                   </h2>
                 </div>
-                <div className="rounded-xl p-4" style={{ backgroundColor: isDark ? colors.gray[800] : colors.gray[50] }}>
+                <div className="rounded-xl p-4" style={{ backgroundColor: isDark ? colors.gray[200] : colors.gray[50] }}>
                   <p className="font-semibold" style={{ color: colors.gray[900] }}>
                     {translateText(pkg.currentLocation, t)}
                   </p>

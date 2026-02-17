@@ -266,7 +266,7 @@ export default function RewardsPage() {
                       value={applyCode}
                       onChange={(e) => setApplyCode(e.target.value.toUpperCase())}
                       placeholder="Enter code (e.g. ALLIANCE-XXXX)"
-                      className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 tracking-wider font-medium"
+                      className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 tracking-wider font-medium bg-[var(--theme-surface-solid)] text-gray-900"
                     />
                     <button
                       onClick={handleApplyCode}
@@ -298,7 +298,7 @@ export default function RewardsPage() {
                         placeholder={`Enter points (max ${points})`}
                         min="0"
                         max={points}
-                        className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-medium"
+                        className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-medium bg-[var(--theme-surface-solid)] text-gray-900"
                       />
                       <button
                         onClick={handleConvertPoints}

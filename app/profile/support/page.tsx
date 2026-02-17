@@ -207,7 +207,7 @@ export default function SupportPage() {
                     onChange={(e) => setMessageSubject(e.target.value)}
                     required
                     placeholder={t.profile.support.subjectPlaceholder}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-[var(--theme-surface-solid)] text-gray-900"
                   />
                 </div>
 
@@ -221,7 +221,7 @@ export default function SupportPage() {
                     required
                     rows={5}
                     placeholder={t.profile.support.messagePlaceholder}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none bg-[var(--theme-surface-solid)] text-gray-900"
                   />
                 </div>
 

@@ -251,7 +251,7 @@ export default function CalculatorPage() {
                           style={{
                             backgroundColor: hasPerfume
                               ? (isDark ? '#92400e' : '#fef3c7')
-                              : (isDark ? colors.gray[700] : colors.gray[100]),
+                              : (isDark ? colors.gray[200] : colors.gray[100]),
                           }}
                         >
                           <Droplets
@@ -425,7 +425,7 @@ export default function CalculatorPage() {
                             className="flex items-center justify-between p-4 rounded-xl border-2 transition-all"
                             style={{
                               borderColor: colors.gray[200],
-                              backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
+                              backgroundColor: isDark ? colors.gray[200] : colors.gray[50],
                             }}
                           >
                             <div className="flex items-center gap-3">

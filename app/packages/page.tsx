@@ -249,7 +249,7 @@ export default function PackagesPage() {
                     style={
                       isActive
                         ? btn.key === 'all'
-                          ? { backgroundColor: colors.gray[900], color: '#ffffff', boxShadow: theme.shadow.lg }
+                          ? { backgroundColor: colors.primary[600], color: '#ffffff', boxShadow: theme.shadow.lg }
                           : {
                               backgroundColor: config?.bg,
                               color: config?.text,
@@ -475,8 +475,8 @@ export default function PackagesPage() {
 
                       {/* Fee Breakdown */}
                       <div className="rounded-lg p-3 mb-2 border" style={{
-                        backgroundColor: isDark ? colors.gray[800] : '#f0f4ff',
-                        borderColor: isDark ? colors.gray[700] : '#c7d7fe'
+                        backgroundColor: isDark ? colors.gray[200] : '#f0f4ff',
+                        borderColor: isDark ? colors.gray[300] : '#c7d7fe'
                       }}>
                         <p className="text-[10px] uppercase tracking-wide font-bold mb-2 flex items-center gap-1" style={{ color: colors.gray[500] }}>
                           <DollarSign className="w-3 h-3" />

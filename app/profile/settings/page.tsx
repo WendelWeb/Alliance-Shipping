@@ -17,12 +17,11 @@ import {
   Phone,
   Mail,
   MapPin,
+  MessageCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import PhoneInput from 'react-phone-number-input';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import 'react-phone-number-input/style.css';
 
 export default function SettingsPage() {
   const { user, isLoaded } = useUser();
@@ -32,7 +31,8 @@ export default function SettingsPage() {
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState<string>('');
+  const [phone, setPhone] = useState('');
+  const [whatsappPhone, setWhatsappPhone] = useState('');
   const [city, setCity] = useState('');
   const [warehouseId, setWarehouseId] = useState<number | null>(null);
   const [warehouses, setWarehouses] = useState<any[]>([]);
@@ -69,19 +69,16 @@ export default function SettingsPage() {
       if (user) {
         setFirstName(user.firstName || '');
         setLastName(user.lastName || '');
-        setPhoneNumber(user.primaryPhoneNumber?.phoneNumber || '');
 
-        // Load city and warehouse from API
+        // Load phone, whatsapp, city and warehouse from API
         try {
           const response = await fetch('/api/user/profile');
           if (response.ok) {
             const data = await response.json();
-            if (data.user?.city) {
-              setCity(data.user.city);
-            }
-            if (data.user?.warehouseId) {
-              setWarehouseId(data.user.warehouseId);
-            }
+            if (data.user?.phone) setPhone(data.user.phone);
+            if (data.user?.whatsappPhone) setWhatsappPhone(data.user.whatsappPhone);
+            if (data.user?.city) setCity(data.user.city);
+            if (data.user?.warehouseId) setWarehouseId(data.user.warehouseId);
           }
         } catch (error) {
           console.error('Error loading user data:', error);
@@ -104,7 +101,12 @@ export default function SettingsPage() {
         const response = await fetch(`/api/warehouses?city=${encodeURIComponent(city)}`);
         if (response.ok) {
           const data = await response.json();
-          setWarehouses(data.warehouses || []);
+          const wh = data.warehouses || [];
+          setWarehouses(wh);
+          // Auto-select if only one warehouse
+          if (wh.length === 1) {
+            setWarehouseId(wh[0].id);
+          }
         }
       } catch (error) {
         console.error('Error loading warehouses:', error);
@@ -167,70 +169,38 @@ export default function SettingsPage() {
     setSuccess(false);
 
     try {
-      let updateSuccess = false;
-
-      // Update name
+      // Update Clerk profile (first and last name)
       if (firstName.trim() !== user.firstName || lastName.trim() !== user.lastName) {
         try {
           await user.update({
             firstName: firstName.trim(),
             lastName: lastName.trim(),
           });
-          updateSuccess = true;
         } catch (nameError: any) {
           console.error('Name update error:', nameError);
           throw new Error(nameError.errors?.[0]?.message || nameError.message || t.profile.settings.nameUpdateFailed);
         }
       }
 
-      // Update phone number - Only if changed and not empty
-      const currentPhone = user.primaryPhoneNumber?.phoneNumber || '';
-      if (phoneNumber && phoneNumber !== currentPhone) {
-        try {
-          // Remove existing phone numbers
-          const existingPhones = user.phoneNumbers || [];
-          for (const phone of existingPhones) {
-            try {
-              await phone.destroy();
-            } catch (e) {
-              console.log('Could not remove existing phone:', e);
-            }
-          }
+      // Update DB profile (phone, whatsapp, city, warehouse)
+      const updateData: Record<string, any> = {};
+      if (phone) updateData.phone = phone;
+      if (whatsappPhone) updateData.whatsappPhone = whatsappPhone;
+      if (city) updateData.city = city;
+      if (warehouseId) updateData.warehouseId = warehouseId;
 
-          // Add the new phone number
-          await user.createPhoneNumber({ phoneNumber });
-          updateSuccess = true;
-        } catch (phoneError: any) {
-          console.error('Phone update error:', phoneError);
-          // Don't fail completely if only phone failed
-          if (!updateSuccess) {
-            throw new Error(t.profile.settings.phoneUpdateFailed + (phoneError.errors?.[0]?.message || phoneError.message));
-          } else {
-            setError(t.profile.settings.phonePartialError);
-          }
-        }
+      if (Object.keys(updateData).length > 0) {
+        await fetch('/api/user/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updateData),
+        });
       }
 
-      // Update city and warehouse in our database
-      if (city || warehouseId) {
-        try {
-          await fetch('/api/user/profile', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ city, warehouseId }),
-          });
-          updateSuccess = true;
-        } catch (updateError: any) {
-          console.error('Profile update error:', updateError);
-        }
-      }
-
-      if (updateSuccess || (firstName.trim() === user.firstName && lastName.trim() === user.lastName && phoneNumber === currentPhone)) {
-        setSuccess(true);
-        setTimeout(() => {
-          router.push('/profile');
-        }, 2000);
-      }
+      setSuccess(true);
+      setTimeout(() => {
+        router.push('/profile');
+      }, 2000);
     } catch (err: any) {
       console.error('Error updating profile:', err);
       setError(err.message || t.profile.settings.profileUpdateFailed);
@@ -379,7 +349,7 @@ export default function SettingsPage() {
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     required
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-[var(--theme-surface-solid)] text-gray-900"
                     placeholder={t.profile.settings.firstNamePlaceholder}
                   />
                 </div>
@@ -394,7 +364,7 @@ export default function SettingsPage() {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     required
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-[var(--theme-surface-solid)] text-gray-900"
                     placeholder={t.profile.settings.lastNamePlaceholder}
                   />
                 </div>
@@ -420,19 +390,30 @@ export default function SettingsPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Phone className="h-4 w-4 inline mr-1" />
-                    {t.profile.settings.phone}
+                    {(t.profile.settings as any).phoneLabel || 'Numero de telephone'}
                   </label>
-                  <PhoneInput
-                    international
-                    defaultCountry="HT"
-                    value={phoneNumber}
-                    onChange={(value) => setPhoneNumber(value || '')}
-                    className="w-full phone-input-custom"
-                    placeholder={t.profile.settings.phonePlaceholder}
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-[var(--theme-surface-solid)] text-gray-900"
+                    placeholder="+50912345678"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    {t.profile.settings.phoneNote}
-                  </p>
+                </div>
+
+                {/* WhatsApp Number */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <MessageCircle className="h-4 w-4 inline mr-1" />
+                    {(t.profile.settings as any).whatsappLabel || 'Numero WhatsApp'}
+                  </label>
+                  <input
+                    type="tel"
+                    value={whatsappPhone}
+                    onChange={(e) => setWhatsappPhone(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-[var(--theme-surface-solid)] text-gray-900"
+                    placeholder="+50912345678"
+                  />
                 </div>
 
                 <div>
@@ -447,7 +428,7 @@ export default function SettingsPage() {
                       setWarehouseId(null); // Reset warehouse when city changes
                     }}
                     disabled={loadingCities}
-                    className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 bg-[var(--theme-surface-solid)] text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <option value="">
                       {loadingCities ? 'Chargement des villes...' : 'Sélectionnez votre ville'}
@@ -478,7 +459,7 @@ export default function SettingsPage() {
                       <select
                         value={warehouseId || ''}
                         onChange={(e) => setWarehouseId(e.target.value ? Number(e.target.value) : null)}
-                        className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-100 transition-all"
+                        className="w-full px-4 py-3 bg-[var(--theme-surface-solid)] text-gray-900 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-100 transition-all"
                       >
                         <option value="">Sélectionnez votre dépôt</option>
                         {warehouses.map((warehouse) => (
@@ -570,39 +551,6 @@ export default function SettingsPage() {
       </main>
       <BottomNav />
 
-      <style jsx global>{`
-        .phone-input-custom input {
-          width: 100%;
-          padding: 0.75rem 1rem;
-          border: 2px solid #d1d5db;
-          border-radius: 0.75rem;
-          font-size: 1rem;
-          outline: none;
-          transition: all 0.2s;
-        }
-
-        .phone-input-custom input:focus {
-          border-color: #10b981;
-          box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-        }
-
-        .phone-input-custom .PhoneInputCountry {
-          padding: 0.5rem;
-          margin-right: 0.5rem;
-        }
-
-        .phone-input-custom .PhoneInputCountrySelect {
-          border: 2px solid #d1d5db;
-          border-radius: 0.5rem;
-          padding: 0.25rem;
-          font-size: 1rem;
-          outline: none;
-        }
-
-        .phone-input-custom .PhoneInputCountrySelect:focus {
-          border-color: #10b981;
-        }
-      `}</style>
     </div>
   );
 }
