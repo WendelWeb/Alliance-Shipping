@@ -20,6 +20,11 @@ import {
 import { getAdminSession } from '@/lib/auth/admin';
 import { eq, and, like, or, desc, sql, lte } from 'drizzle-orm';
 import { sendPushNotification } from '@/lib/notifications/push';
+import {
+  sendPackageStatusChangeEmail,
+  sendPackageAvailableEmail,
+  sendPackageDeliveredEmail
+} from '@/lib/email/service';
 import { generateASTrackingNumber } from '@/lib/utils/tracking';
 import { getAllianceShippingUserId, findPendingRequest, autoTransferPackage, calculateFeesForCity, ALLIANCE_SHIPPING_EMAIL } from '@/lib/utils/package-transfer';
 
@@ -244,12 +249,15 @@ export async function POST(request: NextRequest) {
       console.log('[CREATE PACKAGE] Using target user ID:', ownerId);
     }
 
-    // Get owner's city for fee calculation
-    // Get owner's city AND warehouse
+    // Get owner's city, warehouse, and contact info for fee calculation + email
     const [owner] = await db
       .select({
         city: users.city,
         warehouseId: users.warehouseId,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        preferredLanguage: users.preferredLanguage,
       })
       .from(users)
       .where(eq(users.id, ownerId))
@@ -473,7 +481,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // If package was created for a specific user (from user card), send notification
+    // If package was created for a specific user (from user card), send notification + email
     if (targetUserId) {
       sendPushNotification({
         userId: targetUserId,
@@ -481,6 +489,23 @@ export async function POST(request: NextRequest) {
         variables: { tracking: trackingNumber },
         packageId: newPackage.id,
       }).catch(() => {});
+
+      // Send email notification
+      if (owner?.email) {
+        const userName = `${owner.firstName || ''} ${owner.lastName || ''}`.trim() || owner.email;
+        const userLocale = owner.preferredLanguage || 'fr';
+
+        sendPackageStatusChangeEmail(
+          owner.email,
+          userName,
+          trackingNumber,
+          pkgStatus,
+          'Your package has been received at our warehouse and is being processed.',
+          userLocale
+        ).catch(error => {
+          console.error('Failed to send package creation email:', error);
+        });
+      }
     }
 
     return NextResponse.json({
@@ -617,7 +642,7 @@ export async function PATCH(request: NextRequest) {
       userAgent: request.headers.get('user-agent') || 'unknown',
     });
 
-    // Send push notification for status changes
+    // Send push notification + email for status changes
     if (status) {
       const pushMap: Record<string, string> = {
         'received': 'package_received',
@@ -633,6 +658,72 @@ export async function PATCH(request: NextRequest) {
           variables: { tracking: updatedPackage.trackingNumber },
           packageId: updatedPackage.id,
         }).catch(() => {});
+      }
+
+      // Send email notification for status change
+      const [pkgUser] = await db
+        .select({
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          preferredLanguage: users.preferredLanguage,
+          warehouseId: users.warehouseId,
+        })
+        .from(users)
+        .where(eq(users.id, updatedPackage.userId))
+        .limit(1);
+
+      if (pkgUser?.email) {
+        const userName = `${pkgUser.firstName || ''} ${pkgUser.lastName || ''}`.trim() || pkgUser.email;
+        const userLocale = pkgUser.preferredLanguage || 'fr';
+
+        // Get warehouse/office location for available status
+        let officeLocationForEmail = updatedPackage.currentLocation || 'Port-au-Prince Office';
+        if (pkgUser.warehouseId) {
+          const [wh] = await db
+            .select({ city: warehouses.city })
+            .from(warehouses)
+            .where(eq(warehouses.id, pkgUser.warehouseId))
+            .limit(1);
+          if (wh) officeLocationForEmail = `${wh.city} Office`;
+        }
+
+        if (status === 'available') {
+          sendPackageAvailableEmail(
+            pkgUser.email,
+            userName,
+            updatedPackage.trackingNumber,
+            officeLocationForEmail,
+            userLocale
+          ).catch(error => {
+            console.error('Failed to send available email:', error);
+          });
+        } else if (status === 'delivered') {
+          sendPackageDeliveredEmail(
+            pkgUser.email,
+            userName,
+            updatedPackage.trackingNumber,
+            userName,
+            userLocale
+          ).catch(error => {
+            console.error('Failed to send delivered email:', error);
+          });
+        } else {
+          const statusMessages: Record<string, string> = {
+            'received': 'Your package has been received at our warehouse and is being processed.',
+            'in-transit': 'Your package is on its way to Haiti and will arrive soon.',
+          };
+          sendPackageStatusChangeEmail(
+            pkgUser.email,
+            userName,
+            updatedPackage.trackingNumber,
+            status,
+            statusMessages[status] || 'Your package status has been updated.',
+            userLocale
+          ).catch(error => {
+            console.error('Failed to send status change email:', error);
+          });
+        }
       }
     }
 

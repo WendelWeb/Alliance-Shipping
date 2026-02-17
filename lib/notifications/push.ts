@@ -10,6 +10,7 @@ interface PushMessage {
   title: string;
   body: string;
   data?: Record<string, unknown>;
+  channelId?: string;
 }
 
 // Multilingual notification templates
@@ -149,17 +150,33 @@ export async function sendPushNotification(params: {
         title,
         body,
         data: { type: templateKey, packageId, ...data },
+        channelId: 'default',
       };
 
-      await fetch('https://exp.host/--/api/v2/push/send', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Accept-encoding': 'gzip, deflate',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(message),
-      });
+      const headers: Record<string, string> = {
+        'Accept': 'application/json',
+        'Accept-encoding': 'gzip, deflate',
+        'Content-Type': 'application/json',
+      };
+
+      if (process.env.EXPO_ACCESS_TOKEN) {
+        headers['Authorization'] = `Bearer ${process.env.EXPO_ACCESS_TOKEN}`;
+      }
+
+      try {
+        const response = await fetch('https://exp.host/--/api/v2/push/send', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(message),
+        });
+
+        if (!response.ok) {
+          const errorBody = await response.text();
+          console.error(`Push notification failed. Status: ${response.status}. Error: ${errorBody}`);
+        }
+      } catch (fetchError) {
+        console.error('Network error sending push notification:', fetchError);
+      }
     }
 
     return true;
@@ -226,19 +243,31 @@ export async function sendPushToAllUsers(params: {
 
   // Send push notifications in batches of 100 (Expo limit)
   let sent = 0;
+  const headers: Record<string, string> = {
+    'Accept': 'application/json',
+    'Accept-encoding': 'gzip, deflate',
+    'Content-Type': 'application/json',
+  };
+
+  if (process.env.EXPO_ACCESS_TOKEN) {
+    headers['Authorization'] = `Bearer ${process.env.EXPO_ACCESS_TOKEN}`;
+  }
+
   for (let i = 0; i < messages.length; i += 100) {
     const batch = messages.slice(i, i + 100);
     try {
-      await fetch('https://exp.host/--/api/v2/push/send', {
+      const response = await fetch('https://exp.host/--/api/v2/push/send', {
         method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Accept-encoding': 'gzip, deflate',
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(batch),
       });
-      sent += batch.length;
+
+      if (!response.ok) {
+        console.error(`Batch push failed. Status: ${response.status}`);
+        failed += batch.length;
+      } else {
+        sent += batch.length;
+      }
     } catch {
       failed += batch.length;
     }
