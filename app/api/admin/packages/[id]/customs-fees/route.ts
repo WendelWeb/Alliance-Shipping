@@ -4,6 +4,7 @@ import { packages, users, adminActivityLogs, specialItemFees } from '@/lib/db/sc
 import { getAdminSession } from '@/lib/auth/admin';
 import { eq } from 'drizzle-orm';
 import { sendCustomsFeesEmail } from '@/lib/email/service';
+import { sendPushNotification } from '@/lib/notifications/push';
 
 export async function POST(
   request: NextRequest,
@@ -125,6 +126,18 @@ export async function POST(
         emailError = error.message;
       }
     }
+
+    // Send push notification
+    sendPushNotification({
+      userId: pkg.userId,
+      templateKey: 'customs_fees_added',
+      variables: {
+        tracking: pkg.trackingNumber,
+        customs: customsFeesAmount.toFixed(2),
+        total: newTotal.toFixed(2),
+      },
+      packageId,
+    }).catch(() => {});
 
     return NextResponse.json({
       success: true,

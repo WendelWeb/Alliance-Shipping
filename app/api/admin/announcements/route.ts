@@ -4,6 +4,7 @@ import { announcements } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
 import { eq, desc, or, like, and, isNull } from 'drizzle-orm';
 import { executeAction } from '@/lib/announcements/action-executors';
+import { sendPushToAllUsers } from '@/lib/notifications/push';
 import {
   getTemplateById,
   generateActionTranslations,
@@ -150,6 +151,21 @@ export async function POST(request: NextRequest) {
         createdBy: session.adminId,
       })
       .returning();
+
+    // Send push notification to all users (if not scheduled for later)
+    if (!isScheduled) {
+      const summary = typeof translations === 'object' && translations !== null
+        ? ((translations as any).fr?.content || (translations as any).en?.content || '').substring(0, 100)
+        : '';
+      sendPushToAllUsers({
+        templateKey: 'new_announcement',
+        variables: {
+          title: newAnnouncement.title,
+          summary: summary ? `${summary}...` : '',
+        },
+        data: { announcementId: newAnnouncement.id },
+      }).catch(() => {});
+    }
 
     return NextResponse.json({
       announcement: newAnnouncement,

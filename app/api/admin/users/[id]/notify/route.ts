@@ -5,6 +5,7 @@ import { users, notifications, adminActivityLogs } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
 import { eq } from 'drizzle-orm';
 import { sendEmail } from '@/lib/email';
+import { sendPushNotification } from '@/lib/notifications/push';
 
 // POST - Send notification to a specific user (DB + Email)
 export async function POST(
@@ -155,6 +156,16 @@ export async function POST(
         </html>
       `,
     });
+
+    // Send push notification to user's device
+    sendPushNotification({
+      userId: dbUser.id,
+      templateKey: 'admin_message',
+      variables: {
+        message: message,
+        tracking: '',
+      },
+    }).catch(() => {});
 
     // Log admin activity
     await db.insert(adminActivityLogs).values({

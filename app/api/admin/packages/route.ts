@@ -486,7 +486,12 @@ export async function POST(request: NextRequest) {
       sendPushNotification({
         userId: targetUserId,
         templateKey: 'package_received',
-        variables: { tracking: trackingNumber },
+        variables: {
+          tracking: trackingNumber,
+          weight: weight ? String(weight) : '0',
+          city: owner?.city || 'Haiti',
+          total: fees.totalCost.toFixed(2),
+        },
         packageId: newPackage.id,
       }).catch(() => {});
 
@@ -603,6 +608,20 @@ export async function PATCH(request: NextRequest) {
       .where(eq(packages.id, id))
       .returning();
 
+    // Send weight_updated push notification if weight changed but status didn't
+    if (weight !== undefined && !status) {
+      sendPushNotification({
+        userId: updatedPackage.userId,
+        templateKey: 'weight_updated',
+        variables: {
+          tracking: updatedPackage.trackingNumber,
+          weight: String(weight),
+          total: parseFloat(String(updatedPackage.totalCost || '0')).toFixed(2),
+        },
+        packageId: updatedPackage.id,
+      }).catch(() => {});
+    }
+
     // Add tracking history if status or location changed
     if (status || currentLocation) {
       const statusTitleKeysUpdate: Record<string, string> = {
@@ -644,6 +663,70 @@ export async function PATCH(request: NextRequest) {
 
     // Send push notification + email for status changes
     if (status) {
+      // Fetch user info for push + email
+      const [pkgUser] = await db
+        .select({
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          preferredLanguage: users.preferredLanguage,
+          warehouseId: users.warehouseId,
+          city: users.city,
+        })
+        .from(users)
+        .where(eq(users.id, updatedPackage.userId))
+        .limit(1);
+
+      // Get warehouse/office location and hours
+      let officeLocation = updatedPackage.currentLocation || 'Port-au-Prince Office';
+      let officeHours = 'Lun-Sam 8h-17h';
+      if (pkgUser?.warehouseId) {
+        const [wh] = await db
+          .select({ city: warehouses.city, name: warehouses.name, openingHours: warehouses.openingHours })
+          .from(warehouses)
+          .where(eq(warehouses.id, pkgUser.warehouseId))
+          .limit(1);
+        if (wh) {
+          officeLocation = `${wh.city} Office`;
+          if (wh.openingHours) officeHours = wh.openingHours;
+        }
+      }
+
+      // Get city pricing for delivery days
+      let deliveryDays = '10-15';
+      if (pkgUser?.city) {
+        const [cp] = await db
+          .select({ deliveryDaysMin: cityPricing.deliveryDaysMin, deliveryDaysMax: cityPricing.deliveryDaysMax })
+          .from(cityPricing)
+          .where(eq(cityPricing.city, pkgUser.city))
+          .limit(1);
+        if (cp) deliveryDays = `${cp.deliveryDaysMin}-${cp.deliveryDaysMax}`;
+      }
+
+      // Calculate loyalty points for delivered notification
+      let pointsEarned = '0';
+      if (status === 'delivered') {
+        const totalCost = parseFloat(String(updatedPackage.totalCost)) || 0;
+        const [pointsConfig] = await db
+          .select()
+          .from(loyaltyConfig)
+          .where(eq(loyaltyConfig.key, 'points_per_dollar_spent'));
+        const pointsPerDollar = pointsConfig ? parseFloat(pointsConfig.value) : 50;
+        pointsEarned = String(Math.floor(totalCost * pointsPerDollar));
+      }
+
+      // Build rich variables for push notification
+      const pushVars: Record<string, string> = {
+        tracking: updatedPackage.trackingNumber,
+        weight: String(updatedPackage.weight || '0'),
+        total: parseFloat(String(updatedPackage.totalCost || '0')).toFixed(2),
+        city: pkgUser?.city || 'Haiti',
+        location: officeLocation,
+        hours: officeHours,
+        days: deliveryDays,
+        points: pointsEarned,
+      };
+
       const pushMap: Record<string, string> = {
         'received': 'package_received',
         'in-transit': 'package_in_transit',
@@ -655,45 +738,22 @@ export async function PATCH(request: NextRequest) {
         sendPushNotification({
           userId: updatedPackage.userId,
           templateKey: pushTemplate,
-          variables: { tracking: updatedPackage.trackingNumber },
+          variables: pushVars,
           packageId: updatedPackage.id,
         }).catch(() => {});
       }
 
       // Send email notification for status change
-      const [pkgUser] = await db
-        .select({
-          email: users.email,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          preferredLanguage: users.preferredLanguage,
-          warehouseId: users.warehouseId,
-        })
-        .from(users)
-        .where(eq(users.id, updatedPackage.userId))
-        .limit(1);
-
       if (pkgUser?.email) {
         const userName = `${pkgUser.firstName || ''} ${pkgUser.lastName || ''}`.trim() || pkgUser.email;
         const userLocale = pkgUser.preferredLanguage || 'fr';
-
-        // Get warehouse/office location for available status
-        let officeLocationForEmail = updatedPackage.currentLocation || 'Port-au-Prince Office';
-        if (pkgUser.warehouseId) {
-          const [wh] = await db
-            .select({ city: warehouses.city })
-            .from(warehouses)
-            .where(eq(warehouses.id, pkgUser.warehouseId))
-            .limit(1);
-          if (wh) officeLocationForEmail = `${wh.city} Office`;
-        }
 
         if (status === 'available') {
           sendPackageAvailableEmail(
             pkgUser.email,
             userName,
             updatedPackage.trackingNumber,
-            officeLocationForEmail,
+            officeLocation,
             userLocale
           ).catch(error => {
             console.error('Failed to send available email:', error);

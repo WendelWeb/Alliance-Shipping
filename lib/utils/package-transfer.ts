@@ -287,7 +287,11 @@ export async function autoTransferPackage(params: {
       await sendPushNotification({
         userId: newUserId,
         templateKey: 'request_approved',
-        variables: { tracking: pkg.trackingNumber },
+        variables: {
+          tracking: pkg.trackingNumber,
+          total: fees.totalCost.toFixed(2),
+          city: user.city || 'Haiti',
+        },
         packageId,
       });
     } catch (pushErr) {
