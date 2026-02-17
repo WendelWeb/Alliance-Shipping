@@ -237,6 +237,7 @@ export async function sendPushToAllUsers(params: {
         title,
         body,
         data: { type: templateKey, ...data },
+        channelId: 'default',
       });
     }
   }
