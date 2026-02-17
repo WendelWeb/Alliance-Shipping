@@ -133,6 +133,7 @@ export async function POST(
       templateKey: 'customs_fees_added',
       variables: {
         tracking: pkg.trackingNumber,
+        externalTracking: pkg.externalTrackingNumber || 'N/A',
         customs: customsFeesAmount.toFixed(2),
         total: newTotal.toFixed(2),
       },

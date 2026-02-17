@@ -488,6 +488,8 @@ export async function POST(request: NextRequest) {
         templateKey: 'package_received',
         variables: {
           tracking: trackingNumber,
+          externalTracking: externalTrackingNumber?.trim() || 'N/A',
+          depot: warehouseName || (owner?.city ? `${owner.city} Office` : 'Port-au-Prince Office'),
           weight: weight ? String(weight) : '0',
           city: owner?.city || 'Haiti',
           total: fees.totalCost.toFixed(2),
@@ -615,6 +617,7 @@ export async function PATCH(request: NextRequest) {
         templateKey: 'weight_updated',
         variables: {
           tracking: updatedPackage.trackingNumber,
+          externalTracking: updatedPackage.externalTrackingNumber || 'N/A',
           weight: String(weight),
           total: parseFloat(String(updatedPackage.totalCost || '0')).toFixed(2),
         },
@@ -718,6 +721,8 @@ export async function PATCH(request: NextRequest) {
       // Build rich variables for push notification
       const pushVars: Record<string, string> = {
         tracking: updatedPackage.trackingNumber,
+        externalTracking: updatedPackage.externalTrackingNumber || 'N/A',
+        depot: officeLocation,
         weight: String(updatedPackage.weight || '0'),
         total: parseFloat(String(updatedPackage.totalCost || '0')).toFixed(2),
         city: pkgUser?.city || 'Haiti',

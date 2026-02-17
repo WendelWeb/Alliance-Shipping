@@ -284,11 +284,31 @@ export async function autoTransferPackage(params: {
 
     // Send push notification
     try {
+      // Get warehouse name for depot variable
+      let depotName = user.city ? `${user.city} Office` : 'Port-au-Prince Office';
+      if (user.warehouseId) {
+        const [wh] = await db
+          .select({ city: warehouses.city })
+          .from(warehouses)
+          .where(eq(warehouses.id, user.warehouseId))
+          .limit(1);
+        if (wh) depotName = `${wh.city} Office`;
+      }
+
+      // Get external tracking number
+      const [fullPkg] = await db
+        .select({ externalTrackingNumber: packages.externalTrackingNumber })
+        .from(packages)
+        .where(eq(packages.id, packageId))
+        .limit(1);
+
       await sendPushNotification({
         userId: newUserId,
         templateKey: 'request_approved',
         variables: {
           tracking: pkg.trackingNumber,
+          externalTracking: fullPkg?.externalTrackingNumber || 'N/A',
+          depot: depotName,
           total: fees.totalCost.toFixed(2),
           city: user.city || 'Haiti',
         },
