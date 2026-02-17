@@ -121,7 +121,12 @@ export async function sendPushNotification(params: {
       .where(eq(users.id, userId))
       .limit(1);
 
-    if (!user) return false;
+    if (!user) {
+      console.log(`[PUSH] User ${userId} not found`);
+      return false;
+    }
+
+    console.log(`[PUSH] User ${userId}: token=${user.expoPushToken ? 'YES' : 'NO'}, lang=${user.preferredLanguage}`);
 
     const locale = (['ht', 'fr', 'en', 'es'].includes(user.preferredLanguage)
       ? user.preferredLanguage
@@ -164,18 +169,21 @@ export async function sendPushNotification(params: {
       }
 
       try {
+        console.log(`[PUSH] Sending to ${user.expoPushToken} | template=${templateKey} | EXPO_TOKEN=${process.env.EXPO_ACCESS_TOKEN ? 'SET' : 'NOT SET'}`);
         const response = await fetch('https://exp.host/--/api/v2/push/send', {
           method: 'POST',
           headers,
           body: JSON.stringify(message),
         });
 
+        const responseBody = await response.text();
+        console.log(`[PUSH] Response: ${response.status} | ${responseBody}`);
+
         if (!response.ok) {
-          const errorBody = await response.text();
-          console.error(`Push notification failed. Status: ${response.status}. Error: ${errorBody}`);
+          console.error(`[PUSH] Failed. Status: ${response.status}. Error: ${responseBody}`);
         }
       } catch (fetchError) {
-        console.error('Network error sending push notification:', fetchError);
+        console.error('[PUSH] Network error:', fetchError);
       }
     }
 
