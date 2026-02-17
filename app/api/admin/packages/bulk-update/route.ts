@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { packages, trackingHistory, adminActivityLogs, users, loyaltyConfig, loyaltyCredits } from '@/lib/db/schema';
+import { packages, trackingHistory, adminActivityLogs, users, loyaltyConfig, loyaltyCredits, warehouses, cityPricing } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
 import { eq, inArray } from 'drizzle-orm';
 import {
@@ -168,25 +168,86 @@ export async function POST(request: NextRequest) {
         userAgent: request.headers.get('user-agent') || 'unknown',
       });
 
-      // Send email notification to user (use 'user' from join, not fetch again)
+      // Get warehouse hours for push notification
+      let officeHours = 'Lun-Sam 8h-17h';
+      if (user?.warehouseId) {
+        const [wh] = await db
+          .select({ openingHours: warehouses.openingHours })
+          .from(warehouses)
+          .where(eq(warehouses.id, user.warehouseId))
+          .limit(1);
+        if (wh?.openingHours) officeHours = wh.openingHours;
+      }
+
+      // Get delivery days from city pricing
+      let deliveryDays = '10-15';
+      if (user?.city) {
+        const [cp] = await db
+          .select({ deliveryDaysMin: cityPricing.deliveryDaysMin, deliveryDaysMax: cityPricing.deliveryDaysMax })
+          .from(cityPricing)
+          .where(eq(cityPricing.city, user.city))
+          .limit(1);
+        if (cp) deliveryDays = `${cp.deliveryDaysMin}-${cp.deliveryDaysMax}`;
+      }
+
+      // Calculate loyalty points for delivered notification
+      let pointsEarned = '0';
+      if (status === 'delivered') {
+        const totalCost = parseFloat(String(updated.totalCost)) || 0;
+        const [pointsConfig] = await db
+          .select()
+          .from(loyaltyConfig)
+          .where(eq(loyaltyConfig.key, 'points_per_dollar_spent'));
+        const pointsPerDollar = pointsConfig ? parseFloat(pointsConfig.value) : 50;
+        pointsEarned = String(Math.floor(totalCost * pointsPerDollar));
+      }
+
+      // Send push notification (independent of email)
+      const pushTemplateMap: Record<string, string> = {
+        'received': 'package_received',
+        'in-transit': 'package_in_transit',
+        'available': 'package_available',
+        'delivered': 'package_delivered',
+      };
+      const pushTemplate = pushTemplateMap[status];
+      if (pushTemplate) {
+        sendPushNotification({
+          userId: updated.userId,
+          templateKey: pushTemplate,
+          variables: {
+            tracking: updated.trackingNumber,
+            externalTracking: updated.externalTrackingNumber || 'N/A',
+            depot: officeLocation,
+            weight: String(updated.weight || '0'),
+            total: parseFloat(String(updated.totalCost || '0')).toFixed(2),
+            city: user?.city || 'Haiti',
+            location: officeLocation,
+            hours: officeHours,
+            days: deliveryDays,
+            points: pointsEarned,
+          },
+          packageId: updated.id,
+        }).catch(() => {});
+      }
+
+      // Send email notification to user
       if (user?.email) {
         emailSent = true;
         const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
         const userLocale = user.preferredLanguage || 'fr';
 
-        // Send appropriate email based on status
         if (status === 'available') {
-          await sendPackageAvailableEmail(
+          sendPackageAvailableEmail(
             user.email,
             userName,
             updated.trackingNumber,
-            officeLocation, // ⭐ Utilise le même officeLocation que le tracking history
+            officeLocation,
             userLocale
           ).catch(error => {
             console.error('Failed to send available email:', error);
           });
         } else if (status === 'delivered') {
-          await sendPackageDeliveredEmail(
+          sendPackageDeliveredEmail(
             user.email,
             userName,
             updated.trackingNumber,
@@ -196,13 +257,12 @@ export async function POST(request: NextRequest) {
             console.error('Failed to send delivered email:', error);
           });
         } else {
-          // For other status changes (received, in-transit)
           const statusMessages: Record<string, string> = {
             'received': 'Your package has been received at our warehouse and is being processed.',
             'in-transit': 'Your package is on its way to Haiti and will arrive soon.',
           };
 
-          await sendPackageStatusChangeEmail(
+          sendPackageStatusChangeEmail(
             user.email,
             userName,
             updated.trackingNumber,
@@ -212,28 +272,6 @@ export async function POST(request: NextRequest) {
           ).catch(error => {
             console.error('Failed to send status change email:', error);
           });
-        }
-
-        // Send push notification
-        const pushTemplateMap: Record<string, string> = {
-          'received': 'package_received',
-          'in-transit': 'package_in_transit',
-          'available': 'package_available',
-          'delivered': 'package_delivered',
-        };
-        const pushTemplate = pushTemplateMap[status];
-        if (pushTemplate) {
-          sendPushNotification({
-            userId: updated.userId,
-            templateKey: pushTemplate,
-            variables: {
-              tracking: updated.trackingNumber,
-              weight: String(updated.weight || '0'),
-              location: locationMap[status] || officeLocation,
-              total: parseFloat(String(updated.totalCost || '0')).toFixed(2),
-            },
-            packageId: updated.id,
-          }).catch(() => {});
         }
       }
 
