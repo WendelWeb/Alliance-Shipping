@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { packages, trackingHistory, adminActivityLogs, users, loyaltyConfig, loyaltyCredits, warehouses, cityPricing } from '@/lib/db/schema';
+import { packages, trackingHistory, adminActivityLogs, users, loyaltyConfig, loyaltyCredits, warehouses, cityPricing, specialItemFees } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
 import { eq, inArray } from 'drizzle-orm';
 import {
@@ -203,6 +203,17 @@ export async function POST(request: NextRequest) {
         pointsEarned = String(Math.floor(totalCost * pointsPerDollar));
       }
 
+      // Fetch special item name if applicable
+      let specialItemName = '';
+      if (pkg.specialItemId) {
+        const [si] = await db
+          .select({ itemName: specialItemFees.itemName, brand: specialItemFees.brand })
+          .from(specialItemFees)
+          .where(eq(specialItemFees.id, pkg.specialItemId))
+          .limit(1);
+        if (si) specialItemName = `${si.brand} ${si.itemName}`;
+      }
+
       // Send push notification (independent of email)
       const pushTemplateMap: Record<string, string> = {
         'received': 'package_received',
@@ -226,6 +237,8 @@ export async function POST(request: NextRequest) {
             hours: officeHours,
             days: deliveryDays,
             points: pointsEarned,
+            category: pkg.category || 'general',
+            ...(specialItemName ? { specialItem: specialItemName } : {}),
           },
           packageId: updated.id,
         }).catch(() => {});

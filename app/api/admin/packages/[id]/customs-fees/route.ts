@@ -49,14 +49,16 @@ export async function POST(
 
     // Include special item fixed fee if package has one
     let specialItemFixedFee = 0;
+    let specialItemName = '';
     if (pkg.specialItemId) {
       const [specialItem] = await db
-        .select({ fixedFee: specialItemFees.fixedFee })
+        .select({ fixedFee: specialItemFees.fixedFee, itemName: specialItemFees.itemName, brand: specialItemFees.brand })
         .from(specialItemFees)
         .where(eq(specialItemFees.id, pkg.specialItemId))
         .limit(1);
       if (specialItem) {
         specialItemFixedFee = parseFloat(specialItem.fixedFee);
+        specialItemName = `${specialItem.brand} ${specialItem.itemName}`;
       }
     }
 
@@ -136,6 +138,8 @@ export async function POST(
         externalTracking: pkg.externalTrackingNumber || 'N/A',
         customs: customsFeesAmount.toFixed(2),
         total: newTotal.toFixed(2),
+        category: pkg.category || 'general',
+        ...(specialItemName ? { specialItem: specialItemName } : {}),
       },
       packageId,
     }).catch(() => {});

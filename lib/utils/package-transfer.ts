@@ -123,6 +123,7 @@ export async function autoTransferPackage(params: {
         specialItemId: packages.specialItemId,
         chargeByWeight: packages.chargeByWeight,
         customsFees: packages.customsFees,
+        category: packages.category,
       })
       .from(packages)
       .where(eq(packages.id, packageId))
@@ -241,15 +242,19 @@ export async function autoTransferPackage(params: {
     const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
     const emailLocale = locale || user.preferredLanguage || 'fr';
 
-    // Build special item fee for breakdown
+    // Build special item fee + name for breakdown
     let specialItemFee = 0;
+    let specialItemName = '';
     if (pkg.specialItemId) {
       const [specialItem] = await db
-        .select({ fixedFee: specialItemFees.fixedFee })
+        .select({ fixedFee: specialItemFees.fixedFee, itemName: specialItemFees.itemName, brand: specialItemFees.brand })
         .from(specialItemFees)
         .where(eq(specialItemFees.id, pkg.specialItemId))
         .limit(1);
-      specialItemFee = specialItem ? parseFloat(specialItem.fixedFee) : 0;
+      if (specialItem) {
+        specialItemFee = parseFloat(specialItem.fixedFee);
+        specialItemName = `${specialItem.brand} ${specialItem.itemName}`;
+      }
     }
 
     let emailSent = false;
@@ -311,6 +316,8 @@ export async function autoTransferPackage(params: {
           depot: depotName,
           total: fees.totalCost.toFixed(2),
           city: user.city || 'Haiti',
+          category: pkg.category || 'general',
+          ...(specialItemName ? { specialItem: specialItemName } : {}),
         },
         packageId,
       });

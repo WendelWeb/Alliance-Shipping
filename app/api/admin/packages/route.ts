@@ -281,6 +281,7 @@ export async function POST(request: NextRequest) {
 
     // Calculate fees based on special item or normal package
     let fees: { serviceFee: number; weightCost: number; totalCost: number };
+    let specialItemName = '';
 
     if (specialItemId) {
       // Fetch special item
@@ -296,6 +297,8 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+
+      specialItemName = `${specialItem.brand} ${specialItem.itemName}`;
 
       // Get city pricing for service fee
       const cityFees = await calculateFeesForCity(owner?.city || null, parseFloat(weight) || 0);
@@ -495,6 +498,8 @@ export async function POST(request: NextRequest) {
           weight: weight ? String(weight) : '0',
           city: owner?.city || 'Haiti',
           total: fees.totalCost.toFixed(2),
+          category: category || 'general',
+          ...(specialItemName ? { specialItem: specialItemName } : {}),
         },
         packageId: newPackage.id,
       }).catch(() => {});
@@ -614,6 +619,17 @@ export async function PATCH(request: NextRequest) {
 
     // Send weight_updated push notification if weight changed but status didn't
     if (weight !== undefined && !status) {
+      // Fetch special item name for weight update notification
+      let weightUpdateSpecialItem = '';
+      if (updatedPackage.specialItemId) {
+        const [si] = await db
+          .select({ itemName: specialItemFees.itemName, brand: specialItemFees.brand })
+          .from(specialItemFees)
+          .where(eq(specialItemFees.id, updatedPackage.specialItemId))
+          .limit(1);
+        if (si) weightUpdateSpecialItem = `${si.brand} ${si.itemName}`;
+      }
+
       sendPushNotification({
         userId: updatedPackage.userId,
         templateKey: 'weight_updated',
@@ -622,6 +638,8 @@ export async function PATCH(request: NextRequest) {
           externalTracking: updatedPackage.externalTrackingNumber || 'N/A',
           weight: String(weight),
           total: parseFloat(String(updatedPackage.totalCost || '0')).toFixed(2),
+          category: updatedPackage.category || 'general',
+          ...(weightUpdateSpecialItem ? { specialItem: weightUpdateSpecialItem } : {}),
         },
         packageId: updatedPackage.id,
       }).catch(() => {});
@@ -722,6 +740,17 @@ export async function PATCH(request: NextRequest) {
         pointsEarned = String(Math.floor(totalCost * pointsPerDollar));
       }
 
+      // Fetch special item name if applicable
+      let specialItemName = '';
+      if (updatedPackage.specialItemId) {
+        const [si] = await db
+          .select({ itemName: specialItemFees.itemName, brand: specialItemFees.brand })
+          .from(specialItemFees)
+          .where(eq(specialItemFees.id, updatedPackage.specialItemId))
+          .limit(1);
+        if (si) specialItemName = `${si.brand} ${si.itemName}`;
+      }
+
       // Build rich variables for push notification
       const pushVars: Record<string, string> = {
         tracking: updatedPackage.trackingNumber,
@@ -734,6 +763,8 @@ export async function PATCH(request: NextRequest) {
         hours: officeHours,
         days: deliveryDays,
         points: pointsEarned,
+        category: updatedPackage.category || 'general',
+        ...(specialItemName ? { specialItem: specialItemName } : {}),
       };
 
       const pushMap: Record<string, string> = {

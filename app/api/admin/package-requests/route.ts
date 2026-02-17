@@ -127,15 +127,18 @@ export async function PATCH(request: NextRequest) {
       let fees: { serviceFee: number; weightCost: number; totalCost: number };
       let specialItemFixedFee = 0;
 
+      let specialItemName = '';
+
       if (specialItemId) {
-        // Fetch special item fixed fee
+        // Fetch special item fixed fee + name
         const [specialItem] = await db
-          .select({ fixedFee: specialItemFees.fixedFee })
+          .select({ fixedFee: specialItemFees.fixedFee, itemName: specialItemFees.itemName, brand: specialItemFees.brand })
           .from(specialItemFees)
           .where(eq(specialItemFees.id, specialItemId))
           .limit(1);
 
         specialItemFixedFee = specialItem ? parseFloat(specialItem.fixedFee) : 0;
+        if (specialItem) specialItemName = `${specialItem.brand} ${specialItem.itemName}`;
 
         if (chargeByWeight) {
           // Special item + weight: fixedFee + serviceFee + weightCost + customsFees
@@ -306,7 +309,15 @@ export async function PATCH(request: NextRequest) {
       sendPushNotification({
         userId: packageRequest.userId,
         templateKey: 'request_approved',
-        variables: { tracking: asTrackingNumber, total: fees.totalCost.toFixed(2) },
+        variables: {
+          tracking: asTrackingNumber,
+          externalTracking: packageRequest.externalTrackingNumber || 'N/A',
+          depot: warehouseName || (userInfo?.city || 'Alliance Shipping'),
+          city: userInfo?.city || 'Haiti',
+          total: fees.totalCost.toFixed(2),
+          category: category || 'general',
+          ...(specialItemName ? { specialItem: specialItemName } : {}),
+        },
         packageId: newPackage.id,
       }).catch(() => {});
 
