@@ -425,10 +425,19 @@ export default function NewPackagePage() {
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
-                        <p className="font-semibold text-sm text-center text-gray-900">
-                          {item.itemName}
+                        <p className="font-bold text-sm text-center text-gray-900">
+                          {item.brand} {item.itemName}
                         </p>
-                        <p className="text-xs text-gray-500 text-center">{item.brand}</p>
+                        {item.minModel && item.maxModel && (
+                          <p className="text-xs font-semibold text-primary-700 text-center mt-0.5">
+                            {item.minModel} — {item.maxModel}
+                          </p>
+                        )}
+                        {item.description && (
+                          <p className="text-[11px] text-gray-400 text-center mt-1 line-clamp-2">
+                            {item.description}
+                          </p>
+                        )}
                         <p className="text-lg font-bold text-primary-600 text-center mt-1">
                           ${parseFloat(item.fixedFee).toFixed(2)}
                         </p>
