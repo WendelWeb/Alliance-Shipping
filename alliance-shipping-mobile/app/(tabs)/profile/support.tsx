@@ -5,11 +5,7 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  TextInput,
-  Alert,
   Linking,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,8 +18,6 @@ import {
   MessageCircle,
   ChevronDown,
   ChevronUp,
-  Send,
-  CheckCircle,
   HelpCircle,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/themes/ThemeProvider';
@@ -41,9 +35,6 @@ export default function SupportScreen() {
   const { colors, fonts, spacing, borderRadius, shadows, card } = useTheme();
 
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
-  const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
-  const [messageSent, setMessageSent] = useState(false);
 
   const faqItems: FaqItem[] = [
     { question: t.profile.support.faq1q, answer: t.profile.support.faq1a },
@@ -52,6 +43,20 @@ export default function SupportScreen() {
     { question: t.profile.support.faq4q, answer: t.profile.support.faq4a },
     { question: t.profile.support.faq5q, answer: t.profile.support.faq5a },
     { question: t.profile.support.faq6q, answer: t.profile.support.faq6a },
+    { question: t.profile.support.faq7q, answer: t.profile.support.faq7a },
+    { question: t.profile.support.faq8q, answer: t.profile.support.faq8a },
+    { question: t.profile.support.faq9q, answer: t.profile.support.faq9a },
+    { question: t.profile.support.faq10q, answer: t.profile.support.faq10a },
+    { question: t.profile.support.faq11q, answer: t.profile.support.faq11a },
+    { question: t.profile.support.faq12q, answer: t.profile.support.faq12a },
+    { question: t.profile.support.faq13q, answer: t.profile.support.faq13a },
+    { question: t.profile.support.faq14q, answer: t.profile.support.faq14a },
+    { question: t.profile.support.faq15q, answer: t.profile.support.faq15a },
+    { question: t.profile.support.faq16q, answer: t.profile.support.faq16a },
+    { question: t.profile.support.faq17q, answer: t.profile.support.faq17a },
+    { question: t.profile.support.faq18q, answer: t.profile.support.faq18a },
+    { question: t.profile.support.faq19q, answer: t.profile.support.faq19a },
+    { question: t.profile.support.faq20q, answer: t.profile.support.faq20a },
   ];
 
   const toggleFaq = (index: number) => {
@@ -60,30 +65,15 @@ export default function SupportScreen() {
   };
 
   const handleCall = () => {
-    Linking.openURL('tel:+15551234567');
+    Linking.openURL('tel:+50948812652');
   };
 
   const handleEmail = () => {
-    Linking.openURL('mailto:support@allianceshipping.com');
+    Linking.openURL('mailto:allianceshipping26@gmail.com');
   };
 
   const handleWhatsApp = () => {
-    Linking.openURL('https://wa.me/15551234567');
-  };
-
-  const handleSendMessage = () => {
-    if (!subject.trim() || !message.trim()) {
-      return;
-    }
-
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setMessageSent(true);
-    setSubject('');
-    setMessage('');
-
-    setTimeout(() => {
-      setMessageSent(false);
-    }, 5000);
+    Linking.openURL('https://wa.me/50948812652');
   };
 
   const themedStyles = useMemo(() => ({
@@ -188,14 +178,9 @@ export default function SupportScreen() {
         <View style={themedStyles.backButton} />
       </Animated.View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.flex}
-      >
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
         >
           <Animated.View
             entering={FadeInDown.delay(80).duration(400).springify().damping(18)}
@@ -223,7 +208,7 @@ export default function SupportScreen() {
               <Text style={themedStyles.contactLabel}>
                 {t.profile.support.phone}
               </Text>
-              <Text style={themedStyles.contactInfo}>+1 (555) 123-4567</Text>
+              <Text style={themedStyles.contactInfo}>+509 4881 26-52</Text>
               <Text style={themedStyles.contactNote}>
                 {t.profile.support.phoneHours}
               </Text>
@@ -246,7 +231,7 @@ export default function SupportScreen() {
                 {t.profile.support.email}
               </Text>
               <Text style={themedStyles.contactInfo}>
-                support@allianceshipping.com
+                allianceshipping26@gmail.com
               </Text>
               <Text style={themedStyles.contactNote}>
                 {t.profile.support.emailResponse}
@@ -269,7 +254,7 @@ export default function SupportScreen() {
               <Text style={themedStyles.contactLabel}>
                 {t.profile.support.whatsApp}
               </Text>
-              <Text style={themedStyles.contactInfo}>+1 (555) 123-4567</Text>
+              <Text style={themedStyles.contactInfo}>+509 4881 26-52</Text>
               <Text style={themedStyles.contactNote}>
                 {t.profile.support.liveChat}
               </Text>
@@ -327,75 +312,7 @@ export default function SupportScreen() {
             </View>
           </Animated.View>
 
-          <Animated.View
-            entering={FadeInDown.delay(320).duration(500).springify().damping(18)}
-          >
-            <Text style={themedStyles.sectionTitle}>
-              {t.profile.support.sendMessage}
-            </Text>
-
-            {messageSent ? (
-              <View style={themedStyles.successCard}>
-                <View style={themedStyles.successIconCircle}>
-                  <CheckCircle size={28} color={colors.green[600]} />
-                </View>
-                <Text style={themedStyles.successTitle}>
-                  {t.profile.support.messageSent}
-                </Text>
-                <Text style={themedStyles.successText}>
-                  {t.profile.support.messageResponse}
-                </Text>
-              </View>
-            ) : (
-              <View style={themedStyles.formCard}>
-                <View style={styles.inputGroup}>
-                  <Text style={themedStyles.inputLabel}>
-                    {t.profile.support.subject}
-                  </Text>
-                  <TextInput
-                    style={themedStyles.input}
-                    value={subject}
-                    onChangeText={setSubject}
-                    placeholder={t.profile.support.subjectPlaceholder}
-                    placeholderTextColor={colors.gray[400]}
-                  />
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={themedStyles.inputLabel}>
-                    {t.profile.support.message}
-                  </Text>
-                  <TextInput
-                    style={[themedStyles.input, styles.textArea]}
-                    value={message}
-                    onChangeText={setMessage}
-                    placeholder={t.profile.support.messagePlaceholder}
-                    placeholderTextColor={colors.gray[400]}
-                    multiline
-                    numberOfLines={4}
-                    textAlignVertical="top"
-                  />
-                </View>
-
-                <TouchableOpacity
-                  style={[
-                    themedStyles.sendButton,
-                    (!subject.trim() || !message.trim()) && styles.sendButtonDisabled,
-                  ]}
-                  onPress={handleSendMessage}
-                  disabled={!subject.trim() || !message.trim()}
-                  activeOpacity={0.8}
-                >
-                  <Send size={16} color={colors.white} />
-                  <Text style={themedStyles.sendButtonText}>
-                    {t.profile.support.sendButton}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </Animated.View>
         </ScrollView>
-      </KeyboardAvoidingView>
     </View>
   );
 }
