@@ -67,8 +67,8 @@ export const PRICING: PricingInfo = {
 
 export const SOCIAL_LINKS: SocialLink[] = [
   { name: 'Facebook', href: 'https://www.facebook.com/share/17t6aDphzg/?mibextid=wwXIfr', icon: 'Facebook' },
-  { name: 'Instagram', href: 'https://instagram.com/allianceshipping', icon: 'Instagram' },
-  { name: 'Twitter', href: 'https://twitter.com/allianceshipping', icon: 'Twitter' },
+  { name: 'Instagram', href: 'https://www.instagram.com/alliance_shippinght', icon: 'Instagram' },
+  { name: 'X', href: 'https://x.com/AllianceShpping', icon: 'Twitter' },
   { name: 'LinkedIn', href: 'https://linkedin.com/company/allianceshipping', icon: 'Linkedin' },
   { name: 'YouTube', href: 'https://youtube.com/@allianceshipping', icon: 'Youtube' },
   { name: 'TikTok', href: 'https://tiktok.com/@allianceshipping', icon: 'Music' },
