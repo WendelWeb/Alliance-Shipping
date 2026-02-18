@@ -209,7 +209,7 @@ export const es = {
     items: [
       {
         question: '¿Cómo funciona Alliance Shipping de la A a la Z?',
-        answer: '1) Crea tu cuenta gratis en nuestro sitio web o aplicación móvil. 2) Ordena tus artículos en línea (Amazon, Walmart, Shein, etc.) usando nuestra dirección de Miami: 8298 Northwest 68th Street, Apt PQ-068508, Miami, Florida 33195. El código PQ-068508 debe aparecer en tu nombre o en el campo Apt/Suite. 3) Envía una solicitud de paquete en Alliance Shipping con el número de rastreo del transportista (UPS, USPS, FedEx). 4) Tu paquete llega a nuestro almacén de Miami — lo recibimos, lo pesamos y te asignamos un número de rastreo Alliance Shipping. 5) Recibes un correo electrónico con el desglose de costos (servicio + peso + aduana si aplica). 6) Tu paquete se envía a tu ciudad en Haití (Cap-Haïtien, Port-au-Prince o Port-de-Paix) en 3 a 7 días. 7) Rastrea tu paquete en tiempo real y recibe una notificación cuando esté disponible para recoger.',
+        answer: '1) Crea tu cuenta gratis en nuestro sitio web o aplicación móvil. 2) Ordena tus artículos en línea (Amazon, Walmart, Shein, etc.) usando nuestra dirección de Miami: 8298 Northwest 68th Street, Apt PQ-068508, Miami, Florida 33195. Tel: +1 (954) 607-8226. El código PQ-068508 debe aparecer en tu nombre o en el campo Apt/Suite. 3) Envía una solicitud de paquete en Alliance Shipping con el número de rastreo del transportista (UPS, USPS, FedEx). 4) Tu paquete llega a nuestro almacén de Miami — lo recibimos, lo pesamos y te asignamos un número de rastreo Alliance Shipping. 5) Recibes un correo electrónico con el desglose de costos (servicio + peso + aduana si aplica). 6) Tu paquete se envía a tu ciudad en Haití (Cap-Haïtien, Port-au-Prince o Port-de-Paix) en 3 a 7 días. 7) Rastrea tu paquete en tiempo real y recibe una notificación cuando esté disponible para recoger.',
       },
       {
         question: '¿Cómo hago una solicitud de paquete?',
@@ -225,7 +225,7 @@ export const es = {
       },
       {
         question: '¿Cuál es la dirección de envío de Miami y el código PQ?',
-        answer: 'Al ordenar en línea desde una tienda de EE.UU. (Amazon, Walmart, Shein, etc.), usa la dirección de nuestro almacén en Miami: 8298 Northwest 68th Street, Miami, Florida 33195. Debes incluir el código PQ-068508 en el campo Nombre o en el campo Apt/Suite. Este código identifica tus paquetes en nuestro almacén. Sin este código, tu paquete podría retrasarse o perderse.',
+        answer: 'Al ordenar en línea desde una tienda de EE.UU. (Amazon, Walmart, Shein, etc.), usa la dirección de nuestro almacén en Miami: 8298 Northwest 68th Street, Miami, Florida 33195. Tel: +1 (954) 607-8226. Debes incluir el código PQ-068508 en el campo Nombre o en el campo Apt/Suite. Este código identifica tus paquetes en nuestro almacén. Sin este código, tu paquete podría retrasarse o perderse.',
       },
       {
         question: '¿Qué es el código PQ y qué pasa si lo olvido?',
@@ -330,6 +330,7 @@ export const es = {
       miami: {
         title: 'Oficina de Miami',
         address: '8298 Northwest 68th Street, Miami, FL 33195',
+        phone: '+1 (954) 607-8226',
       },
     },
     callUs: 'Llámenos',
@@ -833,7 +834,7 @@ export const es = {
       messageSent: '¡Mensaje enviado!',
       messageResponse: 'Te responderemos en las próximas 24 horas',
       faq1q: '¿Cómo funciona Alliance Shipping de la A a la Z?',
-      faq1a: '1) Crea tu cuenta gratis en nuestro sitio web o aplicación móvil. 2) Ordena tus artículos en línea (Amazon, Walmart, Shein, etc.) usando nuestra dirección de Miami: 8298 Northwest 68th Street, Apt PQ-068508, Miami, Florida 33195. El código PQ-068508 debe aparecer en tu nombre o en el campo Apt/Suite. 3) Envía una solicitud de paquete en Alliance Shipping con el número de rastreo del transportista (UPS, USPS, FedEx). 4) Tu paquete llega a nuestro almacén de Miami — lo recibimos, lo pesamos y te asignamos un número de rastreo Alliance Shipping. 5) Recibes un correo electrónico con el desglose de costos (servicio + peso + aduana si aplica). 6) Tu paquete se envía a tu ciudad en Haití (Cap-Haïtien, Port-au-Prince o Port-de-Paix) en 3 a 7 días. 7) Rastrea tu paquete en tiempo real y recibe una notificación cuando esté disponible para recoger.',
+      faq1a: '1) Crea tu cuenta gratis en nuestro sitio web o aplicación móvil. 2) Ordena tus artículos en línea (Amazon, Walmart, Shein, etc.) usando nuestra dirección de Miami: 8298 Northwest 68th Street, Apt PQ-068508, Miami, Florida 33195. Tel: +1 (954) 607-8226. El código PQ-068508 debe aparecer en tu nombre o en el campo Apt/Suite. 3) Envía una solicitud de paquete en Alliance Shipping con el número de rastreo del transportista (UPS, USPS, FedEx). 4) Tu paquete llega a nuestro almacén de Miami — lo recibimos, lo pesamos y te asignamos un número de rastreo Alliance Shipping. 5) Recibes un correo electrónico con el desglose de costos (servicio + peso + aduana si aplica). 6) Tu paquete se envía a tu ciudad en Haití (Cap-Haïtien, Port-au-Prince o Port-de-Paix) en 3 a 7 días. 7) Rastrea tu paquete en tiempo real y recibe una notificación cuando esté disponible para recoger.',
       faq2q: '¿Cómo hago una solicitud de paquete?',
       faq2a: 'Para hacer una solicitud: 1) Inicia sesión en tu cuenta (sitio web o app móvil). 2) Ve a la página "Mis Paquetes". 3) Haz clic en "Nueva Solicitud". 4) Elige el tipo (Normal o Artículo Especial). 5) Ingresa el número de rastreo de tu transportista (UPS, USPS, FedEx). 6) Describe el contenido y selecciona una categoría. 7) Envía la solicitud. Nuestro equipo revisará tu solicitud, pesará el paquete en Miami y te asignará un número de rastreo Alliance Shipping (AS-XXXXXXXXXX). Recibirás un correo electrónico y una notificación de confirmación.',
       faq3q: '¿Por qué debo hacer una solicitud de paquete?',
@@ -841,7 +842,7 @@ export const es = {
       faq4q: '¿Dónde puedo ver mis paquetes?',
       faq4a: 'Todos tus paquetes aparecen en la página "Mis Paquetes", accesible desde el sitio web (sección Paquetes) o la app móvil (pestaña Paquetes abajo). Encontrarás la lista de todos tus paquetes con su estado (Pendiente, Recibido, En Tránsito, Disponible, Entregado). Puedes filtrar por estado, buscar por número de rastreo y tocar un paquete para ver sus detalles (tarifas, cronología, ubicación). Importante: solo los paquetes para los que hayas hecho una solicitud aparecerán aquí.',
       faq5q: '¿Cuál es la dirección de envío de Miami y el código PQ?',
-      faq5a: 'Al ordenar en línea desde una tienda de EE.UU. (Amazon, Walmart, Shein, etc.), usa la dirección de nuestro almacén en Miami: 8298 Northwest 68th Street, Miami, Florida 33195. Debes incluir el código PQ-068508 en el campo Nombre o en el campo Apt/Suite. Este código identifica tus paquetes en nuestro almacén. Sin este código, tu paquete podría retrasarse o perderse.',
+      faq5a: 'Al ordenar en línea desde una tienda de EE.UU. (Amazon, Walmart, Shein, etc.), usa la dirección de nuestro almacén en Miami: 8298 Northwest 68th Street, Miami, Florida 33195. Tel: +1 (954) 607-8226. Debes incluir el código PQ-068508 en el campo Nombre o en el campo Apt/Suite. Este código identifica tus paquetes en nuestro almacén. Sin este código, tu paquete podría retrasarse o perderse.',
       faq6q: '¿Qué es el código PQ y qué pasa si lo olvido?',
       faq6a: 'El código PQ (PQ-068508) es el identificador de nuestro almacén de Miami. Permite a nuestro equipo asociar cada paquete recibido con su propietario. Debes incluirlo en el campo "Nombre" o "Apt/Suite" al ordenar en línea. Si olvidas el código PQ, tu paquete podría retrasarse porque nuestro equipo no podrá identificarlo de inmediato. Contacta a nuestro soporte con tu número de rastreo del transportista y localizaremos tu paquete manualmente.',
       faq7q: '¿Cómo se calcula el costo?',

@@ -209,7 +209,7 @@ export const fr = {
     items: [
       {
         question: 'Comment fonctionne Alliance Shipping de A à Z ?',
-        answer: '1) Créez votre compte gratuit sur notre site ou application mobile. 2) Commandez vos articles en ligne (Amazon, Walmart, Shein, etc.) en utilisant notre adresse Miami : 8298 Northwest 68th Street, Apt PQ-068508, Miami, Florida 33195. Le code PQ-068508 doit apparaître dans votre prénom ou le champ Apt/Suite. 3) Soumettez une requête de colis sur Alliance Shipping avec le numéro de suivi du transporteur (UPS, USPS, FedEx). 4) Votre colis arrive à notre entrepôt de Miami — nous le recevons, le pesons et vous attribuons un numéro de suivi Alliance Shipping. 5) Vous recevez un email avec le détail des frais (service + poids + douane si applicable). 6) Votre colis est expédié vers votre ville en Haïti (Cap-Haïtien, Port-au-Prince ou Port-de-Paix) en 3 à 7 jours. 7) Suivez votre colis en temps réel et recevez une notification quand il est disponible pour retrait.',
+        answer: '1) Créez votre compte gratuit sur notre site ou application mobile. 2) Commandez vos articles en ligne (Amazon, Walmart, Shein, etc.) en utilisant notre adresse Miami : 8298 Northwest 68th Street, Apt PQ-068508, Miami, Florida 33195. Tél : +1 (954) 607-8226. Le code PQ-068508 doit apparaître dans votre prénom ou le champ Apt/Suite. 3) Soumettez une requête de colis sur Alliance Shipping avec le numéro de suivi du transporteur (UPS, USPS, FedEx). 4) Votre colis arrive à notre entrepôt de Miami — nous le recevons, le pesons et vous attribuons un numéro de suivi Alliance Shipping. 5) Vous recevez un email avec le détail des frais (service + poids + douane si applicable). 6) Votre colis est expédié vers votre ville en Haïti (Cap-Haïtien, Port-au-Prince ou Port-de-Paix) en 3 à 7 jours. 7) Suivez votre colis en temps réel et recevez une notification quand il est disponible pour retrait.',
       },
       {
         question: 'Comment faire une requête de colis ?',
@@ -225,7 +225,7 @@ export const fr = {
       },
       {
         question: 'Quelle est l\'adresse d\'expédition Miami et le code PQ ?',
-        answer: 'Lorsque vous commandez en ligne depuis un site américain (Amazon, Walmart, Shein, etc.), utilisez l\'adresse de notre entrepôt de Miami : 8298 Northwest 68th Street, Miami, Florida 33195. Vous devez inclure le code PQ-068508 dans le champ Prénom ou dans le champ Apt/Suite. Ce code permet d\'identifier vos colis dans notre entrepôt. Sans ce code, votre colis pourrait être retardé ou perdu.',
+        answer: 'Lorsque vous commandez en ligne depuis un site américain (Amazon, Walmart, Shein, etc.), utilisez l\'adresse de notre entrepôt de Miami : 8298 Northwest 68th Street, Miami, Florida 33195. Tél : +1 (954) 607-8226. Vous devez inclure le code PQ-068508 dans le champ Prénom ou dans le champ Apt/Suite. Ce code permet d\'identifier vos colis dans notre entrepôt. Sans ce code, votre colis pourrait être retardé ou perdu.',
       },
       {
         question: 'Qu\'est-ce que le code PQ et que se passe-t-il si je l\'oublie ?',
@@ -330,6 +330,7 @@ export const fr = {
       miami: {
         title: 'Bureau de Miami',
         address: '8298 Northwest 68th Street, Miami, FL 33195',
+        phone: '+1 (954) 607-8226',
       },
     },
     callUs: 'Appelez-nous',
@@ -833,7 +834,7 @@ export const fr = {
       messageSent: 'Message envoyé !',
       messageResponse: 'Nous vous répondrons dans les 24 heures',
       faq1q: 'Comment fonctionne Alliance Shipping de A à Z ?',
-      faq1a: '1) Créez votre compte gratuit sur notre site ou application mobile. 2) Commandez vos articles en ligne (Amazon, Walmart, Shein, etc.) en utilisant notre adresse Miami : 8298 Northwest 68th Street, Apt PQ-068508, Miami, Florida 33195. Le code PQ-068508 doit apparaître dans votre prénom ou le champ Apt/Suite. 3) Soumettez une requête de colis sur Alliance Shipping avec le numéro de suivi du transporteur (UPS, USPS, FedEx). 4) Votre colis arrive à notre entrepôt de Miami — nous le recevons, le pesons et vous attribuons un numéro de suivi Alliance Shipping. 5) Vous recevez un email avec le détail des frais (service + poids + douane si applicable). 6) Votre colis est expédié vers votre ville en Haïti (Cap-Haïtien, Port-au-Prince ou Port-de-Paix) en 3 à 7 jours. 7) Suivez votre colis en temps réel et recevez une notification quand il est disponible pour retrait.',
+      faq1a: '1) Créez votre compte gratuit sur notre site ou application mobile. 2) Commandez vos articles en ligne (Amazon, Walmart, Shein, etc.) en utilisant notre adresse Miami : 8298 Northwest 68th Street, Apt PQ-068508, Miami, Florida 33195. Tél : +1 (954) 607-8226. Le code PQ-068508 doit apparaître dans votre prénom ou le champ Apt/Suite. 3) Soumettez une requête de colis sur Alliance Shipping avec le numéro de suivi du transporteur (UPS, USPS, FedEx). 4) Votre colis arrive à notre entrepôt de Miami — nous le recevons, le pesons et vous attribuons un numéro de suivi Alliance Shipping. 5) Vous recevez un email avec le détail des frais (service + poids + douane si applicable). 6) Votre colis est expédié vers votre ville en Haïti (Cap-Haïtien, Port-au-Prince ou Port-de-Paix) en 3 à 7 jours. 7) Suivez votre colis en temps réel et recevez une notification quand il est disponible pour retrait.',
       faq2q: 'Comment faire une requête de colis ?',
       faq2a: 'Pour faire une requête : 1) Connectez-vous à votre compte (site web ou appli mobile). 2) Allez sur la page "Mes Colis". 3) Cliquez sur "Nouvelle Requête". 4) Choisissez le type (Normal ou Article Spécial). 5) Entrez le numéro de suivi de votre transporteur (UPS, USPS, FedEx). 6) Décrivez le contenu et sélectionnez une catégorie. 7) Envoyez la demande. Notre équipe examinera votre requête, pèsera le colis à Miami et vous attribuera un tracking Alliance Shipping (AS-XXXXXXXXXX). Vous recevrez un email et une notification de confirmation.',
       faq3q: 'Pourquoi dois-je faire une requête de colis ?',
@@ -841,7 +842,7 @@ export const fr = {
       faq4q: 'Où puis-je voir mes colis ?',
       faq4a: 'Tous vos colis apparaissent sur la page "Mes Colis", accessible depuis le site web (section Colis) ou l\'application mobile (onglet Colis en bas). Vous y trouverez la liste de tous vos colis avec leur statut (En Attente, Reçu, En Transit, Disponible, Livré). Vous pouvez filtrer par statut, rechercher par numéro de suivi et cliquer sur un colis pour voir ses détails (frais, chronologie, localisation). Important : seuls les colis pour lesquels vous avez fait une requête apparaîtront ici.',
       faq5q: 'Quelle est l\'adresse d\'expédition Miami et le code PQ ?',
-      faq5a: 'Lorsque vous commandez en ligne depuis un site américain (Amazon, Walmart, Shein, etc.), utilisez l\'adresse de notre entrepôt de Miami : 8298 Northwest 68th Street, Miami, Florida 33195. Vous devez inclure le code PQ-068508 dans le champ Prénom ou dans le champ Apt/Suite. Ce code permet d\'identifier vos colis dans notre entrepôt. Sans ce code, votre colis pourrait être retardé ou perdu.',
+      faq5a: 'Lorsque vous commandez en ligne depuis un site américain (Amazon, Walmart, Shein, etc.), utilisez l\'adresse de notre entrepôt de Miami : 8298 Northwest 68th Street, Miami, Florida 33195. Tél : +1 (954) 607-8226. Vous devez inclure le code PQ-068508 dans le champ Prénom ou dans le champ Apt/Suite. Ce code permet d\'identifier vos colis dans notre entrepôt. Sans ce code, votre colis pourrait être retardé ou perdu.',
       faq6q: 'Qu\'est-ce que le code PQ et que se passe-t-il si je l\'oublie ?',
       faq6a: 'Le code PQ (PQ-068508) est l\'identifiant de notre entrepôt de Miami. Il permet à notre équipe d\'associer chaque colis reçu à son propriétaire. Vous devez l\'inclure dans le champ "Prénom" ou "Apt/Suite" lorsque vous commandez en ligne. Si vous oubliez le code PQ, votre colis pourrait être retardé car notre équipe ne pourra pas l\'identifier immédiatement. Contactez notre support avec votre numéro de suivi transporteur et nous retrouverons votre colis manuellement.',
       faq7q: 'Comment le coût est-il calculé ?',

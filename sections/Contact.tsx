@@ -178,6 +178,12 @@ export function Contact() {
                       <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
                       <p className="text-sm text-gray-600">{MIAMI_ADDRESS}</p>
                     </div>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <a href="tel:+19546078226" className="text-sm text-blue-600 hover:underline font-medium">
+                        +1 (954) 607-8226
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
