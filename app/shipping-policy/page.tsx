@@ -22,7 +22,6 @@ export default function ShippingPolicyPage() {
     { title: s.s7Title, text: s.s7Text },
     { title: s.s8Title, text: s.s8Text },
     { title: s.s9Title, text: s.s9Text },
-    { title: s.s10Title, text: s.s10Text },
   ];
 
   return (
