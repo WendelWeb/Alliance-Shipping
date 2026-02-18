@@ -45,6 +45,10 @@ export default function SupportPage() {
     { id: '10', question: t.profile.support.faq10q, answer: t.profile.support.faq10a },
     { id: '11', question: t.profile.support.faq11q, answer: t.profile.support.faq11a },
     { id: '12', question: t.profile.support.faq12q, answer: t.profile.support.faq12a },
+    { id: '13', question: t.profile.support.faq13q, answer: t.profile.support.faq13a },
+    { id: '14', question: t.profile.support.faq14q, answer: t.profile.support.faq14a },
+    { id: '15', question: t.profile.support.faq15q, answer: t.profile.support.faq15a },
+    { id: '16', question: t.profile.support.faq16q, answer: t.profile.support.faq16a },
   ];
 
   const handleSubmitMessage = (e: React.FormEvent) => {
