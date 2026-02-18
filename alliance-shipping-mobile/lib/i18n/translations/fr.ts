@@ -471,6 +471,7 @@ export const fr = {
       city: 'Ville',
       state: 'État',
       zip: 'Code Postal',
+      phone: 'Téléphone',
       warningTitle: 'Information Importante',
       warningCodeRequired: 'Le code PQ-068508 doit obligatoirement apparaître :',
       warningIdentification: 'soit dans votre prénom, soit dans le champ Apt/Suite',

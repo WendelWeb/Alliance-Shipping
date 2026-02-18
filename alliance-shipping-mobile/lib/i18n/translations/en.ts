@@ -473,6 +473,7 @@ export const en = {
       city: 'City',
       state: 'State',
       zip: 'Zip Code',
+      phone: 'Phone',
       warningTitle: 'Important Information',
       warningCodeRequired: 'The code PQ-068508 must appear:',
       warningIdentification: 'either in your first name or in the Apt/Suite field',

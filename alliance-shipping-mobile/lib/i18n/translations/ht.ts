@@ -470,6 +470,7 @@ export const ht = {
       city: 'Vil',
       state: 'Eta',
       zip: 'Kòd Postal',
+      phone: 'Telefòn',
       warningTitle: 'Enfòmasyon Enpòtan',
       warningCodeRequired: 'Kòd PQ-068508 dwe parèt obligatwaman:',
       warningIdentification: 'swa nan prenon ou oswa nan chan Apt/Suite a',
