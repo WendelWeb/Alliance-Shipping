@@ -17,6 +17,7 @@ import {
   MapPin,
   Package,
   Truck,
+  Phone,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -27,6 +28,7 @@ const WAREHOUSE_ADDRESS = '8298 Northwest 68th Street';
 const WAREHOUSE_CITY = 'Miami';
 const WAREHOUSE_STATE = 'Florida';
 const WAREHOUSE_ZIP = '33195';
+const WAREHOUSE_PHONE = '+1 (954) 607-8226';
 
 export default function ShippingAddressPage() {
   const router = useRouter();
@@ -155,7 +157,8 @@ export default function ShippingAddressPage() {
                   { label: t.profile.shippingAddress.aptSuite, value: WAREHOUSE_CODE, isHighlight: true },
                   { label: t.profile.shippingAddress.city, value: WAREHOUSE_CITY },
                   { label: t.profile.shippingAddress.state, value: WAREHOUSE_STATE },
-                  { label: t.profile.shippingAddress.zip, value: WAREHOUSE_ZIP, isLast: true },
+                  { label: t.profile.shippingAddress.zip, value: WAREHOUSE_ZIP },
+                  { label: t.profile.shippingAddress.phone || 'Phone', value: WAREHOUSE_PHONE, isLast: true },
                 ].map((field, i) => (
                   <div key={i}>
                     <p className="text-[11px] uppercase tracking-wider font-medium mb-0.5" style={{ color: colors.gray[500] }}>

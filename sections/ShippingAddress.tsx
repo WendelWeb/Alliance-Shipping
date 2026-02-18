@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Copy, Check, AlertTriangle, MapPin, ArrowRight, Warehouse, Package, Plane } from 'lucide-react';
+import { Copy, Check, AlertTriangle, MapPin, ArrowRight, Warehouse, Package, Plane, Phone } from 'lucide-react';
 import { Container } from '@/components/Container';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useUser } from '@clerk/nextjs';
@@ -12,6 +12,7 @@ const WAREHOUSE_ADDRESS = '8298 Northwest 68th Street';
 const WAREHOUSE_CITY = 'Miami';
 const WAREHOUSE_STATE = 'Florida';
 const WAREHOUSE_ZIP = '33195';
+const WAREHOUSE_PHONE = '+1 (954) 607-8226';
 
 const DELIVERY_CITIES = [
   { name: 'Cap-Haïtien', color: 'from-blue-500 to-blue-600', dot: 'bg-blue-500' },
@@ -47,7 +48,8 @@ export function ShippingAddress() {
     { label: sa.aptSuite, value: WAREHOUSE_CODE, isHighlight: true },
     { label: sa.city, value: WAREHOUSE_CITY },
     { label: sa.state, value: WAREHOUSE_STATE },
-    { label: sa.zip, value: WAREHOUSE_ZIP, isLast: true },
+    { label: sa.zip, value: WAREHOUSE_ZIP },
+    { label: sa.phone || 'Phone', value: WAREHOUSE_PHONE, isLast: true },
   ];
 
   return (
@@ -123,6 +125,12 @@ export function ShippingAddress() {
                       <p className="text-sm font-semibold text-gray-600 mt-0.5">
                         {WAREHOUSE_CITY}, {WAREHOUSE_STATE} {WAREHOUSE_ZIP}
                       </p>
+                      <div className="flex items-center justify-center gap-1.5 mt-2">
+                        <Phone className="w-3.5 h-3.5 text-primary-600" />
+                        <a href="tel:+19546078226" className="text-sm font-semibold text-primary-600 hover:underline">
+                          {WAREHOUSE_PHONE}
+                        </a>
+                      </div>
                     </div>
 
                     <p className="text-sm text-gray-500 mt-3 max-w-xs mx-auto">

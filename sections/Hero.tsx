@@ -149,6 +149,9 @@ export function Hero() {
                 <div className="text-xs text-gray-500 mt-0.5">
                   8298 NW 68th St, FL 33195
                 </div>
+                <div className="text-xs text-gray-500 mt-0.5">
+                  +1 (954) 607-8226
+                </div>
               </motion.div>
 
               {/* Floating card - Route */}
