@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import MapView, { Marker, Callout } from 'react-native-maps';
+import { WebView } from 'react-native-webview';
 // TEMPORARY: Disabled expo-location to test app startup
 // import * as Location from 'expo-location';
 import * as Haptics from 'expo-haptics';
@@ -41,9 +41,9 @@ const DEMO_LOCATIONS: LocationItem[] = [
   {
     id: '1',
     name: 'Alliance Shipping Miami',
-    address: '123 NW 36th St',
-    city: 'Miami, FL',
-    phone: '+1 (305) 555-0123',
+    address: '8298 Northwest 68th Street',
+    city: 'Miami, FL 33195',
+    phone: '+1 (954) 607-8226',
     lat: 25.8,
     lng: -80.2,
     hours: 'Mon-Sat: 8AM-6PM',
@@ -85,7 +85,7 @@ type ViewMode = 'map' | 'list';
 export default function LocationsScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const { colors, fonts, spacing, borderRadius, shadows, card } = useTheme();
+  const { colors, fonts, spacing, borderRadius, shadows, card, isDark } = useTheme();
 
   const [locations, setLocations] = useState<LocationItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -247,6 +247,69 @@ export default function LocationsScreen() {
     setSelectedLocation(location);
   }, []);
 
+  const leafletHtml = useMemo(() => {
+    const markersJs = filteredLocations.map((loc) => {
+      const color = loc.isOpen ? '#2563eb' : '#ef4444';
+      return `
+        L.circleMarker([${loc.lat}, ${loc.lng}], {
+          radius: 10,
+          fillColor: '${color}',
+          color: '#fff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.9
+        }).addTo(map)
+          .bindPopup('<b>${loc.name.replace(/'/g, "\\'")}</b><br/>${loc.address.replace(/'/g, "\\'")}<br/><i>${loc.city.replace(/'/g, "\\'")}</i>')
+          .on('click', function() {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'marker', id: '${loc.id}' }));
+          });
+      `;
+    }).join('\n');
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <style>
+          body { margin: 0; padding: 0; }
+          #map { width: 100%; height: 100vh; }
+          .leaflet-popup-content-wrapper { border-radius: 12px; }
+          .leaflet-popup-content { margin: 10px 14px; font-family: -apple-system, sans-serif; font-size: 14px; }
+          .leaflet-popup-content b { font-size: 15px; color: #1e293b; }
+          .leaflet-popup-content i { color: #64748b; font-style: normal; font-size: 13px; }
+        </style>
+      </head>
+      <body>
+        <div id="map"></div>
+        <script>
+          var map = L.map('map', { zoomControl: false }).setView([${HAITI_REGION.latitude}, ${HAITI_REGION.longitude}], 8);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OSM',
+            maxZoom: 19,
+          }).addTo(map);
+          L.control.zoom({ position: 'bottomright' }).addTo(map);
+          ${markersJs}
+        </script>
+      </body>
+      </html>
+    `;
+  }, [filteredLocations]);
+
+  const handleWebViewMessage = useCallback((event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === 'marker') {
+        const loc = locations.find((l) => l.id === data.id);
+        if (loc) {
+          handleMarkerPress(loc);
+        }
+      }
+    } catch (e) {}
+  }, [locations, handleMarkerPress]);
+
   const renderListItem = useCallback(
     ({ item, index }: { item: LocationItem; index: number }) => (
       <LocationCard
@@ -288,7 +351,7 @@ export default function LocationsScreen() {
         entering={FadeInDown.duration(400).springify().damping(18)}
         style={[styles.emptyContainer, { paddingVertical: spacing['5xl'], paddingHorizontal: spacing['3xl'] }]}
       >
-        <View style={[styles.emptyIconCircle, { backgroundColor: colors.primary[50], marginBottom: spacing.xl }]}>
+        <View style={[styles.emptyIconCircle, { backgroundColor: isDark ? colors.primary[900] : colors.primary[50], marginBottom: spacing.xl }]}>
           <MapPin size={32} color={colors.primary[400]} />
         </View>
         <Text style={[styles.emptyTitle, { fontFamily: fonts.headingSemiBold, color: colors.gray[900], marginBottom: spacing.sm }]}>{t.locations.noLocations}</Text>
@@ -398,7 +461,7 @@ export default function LocationsScreen() {
                     ...shadows.sm,
                   },
                   filterOpenOnly
-                    ? { backgroundColor: colors.green[50], borderColor: colors.green[300] }
+                    ? { backgroundColor: isDark ? colors.gray[200] : colors.green[50], borderColor: colors.green[500] }
                     : { backgroundColor: card.backgroundColor, borderColor: card.borderColor },
                 ]}
                 onPress={() => {
@@ -422,7 +485,7 @@ export default function LocationsScreen() {
                   style={{
                     fontFamily: fonts.semiBold,
                     fontSize: 13,
-                    color: filterOpenOnly ? colors.green[700] : colors.gray[600],
+                    color: filterOpenOnly ? colors.green[600] : colors.gray[600],
                   }}
                 >
                   {filterOpenOnly ? '✓ Open Only' : 'All Status'}
@@ -453,75 +516,19 @@ export default function LocationsScreen() {
               <ActivityIndicator size="large" color={colors.primary[500]} />
             </View>
           ) : (
-            <MapView
+            <WebView
               style={styles.map}
-              initialRegion={HAITI_REGION}
-              showsUserLocation
-              showsMyLocationButton
-            >
-              {filteredLocations.map((location) => (
-                <Marker
-                  key={location.id}
-                  coordinate={{
-                    latitude: location.lat,
-                    longitude: location.lng,
-                  }}
-                  title={location.name}
-                  description={`${location.address}, ${location.city}`}
-                  onPress={() => handleMarkerPress(location)}
-                  pinColor={
-                    location.isOpen
-                      ? colors.primary[600]
-                      : colors.red[500]
-                  }
-                >
-                  <Callout tooltip={false}>
-                    <View style={[styles.calloutContainer, { padding: spacing.sm }]}>
-                      <Text style={[styles.calloutTitle, { fontFamily: fonts.headingSemiBold, color: colors.gray[900] }]}>
-                        {location.name}
-                      </Text>
-                      <Text style={[styles.calloutAddress, { fontFamily: fonts.regular, color: colors.gray[600] }]}>
-                        {location.address}
-                      </Text>
-                      <Text style={[styles.calloutCity, { fontFamily: fonts.regular, color: colors.gray[500], marginBottom: spacing.xs }]}>
-                        {location.city}
-                      </Text>
-                      <View style={styles.calloutStatusRow}>
-                        <View
-                          style={[
-                            styles.calloutDot,
-                            {
-                              marginRight: spacing.xs,
-                              backgroundColor: location.isOpen
-                                ? colors.green[500]
-                                : colors.red[500],
-                            },
-                          ]}
-                        />
-                        <Text
-                          style={[
-                            styles.calloutStatus,
-                            {
-                              fontFamily: fonts.semiBold,
-                              color: location.isOpen
-                                ? colors.green[600]
-                                : colors.red[600],
-                            },
-                          ]}
-                        >
-                          {location.isOpen
-                            ? t.locations.open
-                            : t.locations.closed}
-                        </Text>
-                      </View>
-                      <Text style={[styles.calloutHours, { fontFamily: fonts.regular, color: colors.gray[500] }]}>
-                        {location.hours}
-                      </Text>
-                    </View>
-                  </Callout>
-                </Marker>
-              ))}
-            </MapView>
+              source={{ html: leafletHtml }}
+              onMessage={handleWebViewMessage}
+              javaScriptEnabled
+              domStorageEnabled
+              startInLoadingState
+              renderLoading={() => (
+                <View style={[styles.mapLoadingOverlay, { backgroundColor: colors.background, position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }]}>
+                  <ActivityIndicator size="large" color={colors.primary[500]} />
+                </View>
+              )}
+            />
           )}
 
           {selectedLocation && (
