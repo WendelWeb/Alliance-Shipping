@@ -69,13 +69,8 @@ export const SOCIAL_LINKS: SocialLink[] = [
   { name: 'Facebook', href: 'https://www.facebook.com/share/17t6aDphzg/?mibextid=wwXIfr', icon: 'Facebook' },
   { name: 'Instagram', href: 'https://www.instagram.com/alliance_shippinght', icon: 'Instagram' },
   { name: 'X', href: 'https://x.com/AllianceShpping', icon: 'Twitter' },
-  { name: 'LinkedIn', href: 'https://linkedin.com/company/allianceshipping', icon: 'Linkedin' },
   { name: 'YouTube', href: 'https://youtube.com/@allianceshipping', icon: 'Youtube' },
   { name: 'TikTok', href: 'https://tiktok.com/@allianceshipping', icon: 'Music' },
-  { name: 'WhatsApp', href: `https://wa.me/${COMPANY_INFO.whatsapp}`, icon: 'MessageCircle' },
-  { name: 'Telegram', href: 'https://t.me/allianceshipping', icon: 'Send' },
-  { name: 'Pinterest', href: 'https://pinterest.com/allianceshipping', icon: 'Pin' },
-  { name: 'Reddit', href: 'https://reddit.com/r/allianceshipping', icon: 'Radio' },
 ];
 
 export const PROHIBITED_ITEMS = {

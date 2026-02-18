@@ -5,12 +5,7 @@ import {
   Facebook,
   Instagram,
   Twitter,
-  Linkedin,
   Youtube,
-  MessageCircle,
-  Send,
-  Pin,
-  Radio,
   Music,
 } from 'lucide-react';
 import { Container } from '@/components/Container';
@@ -37,12 +32,7 @@ export function Footer() {
     Facebook,
     Instagram,
     Twitter,
-    Linkedin,
     Youtube,
-    MessageCircle,
-    Send,
-    Pin,
-    Radio,
     Music,
   };
 
@@ -139,7 +129,7 @@ export function Footer() {
             <h3 className="text-[#ffffff] font-bold mb-3 text-center text-sm sm:text-base">{t.footer.followUs}</h3>
             <div className="flex flex-wrap justify-center gap-3">
               {SOCIAL_LINKS.map((social, index) => {
-                const Icon = socialIcons[social.icon] || MessageCircle;
+                const Icon = socialIcons[social.icon] || Facebook;
                 return (
                   <a
                     key={index}
