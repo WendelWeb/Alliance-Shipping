@@ -162,9 +162,11 @@ export async function GET(request: NextRequest) {
       };
     };
 
-    // Determine if we need ALL users (filters require full dataset)
+    // Determine if we need ALL users (filters/sort require full dataset)
+    // Clerk only supports sorting by created_at and first_name natively
+    const hasNonClerkSort = sortBy === 'packages' || sortBy === 'spent';
     const hasFilters = !!city || !!status;
-    const needAllUsers = hasFilters || (limit >= 100 && !search);
+    const needAllUsers = hasFilters || hasNonClerkSort || (limit >= 100 && !search);
 
     if (needAllUsers) {
       // Fetch ALL users from Clerk in batches
@@ -246,7 +248,9 @@ export async function GET(request: NextRequest) {
         limit,
         offset,
         query: search || undefined,
-        orderBy: sortBy === 'name' ? (sortOrder === 'asc' ? '+first_name' : '-first_name') : '-created_at',
+        orderBy: sortBy === 'name'
+          ? (sortOrder === 'asc' ? '+first_name' : '-first_name')
+          : (sortOrder === 'asc' ? '+created_at' : '-created_at'),
       });
 
       const mergedUsers = response.data.map(mergeUser);
