@@ -557,9 +557,9 @@ export default function UsersPage() {
                     {/* Avatar with online indicator */}
                     <div className="relative flex-shrink-0">
                       {user.imageUrl ? (
-                        <img src={user.imageUrl} alt={user.name} className="h-16 w-16 rounded-xl object-cover shadow-sm" />
+                        <img src={user.imageUrl} alt={user.name} className="h-[72px] w-[72px] rounded-xl object-cover shadow-sm" />
                       ) : (
-                        <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-lg font-bold shadow-sm">
+                        <div className="h-[72px] w-[72px] rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-lg font-bold shadow-sm">
                           {user.name.charAt(0).toUpperCase()}
                         </div>
                       )}
@@ -596,76 +596,84 @@ export default function UsersPage() {
                     </div>
                   </div>
 
-                  {/* ── KEY INFO: Ville, Depot, Numeros (LARGE) ────────── */}
-                  <div className="mt-4 space-y-2.5">
+                  {/* ── KEY INFO: Ville, Depot, Numeros (2x2 grid) ─────── */}
+                  <div className="mt-4 grid grid-cols-2 gap-2.5">
                     {/* Ville */}
-                    <div className="flex items-center gap-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl px-4 py-3 border border-blue-100/60">
-                      <div className="p-2 bg-white rounded-lg shadow-sm">
-                        <MapPin className="h-5 w-5 text-blue-600" />
+                    <div className="flex items-center gap-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl px-3 py-3 border border-blue-100/60">
+                      <div className="p-1.5 bg-white rounded-lg shadow-sm">
+                        <MapPin className="h-4 w-4 text-blue-600" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-widest">Ville</p>
-                        <p className="text-base font-bold text-gray-900 truncate">{user.city || 'Non definie'}</p>
+                        <p className="text-sm font-bold text-gray-900 truncate">{user.city || 'Non definie'}</p>
                       </div>
                     </div>
 
                     {/* Depot */}
-                    <div className="flex items-center gap-3 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl px-4 py-3 border border-violet-100/60">
-                      <div className="p-2 bg-white rounded-lg shadow-sm">
-                        <Building2 className="h-5 w-5 text-violet-600" />
+                    <div className="flex items-center gap-2.5 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl px-3 py-3 border border-violet-100/60">
+                      <div className="p-1.5 bg-white rounded-lg shadow-sm">
+                        <Building2 className="h-4 w-4 text-violet-600" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[10px] font-semibold text-violet-400 uppercase tracking-widest">Depot</p>
-                        <p className="text-base font-bold text-gray-900 truncate">{user.warehouseName || 'Non assigne'}</p>
+                        <p className="text-sm font-bold text-gray-900 truncate">{user.warehouseName || 'Non assigne'}</p>
                       </div>
                     </div>
 
-                    {/* WhatsApp - HERO */}
+                    {/* WhatsApp */}
                     {user.whatsappPhone ? (
                       <a
                         href={`https://wa.me/${user.whatsappPhone.replace(/[^0-9]/g, '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl px-4 py-3 border border-green-200/60 hover:border-green-300 hover:shadow-md transition-all group/wa"
+                        className="flex items-center gap-2.5 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl px-3 py-3 border border-green-200/60 hover:border-green-300 hover:shadow-md transition-all group/wa"
                       >
-                        <div className="p-2 bg-green-500 rounded-lg shadow-sm group-hover/wa:bg-green-600 transition-colors">
-                          <MessageCircle className="h-5 w-5 text-white" />
+                        <div className="p-1.5 bg-green-500 rounded-lg shadow-sm group-hover/wa:bg-green-600 transition-colors">
+                          <MessageCircle className="h-4 w-4 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[10px] font-semibold text-green-500 uppercase tracking-widest">WhatsApp</p>
-                          <p className="text-base font-bold text-gray-900 group-hover/wa:text-green-700 transition-colors">{user.whatsappPhone}</p>
+                          <p className="text-sm font-bold text-gray-900 truncate group-hover/wa:text-green-700 transition-colors">{user.whatsappPhone}</p>
                         </div>
-                        <ChevronRight className="h-4 w-4 text-green-400 group-hover/wa:text-green-600 group-hover/wa:translate-x-0.5 transition-all" />
                       </a>
                     ) : (
-                      <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
-                        <div className="p-2 bg-gray-200 rounded-lg">
-                          <MessageCircle className="h-5 w-5 text-gray-400" />
+                      <div className="flex items-center gap-2.5 bg-gray-50 rounded-xl px-3 py-3 border border-gray-100">
+                        <div className="p-1.5 bg-gray-200 rounded-lg">
+                          <MessageCircle className="h-4 w-4 text-gray-400" />
                         </div>
                         <div>
                           <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">WhatsApp</p>
-                          <p className="text-sm text-gray-400">Non renseigne</p>
+                          <p className="text-xs text-gray-400">Non renseigne</p>
                         </div>
                       </div>
                     )}
 
                     {/* Telephone */}
-                    {user.phone && (
+                    {user.phone ? (
                       <a
                         href={`tel:${user.phone}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-3 bg-gradient-to-r from-sky-50 to-blue-50 rounded-xl px-4 py-3 border border-sky-100/60 hover:border-sky-200 hover:shadow-md transition-all group/tel"
+                        className="flex items-center gap-2.5 bg-gradient-to-r from-sky-50 to-blue-50 rounded-xl px-3 py-3 border border-sky-100/60 hover:border-sky-200 hover:shadow-md transition-all group/tel"
                       >
-                        <div className="p-2 bg-sky-500 rounded-lg shadow-sm group-hover/tel:bg-sky-600 transition-colors">
-                          <Phone className="h-5 w-5 text-white" />
+                        <div className="p-1.5 bg-sky-500 rounded-lg shadow-sm group-hover/tel:bg-sky-600 transition-colors">
+                          <Phone className="h-4 w-4 text-white" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[10px] font-semibold text-sky-400 uppercase tracking-widest">Telephone</p>
-                          <p className="text-base font-bold text-gray-900 group-hover/tel:text-sky-700 transition-colors">{user.phone}</p>
+                          <p className="text-sm font-bold text-gray-900 truncate group-hover/tel:text-sky-700 transition-colors">{user.phone}</p>
                         </div>
-                        <ChevronRight className="h-4 w-4 text-sky-400 group-hover/tel:text-sky-600 group-hover/tel:translate-x-0.5 transition-all" />
                       </a>
+                    ) : (
+                      <div className="flex items-center gap-2.5 bg-gray-50 rounded-xl px-3 py-3 border border-gray-100">
+                        <div className="p-1.5 bg-gray-200 rounded-lg">
+                          <Phone className="h-4 w-4 text-gray-400" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Telephone</p>
+                          <p className="text-xs text-gray-400">Non renseigne</p>
+                        </div>
+                      </div>
                     )}
                   </div>
 
