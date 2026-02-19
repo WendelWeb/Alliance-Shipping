@@ -34,6 +34,7 @@ import {
   Square,
   ArrowUpDown,
   ChevronDown,
+  Check,
 } from 'lucide-react';
 import { CardSkeleton } from '@/components/admin/LoadingSpinner';
 
@@ -146,6 +147,22 @@ export default function UsersPage() {
   const [bulkNotifyForm, setBulkNotifyForm] = useState({ title: '', message: '', type: 'general' });
   const [bulkSending, setBulkSending] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
+
+  // Custom dropdowns
+  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+  const cityDropdownRef = useRef<HTMLDivElement>(null);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (cityDropdownRef.current && !cityDropdownRef.current.contains(e.target as Node)) setCityDropdownOpen(false);
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(e.target as Node)) setSortDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fetchUsers = useCallback(
     async (page: number, search: string, filters?: { city?: string; status?: string; sortBy?: string; sortOrder?: string }) => {
@@ -422,44 +439,122 @@ export default function UsersPage() {
             ))}
           </div>
 
-          {/* City filter */}
+          {/* City filter - Custom Dropdown */}
           {cities.length > 0 && (
-            <div className="relative flex-shrink-0">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-500 pointer-events-none" />
-              <select
-                value={cityFilter}
-                onChange={(e) => applyFilters({ city: e.target.value })}
-                className="appearance-none pl-9 pr-10 py-3 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-300 cursor-pointer hover:border-gray-300 transition-colors shadow-sm"
+            <div className="relative flex-shrink-0" ref={cityDropdownRef}>
+              <button
+                onClick={() => { setCityDropdownOpen(!cityDropdownOpen); setSortDropdownOpen(false); }}
+                className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all border shadow-sm cursor-pointer ${
+                  cityFilter
+                    ? 'bg-primary-50 border-primary-200 text-primary-700'
+                    : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+                }`}
               >
-                <option value="">Toutes les villes</option>
-                {cities.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                <MapPin className={`h-4 w-4 ${cityFilter ? 'text-primary-500' : 'text-gray-400'}`} />
+                <span className="max-w-[120px] truncate">{cityFilter || 'Toutes les villes'}</span>
+                <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${cityDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              <AnimatePresence>
+                {cityDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl border border-gray-200 shadow-xl z-50 overflow-hidden"
+                  >
+                    <div className="p-1.5 max-h-64 overflow-y-auto">
+                      <button
+                        onClick={() => { applyFilters({ city: '' }); setCityDropdownOpen(false); }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                          !cityFilter ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <MapPin className="h-4 w-4 text-gray-400" />
+                        <span className="flex-1 text-left">Toutes les villes</span>
+                        {!cityFilter && <Check className="h-4 w-4 text-primary-600" />}
+                      </button>
+                      <div className="h-px bg-gray-100 my-1" />
+                      {cities.map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => { applyFilters({ city: c }); setCityDropdownOpen(false); }}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                            cityFilter === c ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className={`h-2 w-2 rounded-full ${cityFilter === c ? 'bg-primary-500' : 'bg-gray-300'}`} />
+                          <span className="flex-1 text-left">{c}</span>
+                          {cityFilter === c && <Check className="h-4 w-4 text-primary-600" />}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
 
-          {/* Sort */}
-          <div className="relative flex-shrink-0">
-            <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-500 pointer-events-none" />
-            <select
-              value={`${sortBy}-${sortOrder}`}
-              onChange={(e) => {
-                const [sb, so] = e.target.value.split('-');
-                applyFilters({ sortBy: sb, sortOrder: so });
-              }}
-              className="appearance-none pl-9 pr-10 py-3 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-300 cursor-pointer hover:border-gray-300 transition-colors shadow-sm"
-            >
-              <option value="date-desc">Plus recent</option>
-              <option value="date-asc">Plus ancien</option>
-              <option value="name-asc">Nom A-Z</option>
-              <option value="name-desc">Nom Z-A</option>
-              <option value="packages-desc">Plus de colis</option>
-              <option value="spent-desc">Plus depense</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-          </div>
+          {/* Sort - Custom Dropdown */}
+          {(() => {
+            const sortOptions = [
+              { value: 'date-desc', label: 'Plus recent', icon: '🕐' },
+              { value: 'date-asc', label: 'Plus ancien', icon: '📅' },
+              { value: 'name-asc', label: 'Nom A → Z', icon: '🔤' },
+              { value: 'name-desc', label: 'Nom Z → A', icon: '🔠' },
+              { value: 'packages-desc', label: 'Plus de colis', icon: '📦' },
+              { value: 'spent-desc', label: 'Plus depense', icon: '💰' },
+            ];
+            const currentSort = `${sortBy}-${sortOrder}`;
+            const currentLabel = sortOptions.find((o) => o.value === currentSort)?.label || 'Plus recent';
+            return (
+              <div className="relative flex-shrink-0" ref={sortDropdownRef}>
+                <button
+                  onClick={() => { setSortDropdownOpen(!sortDropdownOpen); setCityDropdownOpen(false); }}
+                  className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all border shadow-sm cursor-pointer ${
+                    currentSort !== 'date-desc'
+                      ? 'bg-primary-50 border-primary-200 text-primary-700'
+                      : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <ArrowUpDown className={`h-4 w-4 ${currentSort !== 'date-desc' ? 'text-primary-500' : 'text-gray-400'}`} />
+                  <span>{currentLabel}</span>
+                  <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${sortDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                <AnimatePresence>
+                  {sortDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute top-full right-0 mt-2 w-52 bg-white rounded-xl border border-gray-200 shadow-xl z-50 overflow-hidden"
+                    >
+                      <div className="p-1.5">
+                        {sortOptions.map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => {
+                              const [sb, so] = opt.value.split('-');
+                              applyFilters({ sortBy: sb, sortOrder: so });
+                              setSortDropdownOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                              currentSort === opt.value ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            <span className="text-base">{opt.icon}</span>
+                            <span className="flex-1 text-left">{opt.label}</span>
+                            {currentSort === opt.value && <Check className="h-4 w-4 text-primary-600" />}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })()}
 
           {hasActiveFilters && (
             <button
