@@ -425,10 +425,11 @@ export default function UsersPage() {
           {/* City filter */}
           {cities.length > 0 && (
             <div className="relative flex-shrink-0">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-500 pointer-events-none" />
               <select
                 value={cityFilter}
                 onChange={(e) => applyFilters({ city: e.target.value })}
-                className="appearance-none pl-4 pr-10 py-3 bg-gray-50 border-0 rounded-xl text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer"
+                className="appearance-none pl-9 pr-10 py-3 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-300 cursor-pointer hover:border-gray-300 transition-colors shadow-sm"
               >
                 <option value="">Toutes les villes</option>
                 {cities.map((c) => (
@@ -441,13 +442,14 @@ export default function UsersPage() {
 
           {/* Sort */}
           <div className="relative flex-shrink-0">
+            <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-500 pointer-events-none" />
             <select
               value={`${sortBy}-${sortOrder}`}
               onChange={(e) => {
                 const [sb, so] = e.target.value.split('-');
                 applyFilters({ sortBy: sb, sortOrder: so });
               }}
-              className="appearance-none pl-4 pr-10 py-3 bg-gray-50 border-0 rounded-xl text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer"
+              className="appearance-none pl-9 pr-10 py-3 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-300 cursor-pointer hover:border-gray-300 transition-colors shadow-sm"
             >
               <option value="date-desc">Plus recent</option>
               <option value="date-asc">Plus ancien</option>
@@ -456,7 +458,7 @@ export default function UsersPage() {
               <option value="packages-desc">Plus de colis</option>
               <option value="spent-desc">Plus depense</option>
             </select>
-            <ArrowUpDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
           </div>
 
           {hasActiveFilters && (
@@ -539,7 +541,7 @@ export default function UsersPage() {
 
                 <div className="p-5">
                   {/* ── Top Row: Checkbox + Avatar + Identity ──────────── */}
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-3.5">
                     {/* Checkbox */}
                     <button
                       onClick={(e) => { e.stopPropagation(); toggleSelect(user.id); }}
@@ -561,155 +563,161 @@ export default function UsersPage() {
                           {user.name.charAt(0).toUpperCase()}
                         </div>
                       )}
-                      {/* Online dot */}
                       <div className={`absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-white ${
                         isOnline ? 'bg-green-500' : user.lastSignInAt ? 'bg-gray-300' : 'bg-gray-200'
                       }`} />
                     </div>
 
-                    {/* Name + City + Status */}
+                    {/* Name + Status + VIP */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-bold text-gray-900 truncate group-hover:text-primary-700 transition-colors">
-                          {user.name}
-                        </h3>
-                      </div>
+                      <h3 className="text-lg font-bold text-gray-900 truncate group-hover:text-primary-700 transition-colors">
+                        {user.name}
+                      </h3>
                       <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                        {/* Status */}
                         {user.status === 'active' ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
                             Actif
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold rounded-md bg-red-50 text-red-700 border border-red-200">
-                            <Ban className="h-3 w-3" />
-                            Banni
+                            <Ban className="h-3 w-3" /> Banni
                           </span>
                         )}
-                        {/* VIP badge */}
                         {vip && (
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-bold rounded-md border ${vip.bgLight} ${vip.text} ${vip.border}`}>
-                            <Crown className="h-3 w-3" />
-                            {vip.label}
+                            <Crown className="h-3 w-3" /> {vip.label}
                           </span>
                         )}
                       </div>
-                      {/* Location + last seen */}
-                      <p className="text-xs text-gray-400 mt-1 flex items-center gap-1.5">
-                        {user.city && (
-                          <>
-                            <MapPin className="h-3 w-3 flex-shrink-0" />
-                            <span className="font-medium text-gray-500">{user.city}</span>
-                            <span className="text-gray-300">|</span>
-                          </>
-                        )}
+                      <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
                         <Clock className="h-3 w-3 flex-shrink-0" />
-                        <span>{formatLastSeen(user.lastSignInAt)}</span>
+                        {formatLastSeen(user.lastSignInAt)}
                       </p>
                     </div>
                   </div>
 
-                  {/* ── Stats: Key Numbers (LARGE) ────────────────────── */}
-                  <div className="mt-5 grid grid-cols-2 gap-3">
-                    {/* Packages - Primary metric */}
-                    <div className="bg-gradient-to-br from-primary-50 to-blue-50 rounded-xl p-4 text-center border border-primary-100/50">
-                      <div className="flex items-center justify-center gap-2">
-                        <PackageIcon className="h-5 w-5 text-primary-500" />
-                        <span className="text-3xl font-extrabold text-primary-700">{user.totalPackages}</span>
+                  {/* ── KEY INFO: Ville, Depot, Numeros (LARGE) ────────── */}
+                  <div className="mt-4 space-y-2.5">
+                    {/* Ville */}
+                    <div className="flex items-center gap-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl px-4 py-3 border border-blue-100/60">
+                      <div className="p-2 bg-white rounded-lg shadow-sm">
+                        <MapPin className="h-5 w-5 text-blue-600" />
                       </div>
-                      <p className="text-xs font-semibold text-primary-400 uppercase tracking-wider mt-1">Colis</p>
-                    </div>
-                    {/* Spent - Primary metric */}
-                    <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-4 text-center border border-emerald-100/50">
-                      <div className="flex items-center justify-center gap-1">
-                        <DollarSign className="h-5 w-5 text-emerald-500" />
-                        <span className="text-3xl font-extrabold text-emerald-700">{user.totalSpent.replace('$', '')}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-widest">Ville</p>
+                        <p className="text-base font-bold text-gray-900 truncate">{user.city || 'Non definie'}</p>
                       </div>
-                      <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider mt-1">Depense</p>
                     </div>
-                  </div>
 
-                  {/* Secondary stats */}
-                  <div className="mt-2 grid grid-cols-2 gap-3">
-                    <div className="bg-yellow-50/60 rounded-xl px-3 py-2.5 text-center border border-yellow-100/50">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <Star className="h-4 w-4 text-yellow-500" />
-                        <span className="text-lg font-bold text-yellow-700">
-                          {user.pointsBalance >= 1000 ? `${(user.pointsBalance / 1000).toFixed(1)}K` : user.pointsBalance}
-                        </span>
+                    {/* Depot */}
+                    <div className="flex items-center gap-3 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl px-4 py-3 border border-violet-100/60">
+                      <div className="p-2 bg-white rounded-lg shadow-sm">
+                        <Building2 className="h-5 w-5 text-violet-600" />
                       </div>
-                      <p className="text-[10px] font-semibold text-yellow-500 uppercase tracking-wider">Points</p>
-                    </div>
-                    <div className="bg-purple-50/60 rounded-xl px-3 py-2.5 text-center border border-purple-100/50">
-                      <div className="flex items-center justify-center gap-1">
-                        <Gift className="h-4 w-4 text-purple-500" />
-                        <span className="text-lg font-bold text-purple-700">${user.creditBalance.toFixed(2)}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-semibold text-violet-400 uppercase tracking-widest">Depot</p>
+                        <p className="text-base font-bold text-gray-900 truncate">{user.warehouseName || 'Non assigne'}</p>
                       </div>
-                      <p className="text-[10px] font-semibold text-purple-400 uppercase tracking-wider">Credits</p>
                     </div>
-                  </div>
 
-                  {/* ── Contact Row ────────────────────────────────────── */}
-                  <div className="mt-4 flex items-center gap-1.5 flex-wrap">
-                    <a
-                      href={`mailto:${user.email}`}
-                      onClick={(e) => e.stopPropagation()}
-                      title={user.email}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-lg text-xs text-gray-600 hover:bg-primary-50 hover:text-primary-700 transition-all truncate max-w-[200px] border border-transparent hover:border-primary-200"
-                    >
-                      <Mail className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="truncate">{user.email}</span>
-                    </a>
-                    {user.phone && (
-                      <a
-                        href={`tel:${user.phone}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 rounded-lg text-xs text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-all border border-transparent hover:border-blue-200"
-                      >
-                        <Phone className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">{user.phone}</span>
-                      </a>
-                    )}
-                    {user.whatsappPhone && (
+                    {/* WhatsApp - HERO */}
+                    {user.whatsappPhone ? (
                       <a
                         href={`https://wa.me/${user.whatsappPhone.replace(/[^0-9]/g, '')}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-50 rounded-lg text-xs text-gray-600 hover:bg-green-50 hover:text-green-700 transition-all border border-transparent hover:border-green-200"
+                        className="flex items-center gap-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl px-4 py-3 border border-green-200/60 hover:border-green-300 hover:shadow-md transition-all group/wa"
                       >
-                        <MessageCircle className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">WhatsApp</span>
+                        <div className="p-2 bg-green-500 rounded-lg shadow-sm group-hover/wa:bg-green-600 transition-colors">
+                          <MessageCircle className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-semibold text-green-500 uppercase tracking-widest">WhatsApp</p>
+                          <p className="text-base font-bold text-gray-900 group-hover/wa:text-green-700 transition-colors">{user.whatsappPhone}</p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-green-400 group-hover/wa:text-green-600 group-hover/wa:translate-x-0.5 transition-all" />
+                      </a>
+                    ) : (
+                      <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
+                        <div className="p-2 bg-gray-200 rounded-lg">
+                          <MessageCircle className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">WhatsApp</p>
+                          <p className="text-sm text-gray-400">Non renseigne</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Telephone */}
+                    {user.phone && (
+                      <a
+                        href={`tel:${user.phone}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-3 bg-gradient-to-r from-sky-50 to-blue-50 rounded-xl px-4 py-3 border border-sky-100/60 hover:border-sky-200 hover:shadow-md transition-all group/tel"
+                      >
+                        <div className="p-2 bg-sky-500 rounded-lg shadow-sm group-hover/tel:bg-sky-600 transition-colors">
+                          <Phone className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-semibold text-sky-400 uppercase tracking-widest">Telephone</p>
+                          <p className="text-base font-bold text-gray-900 group-hover/tel:text-sky-700 transition-colors">{user.phone}</p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-sky-400 group-hover/tel:text-sky-600 group-hover/tel:translate-x-0.5 transition-all" />
                       </a>
                     )}
                   </div>
 
-                  {/* ── Add Package Button (PROMINENT) ────────────────── */}
+                  {/* ── Email (compact) ────────────────────────────────── */}
+                  <a
+                    href={`mailto:${user.email}`}
+                    onClick={(e) => e.stopPropagation()}
+                    title={user.email}
+                    className="mt-2.5 flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg text-xs text-gray-500 hover:bg-primary-50 hover:text-primary-700 transition-all border border-transparent hover:border-primary-200 truncate"
+                  >
+                    <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="truncate">{user.email}</span>
+                  </a>
+
+                  {/* ── Stats Row (SMALL) ──────────────────────────────── */}
+                  <div className="mt-3 grid grid-cols-4 gap-2">
+                    <div className="text-center py-2 bg-gray-50 rounded-lg">
+                      <p className="text-sm font-bold text-gray-700">{user.totalPackages}</p>
+                      <p className="text-[9px] font-semibold text-gray-400 uppercase">Colis</p>
+                    </div>
+                    <div className="text-center py-2 bg-gray-50 rounded-lg">
+                      <p className="text-sm font-bold text-gray-700">{user.totalSpent}</p>
+                      <p className="text-[9px] font-semibold text-gray-400 uppercase">Depense</p>
+                    </div>
+                    <div className="text-center py-2 bg-gray-50 rounded-lg">
+                      <p className="text-sm font-bold text-yellow-600">{user.pointsBalance}</p>
+                      <p className="text-[9px] font-semibold text-gray-400 uppercase">Points</p>
+                    </div>
+                    <div className="text-center py-2 bg-gray-50 rounded-lg">
+                      <p className="text-sm font-bold text-purple-600">${user.creditBalance.toFixed(2)}</p>
+                      <p className="text-[9px] font-semibold text-gray-400 uppercase">Credits</p>
+                    </div>
+                  </div>
+
+                  {/* ── Add Package Button ─────────────────────────────── */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       router.push(`/admin/packages/new?userId=${user.dbId}`);
                     }}
-                    className="mt-4 w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all shadow-sm hover:shadow-md active:scale-[0.98]"
+                    className="mt-3 w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all shadow-sm hover:shadow-md active:scale-[0.98]"
                   >
                     <PackageIcon className="h-5 w-5" />
                     <Plus className="h-4 w-4 -ml-2" />
                     Ajouter un colis
                   </button>
 
-                  {/* ── Footer meta ────────────────────────────────────── */}
-                  <div className="mt-3 flex items-center justify-between text-[11px] text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      Inscrit {user.joinedAt}
-                    </span>
-                    {user.warehouseName && (
-                      <span className="flex items-center gap-1">
-                        <Building2 className="h-3 w-3" />
-                        {user.warehouseName}
-                      </span>
-                    )}
-                  </div>
+                  {/* ── Footer ─────────────────────────────────────────── */}
+                  <p className="mt-2.5 text-center text-[11px] text-gray-400">
+                    <Calendar className="inline h-3 w-3 mr-1" />
+                    Inscrit {user.joinedAt}
+                  </p>
                 </div>
               </motion.div>
             );
