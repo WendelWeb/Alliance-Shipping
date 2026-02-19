@@ -328,7 +328,7 @@ export default function UsersPage() {
           {[0, 1, 2].map((i) => <div key={i} className="h-24 bg-gray-200 rounded-2xl animate-pulse" />)}
         </div>
         <div className="h-14 bg-gray-200 rounded-2xl animate-pulse" />
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-72 bg-gray-100 rounded-2xl animate-pulse" />
           ))}
@@ -404,7 +404,7 @@ export default function UsersPage() {
       </div>
 
       {/* ── Search + Filter Bar ───────────────────────────────────────── */}
-      <div className="theme-card rounded-2xl border border-gray-100 shadow-sm p-4">
+      <div className="theme-card rounded-2xl border border-gray-100 shadow-sm p-4 relative z-20">
         <div className="flex flex-col lg:flex-row gap-3">
           {/* Search */}
           <div className="relative flex-1">
@@ -612,7 +612,7 @@ export default function UsersPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
           {users.map((user, index) => {
             const vip = getVipTier(user.totalSpent, user.totalPackages);
             const isSelected = selectedIds.has(user.id);

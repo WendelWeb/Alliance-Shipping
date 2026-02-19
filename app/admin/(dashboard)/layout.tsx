@@ -32,7 +32,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Page Content - pt-14 for mobile fixed header (56px), lg:pt-0 for desktop */}
-          <main className="py-6 px-3 sm:px-4 lg:px-6 pt-14 lg:pt-6">
+          <main className="py-6 px-2 sm:px-3 lg:px-5 pt-14 lg:pt-6">
             <PageTransition>{children}</PageTransition>
           </main>
         </div>
