@@ -557,9 +557,9 @@ export default function UsersPage() {
                     {/* Avatar with online indicator */}
                     <div className="relative flex-shrink-0">
                       {user.imageUrl ? (
-                        <img src={user.imageUrl} alt={user.name} className="h-14 w-14 rounded-xl object-cover shadow-sm" />
+                        <img src={user.imageUrl} alt={user.name} className="h-16 w-16 rounded-xl object-cover shadow-sm" />
                       ) : (
-                        <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-lg font-bold shadow-sm">
+                        <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-lg font-bold shadow-sm">
                           {user.name.charAt(0).toUpperCase()}
                         </div>
                       )}
