@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clerkClient } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
-import { users, packages, trackingHistory, notifications, packageRequests } from '@/lib/db/schema';
+import { users, packages, trackingHistory, notifications, packageRequests, loyaltyCredits } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
-import { eq, desc, and, count, sum } from 'drizzle-orm';
+import { eq, desc, count, sum, sql } from 'drizzle-orm';
 
-// GET - Get a specific user's full profile + packages
+// GET - Get a specific user's full profile + packages + loyalty
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -27,12 +27,25 @@ export async function GET(
       return NextResponse.json({ error: 'User not found in Clerk' }, { status: 404 });
     }
 
-    // Find user in local DB
-    const [dbUser] = await db
-      .select()
+    // Find user in local DB with warehouse info
+    const { warehouses } = await import('@/lib/db/schema');
+    const dbUserResults = await db
+      .select({
+        id: users.id,
+        clerkId: users.clerkId,
+        phone: users.phone,
+        whatsappPhone: users.whatsappPhone,
+        city: users.city,
+        warehouseId: users.warehouseId,
+        warehouseName: warehouses.name,
+        preferredLanguage: users.preferredLanguage,
+      })
       .from(users)
+      .leftJoin(warehouses, eq(users.warehouseId, warehouses.id))
       .where(eq(users.clerkId, clerkId))
       .limit(1);
+
+    const dbUser = dbUserResults[0] || null;
 
     // Build user info
     const userInfo = {
@@ -43,6 +56,10 @@ export async function GET(
       name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 'N/A',
       email: clerkUser.emailAddresses[0]?.emailAddress || '',
       phone: clerkUser.phoneNumbers[0]?.phoneNumber || dbUser?.phone || '',
+      whatsappPhone: dbUser?.whatsappPhone || null,
+      city: dbUser?.city || null,
+      warehouseId: dbUser?.warehouseId || null,
+      warehouseName: dbUser?.warehouseName || null,
       imageUrl: clerkUser.imageUrl || null,
       status: clerkUser.banned ? 'banned' : 'active',
       createdAt: clerkUser.createdAt,
@@ -59,6 +76,16 @@ export async function GET(
     let userPackages: any[] = [];
     let userRequests: any[] = [];
     let stats = { packageCount: 0, totalSpent: 0 };
+    let loyalty = {
+      creditBalance: 0,
+      totalCreditsEarned: 0,
+      totalCreditsRedeemed: 0,
+      pointsBalance: 0,
+      totalPointsEarned: 0,
+      totalPointsUsed: 0,
+      transactionCount: 0,
+      recentTransactions: [] as any[],
+    };
 
     if (dbUser) {
       // Get packages
@@ -118,6 +145,57 @@ export async function GET(
         totalSpent: statsResult.total ? parseFloat(statsResult.total) : 0,
       };
 
+      // Get loyalty summary
+      const [loyaltySummary] = await db
+        .select({
+          totalCreditsEarned: sql<string>`COALESCE(SUM(CASE WHEN ${loyaltyCredits.amount} > 0 THEN ${loyaltyCredits.amount} ELSE 0 END), 0)`,
+          totalCreditsRedeemed: sql<string>`COALESCE(SUM(CASE WHEN ${loyaltyCredits.amount} < 0 THEN ABS(${loyaltyCredits.amount}) ELSE 0 END), 0)`,
+          creditBalance: sql<string>`COALESCE(SUM(${loyaltyCredits.amount}), 0)`,
+          totalPointsEarned: sql<number>`COALESCE(SUM(CASE WHEN ${loyaltyCredits.points} > 0 THEN ${loyaltyCredits.points} ELSE 0 END), 0)`,
+          totalPointsUsed: sql<number>`COALESCE(SUM(CASE WHEN ${loyaltyCredits.points} < 0 THEN ABS(${loyaltyCredits.points}) ELSE 0 END), 0)`,
+          pointsBalance: sql<number>`COALESCE(SUM(${loyaltyCredits.points}), 0)`,
+          transactionCount: count(loyaltyCredits.id),
+        })
+        .from(loyaltyCredits)
+        .where(eq(loyaltyCredits.userId, dbUser.id));
+
+      if (loyaltySummary) {
+        loyalty = {
+          creditBalance: parseFloat(String(loyaltySummary.creditBalance)) || 0,
+          totalCreditsEarned: parseFloat(String(loyaltySummary.totalCreditsEarned)) || 0,
+          totalCreditsRedeemed: parseFloat(String(loyaltySummary.totalCreditsRedeemed)) || 0,
+          pointsBalance: Number(loyaltySummary.pointsBalance) || 0,
+          totalPointsEarned: Number(loyaltySummary.totalPointsEarned) || 0,
+          totalPointsUsed: Number(loyaltySummary.totalPointsUsed) || 0,
+          transactionCount: Number(loyaltySummary.transactionCount) || 0,
+          recentTransactions: [],
+        };
+      }
+
+      // Get recent transactions (last 20)
+      const txns = await db
+        .select({
+          id: loyaltyCredits.id,
+          amount: loyaltyCredits.amount,
+          points: loyaltyCredits.points,
+          type: loyaltyCredits.type,
+          description: loyaltyCredits.description,
+          createdAt: loyaltyCredits.createdAt,
+        })
+        .from(loyaltyCredits)
+        .where(eq(loyaltyCredits.userId, dbUser.id))
+        .orderBy(desc(loyaltyCredits.createdAt))
+        .limit(20);
+
+      loyalty.recentTransactions = txns.map((tx) => ({
+        id: tx.id,
+        amount: parseFloat(String(tx.amount)),
+        points: tx.points,
+        type: tx.type,
+        description: tx.description,
+        createdAt: tx.createdAt,
+      }));
+
       // Get user notifications
       const userNotifications = await db
         .select()
@@ -132,6 +210,7 @@ export async function GET(
         requests: userRequests,
         notifications: userNotifications,
         stats,
+        loyalty,
       });
     }
 
@@ -141,6 +220,7 @@ export async function GET(
       requests: [],
       notifications: [],
       stats,
+      loyalty,
     });
   } catch (error) {
     console.error('Error fetching user details:', error);

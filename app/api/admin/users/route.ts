@@ -17,56 +17,13 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const search = searchParams.get('search') || '';
+    const city = searchParams.get('city') || '';
+    const status = searchParams.get('status') || '';
+    const sortBy = searchParams.get('sortBy') || 'date';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
     const offset = (page - 1) * limit;
 
     const client = await clerkClient();
-
-    // ⭐ ALWAYS fetch ALL users by paginating (no limit)
-    // This ensures user search/assignment works for ALL users, not just first 10-20
-    let clerkResponse: { data: any[]; totalCount: number };
-
-    if (limit >= 100 && !search) {
-      // Fetch ALL users in batches of 100 (Clerk's max per request)
-      let allClerkUsers: any[] = [];
-      let hasMore = true;
-      let currentOffset = 0;
-      const batchSize = 100;
-
-      console.log('📥 Fetching ALL users from Clerk (paginated)...');
-
-      while (hasMore) {
-        const batch = await client.users.getUserList({
-          limit: batchSize,
-          offset: currentOffset,
-          orderBy: '-created_at',
-        });
-        allClerkUsers.push(...batch.data);
-        hasMore = batch.data.length === batchSize; // Continue if we got a full batch
-        currentOffset += batchSize;
-
-        console.log(`  ↳ Fetched ${allClerkUsers.length} users so far...`);
-      }
-
-      console.log(`✅ Total users fetched: ${allClerkUsers.length}`);
-
-      // Create response structure
-      clerkResponse = {
-        data: allClerkUsers.slice(offset, offset + limit),
-        totalCount: allClerkUsers.length,
-      };
-    } else {
-      // Normal pagination for small page requests or searches
-      const response = await client.users.getUserList({
-        limit,
-        offset,
-        query: search || undefined,
-        orderBy: '-created_at',
-      });
-      clerkResponse = {
-        data: response.data,
-        totalCount: response.totalCount,
-      };
-    }
 
     // Get package stats from DB for all users with warehouse info
     const { warehouses } = await import('@/lib/db/schema');
@@ -87,6 +44,9 @@ export async function GET(request: NextRequest) {
       .leftJoin(packages, eq(users.id, packages.userId))
       .leftJoin(warehouses, eq(users.warehouseId, warehouses.id))
       .groupBy(users.id, users.clerkId, users.phone, users.whatsappPhone, users.city, users.warehouseId, warehouses.name);
+
+    // Get unique cities for filter dropdown
+    const uniqueCities = [...new Set(dbUsers.map((u) => u.city).filter(Boolean))].sort() as string[];
 
     // Get loyalty credits summary per user
     const loyaltySummary = await db
@@ -121,7 +81,6 @@ export async function GET(request: NextRequest) {
     const loyaltyMap = new Map(
       loyaltySummary.map((l) => [l.userId, l])
     );
-    // Group transactions by userId (max 10 per user)
     const transactionsMap = new Map<number, typeof recentTransactions>();
     for (const tx of recentTransactions) {
       const list = transactionsMap.get(tx.userId) || [];
@@ -131,7 +90,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Build a lookup map by clerkId
+    // Build stats lookup map by clerkId
     const statsMap = new Map(
       dbUsers.map((u) => {
         const loyalty = loyaltyMap.get(u.id);
@@ -166,8 +125,8 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    // Merge Clerk data with DB stats
-    const mergedUsers = clerkResponse.data.map((clerkUser) => {
+    // Helper to merge a Clerk user with DB stats
+    const mergeUser = (clerkUser: any) => {
       const stats = statsMap.get(clerkUser.id);
       return {
         id: clerkUser.id,
@@ -201,15 +160,106 @@ export async function GET(request: NextRequest) {
         transactionCount: stats?.transactionCount || 0,
         recentTransactions: stats?.recentTransactions || [],
       };
-    });
+    };
 
-    return NextResponse.json({
-      users: mergedUsers,
-      totalCount: clerkResponse.totalCount,
-      page,
-      limit,
-      totalPages: Math.ceil(clerkResponse.totalCount / limit),
-    });
+    // Determine if we need ALL users (filters require full dataset)
+    const hasFilters = !!city || !!status;
+    const needAllUsers = hasFilters || (limit >= 100 && !search);
+
+    if (needAllUsers) {
+      // Fetch ALL users from Clerk in batches
+      let allClerkUsers: any[] = [];
+      let hasMore = true;
+      let currentOffset = 0;
+      const batchSize = 100;
+
+      while (hasMore) {
+        const batch = await client.users.getUserList({
+          limit: batchSize,
+          offset: currentOffset,
+          orderBy: '-created_at',
+        });
+        allClerkUsers.push(...batch.data);
+        hasMore = batch.data.length === batchSize;
+        currentOffset += batchSize;
+      }
+
+      // Merge ALL users
+      let merged = allClerkUsers.map(mergeUser);
+
+      // Apply search filter (manual since we're not using Clerk's query)
+      if (search) {
+        const q = search.toLowerCase();
+        merged = merged.filter(
+          (u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (u.phone && u.phone.includes(q))
+        );
+      }
+
+      // Apply city filter
+      if (city) {
+        merged = merged.filter((u) => u.city === city);
+      }
+
+      // Apply status filter
+      if (status === 'active') {
+        merged = merged.filter((u) => u.status === 'active');
+      } else if (status === 'banned') {
+        merged = merged.filter((u) => u.status === 'banned');
+      }
+
+      // Sort
+      merged.sort((a, b) => {
+        let cmp = 0;
+        switch (sortBy) {
+          case 'name':
+            cmp = a.name.localeCompare(b.name);
+            break;
+          case 'packages':
+            cmp = a.totalPackages - b.totalPackages;
+            break;
+          case 'spent':
+            cmp = parseFloat(a.totalSpent.replace('$', '').replace(',', '')) - parseFloat(b.totalSpent.replace('$', '').replace(',', ''));
+            break;
+          case 'date':
+          default:
+            cmp = a.createdAt - b.createdAt;
+            break;
+        }
+        return sortOrder === 'asc' ? cmp : -cmp;
+      });
+
+      // Paginate
+      const totalFiltered = merged.length;
+      const paginatedUsers = merged.slice(offset, offset + limit);
+
+      return NextResponse.json({
+        users: paginatedUsers,
+        totalCount: totalFiltered,
+        page,
+        limit,
+        totalPages: Math.ceil(totalFiltered / limit),
+        cities: uniqueCities,
+      });
+    } else {
+      // Normal pagination via Clerk (no filters active)
+      const response = await client.users.getUserList({
+        limit,
+        offset,
+        query: search || undefined,
+        orderBy: sortBy === 'name' ? (sortOrder === 'asc' ? '+first_name' : '-first_name') : '-created_at',
+      });
+
+      const mergedUsers = response.data.map(mergeUser);
+
+      return NextResponse.json({
+        users: mergedUsers,
+        totalCount: response.totalCount,
+        page,
+        limit,
+        totalPages: Math.ceil(response.totalCount / limit),
+        cities: uniqueCities,
+      });
+    }
   } catch (error) {
     console.error('Error fetching users:', error);
     return NextResponse.json(
