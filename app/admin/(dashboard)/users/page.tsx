@@ -311,7 +311,7 @@ export default function UsersPage() {
           {[0, 1, 2].map((i) => <div key={i} className="h-24 bg-gray-200 rounded-2xl animate-pulse" />)}
         </div>
         <div className="h-14 bg-gray-200 rounded-2xl animate-pulse" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-72 bg-gray-100 rounded-2xl animate-pulse" />
           ))}
@@ -517,7 +517,7 @@ export default function UsersPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {users.map((user, index) => {
             const vip = getVipTier(user.totalSpent, user.totalPackages);
             const isSelected = selectedIds.has(user.id);
