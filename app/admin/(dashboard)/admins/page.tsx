@@ -293,28 +293,28 @@ export default function AdminManagementPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Management</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Management</h1>
+          <p className="mt-1 sm:mt-2 text-sm text-gray-600">
             Manage administrator accounts and permissions
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={refresh}
             disabled={refreshing}
-            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
+            <span className="hidden sm:inline">Refresh</span>
           </button>
           <button
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
           >
             <Plus className="h-5 w-5" />
-            Add Admin
+            <span className="hidden sm:inline">Add Admin</span>
           </button>
         </div>
       </div>
@@ -342,7 +342,88 @@ export default function AdminManagementPage() {
           animate={{ opacity: 1, y: 0 }}
           className="theme-card rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
         >
-          <div className="overflow-x-auto">
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3 p-4">
+            {filteredAdmins.map((admin) => (
+              <div key={admin.id} className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+                {/* Top: Avatar + Name + Email */}
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-sm font-bold shrink-0">
+                    {(admin.user?.firstName?.[0] || '').toUpperCase()}
+                    {(admin.user?.lastName?.[0] || '').toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {admin.user?.firstName} {admin.user?.lastName}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">{admin.user?.email}</div>
+                  </div>
+                </div>
+
+                {/* Middle: Role + Status badges */}
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`inline-flex px-2.5 py-0.5 text-xs font-semibold rounded-full ${
+                      ROLE_COLORS[admin.role] || 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    {ROLE_LABELS[admin.role] || admin.role}
+                  </span>
+                  <span
+                    className={`inline-flex px-2.5 py-0.5 text-xs font-semibold rounded-full ${
+                      admin.isActive
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                  >
+                    {admin.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+
+                {/* Bottom: Last login + Actions */}
+                <div className="flex items-center justify-between pt-1 border-t border-gray-100">
+                  <span className="text-xs text-gray-500">
+                    Last login:{' '}
+                    {admin.lastLoginAt
+                      ? new Date(admin.lastLoginAt).toLocaleDateString()
+                      : 'Never'}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openEditModal(admin)}
+                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Edit"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleToggleActive(admin)}
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        admin.isActive
+                          ? 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                          : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                      }`}
+                      title={admin.isActive ? 'Deactivate' : 'Activate'}
+                    >
+                      {admin.isActive ? (
+                        <UserX className="h-4 w-4" />
+                      ) : (
+                        <UserCheck className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {filteredAdmins.length === 0 && (
+              <div className="px-6 py-8 text-center text-gray-500">
+                No admins found
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -456,7 +537,7 @@ export default function AdminManagementPage() {
             </div>
 
             <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
                   <input
@@ -488,7 +569,7 @@ export default function AdminManagementPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
                   <input
@@ -509,7 +590,7 @@ export default function AdminManagementPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                   <input
@@ -630,7 +711,7 @@ export default function AdminManagementPage() {
             </div>
 
             <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                   <select

@@ -377,14 +377,14 @@ export default function AllPackagesPage() {
   return (
     <div className="space-y-6">
       {/* ── Page Header ─────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Tous les Colis</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Tous les Colis</h1>
+          <p className="mt-1 sm:mt-2 text-sm text-gray-600">
             Gérer et suivre tous les colis
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
           <button
             onClick={refresh}
             disabled={refreshing}
@@ -752,28 +752,28 @@ export default function AllPackagesPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4 z-50"
+          className="fixed bottom-6 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 bg-gray-900 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-xl shadow-2xl flex flex-col sm:flex-row items-center gap-3 sm:gap-4 z-50"
         >
           <span className="text-sm font-medium">
             {selectedPackages.length} colis sélectionné{selectedPackages.length > 1 ? 's' : ''}
           </span>
-          <div className="h-6 w-px bg-gray-700" />
+          <div className="hidden sm:block h-6 w-px bg-gray-700" />
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowStatusModal(true)}
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg text-sm font-medium transition-colors"
+              className="px-3 sm:px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg text-sm font-medium transition-colors"
             >
-              Modifier Statut
+              Statut
             </button>
             <button
               onClick={() => setShowDeleteModal(true)}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-colors"
+              className="px-3 sm:px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-colors"
             >
               Supprimer
             </button>
             <button
               onClick={() => setSelectedPackages([])}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors"
+              className="px-3 sm:px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition-colors"
             >
               Annuler
             </button>
@@ -831,7 +831,7 @@ export default function AllPackagesPage() {
                   Le workflow ne peut avancer que vers l&apos;avant.
                 </p>
 
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-1 xs:grid-cols-2 gap-4 mb-6">
                   {statusOptions.map((status) => {
                     const statusIndex = STATUS_ORDER.indexOf(status.value);
                     const currentIndex = STATUS_ORDER.indexOf(currentStatus);
@@ -963,7 +963,7 @@ export default function AllPackagesPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="theme-card rounded-2xl shadow-2xl max-w-5xl w-full my-8"
+            className="theme-card rounded-2xl shadow-2xl max-w-full sm:max-w-3xl lg:max-w-5xl w-full my-4 sm:my-8"
           >
             {/* Header */}
             <div className="sticky top-0 bg-gradient-to-r from-primary-600 to-primary-700 text-white px-6 py-5 rounded-t-2xl">
@@ -1031,7 +1031,7 @@ export default function AllPackagesPage() {
                       </div>
                       <h3 className="text-base font-semibold text-gray-900">Client</h3>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Nom</p>
                         <p className="font-semibold text-gray-900">{selectedPackageDetails.userName}</p>
@@ -1069,7 +1069,7 @@ export default function AllPackagesPage() {
                       </div>
                       <h3 className="text-base font-semibold text-gray-900">Détails du colis</h3>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Poids</p>
                         <p className="text-2xl font-bold text-gray-900">
@@ -1222,7 +1222,7 @@ export default function AllPackagesPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="theme-card rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden"
+            className="theme-card rounded-2xl shadow-2xl max-w-full sm:max-w-3xl w-full overflow-hidden"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-green-600 to-emerald-700 px-8 py-6">
@@ -1253,7 +1253,7 @@ export default function AllPackagesPage() {
             {/* Content */}
             <div className="p-8">
               {/* Summary Stats */}
-              <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="h-10 w-10 rounded-lg bg-blue-500 flex items-center justify-center">

@@ -145,28 +145,28 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="mt-1 sm:mt-2 text-sm text-gray-600">
             Overview of your shipping operations
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={refresh}
             disabled={refreshing}
-            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
+            <span className="hidden sm:inline">Refresh</span>
           </button>
           <Link
             href="/admin/packages/new"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
           >
             <Plus className="h-5 w-5" />
-            Add Package
+            <span className="hidden sm:inline">Add Package</span>
           </Link>
         </div>
       </div>
@@ -234,7 +234,31 @@ export default function AdminDashboard() {
           </a>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile cards */}
+        <div className="md:hidden space-y-3">
+          {dashboardData.recentPackages.map((pkg) => (
+            <div key={pkg.id} className="rounded-xl border border-gray-100 p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-900 font-mono">{pkg.id}</span>
+                <span
+                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    statusColors[pkg.status as keyof typeof statusColors]
+                  }`}
+                >
+                  {pkg.status}
+                </span>
+              </div>
+              <p className="text-sm text-gray-600">{pkg.customer}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">{pkg.destination}</span>
+                <span className="text-sm font-semibold text-gray-900">{pkg.amount}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead>
               <tr>

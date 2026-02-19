@@ -717,7 +717,7 @@ export default function UsersPage() {
               {/* Modal Body */}
               <div className="p-6 space-y-5 max-h-[60vh] overflow-y-auto">
                 {/* Main Stats */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   <div className="bg-primary-50 rounded-xl p-3 text-center">
                     <PackageIcon className="h-5 w-5 text-primary-500 mx-auto mb-1" />
                     <p className="text-xl font-bold text-gray-900">{selectedUser.totalPackages}</p>

@@ -836,7 +836,7 @@ export default function AnnouncementsPage() {
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
-                                className="mt-4 pl-11 grid grid-cols-2 gap-3"
+                                className="mt-4 pl-11 grid grid-cols-1 sm:grid-cols-2 gap-3"
                               >
                                 <div>
                                   <label className="flex items-center gap-1 text-xs font-semibold text-gray-700 mb-2">
@@ -930,7 +930,7 @@ export default function AnnouncementsPage() {
                             <span className="text-2xl">📦</span>
                             Standard Delivery
                           </h4>
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                               <label className="flex items-center gap-1 text-xs font-semibold text-blue-700 mb-2">
                                 <ArrowLeft className="h-3 w-3" />
@@ -962,7 +962,7 @@ export default function AnnouncementsPage() {
                             <span className="text-2xl">🧴</span>
                             Perfume/Restricted
                           </h4>
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                               <label className="flex items-center gap-1 text-xs font-semibold text-purple-700 mb-2">
                                 <ArrowLeft className="h-3 w-3" />
@@ -1057,7 +1057,7 @@ export default function AnnouncementsPage() {
                       <Plus className="h-5 w-5 text-green-600" />
                       Create New Special Item
                     </h3>
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border-2 border-green-200">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border-2 border-green-200">
                       <div>
                         <label className="flex items-center gap-1 text-sm font-semibold text-gray-700 mb-2">
                           <FileText className="h-4 w-4 text-green-600" />
@@ -1232,7 +1232,7 @@ export default function AnnouncementsPage() {
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="grid grid-cols-2 gap-4 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200"
+                        className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200"
                       >
                         <div className="col-span-2">
                           <h4 className="font-semibold text-purple-900 flex items-center gap-2 mb-3">
@@ -1404,7 +1404,7 @@ export default function AnnouncementsPage() {
                       <Plus className="h-5 w-5 text-blue-600" />
                       Create New Warehouse
                     </h3>
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200">
                       <div>
                         <label className="flex items-center gap-1 text-sm font-semibold text-gray-700 mb-2">
                           <Wrench className="h-4 w-4 text-blue-600" />
@@ -1582,7 +1582,7 @@ export default function AnnouncementsPage() {
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="grid grid-cols-2 gap-4 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200"
+                        className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200"
                       >
                         <div className="col-span-2">
                           <h4 className="font-semibold text-blue-900 flex items-center gap-2 mb-3">

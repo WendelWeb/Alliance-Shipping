@@ -119,18 +119,18 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Analytics & Revenue</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Analytics & Revenue</h1>
+          <p className="mt-1 sm:mt-2 text-sm text-gray-600">
             Track revenue, packages, and business insights
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 theme-card border border-gray-300 rounded-lg p-1">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <div className="flex items-center gap-1 sm:gap-2 theme-card border border-gray-300 rounded-lg p-1">
             <button
               onClick={() => setTimeRange('week')}
-              className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
+              className={`px-2 sm:px-3 py-1 text-sm font-medium rounded transition-colors ${
                 timeRange === 'week'
                   ? 'bg-primary-600 text-white'
                   : 'text-gray-700 hover:bg-gray-100'
@@ -140,7 +140,7 @@ export default function AnalyticsPage() {
             </button>
             <button
               onClick={() => setTimeRange('month')}
-              className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
+              className={`px-2 sm:px-3 py-1 text-sm font-medium rounded transition-colors ${
                 timeRange === 'month'
                   ? 'bg-primary-600 text-white'
                   : 'text-gray-700 hover:bg-gray-100'
@@ -150,7 +150,7 @@ export default function AnalyticsPage() {
             </button>
             <button
               onClick={() => setTimeRange('year')}
-              className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
+              className={`px-2 sm:px-3 py-1 text-sm font-medium rounded transition-colors ${
                 timeRange === 'year'
                   ? 'bg-primary-600 text-white'
                   : 'text-gray-700 hover:bg-gray-100'
@@ -162,14 +162,14 @@ export default function AnalyticsPage() {
           <button
             onClick={refresh}
             disabled={refreshing}
-            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
+            <span className="hidden sm:inline">Refresh</span>
           </button>
-          <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors">
+          <button className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors">
             <Download className="h-5 w-5" />
-            Export Report
+            <span className="hidden sm:inline">Export Report</span>
           </button>
         </div>
       </div>
@@ -313,7 +313,37 @@ export default function AnalyticsPage() {
             </button>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile cards */}
+          <div className="sm:hidden space-y-2">
+            {analytics.topCustomers.map((customer, index) => (
+              <div key={customer.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50">
+                <div
+                  className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                    index === 0
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : index === 1
+                      ? 'bg-gray-200 text-gray-700'
+                      : index === 2
+                      ? 'bg-orange-100 text-orange-700'
+                      : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  {index + 1}
+                </div>
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-xs font-semibold shrink-0">
+                  {customer.name.charAt(0)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{customer.name}</p>
+                  <p className="text-xs text-gray-500">{customer.packages} packages</p>
+                </div>
+                <span className="text-sm font-semibold text-gray-900">${customer.revenue.toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="min-w-full">
               <thead>
                 <tr className="border-b border-gray-200">

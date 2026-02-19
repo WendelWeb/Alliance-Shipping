@@ -204,13 +204,11 @@ export default function TransfersPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Transferts de colis</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Suivi complet des transferts Alliance Shipping &rarr; Utilisateurs
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Transferts de colis</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Suivi complet des transferts Alliance Shipping &rarr; Utilisateurs
+        </p>
       </div>
 
       {/* Stats Cards */}
@@ -347,7 +345,7 @@ export default function TransfersPage() {
 
         {/* Custom Date Range */}
         {selectedPeriod === 'custom' && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Date de début</label>
               <input
@@ -440,7 +438,87 @@ export default function TransfersPage() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Mobile card layout */}
+            <div className="lg:hidden space-y-3 p-4">
+              {transfers.map((transfer) => {
+                const delta = calculateDelta(transfer.oldTotalCost, transfer.newTotalCost);
+                const userName = `${transfer.userFirstName || ''} ${transfer.userLastName || ''}`.trim() || transfer.userEmail;
+
+                return (
+                  <div key={transfer.id} className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+                    {/* Top row: tracking + type badge */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-900">{transfer.trackingNumber}</span>
+                      </div>
+                      <span className={cn(
+                        'inline-flex px-2 py-1 text-xs font-semibold rounded-full',
+                        transfer.transferType === 'user_claimed'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-blue-100 text-blue-800'
+                      )}>
+                        {transfer.transferType === 'user_claimed' ? 'Réclamé' : 'Assigné'}
+                      </span>
+                    </div>
+
+                    {/* User */}
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-gray-400" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{userName}</p>
+                        <p className="text-xs text-gray-500 truncate">{transfer.userEmail}</p>
+                      </div>
+                    </div>
+
+                    {/* Price change */}
+                    <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                      <div className="text-sm">
+                        <span className="text-gray-500">{formatCurrency(transfer.oldTotalCost)}</span>
+                        <span className="mx-2 text-gray-400">&rarr;</span>
+                        <span className="font-semibold text-gray-900">{formatCurrency(transfer.newTotalCost)}</span>
+                      </div>
+                      <div className={cn(
+                        'flex items-center text-sm font-medium',
+                        delta > 0 ? 'text-red-600' : delta < 0 ? 'text-green-600' : 'text-gray-500'
+                      )}>
+                        {delta > 0 ? <TrendingUp className="h-3 w-3 mr-1" /> : delta < 0 ? <TrendingDown className="h-3 w-3 mr-1" /> : null}
+                        {delta >= 0 ? '+' : ''}{formatCurrency(delta)}
+                      </div>
+                    </div>
+
+                    {/* Bottom row: city + date + cancel button */}
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-gray-500">
+                        <span className="font-medium text-gray-700">{transfer.newCity}</span>
+                        <span className="mx-1.5">&middot;</span>
+                        {formatDate(transfer.transferredAt)}
+                      </div>
+                      <button
+                        onClick={() => handleCancelTransfer(transfer.id)}
+                        disabled={cancellingId === transfer.id}
+                        className="inline-flex items-center px-3 py-1.5 border border-red-300 text-xs font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {cancellingId === transfer.id ? (
+                          <>
+                            <div className="animate-spin h-3 w-3 border-2 border-red-600 border-t-transparent rounded-full mr-1.5"></div>
+                            Annulation...
+                          </>
+                        ) : (
+                          <>
+                            <RotateCcw className="h-3 w-3 mr-1.5" />
+                            Annuler
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden lg:block overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -563,7 +641,7 @@ export default function TransfersPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="text-sm text-gray-700">
                   Page {currentPage} sur {totalPages}
                 </div>

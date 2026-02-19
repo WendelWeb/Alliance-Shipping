@@ -336,7 +336,7 @@ export default function NewPackagePage() {
             <ArrowLeft className="h-5 w-5 text-gray-600" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Ajouter un Colis</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Ajouter un Colis</h1>
             <p className="mt-2 text-sm text-gray-600">
               Ajouter un nouveau colis dans le systeme
             </p>
@@ -361,7 +361,7 @@ export default function NewPackagePage() {
                 <h2 className="text-xl font-bold text-gray-900">Type de Colis</h2>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
                   type="button"
                   onClick={() => {

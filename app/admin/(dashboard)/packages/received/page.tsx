@@ -199,14 +199,14 @@ export default function ReceivedPackagesPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Received Packages</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Received Packages</h1>
+          <p className="mt-1 sm:mt-2 text-sm text-gray-600">
             Process packages received in Miami warehouse
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <button
             onClick={refresh}
             disabled={refreshing}
@@ -551,7 +551,7 @@ export default function ReceivedPackagesPage() {
 
               {/* Status Options */}
               <div className="p-6">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
                     { value: 'pending', label: 'Pending', icon: '⏳', color: 'yellow', desc: 'Awaiting processing' },
                     { value: 'received', label: 'Received', icon: '📦', color: 'blue', desc: 'At warehouse' },

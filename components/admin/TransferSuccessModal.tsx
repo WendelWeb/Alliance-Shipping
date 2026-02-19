@@ -203,7 +203,7 @@ export default function TransferSuccessModal({
               </div>
 
               {/* Package & Pricing Info */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Tracking Number */}
                 <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                   <div className="text-xs text-blue-600 font-medium mb-1">Numéro de suivi</div>
@@ -237,7 +237,7 @@ export default function TransferSuccessModal({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={handleViewProfile}
                   className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
