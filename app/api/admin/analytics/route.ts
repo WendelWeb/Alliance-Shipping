@@ -149,6 +149,22 @@ export async function GET(request: NextRequest) {
       .where(and(gte(packageTransfers.transferredAt, cs), lte(packageTransfers.transferredAt, ce)))
     ); // 5
 
+    // A7: Revenue breakdown by source (weightCost, serviceFee, customsFees, specialItem)
+    const revenueBreakdownIdx = 6;
+    queries.push(
+      db.select({
+        totalWeightCost: sql<string>`COALESCE(SUM(CAST(${packages.weightCost} AS DECIMAL)), 0)`,
+        totalServiceFee: sql<string>`COALESCE(SUM(CAST(${packages.serviceFee} AS DECIMAL)), 0)`,
+        totalCustomsFees: sql<string>`COALESCE(SUM(CAST(${packages.customsFees} AS DECIMAL)), 0)`,
+        totalSpecialItemRevenue: sql<string>`COALESCE(SUM(CASE WHEN ${packages.specialItemId} IS NOT NULL THEN CAST(${packages.totalCost} AS DECIMAL) ELSE 0 END), 0)`,
+        totalNormalRevenue: sql<string>`COALESCE(SUM(CASE WHEN ${packages.specialItemId} IS NULL THEN CAST(${packages.totalCost} AS DECIMAL) ELSE 0 END), 0)`,
+        totalWeightLbs: sql<string>`COALESCE(SUM(CAST(${packages.weight} AS DECIMAL)), 0)`,
+        totalQuantity: sql<number>`COALESCE(SUM(${packages.quantity}), 0)`,
+      })
+      .from(packages)
+      .where(and(gte(packages.createdAt, cs), lte(packages.createdAt, ce)))
+    ); // 6
+
     // Previous period queries (if applicable)
     if (dates.previous) {
       const { start: ps, end: pe } = dates.previous;
@@ -156,32 +172,32 @@ export async function GET(request: NextRequest) {
         db.select({ total: sql<string>`COALESCE(SUM(CAST(${packages.totalCost} AS DECIMAL)), 0)` })
         .from(packages)
         .where(and(gte(packages.createdAt, ps), lte(packages.createdAt, pe)))
-      ); // 6
-      queries.push(
-        db.select({ count: sql<number>`COUNT(*)` })
-        .from(packages)
-        .where(and(gte(packages.createdAt, ps), lte(packages.createdAt, pe)))
       ); // 7
       queries.push(
-        db.select({ count: sql<number>`COUNT(DISTINCT ${packages.userId})` })
+        db.select({ count: sql<number>`COUNT(*)` })
         .from(packages)
         .where(and(gte(packages.createdAt, ps), lte(packages.createdAt, pe)))
       ); // 8
       queries.push(
-        db.select({ total: sql<string>`COALESCE(SUM(CAST(${packages.customsFees} AS DECIMAL)), 0)` })
+        db.select({ count: sql<number>`COUNT(DISTINCT ${packages.userId})` })
         .from(packages)
         .where(and(gte(packages.createdAt, ps), lte(packages.createdAt, pe)))
       ); // 9
       queries.push(
+        db.select({ total: sql<string>`COALESCE(SUM(CAST(${packages.customsFees} AS DECIMAL)), 0)` })
+        .from(packages)
+        .where(and(gte(packages.createdAt, ps), lte(packages.createdAt, pe)))
+      ); // 10
+      queries.push(
         db.select({ count: sql<number>`COUNT(*)` })
         .from(packageRequests)
         .where(and(gte(packageRequests.createdAt, ps), lte(packageRequests.createdAt, pe)))
-      ); // 10
+      ); // 11
       queries.push(
         db.select({ count: sql<number>`COUNT(*)` })
         .from(packageTransfers)
         .where(and(gte(packageTransfers.transferredAt, ps), lte(packageTransfers.transferredAt, pe)))
-      ); // 11
+      ); // 12
     }
 
     // B: Revenue trend (from packages.totalCost)
@@ -491,13 +507,25 @@ export async function GET(request: NextRequest) {
     let transfersGrowth: number | null = null;
     let avgValueGrowth: number | null = null;
 
+    // Revenue breakdown (index 6)
+    const breakdownRaw = results[revenueBreakdownIdx] as any[];
+    const revenueBreakdown = {
+      weightCost: parseFloat(String(breakdownRaw[0]?.totalWeightCost)) || 0,
+      serviceFee: parseFloat(String(breakdownRaw[0]?.totalServiceFee)) || 0,
+      customsFees: parseFloat(String(breakdownRaw[0]?.totalCustomsFees)) || 0,
+      specialItemRevenue: parseFloat(String(breakdownRaw[0]?.totalSpecialItemRevenue)) || 0,
+      normalRevenue: parseFloat(String(breakdownRaw[0]?.totalNormalRevenue)) || 0,
+      totalWeightLbs: parseFloat(String(breakdownRaw[0]?.totalWeightLbs)) || 0,
+      totalQuantity: Number(breakdownRaw[0]?.totalQuantity) || 0,
+    };
+
     if (dates.previous) {
-      const prevRevenue = parseFloat(String(results[6][0]?.total)) || 0;
-      const prevPackages = Number(results[7][0]?.count) || 0;
-      const prevClients = Number(results[8][0]?.count) || 0;
-      const prevCustoms = parseFloat(String(results[9][0]?.total)) || 0;
-      const prevRequests = Number(results[10][0]?.count) || 0;
-      const prevTransfers = Number(results[11][0]?.count) || 0;
+      const prevRevenue = parseFloat(String(results[7][0]?.total)) || 0;
+      const prevPackages = Number(results[8][0]?.count) || 0;
+      const prevClients = Number(results[9][0]?.count) || 0;
+      const prevCustoms = parseFloat(String(results[10][0]?.total)) || 0;
+      const prevRequests = Number(results[11][0]?.count) || 0;
+      const prevTransfers = Number(results[12][0]?.count) || 0;
       const prevAvgValue = prevPackages > 0 ? prevRevenue / prevPackages : 0;
 
       revenueGrowth = calcGrowth(curRevenue, prevRevenue);
@@ -708,6 +736,7 @@ export async function GET(request: NextRequest) {
       funnel: { stages: funnelStages, timings: stageTimings },
       specialItems,
       regularPackages: regularPackagesData,
+      revenueBreakdown,
       adminPerformance,
       loyalty,
       transfersData,

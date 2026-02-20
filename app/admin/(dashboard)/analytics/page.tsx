@@ -34,6 +34,11 @@ interface AnalyticsData {
     stages: Array<{ status: string; count: number }>;
     timings: Array<{ from: string; to: string; avgHours: number; count: number }>;
   };
+  revenueBreakdown: {
+    weightCost: number; serviceFee: number; customsFees: number;
+    specialItemRevenue: number; normalRevenue: number;
+    totalWeightLbs: number; totalQuantity: number;
+  };
   specialItems: Array<{ id: number; brand: string; itemName: string; category: string; fixedFee: number; count: number; revenue: number }>;
   regularPackages: { count: number; revenue: number };
   adminPerformance: Array<{ adminId: number; name: string; role: string; actions: number; packagesProcessed: number }>;
@@ -86,11 +91,19 @@ export default function AnalyticsPage() {
   const router = useRouter();
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
   const [exportOpen, setExportOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const exportRef = useRef<HTMLDivElement>(null);
 
   const fetchAnalytics = useCallback(async () => {
+    setError(null);
     const response = await fetch(`/api/admin/analytics?range=${timeRange}`);
-    if (!response.ok) throw new Error('Failed');
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => '');
+      const msg = `API Error ${response.status}: ${errBody.slice(0, 200)}`;
+      console.error('[Analytics]', msg);
+      setError(msg);
+      throw new Error(msg);
+    }
     return response.json();
   }, [timeRange]);
 
@@ -165,7 +178,16 @@ export default function AnalyticsPage() {
     );
   }
 
-  if (!data) return null;
+  if (!data) return error ? (
+    <div className="p-8 text-center">
+      <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+        <X className="h-8 w-8 text-red-600" />
+      </div>
+      <h2 className="text-xl font-bold text-gray-900 mb-2">Erreur de chargement</h2>
+      <p className="text-sm text-gray-500 mb-4 max-w-md mx-auto break-all">{error}</p>
+      <button onClick={refresh} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium">Reessayer</button>
+    </div>
+  ) : null;
 
   const kpiCards = [
     { key: 'revenue', label: 'Revenue', icon: DollarSign, bg: 'bg-green-50', ic: 'text-green-600', kpi: data.kpis.revenue, format: fmt$ },
@@ -254,6 +276,64 @@ export default function AnalyticsPage() {
           </motion.div>
         ))}
       </div>
+
+      {/* ── Revenue Breakdown ─────────────────────────────────────── */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+        className="theme-card rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
+        <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <DollarSign className="h-5 w-5 text-green-600" />
+          Decomposition du Revenue
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
+          {[
+            { label: 'Frais de Poids', value: data.revenueBreakdown.weightCost, color: 'bg-blue-500', lightBg: 'bg-blue-50', textColor: 'text-blue-700', sub: `${data.revenueBreakdown.totalWeightLbs.toFixed(1)} lbs total` },
+            { label: 'Frais de Service', value: data.revenueBreakdown.serviceFee, color: 'bg-emerald-500', lightBg: 'bg-emerald-50', textColor: 'text-emerald-700', sub: `${data.kpis.packages.value} colis` },
+            { label: 'Taxes de Douane', value: data.revenueBreakdown.customsFees, color: 'bg-red-500', lightBg: 'bg-red-50', textColor: 'text-red-700', sub: 'Frais douaniers' },
+            { label: 'Articles Speciaux', value: data.revenueBreakdown.specialItemRevenue, color: 'bg-purple-500', lightBg: 'bg-purple-50', textColor: 'text-purple-700', sub: `${data.specialItems.reduce((s, i) => s + i.count, 0)} articles` },
+            { label: 'Colis Standards', value: data.revenueBreakdown.normalRevenue, color: 'bg-gray-500', lightBg: 'bg-gray-50', textColor: 'text-gray-700', sub: 'Sans article special' },
+          ].map((item) => (
+            <div key={item.label} className={`${item.lightBg} rounded-xl p-4 border border-gray-100`}>
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
+                <span className="text-xs font-medium text-gray-500 truncate">{item.label}</span>
+              </div>
+              <p className={`text-xl font-bold ${item.textColor}`}>{fmt$(item.value)}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">{item.sub}</p>
+            </div>
+          ))}
+        </div>
+        {/* Horizontal bar breakdown */}
+        {data.kpis.revenue.value > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Repartition</p>
+            <div className="h-5 rounded-full overflow-hidden flex bg-gray-100">
+              {[
+                { value: data.revenueBreakdown.weightCost, color: 'bg-blue-500', label: 'Poids' },
+                { value: data.revenueBreakdown.serviceFee, color: 'bg-emerald-500', label: 'Service' },
+                { value: data.revenueBreakdown.customsFees, color: 'bg-red-500', label: 'Douane' },
+              ].filter(s => s.value > 0).map((s) => {
+                const pct = (s.value / data.kpis.revenue.value) * 100;
+                return (
+                  <div key={s.label} className={`${s.color} relative group`} style={{ width: `${pct}%` }}
+                    title={`${s.label}: ${fmt$(s.value)} (${pct.toFixed(1)}%)`}>
+                    {pct > 8 && <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">{pct.toFixed(0)}%</span>}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-500" /> Poids ({((data.revenueBreakdown.weightCost / (data.kpis.revenue.value || 1)) * 100).toFixed(1)}%)</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Service ({((data.revenueBreakdown.serviceFee / (data.kpis.revenue.value || 1)) * 100).toFixed(1)}%)</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500" /> Douane ({((data.revenueBreakdown.customsFees / (data.kpis.revenue.value || 1)) * 100).toFixed(1)}%)</span>
+            </div>
+          </div>
+        )}
+        <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-4 text-sm">
+          <span className="text-gray-500">Total Quantite: <span className="font-bold text-gray-900">{data.revenueBreakdown.totalQuantity} articles</span></span>
+          <span className="text-gray-500">Total Poids: <span className="font-bold text-gray-900">{data.revenueBreakdown.totalWeightLbs.toFixed(1)} lbs</span></span>
+          <span className="text-gray-500">Moy/lbs: <span className="font-bold text-gray-900">{data.revenueBreakdown.totalWeightLbs > 0 ? fmt$(data.kpis.revenue.value / data.revenueBreakdown.totalWeightLbs) : '$0'}/lb</span></span>
+        </div>
+      </motion.div>
 
       {/* ── Charts Row: Revenue + Packages ──────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
