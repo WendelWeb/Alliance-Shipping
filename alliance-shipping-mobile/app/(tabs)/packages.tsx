@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUser } from '@clerk/clerk-expo';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -32,6 +32,7 @@ import {
 import { useTheme } from '@/lib/themes/ThemeProvider';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { api } from '@/lib/api';
+import { getLocalPackages, isSQLiteAvailable } from '@/lib/offline/database';
 import { PackageCard } from '@/components/PackageCard';
 
 // ---------------------------------------------------------------------------
@@ -55,8 +56,15 @@ interface PackageItem {
   category: string;
   createdAt: string;
   currentLocation?: string;
-  customsFees?: number; // ⭐ Customs fees
-  specialItemId?: number; // ⭐ Special item ID
+  customsFees?: number;
+  specialItemId?: number;
+  specialItemName?: string;
+  specialItemBrand?: string;
+  quantity?: number;
+  chargeByWeight?: boolean;
+  serviceFee?: string;
+  weightCost?: string;
+  totalCost?: string;
   timeline: TimelineEvent[];
 }
 
@@ -112,6 +120,7 @@ export default function PackagesScreen() {
   const insets = useSafeAreaInsets();
   const { isSignedIn, user } = useUser();
   const router = useRouter();
+  const { openRequest } = useLocalSearchParams<{ openRequest?: string }>();
   const { t, locale } = useTranslation();
   const { colors, fonts, spacing, borderRadius, shadows, card, isDark } = useTheme();
 
@@ -136,29 +145,42 @@ export default function PackagesScreen() {
   const [selectedSpecialItem, setSelectedSpecialItem] = useState<number | null>(null);
   const [specialItems, setSpecialItems] = useState<any[]>([]);
 
+  // Auto-open request modal when navigated from profile
+  useEffect(() => {
+    if (openRequest === 'true') {
+      setShowRequestModal(true);
+      // Clear the param so it doesn't re-open on next render
+      router.setParams({ openRequest: undefined as any });
+    }
+  }, [openRequest]);
+
   // -------------------------------------------------------------------------
   // Data fetching
   // -------------------------------------------------------------------------
 
   const fetchPackages = useCallback(async () => {
     setFetchError('');
-    console.log('[PACKAGES] Fetching packages...');
     try {
       const response = await api.get<PackagesResponse>('/api/user/packages');
-      console.log('[PACKAGES] Response received:', { success: response?.success, count: response?.packages?.length });
-      // API returns { success, packages: [...] }
       const items = response?.packages ?? response;
       if (Array.isArray(items)) {
-        console.log('[PACKAGES] Setting', items.length, 'packages');
         setPackages(items);
       } else {
-        console.warn('[PACKAGES] Response is not an array:', typeof items);
         setPackages([]);
       }
     } catch (err: any) {
-      console.error('[PACKAGES] Fetch error:', err?.message);
+      console.warn('[PACKAGES] Fetch error, trying offline cache:', err?.message);
       setFetchError(err?.message || t.common.error);
-      setPackages([]);
+      // Fallback to offline cache
+      if (isSQLiteAvailable()) {
+        try {
+          const cached = await getLocalPackages();
+          if (cached.length > 0) {
+            setPackages(cached);
+            setFetchError(''); // Clear error if we have cached data
+          }
+        } catch {}
+      }
     } finally {
       setLoading(false);
     }
@@ -347,7 +369,7 @@ export default function PackagesScreen() {
       <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
         <View style={styles.signInPrompt}>
           <Animated.View entering={FadeInDown.duration(500)} style={[styles.signInCard, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.xl, padding: spacing['3xl'], ...shadows.lg }]}>
-            <View style={[styles.signInIconCircle, { backgroundColor: colors.primary[50] }]}>
+            <View style={[styles.signInIconCircle, { backgroundColor: isDark ? colors.primary[900] : colors.primary[50] }]}>
               <Package size={36} color={colors.primary[500]} />
             </View>
             <Text style={[styles.signInTitle, { fontFamily: fonts.headingSemiBold, color: colors.gray[900] }]}>{t.packages.noPackages}</Text>
@@ -391,7 +413,7 @@ export default function PackagesScreen() {
   const ListEmptyComponent = () => (
     <View style={[styles.emptyContainer, { paddingTop: spacing['5xl'], paddingHorizontal: spacing['3xl'] }]}>
       <View style={[styles.emptyIconCircle, { backgroundColor: colors.gray[100] }]}>
-        <Package size={32} color={colors.gray[300]} />
+        <Package size={32} color={colors.gray[400]} />
       </View>
       <Text style={[styles.emptyTitle, { fontFamily: fonts.headingSemiBold, color: colors.gray[700] }]}>
         {fetchError ? '\uD83D\uDCE1 ' + t.packages.networkError : t.packages.noResults}
@@ -557,7 +579,7 @@ export default function PackagesScreen() {
       >
         <View style={[styles.modalContainer, { paddingTop: insets.top, backgroundColor: colors.background }]}>
           {/* Modal Header */}
-          <View style={[styles.modalHeader, { paddingHorizontal: spacing.xl, paddingVertical: spacing.lg, borderBottomColor: colors.gray[100] }]}>
+          <View style={[styles.modalHeader, { paddingHorizontal: spacing.xl, paddingVertical: spacing.lg, borderBottomColor: colors.gray[200] }]}>
             <Text style={[styles.modalTitle, { fontFamily: fonts.headingBold, color: colors.gray[900] }]}>{'\uD83D\uDCE6'} {t.requestPackage.title}</Text>
             <TouchableOpacity
               onPress={closeRequestModal}
@@ -572,7 +594,7 @@ export default function PackagesScreen() {
             /* Success view */
             <View style={[styles.successContainer, { paddingHorizontal: spacing['2xl'] }]}>
               <Animated.View entering={FadeInDown.duration(500)} style={styles.successContent}>
-                <View style={[styles.successIconCircle, { backgroundColor: colors.green[50] }]}>
+                <View style={[styles.successIconCircle, { backgroundColor: isDark ? colors.gray[200] : colors.green[50] }]}>
                   <Check size={40} color={colors.green[500]} strokeWidth={3} />
                 </View>
                 <Text style={[styles.successTitle, { fontFamily: fonts.headingBold, color: colors.gray[900] }]}>{'\u2705'} {t.requestPackage.success.title}</Text>
@@ -615,8 +637,8 @@ export default function PackagesScreen() {
                 <Text style={[styles.modalSubtitle, { fontFamily: fonts.regular, color: colors.gray[500], marginBottom: spacing.xl }]}>{t.requestPackage.subtitle}</Text>
 
                 {requestError ? (
-                  <View style={[styles.errorBox, { backgroundColor: isDark ? colors.red[900] : colors.red[50], borderRadius: borderRadius.md, padding: spacing.md, marginBottom: spacing.lg, borderColor: isDark ? colors.red[800] : colors.red[100] }]}>
-                    <Text style={[styles.errorText, { color: isDark ? colors.red[300] : colors.red[600], fontFamily: fonts.medium }]}>{requestError}</Text>
+                  <View style={[styles.errorBox, { backgroundColor: isDark ? colors.gray[200] : colors.red[50], borderRadius: borderRadius.md, padding: spacing.md, marginBottom: spacing.lg, borderColor: isDark ? colors.red[500] : colors.red[100] }]}>
+                    <Text style={[styles.errorText, { color: colors.red[500], fontFamily: fonts.medium }]}>{requestError}</Text>
                   </View>
                 ) : null}
 
@@ -630,6 +652,7 @@ export default function PackagesScreen() {
                       onPress={() => {
                         setPackageType('normal');
                         setSelectedSpecialItem(null);
+                        setCategory('');
                         setRequestError('');
                       }}
                       style={[
@@ -638,7 +661,7 @@ export default function PackagesScreen() {
                           flex: 1,
                           borderWidth: 2,
                           borderColor: packageType === 'normal' ? colors.primary[500] : card.borderColor,
-                          backgroundColor: packageType === 'normal' ? colors.primary[50] : card.backgroundColor,
+                          backgroundColor: packageType === 'normal' ? (isDark ? colors.primary[900] : colors.primary[50]) : card.backgroundColor,
                           borderRadius: borderRadius.lg,
                           padding: spacing.lg,
                           alignItems: 'center',
@@ -647,7 +670,7 @@ export default function PackagesScreen() {
                       activeOpacity={0.7}
                     >
                       <Package size={32} color={packageType === 'normal' ? colors.primary[600] : colors.gray[400]} />
-                      <Text style={[{ fontFamily: fonts.semibold, color: packageType === 'normal' ? colors.primary[700] : colors.gray[600], marginTop: spacing.sm }]}>
+                      <Text style={[{ fontFamily: fonts.semiBold, color: packageType === 'normal' ? colors.primary[600] : colors.gray[600], marginTop: spacing.sm }]}>
                         {t.requestPackage.types.normal}
                       </Text>
                       <Text style={[{ fontSize: 11, color: colors.gray[500] }]}>
@@ -665,7 +688,7 @@ export default function PackagesScreen() {
                           flex: 1,
                           borderWidth: 2,
                           borderColor: packageType === 'special' ? colors.primary[500] : card.borderColor,
-                          backgroundColor: packageType === 'special' ? colors.primary[50] : card.backgroundColor,
+                          backgroundColor: packageType === 'special' ? (isDark ? colors.primary[900] : colors.primary[50]) : card.backgroundColor,
                           borderRadius: borderRadius.lg,
                           padding: spacing.lg,
                           alignItems: 'center',
@@ -675,7 +698,7 @@ export default function PackagesScreen() {
                     >
                       {/* Smartphone icon - using Package as substitute */}
                       <Package size={32} color={packageType === 'special' ? colors.primary[600] : colors.gray[400]} />
-                      <Text style={[{ fontFamily: fonts.semibold, color: packageType === 'special' ? colors.primary[700] : colors.gray[600], marginTop: spacing.sm }]}>
+                      <Text style={[{ fontFamily: fonts.semiBold, color: packageType === 'special' ? colors.primary[600] : colors.gray[600], marginTop: spacing.sm }]}>
                         {t.requestPackage.types.special}
                       </Text>
                       <Text style={[{ fontSize: 11, color: colors.gray[500] }]}>
@@ -688,7 +711,7 @@ export default function PackagesScreen() {
                 {/* Special Items Grid */}
                 {packageType === 'special' && (
                   <View style={[styles.fieldGroup, { marginBottom: spacing.xl }]}>
-                    <Text style={[styles.fieldLabel, { fontFamily: fonts.semibold, color: colors.gray[700], marginBottom: spacing.sm }]}>
+                    <Text style={[styles.fieldLabel, { fontFamily: fonts.semiBold, color: colors.gray[700], marginBottom: spacing.sm }]}>
                       {'\uD83D\uDCF1'} {t.requestPackage.fields.specialItem.label} *
                     </Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md }}>
@@ -709,6 +732,7 @@ export default function PackagesScreen() {
                             key={item.id}
                             onPress={() => {
                               setSelectedSpecialItem(item.id);
+                              setCategory('electronics');
                               setRequestError('');
                             }}
                             style={[
@@ -716,7 +740,7 @@ export default function PackagesScreen() {
                                 width: '48%',
                                 borderWidth: 2,
                                 borderColor: selectedSpecialItem === item.id ? colors.primary[500] : card.borderColor,
-                                backgroundColor: selectedSpecialItem === item.id ? colors.primary[50] : card.backgroundColor,
+                                backgroundColor: selectedSpecialItem === item.id ? (isDark ? colors.primary[900] : colors.primary[50]) : card.backgroundColor,
                                 borderRadius: borderRadius.md,
                                 padding: spacing.md,
                                 alignItems: 'center',
@@ -724,7 +748,7 @@ export default function PackagesScreen() {
                             ]}
                             activeOpacity={0.7}
                           >
-                            <Text style={[{ fontFamily: fonts.semibold, fontSize: 14, textAlign: 'center', color: colors.gray[900] }]}>
+                            <Text style={[{ fontFamily: fonts.semiBold, fontSize: 14, textAlign: 'center', color: colors.gray[900] }]}>
                               {getLocalizedName(item)}
                             </Text>
                             <Text style={[{ fontSize: 12, color: colors.gray[500], marginTop: spacing.xs }]}>
@@ -777,12 +801,22 @@ export default function PackagesScreen() {
 
                 {/* Category */}
                 <View style={[styles.fieldGroup, { marginBottom: spacing.xl }]}>
-                  <Text style={[styles.fieldLabel, { fontFamily: fonts.semiBold, color: colors.gray[700], marginBottom: spacing.sm }]}>
-                    {'\uD83C\uDFF7\uFE0F'} {t.requestPackage.fields.category.label} *
-                  </Text>
-                  <View style={[styles.categoryGrid, { gap: spacing.sm }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm, gap: spacing.sm }}>
+                    <Text style={[styles.fieldLabel, { fontFamily: fonts.semiBold, color: colors.gray[700], marginBottom: 0 }]}>
+                      {'\uD83C\uDFF7\uFE0F'} {t.requestPackage.fields.category.label} *
+                    </Text>
+                    {packageType === 'special' && selectedSpecialItem && (
+                      <View style={{ backgroundColor: isDark ? colors.primary[900] : colors.primary[50], paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: borderRadius.full }}>
+                        <Text style={{ fontSize: 10, fontFamily: fonts.medium, color: colors.primary[600] }}>
+                          {t.requestPackage.fields.category.lockedBySpecialItem}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={[styles.categoryGrid, { gap: spacing.sm, opacity: (packageType === 'special' && selectedSpecialItem) ? 0.5 : 1 }]}>
                     {CATEGORY_CONFIG.map((cat) => {
                       const isSelected = category === cat.id;
+                      const isLocked = packageType === 'special' && selectedSpecialItem !== null;
                       return (
                         <TouchableOpacity
                           key={cat.id}
@@ -796,8 +830,9 @@ export default function PackagesScreen() {
                               backgroundColor: isSelected ? colors.primary[500] : card.backgroundColor,
                             },
                           ]}
-                          onPress={() => { setCategory(cat.id); setRequestError(''); }}
-                          activeOpacity={0.7}
+                          onPress={() => { if (!isLocked) { setCategory(cat.id); setRequestError(''); } }}
+                          activeOpacity={isLocked ? 1 : 0.7}
+                          disabled={isLocked}
                         >
                           <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
                           <Text
@@ -885,6 +920,7 @@ const styles = StyleSheet.create({
   centered: { alignItems: 'center', justifyContent: 'center' },
   loadingText: { fontSize: 15 },
 
+  typeButton: {},
   header: {},
   headerTitle: { fontSize: 26, letterSpacing: 0.2 },
   headerSubtitle: { fontSize: 14, marginTop: 2 },

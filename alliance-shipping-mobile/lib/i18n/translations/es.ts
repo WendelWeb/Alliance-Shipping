@@ -105,6 +105,7 @@ export const es = {
       rejected: 'Rechazado',
     },
     specialItem: 'Artículo Especial',
+    quantity: 'Cant',
     customsFees: 'Tasas aduaneras',
     fixedPrice: 'Precio fijo',
     feeBreakdown: {

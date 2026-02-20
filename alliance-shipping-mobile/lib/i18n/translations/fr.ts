@@ -105,6 +105,7 @@ export const fr = {
       rejected: 'Rejeté',
     },
     specialItem: 'Article Spécial',
+    quantity: 'Qté',
     customsFees: 'Frais de douane',
     fixedPrice: 'Prix fixe',
     feeBreakdown: {

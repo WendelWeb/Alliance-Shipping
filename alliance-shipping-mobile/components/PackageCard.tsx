@@ -1,15 +1,15 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   Pressable,
-  LayoutAnimation,
   Platform,
   UIManager,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 import {
   Package,
   Shirt,
@@ -17,12 +17,13 @@ import {
   FileText,
   ShoppingBag,
   HelpCircle,
-  ChevronDown,
-  ChevronUp,
+  ChevronRight,
   MapPin,
   Calendar,
   Weight,
   AlertTriangle,
+  DollarSign,
+  Layers,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/themes/ThemeProvider';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -48,8 +49,16 @@ interface PackageItem {
   status: string;
   category: string;
   createdAt: string;
-  customsFees?: number; // ⭐ Customs fees
-  specialItemId?: number; // ⭐ Special item ID
+  customsFees?: number;
+  specialItemId?: number;
+  specialItemName?: string;
+  specialItemBrand?: string;
+  specialItemFixedFee?: string;
+  quantity?: number;
+  chargeByWeight?: boolean;
+  serviceFee?: string;
+  weightCost?: string;
+  totalCost?: string;
   timeline: TimelineEvent[];
 }
 
@@ -65,6 +74,15 @@ function formatDate(dateStr: string): string {
   const year = date.getFullYear();
   return `${month} ${day}, ${year}`;
 }
+
+const categoryLabels: Record<string, string> = {
+  general: 'General',
+  clothing: 'Vetements',
+  electronics: 'Electronique',
+  food: 'Nourriture',
+  documents: 'Documents',
+  other: 'Autre',
+};
 
 function getStatusLabel(status: string, statusTranslations: Record<string, string>): string {
   const key = status as keyof typeof statusTranslations;
@@ -116,8 +134,15 @@ function translateKey(key: string, translations: any): string {
 
 export function PackageCard({ item, index }: PackageCardProps) {
   const { t } = useTranslation();
-  const { colors, fonts, spacing, borderRadius, shadows, card } = useTheme();
-  const [expanded, setExpanded] = useState(false);
+  const { colors, fonts, spacing, borderRadius, shadows, card, isDark } = useTheme();
+  const router = useRouter();
+
+  // Parse numeric values (API returns decimals as strings)
+  const customsFees = parseFloat(String(item.customsFees ?? '0')) || 0;
+  const serviceFee = parseFloat(String(item.serviceFee ?? '0')) || 0;
+  const weightCost = parseFloat(String(item.weightCost ?? '0')) || 0;
+  const specialItemFixedFee = parseFloat(String(item.specialItemFixedFee ?? '0')) || 0;
+  const totalCost = serviceFee + weightCost + customsFees + specialItemFixedFee;
 
   const statusColors = useMemo(
     (): Record<string, { bg: string; text: string; dot: string }> => ({
@@ -156,11 +181,13 @@ export function PackageCard({ item, index }: PackageCardProps) {
   const palette = statusColors[item.status] ?? defaultStatusColor;
   const categoryIcon = categoryIcons[item.category] ?? categoryIcons.general;
 
-  const toggleExpanded = useCallback(() => {
+  const handlePress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpanded((prev) => !prev);
-  }, []);
+    router.push({
+      pathname: '/package/[id]',
+      params: { id: String(item.id), data: JSON.stringify(item) },
+    });
+  }, [router, item]);
 
   const styles = useMemo(
     () =>
@@ -231,68 +258,13 @@ export function PackageCard({ item, index }: PackageCardProps) {
           fontFamily: fonts.medium,
           fontSize: 11,
         },
-        // Timeline styles
-        timelineContainer: {
-          marginTop: spacing.md,
-        },
-        timelineDivider: {
-          height: 1,
-          marginBottom: spacing.md,
-        },
-        timelineTitle: {
-          fontFamily: fonts.semiBold,
-          fontSize: 13,
-          marginBottom: spacing.md,
-        },
-        timelineItem: {
-          flexDirection: 'row',
-          minHeight: 48,
-        },
-        timelineTrack: {
-          width: 24,
-          alignItems: 'center',
-        },
-        timelineDotOuter: {
-          width: 16,
-          height: 16,
-          borderRadius: 8,
-          borderWidth: 2,
+        chevronContainer: {
+          width: 28,
+          height: 28,
+          borderRadius: 14,
+          backgroundColor: colors.gray[100],
           alignItems: 'center',
           justifyContent: 'center',
-        },
-        timelineDotInner: {
-          width: 6,
-          height: 6,
-          borderRadius: 3,
-        },
-        timelineLine: {
-          width: 2,
-          flex: 1,
-          marginVertical: 2,
-        },
-        timelineContent: {
-          flex: 1,
-          paddingLeft: spacing.sm,
-          paddingBottom: spacing.lg,
-        },
-        timelineEventStatus: {
-          fontFamily: fonts.semiBold,
-          fontSize: 13,
-          marginBottom: 2,
-        },
-        timelineEventMeta: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 4,
-        },
-        timelineEventLocation: {
-          fontFamily: fonts.regular,
-          fontSize: 12,
-        },
-        timelineEventDate: {
-          fontFamily: fonts.regular,
-          fontSize: 12,
-          marginLeft: spacing.sm,
         },
       }),
     [fonts, spacing, borderRadius]
@@ -301,7 +273,7 @@ export function PackageCard({ item, index }: PackageCardProps) {
   return (
     <Animated.View entering={FadeInDown.delay(index * 60).duration(400).springify()}>
       <Pressable
-        onPress={toggleExpanded}
+        onPress={handlePress}
         style={[styles.card, shadows.md, { backgroundColor: card.backgroundColor }]}
       >
         {/* Top row: tracking number + status badge */}
@@ -328,16 +300,14 @@ export function PackageCard({ item, index }: PackageCardProps) {
           {item.description}
         </Text>
 
-        {/* ⭐ Special Item Badge */}
+        {/* Special Item Badge */}
         {item.specialItemId && (
           <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
               alignSelf: 'flex-start',
-              backgroundColor: colors.purple[100],
-              borderColor: colors.purple[200],
-              borderWidth: 1,
+              backgroundColor: isDark ? colors.gray[200] : colors.purple[100],
               borderRadius: borderRadius.md,
               paddingHorizontal: spacing.sm,
               paddingVertical: spacing.xs,
@@ -345,41 +315,14 @@ export function PackageCard({ item, index }: PackageCardProps) {
               gap: spacing.xs,
             }}
           >
-            <Smartphone size={12} color={colors.purple[700]} />
-            <Text style={{ fontFamily: fonts.semibold, fontSize: 11, color: colors.purple[800] }}>
-              {(t as any).packages?.specialItem || 'Article Spécial'}
+            <Smartphone size={12} color={isDark ? colors.purple[500] : colors.purple[600]} />
+            <Text style={{ fontFamily: fonts.semiBold, fontSize: 11, color: isDark ? colors.purple[500] : colors.purple[600] }}>
+              {item.specialItemBrand ? `${item.specialItemBrand} ` : ''}{item.specialItemName || (t as any).packages?.specialItem || 'Article Special'}
             </Text>
           </View>
         )}
 
-        {/* ⭐ Customs Fees Alert (if > 0) */}
-        {item.customsFees && item.customsFees > 0 && (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: colors.red[50],
-              borderColor: colors.red[200],
-              borderWidth: 1,
-              borderRadius: borderRadius.md,
-              padding: spacing.sm,
-              marginBottom: spacing.sm,
-              gap: spacing.xs,
-            }}
-          >
-            <AlertTriangle size={14} color={colors.red[600]} />
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: fonts.semibold, fontSize: 11, color: colors.red[900] }}>
-                {t.packages.customsFees || 'Frais de douane'}
-              </Text>
-              <Text style={{ fontFamily: fonts.bold, fontSize: 13, color: colors.red[700] }}>
-                +${item.customsFees.toFixed(2)}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* Bottom row: weight, category, date, expand chevron */}
+        {/* Info pills row: weight, category, taxes douane, date */}
         <View style={styles.bottomRow}>
           <View style={styles.metaRow}>
             {/* Weight pill */}
@@ -390,11 +333,36 @@ export function PackageCard({ item, index }: PackageCardProps) {
               </Text>
             </View>
 
+            {/* Quantity pill - only shown when quantity > 1 */}
+            {(item.quantity ?? 1) > 1 && (
+              <View style={[styles.metaPill, { backgroundColor: colors.gray[100] }]}>
+                <Layers size={12} color={colors.gray[500]} />
+                <Text style={[styles.metaPillText, { color: colors.gray[600] }]}>
+                  {(t.packages as any).quantity || 'Qty'}: {item.quantity}
+                </Text>
+              </View>
+            )}
+
             {/* Category pill */}
             <View style={[styles.metaPill, { backgroundColor: colors.gray[100] }]}>
               {categoryIcon}
               <Text style={[styles.metaPillText, { color: colors.gray[600] }]}>
-                {item.category ? item.category.charAt(0).toUpperCase() + item.category.slice(1) : 'General'}
+                {item.category ? (categoryLabels[item.category] || item.category.charAt(0).toUpperCase() + item.category.slice(1)) : 'General'}
+              </Text>
+            </View>
+
+            {/* Taxes douane pill - always visible */}
+            <View style={[styles.metaPill, {
+              backgroundColor: (customsFees > 0)
+                ? (isDark ? colors.gray[200] : colors.red[50])
+                : colors.gray[100],
+            }]}>
+              <AlertTriangle size={12} color={(customsFees > 0) ? colors.red[500] : colors.gray[500]} />
+              <Text style={[styles.metaPillText, {
+                color: (customsFees > 0) ? colors.red[500] : colors.gray[600],
+                fontFamily: (customsFees > 0) ? fonts.bold : fonts.medium,
+              }]}>
+                {(customsFees > 0) ? `+$${customsFees.toFixed(2)}` : '$0'} {t.packages.customsFees}
               </Text>
             </View>
 
@@ -407,66 +375,31 @@ export function PackageCard({ item, index }: PackageCardProps) {
             </View>
           </View>
 
-          {expanded ? (
-            <ChevronUp size={18} color={colors.gray[400]} />
-          ) : (
-            <ChevronDown size={18} color={colors.gray[400]} />
-          )}
+          <View style={styles.chevronContainer}>
+            <ChevronRight size={16} color={colors.gray[500]} />
+          </View>
         </View>
 
-        {/* Expandable timeline */}
-        {expanded && item.timeline.length > 0 && (
-          <View style={styles.timelineContainer}>
-            <View style={[styles.timelineDivider, { backgroundColor: colors.gray[100] }]} />
-            <Text style={[styles.timelineTitle, { color: colors.gray[700] }]}>
-              {t.packages.details.timeline}
+        {/* Total cost - compact display */}
+        {totalCost > 0 && (
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: spacing.sm,
+            paddingTop: spacing.sm,
+            borderTopWidth: 1,
+            borderTopColor: colors.gray[100],
+          }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <DollarSign size={14} color={colors.primary[600]} />
+              <Text style={{ fontFamily: fonts.semiBold, fontSize: 12, color: colors.gray[600] }}>
+                {(t.packages as any).feeBreakdown?.total || 'TOTAL'}
+              </Text>
+            </View>
+            <Text style={{ fontFamily: fonts.bold, fontSize: 16, color: colors.primary[600] }}>
+              ${totalCost.toFixed(2)}
             </Text>
-            {item.timeline.map((event, i) => {
-              const eventPalette = statusColors[event.status] ?? defaultStatusColor;
-              const isLast = i === item.timeline.length - 1;
-
-              return (
-                <View key={`${event.status}-${event.date}-${i}`} style={styles.timelineItem}>
-                  {/* Vertical line + dot */}
-                  <View style={styles.timelineTrack}>
-                    <View
-                      style={[
-                        styles.timelineDotOuter,
-                        { borderColor: eventPalette.dot, backgroundColor: card.backgroundColor },
-                      ]}
-                    >
-                      <View
-                        style={[
-                          styles.timelineDotInner,
-                          { backgroundColor: eventPalette.dot },
-                        ]}
-                      />
-                    </View>
-                    {!isLast && (
-                      <View
-                        style={[styles.timelineLine, { backgroundColor: colors.gray[200] }]}
-                      />
-                    )}
-                  </View>
-
-                  {/* Event content */}
-                  <View style={styles.timelineContent}>
-                    <Text style={[styles.timelineEventStatus, { color: colors.gray[800] }]}>
-                      {translateKey(event.status, t)}
-                    </Text>
-                    <View style={styles.timelineEventMeta}>
-                      <MapPin size={11} color={colors.gray[400]} />
-                      <Text style={[styles.timelineEventLocation, { color: colors.gray[500] }]}>
-                        {translateKey(event.location, t)}
-                      </Text>
-                      <Text style={[styles.timelineEventDate, { color: colors.gray[400] }]}>
-                        {formatDate(event.date)}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              );
-            })}
           </View>
         )}
       </Pressable>

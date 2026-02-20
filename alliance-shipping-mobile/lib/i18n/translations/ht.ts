@@ -105,6 +105,7 @@ export const ht = {
       rejected: 'Rejte',
     },
     specialItem: 'Atik Espesyal',
+    quantity: 'Kantite',
     customsFees: 'Frè dwan',
     fixedPrice: 'Pri fiks',
     feeBreakdown: {

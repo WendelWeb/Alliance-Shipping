@@ -107,6 +107,7 @@ export const en = {
       rejected: 'Rejected',
     },
     specialItem: 'Special Item',
+    quantity: 'Qty',
     customsFees: 'Customs fees',
     fixedPrice: 'Fixed price',
     feeBreakdown: {
