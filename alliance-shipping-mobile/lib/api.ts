@@ -1,5 +1,7 @@
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
+const REQUEST_TIMEOUT = 15000; // 15 seconds
+
 let _getToken: (() => Promise<string | null>) | null = null;
 
 export function setTokenGetter(fn: () => Promise<string | null>) {
@@ -22,17 +24,31 @@ async function request<T>(
     }
   }
 
-  const res = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`API ${res.status}: ${body}`);
+  try {
+    const res = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`API ${res.status}: ${body}`);
+    }
+
+    return res.json();
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('Network timeout - no internet connection');
+    }
+    throw error;
   }
-
-  return res.json();
 }
 
 export const api = {

@@ -88,8 +88,18 @@ function AuthGate() {
     if (!isLoaded || !isSignedIn || hasRegisteredPush.current) return;
     hasRegisteredPush.current = true;
 
-    registerForPushNotifications().catch(() => {});
+    registerForPushNotifications()
+      .then(token => console.log('Push token registered:', token ? 'OK' : 'NO TOKEN'))
+      .catch(err => console.error('Push registration failed:', err));
   }, [isLoaded, isSignedIn]);
+
+  // Handle notifications arriving while app is in foreground
+  useEffect(() => {
+    const subscription = Notifications.addNotificationReceivedListener((notification) => {
+      console.log('Notification received in foreground:', notification.request.content.title);
+    });
+    return () => subscription.remove();
+  }, []);
 
   // Handle notification taps (navigate to relevant screen)
   useEffect(() => {
@@ -108,10 +118,10 @@ function AuthGate() {
   useEffect(() => {
     if (!isLoaded) return;
     const inAuth = segments[0] === '(auth)';
+    const inSSOCallback = segments[0] === 'sso-callback';
 
-    if (!isSignedIn && !inAuth) {
-      // Not signed in, accessing protected route — let them browse
-      // Only packages tab requires auth (handled in-screen)
+    if (!isSignedIn && !inAuth && !inSSOCallback) {
+      router.replace('/(auth)/sign-up');
     }
   }, [isLoaded, isSignedIn, segments]);
 

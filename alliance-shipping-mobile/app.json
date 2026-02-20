@@ -17,7 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.allianceshipping.mobile",
       "config": {
-        "googleMapsApiKey": ""
+        "googleMapsApiKey": "AIzaSyCi-MFEcu8xSEBfvFAPUKIMgUl3J20Ab3k"
       }
     },
     "android": {
@@ -27,11 +27,16 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.allianceshipping.mobile",
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS"
+      ],
       "config": {
         "googleMaps": {
-          "apiKey": ""
+          "apiKey": "AIzaSyB3BqafRH2mt3bqNEaA_PEaxnndjX-ZnAU"
         }
-      }
+      },
+      "versionCode": 9
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -48,7 +53,26 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 200
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#1e40af"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Alliance Shipping to access your photos to update your profile picture."
+        }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "af883bd6-9952-4bdd-864e-caea42ff79c7"
+      }
+    }
   }
 }

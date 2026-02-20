@@ -29,6 +29,7 @@ import {
 import { useTheme } from '@/lib/themes/ThemeProvider';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { api } from '@/lib/api';
+import { getLocalFees, isSQLiteAvailable } from '@/lib/offline/database';
 
 // Types
 interface CityPricing {
@@ -72,7 +73,7 @@ const CITY_EMOJI: Record<string, string> = {
 
 export default function CalculatorScreen() {
   const insets = useSafeAreaInsets();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { colors, fonts, spacing, borderRadius, shadows, card, isDark } = useTheme();
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -82,11 +83,13 @@ export default function CalculatorScreen() {
   const [specialItems, setSpecialItems] = useState<SpecialItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [calculationType, setCalculationType] = useState<'weight' | 'special'>('weight');
+  const [selectedSpecialItem, setSelectedSpecialItem] = useState<number | null>(null);
 
   // Animated values
   const weightScale = useSharedValue(1);
 
-  // Fetch user profile and pricing
+  // Fetch user profile and pricing (with offline fallback)
   useEffect(() => {
     (async () => {
       try {
@@ -100,10 +103,21 @@ export default function CalculatorScreen() {
           setIsAuthenticated(true);
 
           // Fetch pricing for user's city
-          const pricingRes = await api.get<{ cities: CityPricing[] }>('/api/pricing/all');
-          const cityData = pricingRes.cities?.find((c: CityPricing) => c.city === profileRes.user.city);
-          if (cityData) {
-            setUserCity(cityData);
+          try {
+            const pricingRes = await api.get<{ cities: CityPricing[] }>('/api/pricing/all');
+            const cityData = pricingRes.cities?.find((c: CityPricing) => c.city === profileRes.user.city);
+            if (cityData) {
+              setUserCity(cityData);
+            }
+          } catch {
+            // Try offline cache for pricing
+            if (isSQLiteAvailable()) {
+              try {
+                const cached = await getLocalFees();
+                const cityData = cached.find((c: any) => c.city === profileRes.user.city);
+                if (cityData) setUserCity(cityData);
+              } catch {}
+            }
           }
         }
 
@@ -111,7 +125,16 @@ export default function CalculatorScreen() {
           setSpecialItems(itemsRes.items.filter(item => item.isActive));
         }
       } catch (error) {
-        console.error('Error loading calculator data:', error);
+        console.warn('Error loading calculator data, trying cache:', error);
+        // Offline fallback for fees
+        if (isSQLiteAvailable()) {
+          try {
+            const cached = await getLocalFees();
+            if (cached.length > 0) {
+              setUserCity(cached[0]); // Use first city as default
+            }
+          } catch {}
+        }
       } finally {
         setLoading(false);
       }
@@ -139,7 +162,15 @@ export default function CalculatorScreen() {
   const serviceFee = userCity ? parseFloat(userCity.serviceFee) : 0;
   const pricePerLb = userCity ? parseFloat(userCity.pricePerLb) : 0;
   const weightCost = weight * pricePerLb;
-  const total = serviceFee + weightCost;
+  const weightTotal = serviceFee + weightCost;
+
+  // Special item pricing (includes service fee)
+  const selectedItem = specialItems.find(item => item.id === selectedSpecialItem);
+  const specialItemPrice = selectedItem ? parseFloat(selectedItem.fixedFee) : 0;
+  const specialItemTotal = specialItemPrice + serviceFee;
+
+  // Final total based on calculation type
+  const total = calculationType === 'weight' ? weightTotal : specialItemTotal;
 
   const deliveryDays = userCity
     ? hasPerfume
@@ -147,12 +178,16 @@ export default function CalculatorScreen() {
       : `${userCity.deliveryDaysMin}-${userCity.deliveryDaysMax}`
     : '';
 
-  // Group special items by category
-  const itemsByCategory = specialItems.reduce((acc, item) => {
-    if (!acc[item.category]) acc[item.category] = [];
-    acc[item.category].push(item);
-    return acc;
-  }, {} as Record<string, SpecialItem[]>);
+  // Helper function for localized item names
+  const getLocalizedItemName = (item: SpecialItem) => {
+    const localizedName = (item as any)[`itemName_${locale}`] || item.itemName;
+    if (item.minModel && item.maxModel) {
+      return `${localizedName} ${item.minModel}-${item.maxModel}`;
+    } else if (item.minModel) {
+      return `${localizedName} ${item.minModel}+`;
+    }
+    return localizedName;
+  };
 
   // Scroll content style with dynamic bottom padding
   const scrollContentStyle = {
@@ -164,7 +199,7 @@ export default function CalculatorScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={colors.primary[500]} />
-        <Text style={{ fontFamily: fonts.medium, color: colors.gray[600], marginTop: spacing.md }}>
+        <Text style={{ fontFamily: fonts.medium, color: isDark ? colors.white : colors.gray[600], marginTop: spacing.md }}>
           {t.calculator.loading || 'Chargement...'}
         </Text>
       </View>
@@ -200,9 +235,12 @@ export default function CalculatorScreen() {
           <Animated.View entering={FadeInDown.delay(100).duration(500)}>
             <View style={[styles.card, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.xl, padding: spacing.xl, marginHorizontal: spacing.xl, marginTop: spacing.xl, ...shadows.md, borderWidth: 2, borderColor: colors.primary[500] }]}>
               <View style={{ alignItems: 'center' }}>
-                <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: colors.primary[50], alignItems: 'center', justifyContent: 'center', marginBottom: spacing.lg }}>
-                  <LogIn size={40} color={colors.primary[600]} />
-                </View>
+                <LinearGradient
+                  colors={[colors.primary[500], colors.primary[600]]}
+                  style={{ width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.lg }}
+                >
+                  <LogIn size={40} color={colors.white} />
+                </LinearGradient>
                 <Text style={{ fontFamily: fonts.bold, fontSize: 20, color: colors.gray[900], textAlign: 'center', marginBottom: spacing.sm }}>
                   {t.calculator.loginRequired || 'Connexion requise'}
                 </Text>
@@ -211,12 +249,19 @@ export default function CalculatorScreen() {
                 </Text>
                 <TouchableOpacity
                   onPress={() => router.push('/sign-in')}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.primary[600], paddingVertical: spacing.md, paddingHorizontal: spacing.xl, borderRadius: borderRadius.lg }}
+                  style={{ overflow: 'hidden', borderRadius: borderRadius.lg }}
                 >
-                  <User size={20} color={colors.white} />
-                  <Text style={{ fontFamily: fonts.semiBold, fontSize: 16, color: colors.white }}>
-                    {t.calculator.login || 'Se connecter'}
-                  </Text>
+                  <LinearGradient
+                    colors={[colors.primary[500], colors.primary[600]]}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.md, paddingHorizontal: spacing.xl }}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  >
+                    <User size={20} color={colors.white} />
+                    <Text style={{ fontFamily: fonts.semiBold, fontSize: 16, color: colors.white }}>
+                      {t.calculator.login || 'Se connecter'}
+                    </Text>
+                  </LinearGradient>
                 </TouchableOpacity>
               </View>
             </View>
@@ -254,13 +299,16 @@ export default function CalculatorScreen() {
 
         {/* User's City Card */}
         <Animated.View entering={FadeInDown.delay(60).duration(500)}>
-          <View style={[styles.card, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginTop: spacing.lg, ...shadows.sm }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md }}>
-              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary[50], alignItems: 'center', justifyContent: 'center' }}>
-                <MapPin size={20} color={colors.primary[600]} />
-              </View>
+          <View style={[styles.card, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginTop: spacing.lg, ...shadows.sm, borderWidth: 1, borderColor: card.borderColor }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+              <LinearGradient
+                colors={[colors.primary[500], colors.primary[600]]}
+                style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <MapPin size={20} color={colors.white} />
+              </LinearGradient>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: fonts.regular, fontSize: 12, color: colors.gray[500] }}>
+                <Text style={{ fontFamily: fonts.regular, fontSize: 12, color: colors.gray[600] }}>
                   {t.calculator.yourDestination || 'Votre destination'}
                 </Text>
                 <Text style={{ fontFamily: fonts.bold, fontSize: 18, color: colors.gray[900] }}>
@@ -268,211 +316,429 @@ export default function CalculatorScreen() {
                 </Text>
               </View>
             </View>
-
-            {/* Pricing Info */}
-            <View style={{ backgroundColor: isDark ? colors.green[900] : colors.green[50], borderRadius: borderRadius.md, padding: spacing.md, borderWidth: 1, borderColor: isDark ? colors.green[800] : colors.green[100] }}>
-              <Text style={{ fontFamily: fonts.semiBold, fontSize: 13, color: isDark ? colors.green[300] : colors.green[700] }}>
-                💵 Service: ${serviceFee.toFixed(2)} • Par lb: ${pricePerLb.toFixed(2)}
-              </Text>
-            </View>
           </View>
         </Animated.View>
 
-        {/* Weight Input */}
+        {/* Calculation Type Selector */}
         <Animated.View entering={FadeInDown.delay(120).duration(500)}>
-          <View style={[styles.card, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginTop: spacing.lg, ...shadows.sm }]}>
-            <View style={[styles.cardHeaderRow, { gap: spacing.sm, marginBottom: spacing.md }]}>
-              <Weight size={16} color={colors.primary[500]} />
-              <Text style={[styles.cardTitle, { fontFamily: fonts.semiBold, color: colors.gray[800] }]}>
-                {t.calculator.weightLabel}
-              </Text>
-            </View>
-
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+          <View style={{ marginHorizontal: spacing.xl, marginTop: spacing.lg }}>
+            <View style={{ flexDirection: 'row', gap: spacing.md }}>
               <TouchableOpacity
-                onPress={() => handleWeightChange(-1)}
-                disabled={weight <= MIN_WEIGHT}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setCalculationType('weight');
+                }}
                 style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: borderRadius.lg,
-                  borderWidth: 1.5,
-                  borderColor: weight <= MIN_WEIGHT ? card.borderColor : colors.primary[500],
-                  backgroundColor: weight <= MIN_WEIGHT ? colors.gray[50] : card.backgroundColor,
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  flex: 1,
+                  overflow: 'hidden',
+                  borderRadius: borderRadius.xl,
+                  borderWidth: 2,
+                  borderColor: calculationType === 'weight' ? colors.primary[500] : card.borderColor,
+                  ...shadows.sm,
                 }}
               >
-                <Minus size={20} color={weight <= MIN_WEIGHT ? colors.gray[400] : colors.primary[600]} />
-              </TouchableOpacity>
-
-              <Animated.View style={[{ flex: 1, alignItems: 'center' }, weightAnimatedStyle]}>
-                <Text style={{ fontFamily: fonts.headingBold, fontSize: 48, color: colors.primary[600] }}>
-                  {weight}
-                </Text>
-                <Text style={{ fontFamily: fonts.medium, fontSize: 14, color: colors.gray[500], marginTop: -spacing.xs }}>
-                  {t.calculator.lbsUnit}
-                </Text>
-              </Animated.View>
-
-              <TouchableOpacity
-                onPress={() => handleWeightChange(1)}
-                disabled={weight >= MAX_WEIGHT}
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: borderRadius.lg,
-                  borderWidth: 1.5,
-                  borderColor: weight >= MAX_WEIGHT ? card.borderColor : colors.primary[500],
-                  backgroundColor: weight >= MAX_WEIGHT ? colors.gray[50] : card.backgroundColor,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Plus size={20} color={weight >= MAX_WEIGHT ? colors.gray[400] : colors.primary[600]} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Perfume Toggle */}
-            <View style={{ marginTop: spacing.lg, paddingTop: spacing.lg, borderTopWidth: 1, borderTopColor: card.borderColor }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 }}>
-                  <Droplets size={16} color={colors.purple[500]} />
-                  <Text style={{ fontFamily: fonts.medium, fontSize: 14, color: colors.gray[700] }}>
-                    {t.calculator.perfumeLabel}
-                  </Text>
-                </View>
-                <Switch
-                  value={hasPerfume}
-                  onValueChange={(val) => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setHasPerfume(val);
+                <LinearGradient
+                  colors={
+                    calculationType === 'weight'
+                      ? [colors.primary[500], colors.primary[600]]
+                      : isDark
+                      ? [card.backgroundColor, card.backgroundColor]
+                      : [colors.white, colors.gray[50]]
+                  }
+                  style={{
+                    padding: spacing.lg,
+                    alignItems: 'center',
                   }}
-                  trackColor={{ false: colors.gray[200], true: colors.purple[200] }}
-                  thumbColor={hasPerfume ? colors.purple[600] : colors.gray[400]}
-                />
-              </View>
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Weight size={28} color={calculationType === 'weight' ? colors.white : colors.primary[500]} strokeWidth={2.5} />
+                  <Text style={{
+                    fontFamily: fonts.bold,
+                    fontSize: 13,
+                    color: calculationType === 'weight' ? colors.white : colors.gray[700],
+                    marginTop: spacing.sm,
+                  }}>
+                    {t.calculator.byWeight || 'Par Poids'}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setCalculationType('special');
+                }}
+                style={{
+                  flex: 1,
+                  overflow: 'hidden',
+                  borderRadius: borderRadius.xl,
+                  borderWidth: 2,
+                  borderColor: calculationType === 'special' ? colors.primary[500] : card.borderColor,
+                  ...shadows.sm,
+                }}
+              >
+                <LinearGradient
+                  colors={
+                    calculationType === 'special'
+                      ? [colors.primary[500], colors.primary[600]]
+                      : isDark
+                      ? [card.backgroundColor, card.backgroundColor]
+                      : [colors.white, colors.gray[50]]
+                  }
+                  style={{
+                    padding: spacing.lg,
+                    alignItems: 'center',
+                  }}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Package size={28} color={calculationType === 'special' ? colors.white : colors.primary[500]} strokeWidth={2.5} />
+                  <Text style={{
+                    fontFamily: fonts.bold,
+                    fontSize: 13,
+                    color: calculationType === 'special' ? colors.white : colors.gray[700],
+                    marginTop: spacing.sm,
+                  }}>
+                    {t.calculator.specialItem || 'Article Spécial'}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
           </View>
         </Animated.View>
 
-        {/* Pricing Breakdown */}
-        <Animated.View entering={FadeInDown.delay(180).duration(500)}>
-          <View style={[styles.card, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginTop: spacing.lg, ...shadows.sm }]}>
-            <View style={[styles.cardHeaderRow, { gap: spacing.sm, marginBottom: spacing.md }]}>
-              <DollarSign size={16} color={colors.primary[500]} />
-              <Text style={[styles.cardTitle, { fontFamily: fonts.semiBold, color: colors.gray[800] }]}>
-                {t.calculator.breakdown}
-              </Text>
-            </View>
-
-            <View style={{ gap: spacing.md }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ fontFamily: fonts.regular, fontSize: 14, color: colors.gray[600] }}>
-                  {t.calculator.serviceFeeLabel}
-                </Text>
-                <Text style={{ fontFamily: fonts.semiBold, fontSize: 14, color: colors.gray[900] }}>
-                  ${serviceFee.toFixed(2)}
+        {/* Weight Calculator */}
+        {calculationType === 'weight' && (
+          <Animated.View entering={FadeInDown.delay(180).duration(300)}>
+            <View style={[styles.card, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginTop: spacing.lg, ...shadows.sm, borderWidth: 1, borderColor: card.borderColor }]}>
+              <View style={[styles.cardHeaderRow, { gap: spacing.sm, marginBottom: spacing.md }]}>
+                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: isDark ? colors.primary[900] : colors.primary[50], alignItems: 'center', justifyContent: 'center' }}>
+                  <Weight size={16} color={colors.primary[600]} />
+                </View>
+                <Text style={[styles.cardTitle, { fontFamily: fonts.semiBold, color: colors.gray[800] }]}>
+                  {t.calculator.weightLabel}
                 </Text>
               </View>
 
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ fontFamily: fonts.regular, fontSize: 14, color: colors.gray[600] }}>
-                  {weight} lbs × ${pricePerLb.toFixed(2)}
-                </Text>
-                <Text style={{ fontFamily: fonts.semiBold, fontSize: 14, color: colors.gray[900] }}>
-                  ${weightCost.toFixed(2)}
-                </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+                <TouchableOpacity
+                  onPress={() => handleWeightChange(-1)}
+                  disabled={weight <= MIN_WEIGHT}
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: borderRadius.xl,
+                    borderWidth: 2,
+                    borderColor: weight <= MIN_WEIGHT ? card.borderColor : colors.primary[500],
+                    backgroundColor: weight <= MIN_WEIGHT ? (colors.gray[100]) : card.backgroundColor,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    ...shadows.sm,
+                  }}
+                >
+                  <Minus size={24} color={weight <= MIN_WEIGHT ? (colors.gray[400]) : colors.primary[600]} strokeWidth={2.5} />
+                </TouchableOpacity>
+
+                <Animated.View style={[{ flex: 1, alignItems: 'center' }, weightAnimatedStyle]}>
+                  <Text style={{ fontFamily: fonts.headingBold, fontSize: 56, color: colors.primary[600] }}>
+                    {weight}
+                  </Text>
+                  <Text style={{ fontFamily: fonts.semiBold, fontSize: 16, color: colors.gray[600], marginTop: -spacing.sm }}>
+                    {t.calculator.lbsUnit}
+                  </Text>
+                </Animated.View>
+
+                <TouchableOpacity
+                  onPress={() => handleWeightChange(1)}
+                  disabled={weight >= MAX_WEIGHT}
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: borderRadius.xl,
+                    borderWidth: 2,
+                    borderColor: weight >= MAX_WEIGHT ? card.borderColor : colors.primary[500],
+                    backgroundColor: weight >= MAX_WEIGHT ? (colors.gray[100]) : card.backgroundColor,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    ...shadows.sm,
+                  }}
+                >
+                  <Plus size={24} color={weight >= MAX_WEIGHT ? (colors.gray[400]) : colors.primary[600]} strokeWidth={2.5} />
+                </TouchableOpacity>
               </View>
 
-              <View style={{ height: 1, backgroundColor: card.borderColor, marginVertical: spacing.xs }} />
-
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={{ fontFamily: fonts.bold, fontSize: 16, color: colors.gray[900] }}>
-                  {t.calculator.total}
-                </Text>
-                <Text style={{ fontFamily: fonts.headingBold, fontSize: 28, color: colors.primary[600] }}>
-                  ${total.toFixed(2)}
-                </Text>
-              </View>
-            </View>
-
-            {/* Delivery Time */}
-            {deliveryDays && (
+              {/* Perfume Toggle */}
               <View style={{ marginTop: spacing.lg, paddingTop: spacing.lg, borderTopWidth: 1, borderTopColor: card.borderColor }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-                  <Clock size={16} color={colors.emerald[500]} />
-                  <Text style={{ fontFamily: fonts.regular, fontSize: 13, color: colors.gray[600] }}>
-                    {t.calculator.estimatedDelivery}:
-                  </Text>
-                  <Text style={{ fontFamily: fonts.bold, fontSize: 13, color: colors.emerald[600] }}>
-                    {deliveryDays} {t.calculator.days}
-                  </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 }}>
+                    <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: isDark ? colors.gray[200] : colors.purple[50], alignItems: 'center', justifyContent: 'center' }}>
+                      <Droplets size={14} color={colors.purple[600]} />
+                    </View>
+                    <Text style={{ fontFamily: fonts.medium, fontSize: 14, color: colors.gray[700] }}>
+                      {t.calculator.perfumeLabel}
+                    </Text>
+                  </View>
+                  <Switch
+                    value={hasPerfume}
+                    onValueChange={(val) => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setHasPerfume(val);
+                    }}
+                    trackColor={{ false: colors.gray[300], true: colors.purple[500] }}
+                    thumbColor={hasPerfume ? colors.purple[600] : colors.gray[400]}
+                  />
                 </View>
               </View>
-            )}
-          </View>
-        </Animated.View>
+            </View>
+          </Animated.View>
+        )}
 
-        {/* Special Items */}
-        {Object.keys(itemsByCategory).length > 0 && (
-          <Animated.View entering={FadeInDown.delay(240).duration(500)}>
-            <View style={{ paddingHorizontal: spacing.xl, marginTop: spacing.xl, marginBottom: spacing.sm }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-                <Package size={18} color={colors.primary[500]} />
+        {/* Special Items Selector */}
+        {calculationType === 'special' && specialItems.length > 0 && (
+          <Animated.View entering={FadeInDown.delay(180).duration(300)}>
+            <View style={{ marginTop: spacing.lg, paddingHorizontal: spacing.xl }}>
+              {/* Header */}
+              <View style={{ marginBottom: spacing.md }}>
                 <Text style={{ fontFamily: fonts.bold, fontSize: 16, color: colors.gray[900] }}>
-                  {t.calculator.specialItems || 'Articles Spéciaux'}
+                  {t.calculator.selectItem || 'Sélectionnez un article'}
                 </Text>
               </View>
-              <Text style={{ fontFamily: fonts.regular, fontSize: 13, color: colors.gray[500], marginTop: spacing.xs }}>
-                {t.calculator.specialItemsDesc || 'Prix fixes pour articles spécifiques'}
-              </Text>
-            </View>
 
-            <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.xl }}>
-              {Object.entries(itemsByCategory).map(([category, items]) => (
-                <View key={category} style={{ marginTop: spacing.lg }}>
-                  <Text style={{ fontFamily: fonts.semiBold, fontSize: 14, color: colors.gray[700], marginBottom: spacing.sm, textTransform: 'capitalize' }}>
-                    {category}
-                  </Text>
-                  <View style={{ gap: spacing.sm }}>
-                    {items.map((item) => {
-                      const modelRange = item.minModel && item.maxModel ? `${item.minModel} - ${item.maxModel}` : item.minModel || item.maxModel;
-                      return (
-                        <View
-                          key={item.id}
-                          style={{
-                            backgroundColor: card.backgroundColor,
-                            borderRadius: borderRadius.lg,
-                            padding: spacing.md,
-                            ...shadows.sm,
-                            borderWidth: 1,
-                            borderColor: card.borderColor,
-                          }}
-                        >
-                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <View style={{ flex: 1 }}>
-                              <Text style={{ fontFamily: fonts.semiBold, fontSize: 14, color: colors.gray[900] }}>
-                                {item.brand} {item.itemName}
-                              </Text>
-                              {modelRange && (
-                                <Text style={{ fontFamily: fonts.regular, fontSize: 11, color: colors.gray[400], marginTop: 2 }}>
-                                  {modelRange}
-                                </Text>
-                              )}
-                            </View>
-                            <View style={{ backgroundColor: isDark ? colors.primary[900] : colors.primary[50], paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: borderRadius.md }}>
-                              <Text style={{ fontFamily: fonts.bold, fontSize: 14, color: colors.primary[600] }}>
-                                ${parseFloat(item.fixedFee).toFixed(2)}
-                              </Text>
-                            </View>
-                          </View>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+                {specialItems.map((item) => {
+                  const isSelected = selectedSpecialItem === item.id;
+
+                  // Get category emoji
+                  const getCategoryEmoji = (category: string) => {
+                    const emojiMap: Record<string, string> = {
+                      phone: '📱',
+                      tablet: '📱',
+                      electronics: '⚡',
+                      satellite: '🛰️',
+                      other: '📦',
+                    };
+                    return emojiMap[category] || '📦';
+                  };
+
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        setSelectedSpecialItem(item.id);
+                      }}
+                      activeOpacity={0.7}
+                      style={{
+                        width: '31.5%',
+                        backgroundColor: card.backgroundColor,
+                        borderRadius: borderRadius.lg,
+                        borderWidth: 2,
+                        borderColor: isSelected ? colors.primary[500] : card.borderColor,
+                        overflow: 'hidden',
+                        ...shadows.sm,
+                      }}
+                    >
+                      {/* Top section: Icon + Name on same line */}
+                      <View style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        padding: spacing.sm,
+                        gap: spacing.xs,
+                        minHeight: 58,
+                      }}>
+                        {/* Category Icon */}
+                        <View style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 16,
+                          backgroundColor: isSelected ? (isDark ? colors.primary[900] : colors.primary[100]) : colors.gray[100],
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}>
+                          <Text style={{ fontSize: 16 }}>{getCategoryEmoji(item.category)}</Text>
                         </View>
-                      );
-                    })}
+
+                        {/* Item Name + Brand */}
+                        <View style={{ flex: 1 }}>
+                          <Text
+                            style={{
+                              fontFamily: fonts.semiBold,
+                              fontSize: 11,
+                              color: colors.gray[900],
+                              lineHeight: 14,
+                            }}
+                            numberOfLines={2}
+                          >
+                            {getLocalizedItemName(item)}
+                          </Text>
+                          <Text style={{
+                            fontFamily: fonts.regular,
+                            fontSize: 9,
+                            color: colors.gray[500],
+                            marginTop: 1,
+                          }}>
+                            {item.brand}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Price Badge - Full Width Bottom - LESS PADDING */}
+                      <LinearGradient
+                        colors={
+                          isSelected
+                            ? [colors.primary[500], colors.primary[600]]
+                            : [colors.emerald[500], colors.emerald[600]]
+                        }
+                        style={{
+                          paddingVertical: spacing.xs + 2,
+                          alignItems: 'center',
+                          borderTopWidth: 1,
+                          borderTopColor: isSelected ? colors.primary[600] : colors.emerald[600],
+                        }}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                      >
+                        <Text style={{
+                          fontFamily: fonts.bold,
+                          fontSize: 14,
+                          color: colors.white,
+                        }}>
+                          ${parseFloat(item.fixedFee).toFixed(2)}
+                        </Text>
+                      </LinearGradient>
+
+                      {/* Selected Checkmark */}
+                      {isSelected && (
+                        <View style={{
+                          position: 'absolute',
+                          top: 4,
+                          right: 4,
+                          width: 22,
+                          height: 22,
+                          borderRadius: 11,
+                          backgroundColor: colors.primary[600],
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderWidth: 2,
+                          borderColor: colors.white,
+                          ...shadows.md,
+                        }}>
+                          <Text style={{ fontSize: 12, color: colors.white }}>✓</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </Animated.View>
+        )}
+
+        {/* Pricing Summary */}
+        {(calculationType === 'weight' || (calculationType === 'special' && selectedSpecialItem)) && (
+          <Animated.View entering={FadeInDown.delay(240).duration(300)}>
+            <View style={[styles.card, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginTop: spacing.lg, ...shadows.md, borderWidth: 1, borderColor: card.borderColor }]}>
+              <View style={[styles.cardHeaderRow, { gap: spacing.sm, marginBottom: spacing.md }]}>
+                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: isDark ? colors.gray[200] : colors.green[50], alignItems: 'center', justifyContent: 'center' }}>
+                  <DollarSign size={16} color={colors.emerald[500]} />
+                </View>
+                <Text style={[styles.cardTitle, { fontFamily: fonts.bold, fontSize: 16, color: colors.gray[800] }]}>
+                  {t.calculator.summary || 'Résumé'}
+                </Text>
+              </View>
+
+              <View style={{ gap: spacing.md }}>
+                {calculationType === 'weight' ? (
+                  <>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ fontFamily: fonts.regular, fontSize: 14, color: colors.gray[600] }}>
+                        {t.calculator.serviceFeeLabel}
+                      </Text>
+                      <Text style={{ fontFamily: fonts.semiBold, fontSize: 15, color: colors.gray[900] }}>
+                        ${serviceFee.toFixed(2)}
+                      </Text>
+                    </View>
+
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ fontFamily: fonts.regular, fontSize: 14, color: colors.gray[600] }}>
+                        {weight} lbs × ${pricePerLb.toFixed(2)}
+                      </Text>
+                      <Text style={{ fontFamily: fonts.semiBold, fontSize: 15, color: colors.gray[900] }}>
+                        ${weightCost.toFixed(2)}
+                      </Text>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ fontFamily: fonts.regular, fontSize: 14, color: colors.gray[600], flex: 1 }}>
+                        {selectedItem ? getLocalizedItemName(selectedItem) : ''}
+                      </Text>
+                      <Text style={{ fontFamily: fonts.semiBold, fontSize: 15, color: colors.gray[900] }}>
+                        ${specialItemPrice.toFixed(2)}
+                      </Text>
+                    </View>
+
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ fontFamily: fonts.regular, fontSize: 14, color: colors.gray[600] }}>
+                        {t.calculator.serviceFeeLabel}
+                      </Text>
+                      <Text style={{ fontFamily: fonts.semiBold, fontSize: 15, color: colors.gray[900] }}>
+                        ${serviceFee.toFixed(2)}
+                      </Text>
+                    </View>
+                  </>
+                )}
+
+                <View style={{ height: 2, backgroundColor: colors.gray[200], marginVertical: spacing.sm, borderRadius: 1 }} />
+
+                {/* Total with Gradient Background */}
+                <LinearGradient
+                  colors={isDark ? [colors.primary[900], colors.primary[800]] : [colors.primary[50], colors.green[50]]}
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: spacing.md,
+                    borderRadius: borderRadius.lg,
+                    marginTop: spacing.xs,
+                  }}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={{ fontFamily: fonts.bold, fontSize: 17, color: colors.gray[900] }}>
+                    {t.calculator.total}
+                  </Text>
+                  <Text style={{ fontFamily: fonts.headingBold, fontSize: 36, color: isDark ? colors.primary[400] : colors.primary[600] }}>
+                    ${total.toFixed(2)}
+                  </Text>
+                </LinearGradient>
+              </View>
+
+              {/* Delivery Time */}
+              {deliveryDays && calculationType === 'weight' && (
+                <View style={{ marginTop: spacing.lg, paddingTop: spacing.lg, borderTopWidth: 1, borderTopColor: card.borderColor }}>
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: spacing.sm,
+                    backgroundColor: isDark ? colors.gray[200] : colors.green[50],
+                    padding: spacing.md,
+                    borderRadius: borderRadius.md,
+                    borderWidth: 1,
+                    borderColor: isDark ? colors.emerald[600] : colors.green[100],
+                  }}>
+                    <Clock size={18} color={colors.emerald[500]} />
+                    <Text style={{ fontFamily: fonts.regular, fontSize: 13, color: colors.gray[700] }}>
+                      {t.calculator.estimatedDelivery}:
+                    </Text>
+                    <Text style={{ fontFamily: fonts.bold, fontSize: 14, color: colors.emerald[600] }}>
+                      {deliveryDays} {t.calculator.days}
+                    </Text>
                   </View>
                 </View>
-              ))}
+              )}
             </View>
           </Animated.View>
         )}

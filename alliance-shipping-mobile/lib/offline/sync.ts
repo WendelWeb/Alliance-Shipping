@@ -48,9 +48,8 @@ async function pushPendingRequests(): Promise<number> {
       await removePendingRequest(req.id);
       synced++;
     } catch (error) {
-      // If the request fails, leave it in queue for next sync
+      // If the request fails, leave it in queue and continue with others
       console.warn('Sync push failed for request:', req.id, error);
-      break; // Stop on first failure to preserve order
     }
   }
 
@@ -111,13 +110,14 @@ export async function syncNotifications(): Promise<boolean> {
   }
 }
 
-/** Pull fresh fee data */
+/** Pull fresh fee/pricing data (public endpoint) */
 export async function syncFees(): Promise<boolean> {
   if (!isSQLiteAvailable()) return false;
   try {
-    const data = await api.get<{ fees: any[] }>('/api/admin/fees');
-    if (data.fees) {
-      await upsertFees(data.fees);
+    const data = await api.get<{ cities: any[] }>('/api/pricing/all');
+    if (data.cities && data.cities.length > 0) {
+      // Store city pricing as JSON in sync_meta for offline calculator
+      await setSyncMeta('cached_city_pricing', JSON.stringify(data.cities));
     }
     await setSyncMeta('fees_last_sync', new Date().toISOString());
     return true;

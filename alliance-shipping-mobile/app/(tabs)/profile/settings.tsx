@@ -18,27 +18,35 @@ import { useUser } from '@clerk/clerk-expo';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
-import { ArrowLeft, Camera } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { ArrowLeft, Camera, ChevronDown } from 'lucide-react-native';
 import { useTheme } from '@/lib/themes/ThemeProvider';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { api } from '@/lib/api';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useUser();
   const router = useRouter();
   const { t } = useTranslation();
-  const { colors, fonts, spacing, borderRadius, shadows, card } = useTheme();
+  const { colors, fonts, spacing, borderRadius, shadows, card, isDark } = useTheme();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
+  const [whatsappPhone, setWhatsappPhone] = useState('');
   const [city, setCity] = useState('');
   const [warehouseId, setWarehouseId] = useState<number | null>(null);
   const [warehouseName, setWarehouseName] = useState('');
   const [warehouses, setWarehouses] = useState<any[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
   const [loadingWarehouses, setLoadingWarehouses] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showCityPicker, setShowCityPicker] = useState(false);
+  const [showWarehousePicker, setShowWarehousePicker] = useState(false);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -46,29 +54,32 @@ export default function SettingsScreen() {
         setFirstName(user.firstName || '');
         setLastName(user.lastName || '');
 
-        // Load phone, city and warehouse from API
         try {
-          const { api } = await import('@/lib/api');
           const response = await api.get<{ success: boolean; user: any }>('/api/user/profile');
 
-          // Load phone from database (with country code)
-          if (response.user?.phone) {
-            setPhone(response.user.phone);
-          }
-
-          if (response.user?.city) {
-            setCity(response.user.city);
-          }
-
-          if (response.user?.warehouseId) {
-            setWarehouseId(response.user.warehouseId);
-          }
+          if (response.user?.phone) setPhone(response.user.phone);
+          if (response.user?.whatsappPhone) setWhatsappPhone(response.user.whatsappPhone);
+          if (response.user?.city) setCity(response.user.city);
+          if (response.user?.warehouseId) setWarehouseId(response.user.warehouseId);
         } catch (error) {
           console.error('Error loading user data:', error);
         }
       }
     };
+
+    const loadCities = async () => {
+      try {
+        const response = await api.get<{ cities: { city: string }[] }>('/api/pricing/all');
+        setCities(response.cities.map((c) => c.city));
+      } catch (error) {
+        console.error('Error loading cities:', error);
+      } finally {
+        setLoadingCities(false);
+      }
+    };
+
     loadUserData();
+    loadCities();
   }, [user]);
 
   // Load warehouses when city changes
@@ -82,15 +93,18 @@ export default function SettingsScreen() {
 
       setLoadingWarehouses(true);
       try {
-        const { api } = await import('@/lib/api');
         const response = await api.get<{ success: boolean; warehouses: any[] }>(
           `/api/warehouses?city=${encodeURIComponent(city)}`
         );
-        setWarehouses(response.warehouses || []);
+        const wh = response.warehouses || [];
+        setWarehouses(wh);
 
-        // Set warehouse name if we have a warehouseId
-        if (warehouseId && response.warehouses) {
-          const warehouse = response.warehouses.find((w: any) => w.id === warehouseId);
+        // Auto-select if only one warehouse
+        if (wh.length === 1 && !warehouseId) {
+          setWarehouseId(wh[0].id);
+          setWarehouseName(wh[0].name);
+        } else if (warehouseId && wh.length > 0) {
+          const warehouse = wh.find((w: any) => w.id === warehouseId);
           if (warehouse) {
             setWarehouseName(warehouse.name);
           }
@@ -108,23 +122,59 @@ export default function SettingsScreen() {
 
   const email = user?.primaryEmailAddress?.emailAddress || '';
 
-  const handleChangePhoto = () => {
-    Alert.alert(
-      t.profile.settings.profilePhoto,
-      t.profile.settings.photoNote,
-      [{ text: 'OK' }]
-    );
+  const handleChangePhoto = async () => {
+    try {
+      const permResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permResult.granted) {
+        Alert.alert('Permission requise', 'Autorisez l\'accès aux photos pour changer votre photo de profil.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (result.canceled || !result.assets?.[0]) return;
+
+      setUploadingPhoto(true);
+      const asset = result.assets[0];
+
+      // Convert to blob for Clerk
+      const response = await fetch(asset.uri);
+      const blob = await response.blob();
+      const file = new File([blob], 'profile.jpg', { type: asset.mimeType || 'image/jpeg' });
+
+      await user?.setProfileImage({ file });
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (err: any) {
+      console.error('Error uploading photo:', err);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert(t.profile.settings.error, t.profile.settings.imageUploadFailed || 'Impossible de mettre à jour la photo.');
+    } finally {
+      setUploadingPhoto(false);
+    }
   };
 
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
     try {
-      // Update Clerk profile (only first and last name)
-      await user.update({
-        firstName,
-        lastName,
-      });
+      // Update Clerk profile (first and last name)
+      await user.update({ firstName, lastName });
+
+      // Update DB profile (phone, whatsapp, city, warehouse)
+      const updateData: any = {};
+      if (phone) updateData.phone = phone;
+      if (whatsappPhone) updateData.whatsappPhone = whatsappPhone;
+      if (city) updateData.city = city;
+      if (warehouseId) updateData.warehouseId = warehouseId;
+
+      if (Object.keys(updateData).length > 0) {
+        await api.patch('/api/user/profile', updateData);
+      }
 
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
@@ -160,15 +210,16 @@ export default function SettingsScreen() {
           onPress: async () => {
             setDeleting(true);
             try {
-              const { api } = await import('@/lib/api');
               await api.patch('/api/user/profile', {
                 phone: null,
+                whatsappPhone: null,
                 city: null,
                 warehouseId: null,
               });
 
               // Clear local state
               setPhone('');
+              setWhatsappPhone('');
               setCity('');
               setWarehouseId(null);
               setWarehouseName('');
@@ -241,7 +292,7 @@ export default function SettingsScreen() {
     photoNote: { fontFamily: fonts.regular, fontSize: 12, color: colors.gray[400] },
     inputLabel: { fontFamily: fonts.semiBold, fontSize: 14, color: colors.gray[700], marginBottom: spacing.sm },
     input: {
-      backgroundColor: colors.gray[50],
+      backgroundColor: colors.gray[100],
       borderRadius: borderRadius.lg,
       borderWidth: 1,
       borderColor: colors.gray[200],
@@ -251,7 +302,7 @@ export default function SettingsScreen() {
       fontFamily: fonts.regular,
       color: colors.gray[900],
     },
-    inputReadOnly: { backgroundColor: colors.gray[100], color: colors.gray[500] },
+    inputReadOnly: { backgroundColor: colors.gray[200], color: colors.gray[500] },
     inputNote: { fontFamily: fonts.regular, fontSize: 12, color: colors.gray[400], marginTop: spacing.xs },
     cancelButton: {
       flex: 1,
@@ -270,7 +321,7 @@ export default function SettingsScreen() {
       borderRadius: borderRadius.lg,
       overflow: 'hidden' as const,
     },
-    saveButtonText: { fontFamily: fonts.semiBold, fontSize: 15, color: colors.white },
+    saveButtonText: { fontFamily: fonts.semiBold, fontSize: 15, color: colors.white, textAlign: 'center' as const },
   }), [colors, fonts, spacing, borderRadius, shadows]);
 
   return (
@@ -312,17 +363,23 @@ export default function SettingsScreen() {
                   contentFit="cover"
                   transition={200}
                 />
+                {uploadingPhoto && (
+                  <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 44, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}>
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  </View>
+                )}
                 <TouchableOpacity
                   style={themedStyles.cameraButton}
                   onPress={handleChangePhoto}
                   activeOpacity={0.7}
+                  disabled={uploadingPhoto}
                 >
                   <Camera size={14} color={colors.white} />
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity onPress={handleChangePhoto} activeOpacity={0.7}>
+              <TouchableOpacity onPress={handleChangePhoto} activeOpacity={0.7} disabled={uploadingPhoto}>
                 <Text style={themedStyles.changePhotoText}>
-                  {t.profile.settings.changePhoto}
+                  {uploadingPhoto ? (t.profile.settings.uploading || 'Chargement...') : t.profile.settings.changePhoto}
                 </Text>
               </TouchableOpacity>
               <Text style={themedStyles.photoNote}>{t.profile.settings.photoNote}</Text>
@@ -372,33 +429,57 @@ export default function SettingsScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={themedStyles.inputLabel}>📞 Numéro de téléphone</Text>
-              <View style={[themedStyles.input, themedStyles.inputReadOnly]}>
-                <Text style={{ color: phone ? colors.gray[700] : colors.gray[400], fontFamily: fonts.regular, fontSize: 15 }}>
-                  {phone || 'Non renseigné'}
-                </Text>
-              </View>
-              <Text style={themedStyles.inputNote}>Utilisez le modal de profil pour modifier votre numéro</Text>
+              <Text style={themedStyles.inputLabel}>{t.profile.settings.phoneLabel || '📞 Numéro de téléphone'}</Text>
+              <TextInput
+                style={themedStyles.input}
+                value={phone}
+                onChangeText={setPhone}
+                placeholder="+50912345678"
+                placeholderTextColor={colors.gray[400]}
+                keyboardType="phone-pad"
+              />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={themedStyles.inputLabel}>📍 Ville</Text>
-              <View style={[themedStyles.input, themedStyles.inputReadOnly]}>
-                <Text style={{ color: city ? colors.gray[700] : colors.gray[400], fontFamily: fonts.regular, fontSize: 15 }}>
-                  {city || 'Non renseignée'}
-                </Text>
-              </View>
-              <Text style={themedStyles.inputNote}>Utilisez le modal de profil pour modifier votre ville</Text>
+              <Text style={themedStyles.inputLabel}>{t.profile.settings.whatsappLabel || '💬 Numéro WhatsApp'}</Text>
+              <TextInput
+                style={themedStyles.input}
+                value={whatsappPhone}
+                onChangeText={setWhatsappPhone}
+                placeholder="+50912345678"
+                placeholderTextColor={colors.gray[400]}
+                keyboardType="phone-pad"
+              />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={themedStyles.inputLabel}>📦 Dépôt de Réception</Text>
-              <View style={[themedStyles.input, themedStyles.inputReadOnly]}>
-                <Text style={{ color: warehouseName ? colors.gray[700] : colors.gray[400], fontFamily: fonts.regular, fontSize: 15 }}>
-                  {warehouseName || 'Non renseigné'}
+              <Text style={themedStyles.inputLabel}>{t.profile.settings.cityLabel || '📍 Ville'}</Text>
+              <TouchableOpacity
+                onPress={() => setShowCityPicker(true)}
+                style={[themedStyles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+                activeOpacity={0.7}
+              >
+                <Text style={{ color: city ? colors.gray[900] : colors.gray[400], fontFamily: fonts.regular, fontSize: 15 }}>
+                  {city || (t.profile.settings.selectCity || 'Sélectionner une ville')}
                 </Text>
-              </View>
-              <Text style={themedStyles.inputNote}>Utilisez le modal de profil pour modifier votre dépôt</Text>
+                <ChevronDown size={18} color={colors.gray[400]} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={themedStyles.inputLabel}>{t.profile.settings.warehouseLabel || '📦 Dépôt de Réception'}</Text>
+              <TouchableOpacity
+                onPress={() => city ? setShowWarehousePicker(true) : null}
+                style={[themedStyles.input, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, !city && { opacity: 0.5 }]}
+                activeOpacity={0.7}
+                disabled={!city}
+              >
+                <Text style={{ color: warehouseName ? colors.gray[900] : colors.gray[400], fontFamily: fonts.regular, fontSize: 15 }}>
+                  {warehouseName || (t.profile.settings.selectWarehouse || 'Sélectionner un dépôt')}
+                </Text>
+                <ChevronDown size={18} color={colors.gray[400]} />
+              </TouchableOpacity>
+              {!city && <Text style={themedStyles.inputNote}>{t.profile.settings.selectCityFirst || 'Sélectionnez une ville d\'abord'}</Text>}
             </View>
 
             {/* Delete Info Button */}
@@ -407,7 +488,7 @@ export default function SettingsScreen() {
                 style={[
                   styles.deleteButton,
                   {
-                    backgroundColor: colors.red[50],
+                    backgroundColor: isDark ? colors.gray[200] : colors.red[50],
                     borderColor: colors.red[500],
                     borderWidth: 1.5,
                     borderRadius: borderRadius.lg,
@@ -475,6 +556,136 @@ export default function SettingsScreen() {
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* City Picker Modal */}
+      <Modal visible={showCityPicker} animationType="slide" transparent>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowCityPicker(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+            style={[styles.pickerModal, { backgroundColor: colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: insets.bottom }]}
+          >
+            <View style={styles.pickerHeader}>
+              <View style={{ alignItems: 'center', paddingVertical: 8 }}>
+                <View style={{ width: 40, height: 4, backgroundColor: colors.gray[300], borderRadius: 2 }} />
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginTop: 4 }}>
+                <Text style={{ fontFamily: fonts.bold, color: colors.gray[900], fontSize: 18 }}>
+                  {t.profile.settings.selectCity || 'Sélectionner une ville'}
+                </Text>
+                <TouchableOpacity onPress={() => setShowCityPicker(false)} style={{ padding: 4 }}>
+                  <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[600], fontSize: 16 }}>
+                    {t.common.close || 'Fermer'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <ScrollView style={{ maxHeight: 400 }} contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 16 }}>
+              {cities.map((c) => (
+                <TouchableOpacity
+                  key={c}
+                  onPress={() => {
+                    setCity(c);
+                    setWarehouseId(null);
+                    setWarehouseName('');
+                    setShowCityPicker(false);
+                    Haptics.selectionAsync();
+                  }}
+                  style={{
+                    backgroundColor: city === c ? colors.primary[50] : colors.gray[50],
+                    borderRadius: 12,
+                    paddingHorizontal: 16,
+                    paddingVertical: 14,
+                    marginVertical: 4,
+                    borderWidth: city === c ? 2 : 0,
+                    borderColor: colors.primary[600],
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <Text style={{ fontFamily: fonts.semiBold, color: city === c ? colors.primary[600] : colors.gray[900], fontSize: 16 }}>
+                    📍 {c}
+                  </Text>
+                  {city === c && <Text style={{ fontSize: 20, color: colors.primary[600] }}>✓</Text>}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Warehouse Picker Modal */}
+      <Modal visible={showWarehousePicker} animationType="slide" transparent>
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowWarehousePicker(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+            style={[styles.pickerModal, { backgroundColor: colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: insets.bottom }]}
+          >
+            <View style={styles.pickerHeader}>
+              <View style={{ alignItems: 'center', paddingVertical: 8 }}>
+                <View style={{ width: 40, height: 4, backgroundColor: colors.gray[300], borderRadius: 2 }} />
+              </View>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginTop: 4 }}>
+                <Text style={{ fontFamily: fonts.bold, color: colors.gray[900], fontSize: 18 }}>
+                  {t.profile.settings.selectWarehouse || 'Sélectionner un dépôt'}
+                </Text>
+                <TouchableOpacity onPress={() => setShowWarehousePicker(false)} style={{ padding: 4 }}>
+                  <Text style={{ fontFamily: fonts.semiBold, color: colors.primary[600], fontSize: 16 }}>
+                    {t.common.close || 'Fermer'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <ScrollView style={{ maxHeight: 400 }} contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 16 }}>
+              {loadingWarehouses ? (
+                <View style={{ padding: 20, alignItems: 'center' }}>
+                  <ActivityIndicator size="large" color={colors.primary[600]} />
+                </View>
+              ) : warehouses.map((w) => (
+                <TouchableOpacity
+                  key={w.id}
+                  onPress={() => {
+                    setWarehouseId(w.id);
+                    setWarehouseName(w.name);
+                    setShowWarehousePicker(false);
+                    Haptics.selectionAsync();
+                  }}
+                  style={{
+                    backgroundColor: warehouseId === w.id ? colors.primary[50] : colors.gray[50],
+                    borderRadius: 12,
+                    padding: 14,
+                    marginVertical: 4,
+                    borderWidth: warehouseId === w.id ? 2 : 0,
+                    borderColor: colors.primary[600],
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: fonts.bold, color: warehouseId === w.id ? colors.primary[600] : colors.gray[900], fontSize: 16, marginBottom: 4 }}>
+                        🏢 {w.name}
+                      </Text>
+                      <Text style={{ fontFamily: fonts.regular, color: colors.gray[600], fontSize: 14 }}>
+                        📍 {w.address}
+                      </Text>
+                    </View>
+                    {warehouseId === w.id && <Text style={{ fontSize: 22, color: colors.primary[600] }}>✓</Text>}
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -525,5 +736,16 @@ const styles = StyleSheet.create({
   deleteButton: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  pickerModal: {
+    maxHeight: '70%',
+  },
+  pickerHeader: {
+    paddingBottom: 8,
   },
 });

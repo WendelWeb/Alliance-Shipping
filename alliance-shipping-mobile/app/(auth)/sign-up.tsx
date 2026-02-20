@@ -17,21 +17,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { useTheme } from '@/lib/themes/ThemeProvider';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { GoogleLogo } from '@/components/icons/GoogleLogo';
-import { AppleLogo } from '@/components/icons/AppleLogo';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function SignUpScreen() {
   const { signUp, setActive, isLoaded } = useSignUp();
   const { startSSOFlow } = useSSO();
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, getToken } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const { colors, fonts, spacing, borderRadius, shadows } = useTheme();
+  const { colors, fonts, spacing, borderRadius, shadows, card, isDark } = useTheme();
 
   // Redirect if already signed in
   useEffect(() => {
@@ -45,10 +45,11 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [oauthLoading, setOauthLoading] = useState<'google' | 'apple' | null>(null);
+  const [oauthLoading, setOauthLoading] = useState<'google' | null>(null);
   const [error, setError] = useState('');
   const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSignUp = async () => {
     if (!isLoaded) return;
@@ -66,14 +67,41 @@ export default function SignUpScreen() {
   };
 
   const handleVerify = async () => {
-    if (!isLoaded) return;
+    if (!isLoaded || !signUp) return;
     setLoading(true);
     setError('');
     try {
       const result = await signUp.attemptEmailAddressVerification({ code });
+
       if (result.status === 'complete') {
-        await setActive({ session: result.createdSessionId });
-        router.replace('/(tabs)');
+        if (result.createdSessionId) {
+          await setActive({ session: result.createdSessionId });
+          router.replace('/(tabs)');
+        }
+        return;
+      }
+
+      // Handle missing_requirements (e.g. username required by Clerk)
+      if (result.status === 'missing_requirements') {
+        const baseName = email.split('@')[0] || `user${Date.now()}`;
+        const username = baseName.replace(/[^a-zA-Z0-9_]/g, '') + Math.floor(Math.random() * 1000);
+
+        try {
+          await signUp.update({ username });
+          const completeResult = await signUp.reload();
+          if (completeResult.status === 'complete' && completeResult.createdSessionId) {
+            await setActive({ session: completeResult.createdSessionId });
+            router.replace('/(tabs)');
+            return;
+          }
+        } catch {
+          // If username update fails, check if session was created anyway
+          if (signUp.createdSessionId) {
+            await setActive({ session: signUp.createdSessionId });
+            router.replace('/(tabs)');
+            return;
+          }
+        }
       }
     } catch (err: any) {
       setError(err?.errors?.[0]?.message || t.common.error);
@@ -82,47 +110,108 @@ export default function SignUpScreen() {
     }
   };
 
-  const handleOAuth = useCallback(
-    async (strategy: 'oauth_google' | 'oauth_apple') => {
-      const provider = strategy === 'oauth_google' ? 'google' : 'apple';
+  // Helper: poll until Clerk recognises the session (max 8s)
+  const waitForSession = useCallback(
+    () =>
+      new Promise<boolean>((resolve) => {
+        let elapsed = 0;
+        const interval = setInterval(async () => {
+          elapsed += 400;
+          try {
+            const token = await getToken();
+            if (token) { clearInterval(interval); resolve(true); }
+          } catch {}
+          if (elapsed >= 8000) { clearInterval(interval); resolve(false); }
+        }, 400);
+      }),
+    [getToken],
+  );
+
+  // Helper: try setting username with retries (Clerk may require it)
+  const completeSignUpWithUsername = async (
+    ssoSignUp: any,
+    ssoSetActive: any,
+    emailAddr: string,
+  ): Promise<boolean> => {
+    const baseName = (emailAddr.split('@')[0] || 'user').replace(/[^a-zA-Z0-9_]/g, '');
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const suffix = Math.floor(Math.random() * 99999);
+      const username = `${baseName}${suffix}`;
       try {
-        setOauthLoading(provider);
+        await ssoSignUp.update({ username });
+        const result = await ssoSignUp.reload();
+        if (result.status === 'complete' && result.createdSessionId) {
+          await ssoSetActive!({ session: result.createdSessionId });
+          return true;
+        }
+        if (result.createdSessionId) {
+          await ssoSetActive!({ session: result.createdSessionId });
+          return true;
+        }
+      } catch {
+        // Username might be taken, retry with different suffix
+      }
+    }
+    // Last resort: check if a session was created anyway
+    if (ssoSignUp.createdSessionId) {
+      await ssoSetActive!({ session: ssoSignUp.createdSessionId });
+      return true;
+    }
+    return false;
+  };
+
+  const handleOAuth = useCallback(
+    async (strategy: 'oauth_google') => {
+      try {
+        setOauthLoading('google');
         setError('');
+
+        // BUILD: utiliser l'URL en dur pour éviter mismatch
+        const redirectUrl = 'alliance-shipping://sso-callback';
+        // const redirectUrl = Linking.createURL('/sso-callback');
 
         const { createdSessionId, setActive: ssoSetActive, signUp: ssoSignUp, signIn: ssoSignIn } =
           await startSSOFlow({
             strategy,
-            redirectUrl: Linking.createURL('/(tabs)'),
+            redirectUrl,
           });
 
+        // 1. Session already created — just activate
         if (createdSessionId) {
           await ssoSetActive!({ session: createdSessionId });
           router.replace('/(tabs)');
           return;
         }
 
-        // If user needs to complete sign-up (e.g. missing fields like username)
-        if (ssoSignUp?.status === 'missing_requirements') {
-          const emailAddr =
-            ssoSignUp.emailAddress ||
-            ssoSignIn?.identifier ||
-            '';
-          const baseName = emailAddr.split('@')[0] || `user${Date.now()}`;
-          const username = baseName.replace(/[^a-zA-Z0-9_]/g, '') + Math.floor(Math.random() * 1000);
+        // 2. Existing user returned via signIn
+        if (ssoSignIn?.createdSessionId) {
+          await ssoSetActive!({ session: ssoSignIn.createdSessionId });
+          router.replace('/(tabs)');
+          return;
+        }
 
-          try {
-            await ssoSignUp.update({ username });
-            const completeResult = await ssoSignUp.reload();
-            if (completeResult.status === 'complete' && completeResult.createdSessionId) {
-              await ssoSetActive!({ session: completeResult.createdSessionId });
+        // 3. New user — signUp may need username
+        if (ssoSignUp) {
+          if (ssoSignUp.status === 'complete' && ssoSignUp.createdSessionId) {
+            await ssoSetActive!({ session: ssoSignUp.createdSessionId });
+            router.replace('/(tabs)');
+            return;
+          }
+          if (ssoSignUp.status === 'missing_requirements') {
+            const emailAddr = ssoSignUp.emailAddress || ssoSignIn?.identifier || '';
+            const ok = await completeSignUpWithUsername(ssoSignUp, ssoSetActive, emailAddr);
+            if (ok) {
               router.replace('/(tabs)');
-            }
-          } catch {
-            if (ssoSignUp.createdSessionId) {
-              await ssoSetActive!({ session: ssoSignUp.createdSessionId });
-              router.replace('/(tabs)');
+              return;
             }
           }
+        }
+
+        // 4. Fallback: poll until Clerk syncs the session
+        const ready = await waitForSession();
+        if (ready) {
+          router.replace('/(tabs)');
+          return;
         }
       } catch (err: any) {
         const msg = err?.errors?.[0]?.message || err?.message || t.common.error;
@@ -131,7 +220,7 @@ export default function SignUpScreen() {
         setOauthLoading(null);
       }
     },
-    [startSSOFlow, router, t.common.error],
+    [startSSOFlow, router, t.common.error, waitForSession],
   );
 
   const isDisabled = loading || oauthLoading !== null;
@@ -140,15 +229,18 @@ export default function SignUpScreen() {
     container: { backgroundColor: colors.background },
     header: {
       paddingHorizontal: spacing.xl,
-      paddingVertical: spacing['3xl'],
-      paddingBottom: spacing['4xl'],
+      paddingVertical: spacing.xl,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
       borderBottomLeftRadius: borderRadius['2xl'],
       borderBottomRightRadius: borderRadius['2xl'],
     },
-    logo: { fontSize: 24, fontFamily: fonts.headingBold, color: colors.white, marginBottom: 4 },
-    subtitle: { fontSize: 14, fontFamily: fonts.regular, color: 'rgba(255,255,255,0.85)' as const },
-    scroll: { padding: spacing.xl, paddingTop: spacing['2xl'] },
-    welcomeText: { fontSize: 22, fontFamily: fonts.headingSemiBold, color: colors.gray[900], marginBottom: spacing['2xl'] },
+    logo: { fontSize: 24, fontFamily: fonts.headingBold, color: colors.white, marginBottom: 4, textAlign: 'center' as const },
+    subtitle: { fontSize: 14, fontFamily: fonts.regular, color: 'rgba(255,255,255,0.85)' as const, textAlign: 'center' as const },
+    scroll: { padding: spacing.xl, paddingTop: spacing.sm },
+    welcomeText: { fontSize: 22, fontFamily: fonts.headingSemiBold, color: colors.gray[900], marginBottom: spacing.xs },
+    hasAccountHint: { fontSize: 13, fontFamily: fonts.regular, color: colors.gray[500], marginBottom: spacing.lg, lineHeight: 19 },
+    hasAccountHintLink: { fontSize: 13, fontFamily: fonts.semiBold, color: colors.primary[600] },
     errorBox: { backgroundColor: colors.red[50], borderRadius: borderRadius.md, padding: spacing.md, marginBottom: spacing.lg, borderWidth: 1, borderColor: colors.red[100] },
     errorText: { color: colors.red[600], fontFamily: fonts.medium, fontSize: 13 },
     oauthBtn: {
@@ -157,18 +249,16 @@ export default function SignUpScreen() {
       justifyContent: 'center' as const,
       height: 52,
       borderRadius: borderRadius.lg,
-      marginBottom: spacing.md,
+      marginBottom: spacing.xs,
       ...shadows.sm,
     },
     googleBtn: {
-      backgroundColor: colors.white,
+      backgroundColor: isDark ? card.backgroundColor : colors.white,
       borderWidth: 1.5,
-      borderColor: colors.gray[200],
+      borderColor: isDark ? colors.gray[300] : colors.gray[200],
       gap: spacing.sm,
     },
-    googleBtnText: { fontSize: 16, fontFamily: fonts.semiBold, color: colors.gray[700] },
-    appleBtn: { backgroundColor: '#000000', gap: spacing.sm },
-    appleBtnText: { fontSize: 16, fontFamily: fonts.semiBold, color: colors.white },
+    googleBtnText: { fontSize: 16, fontFamily: fonts.semiBold, color: isDark ? colors.gray[900] : colors.gray[700] },
     dividerLine: { backgroundColor: colors.gray[200] },
     dividerText: {
       marginHorizontal: spacing.lg,
@@ -189,7 +279,7 @@ export default function SignUpScreen() {
       fontFamily: fonts.regular,
       color: colors.gray[900],
     },
-    btn: { marginTop: spacing.lg, borderRadius: borderRadius.lg, overflow: 'hidden' as const },
+    btn: { marginTop: spacing.sm, borderRadius: borderRadius.lg, overflow: 'hidden' as const },
     btnGradient: { paddingVertical: spacing.lg, alignItems: 'center' as const, borderRadius: borderRadius.lg },
     btnText: { fontSize: 16, fontFamily: fonts.semiBold, color: colors.white },
     linkText: { fontSize: 14, fontFamily: fonts.regular, color: colors.gray[600] },
@@ -209,7 +299,7 @@ export default function SignUpScreen() {
       letterSpacing: 8,
       marginBottom: spacing.xl,
     },
-  }), [colors, fonts, spacing, borderRadius, shadows]);
+  }), [colors, fonts, spacing, borderRadius, shadows, card, isDark]);
 
   if (pendingVerification) {
     return (
@@ -284,6 +374,11 @@ export default function SignUpScreen() {
         >
           <Animated.View entering={FadeInDown.delay(200).duration(600)}>
             <Text style={themedStyles.welcomeText}>{t.auth.signUp.createAccount}</Text>
+            <Text style={themedStyles.hasAccountHint}>
+              {t.auth.signUp.hasAccountHintStart}
+              <Text style={themedStyles.hasAccountHintLink} onPress={() => router.push('/(auth)/sign-in')}>{t.auth.signUp.hasAccountHintLink}</Text>
+              {t.auth.signUp.hasAccountHintEnd}
+            </Text>
 
             {error ? (
               <View style={themedStyles.errorBox}>
@@ -304,23 +399,6 @@ export default function SignUpScreen() {
                 <>
                   <GoogleLogo size={22} />
                   <Text style={themedStyles.googleBtnText}>{t.auth.continueWithGoogle}</Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            {/* Apple OAuth */}
-            <TouchableOpacity
-              style={[themedStyles.oauthBtn, themedStyles.appleBtn, isDisabled && styles.disabled]}
-              onPress={() => handleOAuth('oauth_apple')}
-              disabled={isDisabled}
-              activeOpacity={0.8}
-            >
-              {oauthLoading === 'apple' ? (
-                <ActivityIndicator size="small" color={colors.white} />
-              ) : (
-                <>
-                  <AppleLogo size={22} />
-                  <Text style={themedStyles.appleBtnText}>{t.auth.continueWithApple}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -374,15 +452,28 @@ export default function SignUpScreen() {
 
             <View style={styles.inputGroup}>
               <Text style={themedStyles.inputLabel}>Password</Text>
-              <TextInput
-                style={themedStyles.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="••••••••"
-                placeholderTextColor={colors.gray[400]}
-                secureTextEntry
-                editable={!isDisabled}
-              />
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={[themedStyles.input, { flex: 1, paddingRight: 48 }]}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="••••••••"
+                  placeholderTextColor={colors.gray[400]}
+                  secureTextEntry={!showPassword}
+                  editable={!isDisabled}
+                />
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                  activeOpacity={0.6}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color={colors.gray[400]} />
+                  ) : (
+                    <Eye size={20} color={colors.gray[400]} />
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
 
             <TouchableOpacity
@@ -424,14 +515,16 @@ const styles = StyleSheet.create({
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: 10,
   },
   dividerLine: {
     flex: 1,
     height: 1,
   },
   nameRow: { flexDirection: 'row' },
-  inputGroup: { marginBottom: 16 },
+  inputGroup: { marginBottom: 10 },
+  passwordContainer: { position: 'relative' },
+  eyeButton: { position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' },
   disabled: { opacity: 0.7 },
-  linkRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
+  linkRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 14 },
 });

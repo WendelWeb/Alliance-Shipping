@@ -7,17 +7,25 @@ try {
 }
 
 let db: any = null;
+let sqliteDisabled = false;
 
 export async function getDatabase(): Promise<any> {
-  if (!SQLite) throw new Error('SQLite not available');
+  if (!SQLite || sqliteDisabled) throw new Error('SQLite not available');
   if (db) return db;
-  db = await SQLite.openDatabaseAsync('alliance-shipping.db');
-  await initializeDatabase(db);
-  return db;
+  try {
+    db = await SQLite.openDatabaseAsync('alliance-shipping.db');
+    await initializeDatabase(db);
+    return db;
+  } catch (error) {
+    console.warn('SQLite database initialization failed (Expo Go?). Disabling offline mode.');
+    db = null;
+    sqliteDisabled = true;
+    throw new Error('SQLite database unavailable');
+  }
 }
 
 export function isSQLiteAvailable(): boolean {
-  return SQLite !== null;
+  return SQLite !== null && !sqliteDisabled;
 }
 
 async function initializeDatabase(database: any) {
@@ -276,8 +284,13 @@ export async function upsertFees(fees: any[]) {
 }
 
 export async function getLocalFees(): Promise<any[]> {
-  const database = await getDatabase();
-  return database.getAllAsync('SELECT * FROM fees WHERE isActive = 1') as any;
+  try {
+    const cached = await getSyncMeta('cached_city_pricing');
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch {}
+  return [];
 }
 
 // ==================== SYNC META ====================

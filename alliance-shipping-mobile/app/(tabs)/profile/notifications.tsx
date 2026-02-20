@@ -29,6 +29,7 @@ import {
 import { useTheme } from '@/lib/themes/ThemeProvider';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { api } from '@/lib/api';
+import { getLocalNotifications, isSQLiteAvailable } from '@/lib/offline/database';
 
 interface NotificationItem {
   id: number;
@@ -78,7 +79,7 @@ export default function NotificationsScreen() {
       case 'package_available':
         return <CheckCircle size={18} color={colors.green[600]} />;
       case 'package_delivered':
-        return <CheckCircle size={18} color={colors.green[700]} />;
+        return <CheckCircle size={18} color={colors.green[600]} />;
       case 'request_approved':
         return <CheckCircle size={18} color={colors.green[600]} />;
       case 'request_rejected':
@@ -122,7 +123,15 @@ export default function NotificationsScreen() {
       const data = await api.get<NotificationsResponse>('/api/user/notifications?limit=50');
       setNotifications(data.notifications);
     } catch {
-      setNotifications([]);
+      // Fallback to offline cache
+      if (isSQLiteAvailable()) {
+        try {
+          const cached = await getLocalNotifications();
+          if (cached.length > 0) {
+            setNotifications(cached);
+          }
+        } catch {}
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);

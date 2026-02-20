@@ -17,7 +17,8 @@ try {
 if (Notifications) {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowAlert: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
       shouldPlaySound: true,
       shouldSetBadge: true,
     }),
@@ -66,17 +67,21 @@ export async function registerForPushNotifications(): Promise<string | null> {
 
   // Get push token
   const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+  console.log('Push: projectId =', projectId);
+
   const tokenData = await Notifications.getExpoPushTokenAsync({
     projectId,
   });
 
   const token = tokenData.data;
+  console.log('Push: token =', token);
 
   // Send token to backend
   try {
-    await api.post('/api/user/push-token', { token });
+    const result = await api.post('/api/user/push-token', { token });
+    console.log('Push: token saved to backend:', result);
   } catch (error) {
-    console.error('Failed to register push token with backend:', error);
+    console.error('Push: failed to save token to backend:', error);
   }
 
   return token;

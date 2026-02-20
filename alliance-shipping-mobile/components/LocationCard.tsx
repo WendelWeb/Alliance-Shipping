@@ -157,8 +157,8 @@ export function LocationCard({
                 paddingVertical: spacing.xs,
                 borderRadius: borderRadius.full,
                 backgroundColor: item.isOpen
-                  ? (isDark ? colors.green[900] : colors.green[50])
-                  : (isDark ? colors.red[900] : colors.red[50]),
+                  ? (isDark ? colors.gray[200] : colors.green[50])
+                  : (isDark ? colors.gray[200] : colors.red[50]),
               },
             ]}
           >
@@ -168,8 +168,8 @@ export function LocationCard({
                 {
                   marginRight: spacing.xs,
                   backgroundColor: item.isOpen
-                    ? (isDark ? colors.green[400] : colors.green[500])
-                    : (isDark ? colors.red[400] : colors.red[500]),
+                    ? colors.green[500]
+                    : colors.red[500],
                 },
               ]}
             />
@@ -179,8 +179,8 @@ export function LocationCard({
                 {
                   fontFamily: fonts.semiBold,
                   color: item.isOpen
-                    ? (isDark ? colors.green[300] : colors.green[600])
-                    : (isDark ? colors.red[300] : colors.red[600]),
+                    ? colors.green[600]
+                    : colors.red[600],
                 },
               ]}
             >

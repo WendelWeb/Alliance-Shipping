@@ -14,6 +14,7 @@ import { Bell } from 'lucide-react-native';
 import { useTheme } from '@/lib/themes/ThemeProvider';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { api } from '@/lib/api';
+import { getLocalAnnouncements, isSQLiteAvailable } from '@/lib/offline/database';
 import { NewsCard } from '@/components/NewsCard';
 
 interface Announcement {
@@ -47,8 +48,16 @@ export default function NewsScreen() {
       );
       setAnnouncements(data.announcements);
     } catch (error) {
-      console.error('Failed to fetch announcements:', error);
-      setAnnouncements([]);
+      console.warn('Failed to fetch announcements, trying cache:', error);
+      // Fallback to offline cache
+      if (isSQLiteAvailable()) {
+        try {
+          const cached = await getLocalAnnouncements();
+          if (cached.length > 0) {
+            setAnnouncements(cached);
+          }
+        } catch {}
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);

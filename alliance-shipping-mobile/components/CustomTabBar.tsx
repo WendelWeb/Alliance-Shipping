@@ -88,7 +88,7 @@ function TabItem({
         <Animated.Text
           style={[
             styles.centerLabel,
-            { fontFamily: fonts.medium, color: isActive ? colors.primary[600] : colors.gray[400] },
+            { fontFamily: fonts.headingBold, fontWeight: '800', color: isActive ? colors.primary[600] : colors.gray[400] },
           ]}
         >
           {label}
@@ -114,7 +114,7 @@ function TabItem({
       <Animated.Text
         style={[
           styles.label,
-          { fontFamily: fonts.medium, color: isActive ? colors.primary[600] : colors.gray[400] },
+          { fontFamily: fonts.headingBold, fontWeight: '800', color: isActive ? colors.primary[600] : colors.gray[400] },
         ]}
       >
         {label}
@@ -144,10 +144,11 @@ export function CustomTabBar({ state, descriptors, navigation }: TabBarProps) {
         {
           paddingBottom: Math.max(insets.bottom, 8),
           borderTopColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+          backgroundColor: isDark ? 'rgba(0,0,0,0.88)' : 'rgba(255,255,255,0.88)',
         },
       ]}
     >
-      <BlurView intensity={90} tint={isDark ? 'dark' : 'light'} style={styles.blur}>
+      <BlurView intensity={150} tint={isDark ? 'dark' : 'light'} style={styles.blur}>
         <View style={styles.inner}>
           {state.routes.map((route, index) => {
             const { options } = descriptors[route.key];
@@ -160,7 +161,7 @@ export function CustomTabBar({ state, descriptors, navigation }: TabBarProps) {
                 : isActive
                   ? colors.primary[600]
                   : colors.gray[400],
-              size: isCenter ? 28 : 22,
+              size: isCenter ? 32 : 26,
               focused: isActive,
             });
 
@@ -206,30 +207,32 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   blur: {
-    overflow: 'hidden',
+    // overflow removed to allow center button to show fully
   },
   inner: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-around',
-    paddingTop: 8,
+    paddingTop: 4,
     paddingHorizontal: 8,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
+    paddingVertical: 0,
   },
   label: {
-    fontSize: 10,
+    fontSize: 11,
     marginTop: 2,
+    fontWeight: '800',
   },
   centerTab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: -20,
+    zIndex: 999,
   },
   centerGradient: {
     width: 56,
@@ -241,9 +244,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 8,
+    zIndex: 999,
   },
   centerLabel: {
-    fontSize: 10,
+    fontSize: 11,
     marginTop: 4,
+    fontWeight: '800',
   },
 });

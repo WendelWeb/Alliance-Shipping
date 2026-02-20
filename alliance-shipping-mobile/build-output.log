@@ -1,0 +1,57 @@
+The field "cli.appVersionSource" is not set, but it will be required in the future. Learn more: https://docs.expo.dev/build-reference/app-versions/
+Resolved "preview" environment for the build. Learn more: https://docs.expo.dev/eas/environment-variables/#setting-the-environment-for-your-builds
+No environment variables with visibility "Plain text" and "Sensitive" found for the "preview" environment on EAS.
+
+
+
+The field "cli.appVersionSource" is not set, but it will be required in the future. Learn more: https://docs.expo.dev/build-reference/app-versions/
+✔ Using remote Android credentials (Expo server)
+✔ Using Keystore from configuration: Build Credentials wbtUekcANI (default)
+
+Compressing project files and uploading to EAS Build. Learn more: https://expo.fyi/eas-build-archive
+- Compressing project files
+Your project archive is 225 MB. You can reduce its size and the time it takes to upload by excluding files that are unnecessary for the build process in .easignore file. Learn more: https://expo.fyi/eas-build-archive
+- Uploading to EAS Build (0 / 225 MB)
+✔ Uploaded to EAS 2m 42s
+- Computing project fingerprint
+✔ Computed project fingerprint
+
+See logs: https://expo.dev/accounts/tegrwfewdsq/projects/alliance-shipping-mobile/builds/a39b8053-7711-48a0-b7a7-792fcb1d4356
+
+Waiting for build to complete. You can press Ctrl+C to exit.
+- Waiting for build to complete.
+  Build queued...
+
+Start builds sooner in the priority queue.
+Sign up for a paid plan at https://expo.dev/accounts/tegrwfewdsq/settings/billing
+
+Waiting in Free tier queue
+
+- Build is about to start
+✔ Build finished
+  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+  █ ▄▄▄▄▄ █ █▄█▄█▄▄▄ ▄▀█▀▄▄█  ▄ █▄▀██ ▄▄▄▄▄ █
+  █ █   █ █ ▀▀▄ ▄▀▄▄▀▀██▄▄█ ▀▄ ▀▄▄█▀█ █   █ █
+  █ █▄▄▄█ █▀▀ ▀ ▀ █▀▄▄  ██▄▄▄█▄▄▀▀▀ █ █▄▄▄█ █
+  █▄▄▄▄▄▄▄█▄▀▄█▄█ ▀ ▀▄▀ ▀ ▀▄█ ▀ ▀ █▄█▄▄▄▄▄▄▄█
+  █ ▄█▀  ▄█▀▀▄██▀█▀▀▄▀▄▄▄   ▀█ ▀▄▀▄▄▀▀ ▀▄ ▄ █
+  ██▀▀▄ █▄█▄█▄█ █▀▄▀ ▀▀ ▀▀ ▄██ ▄▀▀▀ ▄▄ ▀▀█▀ █
+  █▄██▄▄ ▄▀▄█ ▄▄ ▄█▀▀▄█▀▄▄▀▀▀ ▀▄▄ █▀█▀ ▀█▀  █
+  ██ █▄▀█▄█▀█ █▀███▄ ▄█ ▀ ▄ ▄█ ▄▀▀██  ▄█▄█▀ █
+  █  ▄█▄ ▄▄█▄█ ▄██   ▀▄ ▄▄▀███▀  ▀█ ▄▀ ▀ ▀▄▀█
+  █▄  ▄▄▄▄▀██▀   ▄ ██▄▀▄▀▄▄▄█ ▄█  ▀▀████▀██ █
+  ████▀▄▄▄█▀█▀▄▀ ▀▄▄▀▀▄▀ ▄▀▀▀▀ ▄ ▄▄▀▄▀▀▀██▀ █
+  █▄▀▀█▀▀▄▀▀▀▀ ▄██ ▀ ▀▀▄▀█  ▄  █▀ ▀███▄▀ ▄▀ █
+  █▀▀▄▀▀▀▄▀▄█ ▀▄▀▀▀█▄▀▄█▄▄ █▀▀ █▄█▄██▀▀▀ ▀█ █
+  ██ ▀█ ▄▄█ ▀   █▀ █ ▀█▀▀  ▀▄█▄▀▀ █ ▄ █ ▄▄▀▄█
+  █▀▀█▄█▀▄█ ▀▀▄▄▄▄█▀█▄▄▀ ▀▀ ▀▄▀█▄▄▄▄▀▀▀▀▀▀█▀█
+  █████▀█▄ █ ▀█▀█▀█▄ ▀█▀▀ ▄ ▄▄ ▀  █▄▀█▀▀▀▄█▄█
+  █▄▄▄███▄▄  ▀  █▀ ▀ ▀▄█▄▄▀▄▀▀▀ ▄▀▀ ▄▄▄ ▀██▀█
+  █ ▄▄▄▄▄ █▀▀▀▄  ▄▄▀█▄▀▄ ▄▄ ▄  ▄▀   █▄█ █▄█▄█
+  █ █   █ █▄ ▄█▀▄▀█▄▀▀▄▀▄▄▀▀▀▀▀▄ ▄   ▄▄▄▄▀  █
+  █ █▄▄▄█ █▀█  ▄▄▄ ▀▀▄█▀ █ ▄█  ▀▀▄ ▀ ▀▄▀ █▀ █
+  █▄▄▄▄▄▄▄█▄▄▄█▄████▄█▄▄▄▄█████▄▄█▄▄▄▄▄█▄█▄██
+
+
+🤖 Open this link on your Android devices (or scan the QR code) to install the app:
+https://expo.dev/accounts/tegrwfewdsq/projects/alliance-shipping-mobile/builds/a39b8053-7711-48a0-b7a7-792fcb1d4356

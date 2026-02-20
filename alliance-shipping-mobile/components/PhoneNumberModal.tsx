@@ -144,7 +144,7 @@ export function PhoneNumberModal({
         updateData.countryCode = selectedCountry.code;
       }
 
-      // Save WhatsApp number if provided (optional)
+      // Save WhatsApp number (required)
       if (whatsappNumber) {
         const whatsappDialDigits = whatsappCountry.dial.replace(/\D/g, '');
         const whatsappPhoneDigits = whatsappNumber.replace(/\D/g, '');
@@ -176,6 +176,7 @@ export function PhoneNumberModal({
     isLoading ||
     isLoadingWarehouses ||
     (missingPhone && !phoneNumber) ||
+    (missingPhone && !whatsappNumber) ||
     (missingCity && !selectedCity) ||
     (missingWarehouse && !selectedWarehouse);
 
@@ -199,33 +200,30 @@ export function PhoneNumberModal({
           </View>
         </LinearGradient>
 
-        {/* Why We Ask - Info Card */}
-        <View style={[styles.infoCard, {
-          backgroundColor: colors.primary[50],
-          marginHorizontal: spacing.lg,
-          marginTop: spacing.lg,
-          marginBottom: spacing.md,
-          padding: spacing.md,
-          borderRadius: borderRadius.lg,
-          borderLeftWidth: 3,
-          borderLeftColor: colors.primary[600],
-        }]}>
-          <Text style={[styles.infoTitle, { fontFamily: fonts.semiBold, color: colors.primary[900], fontSize: 14, marginBottom: spacing.xs }]}>
-            💡 {t.phoneModal.whyWeAsk}
-          </Text>
-          <Text style={[styles.infoText, { fontFamily: fonts.regular, color: colors.primary[800], fontSize: 12, lineHeight: 18 }]}>
-            • {t.phoneModal.whyPhone}
-            {'\n'}• {t.phoneModal.whyCity}
-            {'\n'}• {t.phoneModal.whyWarehouse}
-          </Text>
-        </View>
-
         {/* Content */}
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[styles.content, { paddingHorizontal: spacing.lg, paddingTop: 0, paddingBottom: spacing.xl }]}
+          contentContainerStyle={[styles.content, { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.xl }]}
           showsVerticalScrollIndicator={false}
         >
+          {/* Why We Ask - Info Card */}
+          <View style={[styles.infoCard, {
+            backgroundColor: colors.primary[50],
+            marginBottom: spacing.md,
+            padding: spacing.md,
+            borderRadius: borderRadius.lg,
+            borderLeftWidth: 3,
+            borderLeftColor: colors.primary[600],
+          }]}>
+            <Text style={[styles.infoTitle, { fontFamily: fonts.semiBold, color: colors.primary[900], fontSize: 14, marginBottom: spacing.xs }]}>
+              💡 {t.phoneModal.whyWeAsk}
+            </Text>
+            <Text style={[styles.infoText, { fontFamily: fonts.regular, color: colors.primary[800], fontSize: 12, lineHeight: 18 }]}>
+              • {t.phoneModal.whyPhone}
+              {'\n'}• {t.phoneModal.whyCity}
+              {'\n'}• {t.phoneModal.whyWarehouse}
+            </Text>
+          </View>
           {/* Phone Number Section */}
           {missingPhone && (
             <View style={[styles.card, {
@@ -268,8 +266,8 @@ export function PhoneNumberModal({
                     Haptics.selectionAsync();
                   }}
                   style={[styles.modernInput, {
-                    backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
-                    borderColor: isDark ? colors.gray[700] : colors.gray[200],
+                    backgroundColor: colors.gray[100],
+                    borderColor: colors.gray[200],
                     borderRadius: borderRadius.xl,
                     paddingHorizontal: spacing.lg,
                     paddingVertical: spacing.md,
@@ -300,8 +298,8 @@ export function PhoneNumberModal({
                     placeholderTextColor={colors.gray[400]}
                     keyboardType="phone-pad"
                     style={[styles.phoneInput, {
-                      backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
-                      borderColor: isDark ? colors.gray[700] : colors.gray[200],
+                      backgroundColor: colors.gray[100],
+                      borderColor: colors.gray[200],
                       borderRadius: borderRadius.lg,
                       borderWidth: 1,
                       paddingHorizontal: spacing.md,
@@ -320,8 +318,8 @@ export function PhoneNumberModal({
                   <Text style={{ fontFamily: fonts.semiBold, color: colors.gray[700], fontSize: 14 }}>
                     💬 {t.phoneModal.phoneNumberWhatsApp}
                   </Text>
-                  <View style={{ backgroundColor: colors.green[100], paddingHorizontal: spacing.xs, paddingVertical: 2, borderRadius: borderRadius.sm, marginLeft: spacing.sm }}>
-                    <Text style={{ fontFamily: fonts.medium, color: colors.green[700], fontSize: 10 }}>OPTIONNEL</Text>
+                  <View style={{ backgroundColor: colors.red[100], paddingHorizontal: spacing.xs, paddingVertical: 2, borderRadius: borderRadius.sm, marginLeft: spacing.sm }}>
+                    <Text style={{ fontFamily: fonts.medium, color: colors.red[600], fontSize: 10 }}>{t.phoneModal.required || 'REQUIS'}</Text>
                   </View>
                 </View>
                 <Text style={{ fontFamily: fonts.regular, color: colors.gray[500], fontSize: 12, marginBottom: spacing.sm }}>
@@ -335,7 +333,7 @@ export function PhoneNumberModal({
                   }}
                   style={[styles.modernInput, {
                     backgroundColor: isDark ? colors.gray[800] : colors.green[50],
-                    borderColor: isDark ? colors.gray[700] : colors.green[200],
+                    borderColor: isDark ? colors.gray[700] : colors.green[100],
                     borderRadius: borderRadius.xl,
                     paddingHorizontal: spacing.lg,
                     paddingVertical: spacing.md,
@@ -355,7 +353,7 @@ export function PhoneNumberModal({
                     paddingHorizontal: spacing.md,
                     paddingVertical: spacing.md,
                   }]}>
-                    <Text style={{ fontFamily: fonts.semiBold, color: colors.green[700], fontSize: 15 }}>
+                    <Text style={{ fontFamily: fonts.semiBold, color: colors.green[600], fontSize: 15 }}>
                       {whatsappCountry.dial}
                     </Text>
                   </View>
@@ -367,7 +365,7 @@ export function PhoneNumberModal({
                     keyboardType="phone-pad"
                     style={[styles.phoneInput, {
                       backgroundColor: isDark ? colors.gray[800] : colors.green[50],
-                      borderColor: isDark ? colors.gray[700] : colors.green[200],
+                      borderColor: isDark ? colors.gray[700] : colors.green[100],
                       borderRadius: borderRadius.lg,
                       borderWidth: 1,
                       paddingHorizontal: spacing.md,
@@ -396,7 +394,7 @@ export function PhoneNumberModal({
               elevation: 3,
             }]}>
               <View style={styles.sectionHeader}>
-                <View style={[styles.labelIconContainer, { backgroundColor: colors.emerald[50] }]}>
+                <View style={[styles.labelIconContainer, { backgroundColor: colors.green[50] }]}>
                   <Text style={styles.labelIcon}>📍</Text>
                 </View>
                 <View style={{ flex: 1, marginLeft: spacing.md }}>
@@ -415,8 +413,8 @@ export function PhoneNumberModal({
                   Haptics.selectionAsync();
                 }}
                 style={[styles.modernInput, {
-                  backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
-                  borderColor: isDark ? colors.gray[700] : colors.gray[200],
+                  backgroundColor: colors.gray[100],
+                  borderColor: colors.gray[200],
                   borderRadius: borderRadius.xl,
                   paddingHorizontal: spacing.lg,
                   paddingVertical: spacing.lg,
@@ -445,7 +443,7 @@ export function PhoneNumberModal({
               elevation: 3,
             }]}>
               <View style={styles.sectionHeader}>
-                <View style={[styles.labelIconContainer, { backgroundColor: colors.orange[50] }]}>
+                <View style={[styles.labelIconContainer, { backgroundColor: colors.yellow[50] }]}>
                   <Text style={styles.labelIcon}>🏢</Text>
                 </View>
                 <View style={{ flex: 1, marginLeft: spacing.md }}>
@@ -472,7 +470,7 @@ export function PhoneNumberModal({
                   padding: spacing.lg,
                   marginTop: spacing.lg,
                 }]}>
-                  <Text style={{ fontFamily: fonts.medium, color: colors.yellow[800], textAlign: 'center', fontSize: 14 }}>
+                  <Text style={{ fontFamily: fonts.medium, color: colors.yellow[600], textAlign: 'center', fontSize: 14 }}>
                     {t.phoneModal.noWarehousesAvailable}
                   </Text>
                 </View>
@@ -484,8 +482,8 @@ export function PhoneNumberModal({
                       Haptics.selectionAsync();
                     }}
                     style={[styles.modernInput, {
-                      backgroundColor: isDark ? colors.gray[800] : colors.gray[50],
-                      borderColor: isDark ? colors.gray[700] : colors.gray[200],
+                      backgroundColor: colors.gray[100],
+                      borderColor: colors.gray[200],
                       borderRadius: borderRadius.xl,
                       paddingHorizontal: spacing.lg,
                       paddingVertical: spacing.lg,
@@ -726,10 +724,10 @@ export function PhoneNumberModal({
                       borderColor: colors.green[600],
                     }]}
                   >
-                    <Text style={{ fontFamily: fonts.semiBold, color: whatsappCountry.code === country.code ? colors.green[900] : colors.gray[900], fontSize: 16 }}>
+                    <Text style={{ fontFamily: fonts.semiBold, color: whatsappCountry.code === country.code ? colors.green[600] : colors.gray[900], fontSize: 16 }}>
                       {country.flag}  {getCountryName(country, locale)}
                     </Text>
-                    <Text style={{ fontFamily: fonts.regular, color: whatsappCountry.code === country.code ? colors.green[700] : colors.gray[600], fontSize: 14, marginTop: 2 }}>
+                    <Text style={{ fontFamily: fonts.regular, color: whatsappCountry.code === country.code ? colors.green[600] : colors.gray[600], fontSize: 14, marginTop: 2 }}>
                       {country.dial}
                     </Text>
                   </TouchableOpacity>
@@ -802,7 +800,7 @@ export function PhoneNumberModal({
                           Haptics.selectionAsync();
                         }}
                         style={[styles.pickerItemCard, {
-                          backgroundColor: selectedCity === city ? colors.emerald[50] : colors.gray[50],
+                          backgroundColor: selectedCity === city ? colors.green[50] : colors.gray[50],
                           borderRadius: borderRadius.lg,
                           paddingHorizontal: spacing.lg,
                           paddingVertical: spacing.md + 2,
@@ -814,7 +812,7 @@ export function PhoneNumberModal({
                           justifyContent: 'space-between',
                         }]}
                       >
-                        <Text style={{ fontFamily: fonts.semiBold, color: selectedCity === city ? colors.emerald[900] : colors.gray[900], fontSize: 16 }}>
+                        <Text style={{ fontFamily: fonts.semiBold, color: selectedCity === city ? colors.emerald[600] : colors.gray[900], fontSize: 16 }}>
                           📍 {city}
                         </Text>
                         {selectedCity === city && (
@@ -877,7 +875,7 @@ export function PhoneNumberModal({
                       Haptics.selectionAsync();
                     }}
                     style={[styles.pickerItemCard, {
-                      backgroundColor: selectedWarehouse === warehouse.id ? colors.orange[50] : colors.gray[50],
+                      backgroundColor: selectedWarehouse === warehouse.id ? colors.yellow[50] : colors.gray[50],
                       borderRadius: borderRadius.lg,
                       padding: spacing.md,
                       marginVertical: spacing.xs,
@@ -887,14 +885,14 @@ export function PhoneNumberModal({
                   >
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontFamily: fonts.bold, color: selectedWarehouse === warehouse.id ? colors.orange[900] : colors.gray[900], fontSize: 16, marginBottom: spacing.xs }}>
+                        <Text style={{ fontFamily: fonts.bold, color: selectedWarehouse === warehouse.id ? colors.orange[600] : colors.gray[900], fontSize: 16, marginBottom: spacing.xs }}>
                           🏢 {warehouse.name}
                         </Text>
-                        <Text style={{ fontFamily: fonts.regular, color: selectedWarehouse === warehouse.id ? colors.orange[800] : colors.gray[600], fontSize: 14, lineHeight: 20 }}>
+                        <Text style={{ fontFamily: fonts.regular, color: selectedWarehouse === warehouse.id ? colors.orange[600] : colors.gray[600], fontSize: 14, lineHeight: 20 }}>
                           📍 {warehouse.address}
                         </Text>
                         {warehouse.phone && (
-                          <Text style={{ fontFamily: fonts.regular, color: selectedWarehouse === warehouse.id ? colors.orange[800] : colors.gray[600], fontSize: 14, marginTop: spacing.xs }}>
+                          <Text style={{ fontFamily: fonts.regular, color: selectedWarehouse === warehouse.id ? colors.orange[600] : colors.gray[600], fontSize: 14, marginTop: spacing.xs }}>
                             📞 {warehouse.phone}
                           </Text>
                         )}

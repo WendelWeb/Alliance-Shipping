@@ -23,8 +23,6 @@ import {
   ChevronRight,
   LogOut,
   Calculator,
-  CreditCard,
-  MapPinned,
   Clock,
   Bell,
   HelpCircle,
@@ -36,6 +34,8 @@ import {
   X,
   Fingerprint,
   ScanFace,
+  Warehouse,
+  Copy,
 } from 'lucide-react-native';
 import { useTheme, themes, ACCENT_PRESETS } from '@/lib/themes/ThemeProvider';
 import type { ThemeDefinition } from '@/lib/themes/definitions';
@@ -192,6 +192,8 @@ export default function ProfileScreen() {
     delivered: 0,
   });
   const [userCity, setUserCity] = useState<string | null>(null);
+  const [userPhone, setUserPhone] = useState<string | null>(null);
+  const [userWhatsapp, setUserWhatsapp] = useState<string | null>(null);
 
   // Load biometric settings and fetch package stats
   useEffect(() => {
@@ -237,6 +239,12 @@ export default function ProfileScreen() {
             if (data.user?.city) {
               setUserCity(data.user.city);
             }
+            if (data.user?.phone) {
+              setUserPhone(data.user.phone);
+            }
+            if (data.user?.whatsappPhone) {
+              setUserWhatsapp(data.user.whatsappPhone);
+            }
           })
           .catch((err) => {
             console.error('Error fetching user city:', err);
@@ -262,7 +270,7 @@ export default function ProfileScreen() {
 
   const handleRequestPackage = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.push('/claim-package');
+    router.push('/(tabs)/packages?openRequest=true');
   };
 
   const handleBiometricToggle = async (value: boolean) => {
@@ -285,16 +293,15 @@ export default function ProfileScreen() {
   const colorThemes = themes.filter((t) => t.category === 'color');
 
   const menuItems: MenuItem[] = [
-    { icon: <Package size={20} color={colors.primary[600]} />, label: t.profile.menuItems.myPackages, route: '/(tabs)/packages' },
-    { icon: <Send size={20} color={colors.purple[600]} />, label: t.profile.menuItems.requestPackage, onPress: handleRequestPackage },
+    { icon: <Settings size={20} color={colors.gray[600]} />, label: t.profile.menuItems.profileSettings, route: '/(tabs)/profile/settings' },
+    { icon: <Warehouse size={20} color={colors.orange[600]} />, label: t.profile.menuItems.shippingAddress, route: '/(tabs)/profile/shipping-address' },
     { icon: <Gift size={20} color={colors.yellow[600]} />, label: t.profile.menuItems.rewards, route: '/(tabs)/profile/rewards' },
     { icon: <Calculator size={20} color={colors.emerald[600]} />, label: t.profile.menuItems.priceCalculator, route: '/(tabs)/calculator' },
-    { icon: <CreditCard size={20} color={colors.orange[600]} />, label: t.profile.menuItems.paymentMethods, route: '/(tabs)/profile/payment' },
-    { icon: <MapPinned size={20} color={colors.primary[600]} />, label: t.profile.menuItems.myAddresses, route: '/(tabs)/profile/addresses' },
     { icon: <Clock size={20} color={colors.yellow[600]} />, label: t.profile.menuItems.history, route: '/(tabs)/profile/history' },
     { icon: <Bell size={20} color={colors.red[500]} />, label: t.profile.menuItems.notifications, route: '/(tabs)/profile/notifications' },
     { icon: <HelpCircle size={20} color={colors.green[600]} />, label: t.profile.menuItems.support, route: '/(tabs)/profile/support' },
-    { icon: <Settings size={20} color={colors.gray[600]} />, label: t.profile.menuItems.profileSettings, route: '/(tabs)/profile/settings' },
+    { icon: <Package size={20} color={colors.primary[600]} />, label: t.profile.menuItems.myPackages, route: '/(tabs)/packages' },
+    { icon: <Send size={20} color={colors.purple[600]} />, label: t.profile.menuItems.requestPackage, onPress: handleRequestPackage },
   ];
 
   const handleMenuPress = (item: MenuItem) => {
@@ -530,8 +537,11 @@ export default function ProfileScreen() {
                   {user?.firstName} {user?.lastName}
                 </Text>
                 <Text style={styles.headerEmail} numberOfLines={1}>{user?.primaryEmailAddress?.emailAddress}</Text>
-                {user?.primaryPhoneNumber?.phoneNumber ? (
-                  <Text style={styles.headerPhone} numberOfLines={1}>📞 {user.primaryPhoneNumber.phoneNumber}</Text>
+                {userPhone ? (
+                  <Text style={styles.headerPhone} numberOfLines={1}>📞 {userPhone}</Text>
+                ) : null}
+                {userWhatsapp ? (
+                  <Text style={styles.headerPhone} numberOfLines={1}>💬 {userWhatsapp}</Text>
                 ) : null}
                 {userCity ? (
                   <Text style={styles.headerPhone} numberOfLines={1}>📍 {userCity}</Text>
@@ -541,8 +551,52 @@ export default function ProfileScreen() {
           </LinearGradient>
         </Animated.View>
 
+        {/* Shipping Address Card */}
+        <Animated.View entering={FadeInDown.delay(80).duration(500).springify().damping(18)}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.push('/(tabs)/profile/shipping-address' as any);
+            }}
+            style={[
+              styles.shippingCard,
+              shadows.md,
+              {
+                backgroundColor: card.backgroundColor,
+                borderColor: card.borderColor,
+                borderWidth: card.borderWidth,
+              },
+            ]}
+          >
+            <View style={styles.shippingCardRow}>
+              <View style={[styles.shippingIconCircle, { backgroundColor: isDark ? colors.gray[200] : colors.primary[50] }]}>
+                <Warehouse size={22} color={colors.primary[600]} />
+              </View>
+              <View style={styles.shippingCardInfo}>
+                <Text style={[styles.shippingCardTitle, { fontFamily: fonts.headingSemiBold, color: colors.gray[900] }]}>
+                  {t.profile.shippingAddress.cardTitle}
+                </Text>
+                <Text style={[styles.shippingCardCode, { fontFamily: fonts.headingBold, color: colors.primary[600] }]}>
+                  PQ-068508
+                </Text>
+                <Text style={[styles.shippingCardAddress, { fontFamily: fonts.regular, color: colors.gray[500] }]} numberOfLines={1}>
+                  8298 NW 68th St, Miami FL 33195
+                </Text>
+              </View>
+              <ChevronRight size={20} color={colors.gray[400]} />
+            </View>
+            <View style={[styles.shippingCardFooter, { borderTopColor: colors.gray[200] }]}>
+              <Copy size={14} color={colors.primary[600]} />
+              <Text style={[styles.shippingCardFooterText, { fontFamily: fonts.semiBold, color: colors.primary[600] }]}>
+                {t.profile.shippingAddress.viewTemplate}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+
         {/* Language */}
-        <Animated.View entering={FadeInDown.delay(100).duration(500).springify().damping(18)}>
+        <Animated.View entering={FadeInDown.delay(140).duration(500).springify().damping(18)}>
           <Text style={[styles.sectionTitle, { fontFamily: fonts.headingSemiBold, color: colors.gray[800] }]}>{t.profile.language}</Text>
           <View style={styles.languageGrid}>
             {locales.map((loc) => (
@@ -743,6 +797,17 @@ const styles = StyleSheet.create({
   accentGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   accentSwatch: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   accentSwatchSelected: { borderWidth: 3, borderColor: 'rgba(255,255,255,0.8)' },
+
+  // Shipping Address Card
+  shippingCard: { borderRadius: 20, padding: 16, marginBottom: 20 },
+  shippingCardRow: { flexDirection: 'row', alignItems: 'center' },
+  shippingIconCircle: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  shippingCardInfo: { flex: 1 },
+  shippingCardTitle: { fontSize: 15, marginBottom: 2 },
+  shippingCardCode: { fontSize: 18, letterSpacing: 1, marginBottom: 2 },
+  shippingCardAddress: { fontSize: 12 },
+  shippingCardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderTopWidth: 1, marginTop: 12, paddingTop: 10, gap: 6 },
+  shippingCardFooterText: { fontSize: 13 },
 
   // Biometric Card
   biometricCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 20, padding: 14, marginBottom: 20 },

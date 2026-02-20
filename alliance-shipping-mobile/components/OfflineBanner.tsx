@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 import { WifiOff } from 'lucide-react-native';
 import { useTheme } from '@/lib/themes/ThemeProvider';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface OfflineBannerProps {
   visible: boolean;
@@ -11,26 +12,29 @@ interface OfflineBannerProps {
 
 export function OfflineBanner({ visible, lastSync }: OfflineBannerProps) {
   const { colors, fonts } = useTheme();
+  const { t } = useTranslation();
 
   if (!visible) return null;
 
   const syncText = lastSync
-    ? `Last synced: ${new Date(lastSync).toLocaleTimeString()}`
-    : 'No data synced yet';
+    ? new Date(lastSync).toLocaleTimeString()
+    : '';
 
   return (
     <Animated.View
       entering={FadeInUp.duration(300)}
       exiting={FadeOutUp.duration(200)}
-      style={[styles.container, { backgroundColor: colors.primary[600] }]}
+      style={[styles.container, { backgroundColor: colors.yellow[600] }]}
     >
-      <WifiOff size={14} color={colors.white} />
-      <Text style={[styles.text, { color: colors.white, fontFamily: fonts.medium }]}>
-        Offline Mode
+      <WifiOff size={14} color="#fff" />
+      <Text style={[styles.text, { color: '#fff', fontFamily: fonts.semiBold }]}>
+        {(t.common as any).offline || 'Mode hors ligne'}
       </Text>
-      <Text style={[styles.syncText, { color: 'rgba(255,255,255,0.7)', fontFamily: fonts.regular }]}>
-        {syncText}
-      </Text>
+      {syncText ? (
+        <Text style={[styles.syncText, { color: 'rgba(255,255,255,0.8)', fontFamily: fonts.regular }]}>
+          ({syncText})
+        </Text>
+      ) : null}
     </Animated.View>
   );
 }
