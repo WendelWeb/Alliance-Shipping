@@ -30,6 +30,7 @@ interface InTransitPackage {
   userEmail: string;
   destination: string;
   weight: number;
+  quantity: number;
   totalFee: number;
   customsFees: number; // ⭐ Customs fees
   totalCost: number; // ⭐ Total cost for modal
@@ -74,6 +75,7 @@ export default function InTransitPackagesPage() {
       userEmail: pkg.user?.email || 'N/A',
       destination: pkg.user?.city || '-',
       weight: parseFloat(pkg.weight) || 0,
+      quantity: parseInt(pkg.quantity) || 1,
       totalFee: parseFloat(pkg.totalCost) || 0,
       customsFees: parseFloat(pkg.customsFees) || 0, // ⭐ Extract customs fees
       totalCost: parseFloat(pkg.totalCost) || 0, // ⭐ For modal
@@ -309,6 +311,10 @@ export default function InTransitPackagesPage() {
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Package className="h-4 w-4 text-gray-400" />
+                      <span className="text-gray-600">Quantite: {pkg.quantity || 1}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Package className="h-4 w-4 text-gray-400" />
                       <span className="text-gray-600">Weight: {pkg.weight} lbs</span>
                     </div>
                   </div>
@@ -399,6 +405,10 @@ export default function InTransitPackagesPage() {
                       <span className="ml-2 font-bold text-gray-900">
                         ${pkg.totalFee.toFixed(2)}
                       </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Quantite:</span>
+                      <span className="ml-2 font-semibold text-gray-900">{pkg.quantity || 1}</span>
                     </div>
                     <div>
                       <span className="text-gray-600">Weight:</span>

@@ -35,6 +35,7 @@ interface ReceivedPackage {
   receivedAt: string;
   weight: number;
   declaredValue: number;
+  quantity: number;
   specialItemId: number | null;
   locationDetails: string;
   photos: string[];
@@ -79,6 +80,7 @@ export default function ReceivedPackagesPage() {
       description: pkg.description,
       receivedAt: pkg.createdAt,
       weight: parseFloat(pkg.weight) || 0,
+      quantity: parseInt(pkg.quantity) || 1,
       declaredValue: 0,
       specialItemId: pkg.specialItemId,
       locationDetails: pkg.locationDetails?.warehouse || 'Warehouse A',
@@ -308,7 +310,7 @@ export default function ReceivedPackagesPage() {
                 <div className="bg-gray-50 rounded-lg p-3 mb-4">
                   <p className="text-sm text-gray-700">{pkg.description}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Declared Value: ${pkg.declaredValue.toFixed(2)}
+                    Quantite: {pkg.quantity || 1} | Declared Value: ${pkg.declaredValue.toFixed(2)}
                   </p>
                 </div>
 

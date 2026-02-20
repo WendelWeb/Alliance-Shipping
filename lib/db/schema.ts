@@ -29,6 +29,7 @@ export const packages = pgTable('packages', {
 
   // Package Details
   description: text('description'),
+  quantity: integer('quantity').default(1).notNull(),
   weight: decimal('weight', { precision: 10, scale: 2 }),
   weightUnit: varchar('weight_unit', { length: 10 }).default('lbs').notNull(),
   dimensions: json('dimensions').$type<{ length: number; width: number; height: number }>(),

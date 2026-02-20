@@ -33,6 +33,7 @@ interface AvailablePackage {
   userPhone: string;
   destination: string;
   weight: number;
+  quantity: number;
   totalFee: number;
   customsFees: number; // ⭐ Customs fees
   totalCost: number; // ⭐ Total cost for modal
@@ -76,6 +77,7 @@ export default function AvailablePackagesPage() {
       userPhone: pkg.user?.phone || 'N/A',
       destination: pkg.user?.city || '-',
       weight: parseFloat(pkg.weight) || 0,
+      quantity: parseInt(pkg.quantity) || 1,
       totalFee: parseFloat(pkg.totalCost) || 0,
       customsFees: parseFloat(pkg.customsFees) || 0, // ⭐ Extract customs fees
       totalCost: parseFloat(pkg.totalCost) || 0, // ⭐ For modal
@@ -366,6 +368,10 @@ export default function AvailablePackagesPage() {
                   <div className="flex items-center gap-2 text-sm">
                     <MapPin className="h-4 w-4 text-gray-400" />
                     <span className="text-gray-600">{pkg.pickupLocation}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Package className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-600">Quantite: {pkg.quantity || 1}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Package className="h-4 w-4 text-gray-400" />
