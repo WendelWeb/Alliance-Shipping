@@ -64,8 +64,8 @@ const CITY_COLORS: Record<string, string> = {
 };
 const CITY_FALLBACKS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'];
 
-const PAYMENT_COLORS: Record<string, string> = {
-  cash: '#22c55e', card: '#3b82f6', mobile: '#8b5cf6', bank_transfer: '#f59e0b', Inconnu: '#9ca3af',
+const STATUS_COLORS: Record<string, string> = {
+  pending: '#eab308', received: '#3b82f6', 'in-transit': '#8b5cf6', available: '#22c55e', delivered: '#14b8a6', Inconnu: '#9ca3af',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -342,10 +342,10 @@ export default function AnalyticsPage() {
           )}
         </motion.div>
 
-        {/* Payment Methods */}
+        {/* Revenue par Statut */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
           className="theme-card rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-          <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">Methodes de Paiement</h2>
+          <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">Revenue par Statut</h2>
           {data.paymentMethods.length > 0 ? (
             <>
               <div className="h-56 sm:h-64">
@@ -353,7 +353,7 @@ export default function AnalyticsPage() {
                   <PieChart>
                     <Pie data={data.paymentMethods} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="revenue" nameKey="method">
                       {data.paymentMethods.map((entry) => (
-                        <Cell key={entry.method} fill={PAYMENT_COLORS[entry.method] || '#9ca3af'} />
+                        <Cell key={entry.method} fill={STATUS_COLORS[entry.method] || '#9ca3af'} />
                       ))}
                     </Pie>
                     <Tooltip formatter={(value: number | undefined) => [fmt$(value ?? 0)]} contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: '13px' }} />
@@ -363,8 +363,8 @@ export default function AnalyticsPage() {
               <div className="space-y-2 mt-2">
                 {data.paymentMethods.map((pm) => (
                   <div key={pm.method} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
-                    <div className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: PAYMENT_COLORS[pm.method] || '#9ca3af' }} />
-                    <span className="text-sm text-gray-700 flex-1 capitalize">{pm.method.replace('_', ' ')}</span>
+                    <div className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: STATUS_COLORS[pm.method] || '#9ca3af' }} />
+                    <span className="text-sm text-gray-700 flex-1">{STATUS_LABELS[pm.method] || pm.method}</span>
                     <span className="text-sm font-semibold text-gray-900">{fmt$(pm.revenue)}</span>
                     <span className="text-xs text-gray-400">{pm.percentage}%</span>
                   </div>

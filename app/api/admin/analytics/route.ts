@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import {
-  packages, users, revenueRecords, packageRequests,
+  packages, users, packageRequests,
   packageTransfers, loyaltyCredits, adminActivityLogs,
   admins, specialItemFees, trackingHistory,
 } from '@/lib/db/schema';
@@ -103,13 +103,13 @@ export async function GET(request: NextRequest) {
     // ── Build all queries in parallel ──────────────────────────────────
     const queries: Promise<any>[] = [];
 
-    // A1: Current revenue (from revenueRecords)
+    // A1: Current revenue (from packages.totalCost)
     queries.push(
       db.select({
-        total: sql<string>`COALESCE(SUM(CAST(${revenueRecords.amount} AS DECIMAL)), 0)`,
+        total: sql<string>`COALESCE(SUM(CAST(${packages.totalCost} AS DECIMAL)), 0)`,
       })
-      .from(revenueRecords)
-      .where(and(gte(revenueRecords.paymentDate, cs), lte(revenueRecords.paymentDate, ce)))
+      .from(packages)
+      .where(and(gte(packages.createdAt, cs), lte(packages.createdAt, ce)))
     ); // 0
 
     // A2: Current packages count (all statuses)
@@ -153,9 +153,9 @@ export async function GET(request: NextRequest) {
     if (dates.previous) {
       const { start: ps, end: pe } = dates.previous;
       queries.push(
-        db.select({ total: sql<string>`COALESCE(SUM(CAST(${revenueRecords.amount} AS DECIMAL)), 0)` })
-        .from(revenueRecords)
-        .where(and(gte(revenueRecords.paymentDate, ps), lte(revenueRecords.paymentDate, pe)))
+        db.select({ total: sql<string>`COALESCE(SUM(CAST(${packages.totalCost} AS DECIMAL)), 0)` })
+        .from(packages)
+        .where(and(gte(packages.createdAt, ps), lte(packages.createdAt, pe)))
       ); // 6
       queries.push(
         db.select({ count: sql<number>`COUNT(*)` })
@@ -184,17 +184,17 @@ export async function GET(request: NextRequest) {
       ); // 11
     }
 
-    // B: Revenue trend
+    // B: Revenue trend (from packages.totalCost)
     const trendIdx = queries.length;
     queries.push(
       db.select({
-        date: sql<string>`TO_CHAR(${revenueRecords.paymentDate}, ${sql.raw(`'${dateFormat}'`)})`,
-        revenue: sql<string>`COALESCE(SUM(CAST(${revenueRecords.amount} AS DECIMAL)), 0)`,
+        date: sql<string>`TO_CHAR(${packages.createdAt}, ${sql.raw(`'${dateFormat}'`)})`,
+        revenue: sql<string>`COALESCE(SUM(CAST(${packages.totalCost} AS DECIMAL)), 0)`,
       })
-      .from(revenueRecords)
-      .where(and(gte(revenueRecords.paymentDate, cs), lte(revenueRecords.paymentDate, ce)))
-      .groupBy(sql`TO_CHAR(${revenueRecords.paymentDate}, ${sql.raw(`'${dateFormat}'`)})`)
-      .orderBy(sql`TO_CHAR(${revenueRecords.paymentDate}, ${sql.raw(`'${dateFormat}'`)})`)
+      .from(packages)
+      .where(and(gte(packages.createdAt, cs), lte(packages.createdAt, ce)))
+      .groupBy(sql`TO_CHAR(${packages.createdAt}, ${sql.raw(`'${dateFormat}'`)})`)
+      .orderBy(sql`TO_CHAR(${packages.createdAt}, ${sql.raw(`'${dateFormat}'`)})`)
     );
 
     // C: Packages trend
@@ -458,17 +458,17 @@ export async function GET(request: NextRequest) {
       `)
     );
 
-    // L: Payment methods
+    // L: Revenue by status (from packages)
     const paymentIdx = queries.length;
     queries.push(
       db.select({
-        method: revenueRecords.paymentMethod,
+        method: packages.status,
         count: sql<number>`COUNT(*)`,
-        revenue: sql<string>`COALESCE(SUM(CAST(${revenueRecords.amount} AS DECIMAL)), 0)`,
+        revenue: sql<string>`COALESCE(SUM(CAST(${packages.totalCost} AS DECIMAL)), 0)`,
       })
-      .from(revenueRecords)
-      .where(and(gte(revenueRecords.paymentDate, cs), lte(revenueRecords.paymentDate, ce)))
-      .groupBy(revenueRecords.paymentMethod)
+      .from(packages)
+      .where(and(gte(packages.createdAt, cs), lte(packages.createdAt, ce)))
+      .groupBy(packages.status)
     );
 
     // ── Execute all queries in parallel ───────────────────────────────
