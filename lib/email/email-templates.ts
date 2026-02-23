@@ -1508,3 +1508,198 @@ export const sendPackageReminderEmail = async (
 
   return sendEmail({ to: userEmail, subject, html });
 };
+
+// ==================== BUNDLE DELIVERED EMAIL ====================
+
+interface BundlePackageInfo {
+  trackingNumber: string;
+  weight: number;
+  serviceFee: number;
+  weightCost: number;
+  customsFees: number;
+  totalCost: number;
+  bundleTotalCost: number;
+}
+
+export const sendBundleDeliveredEmail = async (
+  userEmail: string,
+  userName: string,
+  bundlePackages: BundlePackageInfo[],
+  savings: number,
+  totalPoints: number,
+  locale: string = 'fr'
+) => {
+  type Loc = 'ht' | 'fr' | 'en' | 'es';
+  const lang = (['ht', 'fr', 'en', 'es'].includes(locale) ? locale : 'fr') as Loc;
+  const count = bundlePackages.length;
+
+  const translations: Record<Loc, Record<string, string>> = {
+    fr: {
+      subject: '\u{1F4E6}\u2728 Bundle Livr\u00e9 \u2014 ' + count + ' colis - Alliance Shipping',
+      headerTitle: 'Bundle Livr\u00e9 !',
+      greeting: 'F\u00e9licitations ' + userName + ' !',
+      body: 'Vos ' + count + ' colis ont \u00e9t\u00e9 livr\u00e9s ensemble en bundle.',
+      packagesTitle: 'Colis dans le Bundle',
+      trackingCol: 'Tracking',
+      weightCol: 'Poids',
+      serviceCol: 'Service',
+      totalCol: 'Total',
+      firstPkg: '1er colis',
+      extraPkg: 'Service $0',
+      savingsTitle: '\u00c9conomie Bundle',
+      originalLabel: 'Total original :',
+      savingsLabel: '\u00c9conomie :',
+      bundleTotalLabel: 'Total Bundle :',
+      oneFeeNote: '1 seul frais de service au lieu de ' + count,
+      pointsTitle: 'Points de Fid\u00e9lit\u00e9',
+      pointsEarned: 'Vous avez gagn\u00e9 ' + totalPoints + ' points avec ce bundle !',
+      buttonLabel: 'Voir Mes Colis',
+      thankYou: 'Merci d\'avoir choisi Alliance Shipping !',
+      footerText: 'Alliance Shipping - Exp\u00e9dition Fiable des USA vers Ha\u00efti',
+      automated: 'Ceci est un message automatique, merci de ne pas r\u00e9pondre.',
+    },
+    en: {
+      subject: '\u{1F4E6}\u2728 Bundle Delivered \u2014 ' + count + ' packages - Alliance Shipping',
+      headerTitle: 'Bundle Delivered!',
+      greeting: 'Congratulations ' + userName + '!',
+      body: 'Your ' + count + ' packages have been delivered together as a bundle.',
+      packagesTitle: 'Packages in Bundle',
+      trackingCol: 'Tracking',
+      weightCol: 'Weight',
+      serviceCol: 'Service',
+      totalCol: 'Total',
+      firstPkg: '1st package',
+      extraPkg: 'Service $0',
+      savingsTitle: 'Bundle Savings',
+      originalLabel: 'Original total:',
+      savingsLabel: 'Savings:',
+      bundleTotalLabel: 'Bundle total:',
+      oneFeeNote: '1 service fee instead of ' + count,
+      pointsTitle: 'Loyalty Points',
+      pointsEarned: 'You earned ' + totalPoints + ' points with this bundle!',
+      buttonLabel: 'View My Packages',
+      thankYou: 'Thank you for choosing Alliance Shipping!',
+      footerText: 'Alliance Shipping - Reliable Shipping from USA to Haiti',
+      automated: 'This is an automated message, please do not reply to this email.',
+    },
+    ht: {
+      subject: '\u{1F4E6}\u2728 Bundle Livre \u2014 ' + count + ' kolis - Alliance Shipping',
+      headerTitle: 'Bundle Livre !',
+      greeting: 'Felisitasyon ' + userName + ' !',
+      body: count + ' kolis ou yo livre ansanm nan yon bundle.',
+      packagesTitle: 'Kolis nan Bundle',
+      trackingCol: 'Tracking',
+      weightCol: 'Pwa',
+      serviceCol: 'S\u00e8vis',
+      totalCol: 'Total',
+      firstPkg: '1ye kolis',
+      extraPkg: 'S\u00e8vis $0',
+      savingsTitle: 'Ekonomi Bundle',
+      originalLabel: 'Total orijinal :',
+      savingsLabel: 'Ekonomi :',
+      bundleTotalLabel: 'Total Bundle :',
+      oneFeeNote: '1 s\u00e8l fr\u00e8 s\u00e8vis olye de ' + count,
+      pointsTitle: 'Pwen Fidelite',
+      pointsEarned: 'Ou genyen ' + totalPoints + ' pwen av\u00e8k bundle sa a !',
+      buttonLabel: 'W\u00e8 Kolis Mwen Yo',
+      thankYou: 'M\u00e8si paske ou chwazi Alliance Shipping !',
+      footerText: 'Alliance Shipping - Livrezon Fyab soti nan USA pou ale an Ayiti',
+      automated: 'Sa a se yon mesaj otomatik, tanpri pa reponn im\u00e8l sa a.',
+    },
+    es: {
+      subject: '\u{1F4E6}\u2728 Bundle Entregado \u2014 ' + count + ' paquetes - Alliance Shipping',
+      headerTitle: '\u00a1Bundle Entregado!',
+      greeting: '\u00a1Felicidades ' + userName + '!',
+      body: 'Sus ' + count + ' paquetes han sido entregados juntos como bundle.',
+      packagesTitle: 'Paquetes en el Bundle',
+      trackingCol: 'Seguimiento',
+      weightCol: 'Peso',
+      serviceCol: 'Servicio',
+      totalCol: 'Total',
+      firstPkg: '1er paquete',
+      extraPkg: 'Servicio $0',
+      savingsTitle: 'Ahorro Bundle',
+      originalLabel: 'Total original:',
+      savingsLabel: 'Ahorro:',
+      bundleTotalLabel: 'Total Bundle:',
+      oneFeeNote: '1 tarifa de servicio en vez de ' + count,
+      pointsTitle: 'Puntos de Fidelidad',
+      pointsEarned: '\u00a1Gan\u00f3 ' + totalPoints + ' puntos con este bundle!',
+      buttonLabel: 'Ver Mis Paquetes',
+      thankYou: '\u00a1Gracias por elegir Alliance Shipping!',
+      footerText: 'Alliance Shipping - Env\u00edos Confiables de USA a Hait\u00ed',
+      automated: 'Este es un mensaje autom\u00e1tico, por favor no responda.',
+    },
+  };
+
+  const s = translations[lang];
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const originalTotal = bundlePackages.reduce((sum, p) => sum + p.totalCost, 0);
+  const bundleTotal = originalTotal - savings;
+
+  const packageRows = bundlePackages.map((pkg, i) => {
+    const bgColor = i === 0 ? '#ffffff' : '#f0fdf4';
+    const serviceHtml = i === 0
+      ? '<span style="font-size:13px;">$' + pkg.serviceFee.toFixed(2) + '</span>'
+      : '<span style="color:#16a34a;font-weight:600;font-size:13px;">$0.00</span>';
+    const badge = i === 0 ? s.firstPkg : s.extraPkg;
+    const strikethrough = i > 0
+      ? '<span style="text-decoration:line-through;color:#9ca3af;font-size:11px;">$' + pkg.totalCost.toFixed(2) + '</span><br>'
+      : '';
+    return '<tr style="background:' + bgColor + ';">'
+      + '<td style="padding:10px 12px;font-family:monospace;font-size:13px;font-weight:600;">' + pkg.trackingNumber + '</td>'
+      + '<td style="padding:10px 8px;text-align:center;font-size:13px;">' + pkg.weight + ' lbs</td>'
+      + '<td style="padding:10px 8px;text-align:center;">' + serviceHtml + '<br><span style="font-size:10px;color:#9ca3af;">' + badge + '</span></td>'
+      + '<td style="padding:10px 12px;text-align:right;font-weight:600;font-size:13px;">' + strikethrough + '$' + pkg.bundleTotalCost.toFixed(2) + '</td>'
+      + '</tr>';
+  }).join('');
+
+  const pointsSection = totalPoints > 0
+    ? '<div class="card" style="text-align:center;"><h3>\u{1F31F} ' + s.pointsTitle + '</h3><p style="font-size:24px;font-weight:800;color:#7c3aed;">' + totalPoints + ' pts</p><p style="color:#6b7280;font-size:14px;">' + s.pointsEarned + '</p></div>'
+    : '';
+
+  const colisLabel = lang === 'en' ? 'packages' : lang === 'es' ? 'paquetes' : 'colis';
+
+  const html = '<!DOCTYPE html><html lang="' + lang + '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>'
+    + 'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.6;color:#1f2937;margin:0;padding:0;background:#f3f4f6;}'
+    + '.wrapper{padding:20px;}'
+    + '.container{max-width:600px;margin:0 auto;}'
+    + '.header{background:linear-gradient(135deg,#7c3aed 0%,#4f46e5 100%);color:white;padding:32px 24px;text-align:center;border-radius:12px 12px 0 0;}'
+    + '.header h1{margin:0;font-size:22px;font-weight:700;}'
+    + '.header p{margin:8px 0 0;font-size:14px;opacity:0.9;}'
+    + '.content{background:#ffffff;padding:32px 24px;border-radius:0 0 12px 12px;}'
+    + '.card{background:#f9fafb;padding:20px;border-radius:10px;margin:20px 0;border:1px solid #e5e7eb;}'
+    + '.savings-card{background:linear-gradient(135deg,#ecfdf5,#d1fae5);padding:20px;border-radius:10px;margin:20px 0;border:2px solid #86efac;}'
+    + '.btn-container{text-align:center;margin:24px 0;}'
+    + '.button{display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#7c3aed 0%,#4f46e5 100%);color:#ffffff !important;text-decoration:none;border-radius:8px;font-weight:600;font-size:15px;}'
+    + '.footer{text-align:center;padding:24px;color:#9ca3af;font-size:12px;}'
+    + '.footer p{margin:4px 0;}'
+    + '.divider{height:1px;background:#e5e7eb;margin:24px 0;}'
+    + 'h3{color:#1f2937;font-size:15px;margin:0 0 12px;}'
+    + '</style></head><body><div class="wrapper"><div class="container">'
+    + '<div class="header"><h1>\u{1F4E6}\u2728 ' + s.headerTitle + '</h1><p>' + count + ' ' + colisLabel + ' \u2022 Bundle Delivery</p></div>'
+    + '<div class="content">'
+    + '<p>' + s.greeting + '</p><p>' + s.body + '</p>'
+    + '<div class="card"><h3>' + s.packagesTitle + '</h3>'
+    + '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">'
+    + '<thead><tr style="background:#f3f4f6;">'
+    + '<th style="padding:10px 12px;text-align:left;font-size:12px;color:#6b7280;text-transform:uppercase;">' + s.trackingCol + '</th>'
+    + '<th style="padding:10px 8px;text-align:center;font-size:12px;color:#6b7280;text-transform:uppercase;">' + s.weightCol + '</th>'
+    + '<th style="padding:10px 8px;text-align:center;font-size:12px;color:#6b7280;text-transform:uppercase;">' + s.serviceCol + '</th>'
+    + '<th style="padding:10px 12px;text-align:right;font-size:12px;color:#6b7280;text-transform:uppercase;">' + s.totalCol + '</th>'
+    + '</tr></thead><tbody>' + packageRows + '</tbody></table></div>'
+    + '<div class="savings-card"><h3 style="color:#065f46;">\u{1F389} ' + s.savingsTitle + '</h3>'
+    + '<table width="100%" cellpadding="0" cellspacing="0">'
+    + '<tr><td style="padding:6px 0;color:#6b7280;">' + s.originalLabel + '</td><td style="padding:6px 0;text-align:right;color:#9ca3af;text-decoration:line-through;">$' + originalTotal.toFixed(2) + '</td></tr>'
+    + '<tr><td style="padding:6px 0;color:#16a34a;font-weight:600;">' + s.savingsLabel + '</td><td style="padding:6px 0;text-align:right;color:#16a34a;font-weight:700;font-size:18px;">-$' + savings.toFixed(2) + '</td></tr>'
+    + '<tr style="border-top:2px solid #86efac;"><td style="padding:10px 0 6px;font-weight:800;color:#065f46;font-size:16px;">' + s.bundleTotalLabel + '</td><td style="padding:10px 0 6px;text-align:right;font-weight:800;color:#065f46;font-size:20px;">$' + bundleTotal.toFixed(2) + '</td></tr>'
+    + '</table><div style="text-align:center;margin-top:12px;"><span style="display:inline-block;padding:6px 16px;background:#dcfce7;color:#16a34a;border-radius:20px;font-size:13px;font-weight:600;">\u2728 ' + s.oneFeeNote + '</span></div></div>'
+    + pointsSection
+    + '<div class="btn-container"><a href="' + appUrl + '/packages" class="button">' + s.buttonLabel + '</a></div>'
+    + '<div class="divider"></div><p style="color:#6b7280;font-size:14px;text-align:center;">' + s.thankYou + '</p>'
+    + '</div>'
+    + '<div class="footer"><p><strong>' + s.footerText + '</strong></p><p>' + s.automated + '</p></div>'
+    + '</div></div></body></html>';
+
+  return sendEmail({ to: userEmail, subject: s.subject, html });
+};

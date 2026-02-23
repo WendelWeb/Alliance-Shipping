@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import {
   packages, users, packageRequests,
   packageTransfers, loyaltyCredits, adminActivityLogs,
-  admins, specialItemFees, trackingHistory,
+  admins, specialItemFees, trackingHistory, deliveryBundles,
 } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
 import { sql, eq, and, gte, lte, desc, isNull, count } from 'drizzle-orm';
@@ -487,6 +487,40 @@ export async function GET(request: NextRequest) {
       .groupBy(packages.status)
     );
 
+    // M: Bundle stats
+    const bundleTotalIdx = queries.length;
+    queries.push(
+      db.select({
+        count: sql<number>`COUNT(*)`,
+        totalSavings: sql<string>`COALESCE(SUM(CAST(${deliveryBundles.totalSavings} AS DECIMAL)), 0)`,
+        avgPackages: sql<string>`COALESCE(AVG(${deliveryBundles.packageCount}), 0)`,
+        totalBundleCost: sql<string>`COALESCE(SUM(CAST(${deliveryBundles.bundleTotalCost} AS DECIMAL)), 0)`,
+      })
+      .from(deliveryBundles)
+      .where(and(
+        eq(deliveryBundles.status, 'delivered'),
+        gte(deliveryBundles.deliveredAt, cs),
+        lte(deliveryBundles.deliveredAt, ce),
+      ))
+    );
+
+    const bundleTrendIdx = queries.length;
+    queries.push(
+      db.select({
+        date: sql<string>`TO_CHAR(${deliveryBundles.deliveredAt}, ${sql.raw(`'${dateFormat}'`)})`,
+        count: sql<number>`COUNT(*)`,
+        savings: sql<string>`COALESCE(SUM(CAST(${deliveryBundles.totalSavings} AS DECIMAL)), 0)`,
+      })
+      .from(deliveryBundles)
+      .where(and(
+        eq(deliveryBundles.status, 'delivered'),
+        gte(deliveryBundles.deliveredAt, cs),
+        lte(deliveryBundles.deliveredAt, ce),
+      ))
+      .groupBy(sql`TO_CHAR(${deliveryBundles.deliveredAt}, ${sql.raw(`'${dateFormat}'`)})`)
+      .orderBy(sql`TO_CHAR(${deliveryBundles.deliveredAt}, ${sql.raw(`'${dateFormat}'`)})`)
+    );
+
     // ── Execute all queries in parallel ───────────────────────────────
     const results = await Promise.all(queries);
 
@@ -718,6 +752,20 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    // Bundles
+    const bundleTotalRaw = results[bundleTotalIdx] as any[];
+    const bundleStats = {
+      totalBundles: Number(bundleTotalRaw[0]?.count) || 0,
+      totalSavings: parseFloat(String(bundleTotalRaw[0]?.totalSavings)) || 0,
+      avgPackagesPerBundle: parseFloat(String(bundleTotalRaw[0]?.avgPackages)) || 0,
+      totalBundleCost: parseFloat(String(bundleTotalRaw[0]?.totalBundleCost)) || 0,
+      trend: (results[bundleTrendIdx] as any[]).map((r: any) => ({
+        date: r.date,
+        count: Number(r.count) || 0,
+        savings: parseFloat(String(r.savings)) || 0,
+      })),
+    };
+
     return NextResponse.json({
       range,
       period: { start: dates.current.start, end: dates.current.end },
@@ -743,6 +791,7 @@ export async function GET(request: NextRequest) {
       topClients,
       deliveryMetrics,
       paymentMethods,
+      bundleStats,
     });
   } catch (error) {
     console.error('Error fetching analytics:', error);

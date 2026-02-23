@@ -88,6 +88,7 @@ export async function GET(request: NextRequest) {
         createdAt: packages.createdAt,
         updatedAt: packages.updatedAt,
         assignedToAdmin: packages.assignedToAdmin,
+        deliveryBundleId: packages.deliveryBundleId,
         user: {
           id: users.id,
           email: users.email,

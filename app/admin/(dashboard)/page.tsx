@@ -17,6 +17,7 @@ import {
   Megaphone,
   Zap,
   ArrowRightLeft,
+  Layers,
 } from 'lucide-react';
 import { LoadingSpinner, CardSkeleton, SkeletonLoader } from '@/components/admin/LoadingSpinner';
 import { useCachedFetch } from '@/hooks/useAdminCache';
@@ -31,6 +32,9 @@ interface DashboardStats {
   transfersToday: number;
   totalTransfers: number;
   transferChange: number;
+  potentialBundles: number;
+  totalBundlesDelivered: number;
+  totalBundleSavings: number;
   recentPackages: { id: string; customer: string; destination: string; status: string; amount: string }[];
 }
 
@@ -100,6 +104,9 @@ export default function AdminDashboard() {
     transfersToday: 0,
     totalTransfers: 0,
     transferChange: 0,
+    potentialBundles: 0,
+    totalBundlesDelivered: 0,
+    totalBundleSavings: 0,
     recentPackages: [],
   };
 
@@ -457,6 +464,46 @@ export default function AdminDashboard() {
           </div>
         </a>
       </motion.div>
+      )}
+
+      {/* Bundle Stats */}
+      {!loading && (dashboardData.potentialBundles > 0 || dashboardData.totalBundlesDelivered > 0) && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
+          className="rounded-2xl theme-card p-6 shadow-sm border border-gray-100"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <Layers className="h-5 w-5 text-purple-600" />
+              Bundles
+            </h2>
+            <Link
+              href="/admin/packages/available?view=bundles"
+              className="text-sm font-semibold text-primary-600 hover:text-primary-700"
+            >
+              Voir bundles disponibles →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl bg-purple-50 border border-purple-100">
+              <p className="text-sm font-medium text-purple-700">Bundles potentiels</p>
+              <p className="text-2xl font-bold text-purple-800 mt-1">{dashboardData.potentialBundles}</p>
+              <p className="text-xs text-purple-500 mt-0.5">Clients avec 2+ colis disponibles</p>
+            </div>
+            <div className="p-4 rounded-xl bg-green-50 border border-green-100">
+              <p className="text-sm font-medium text-green-700">Bundles livres</p>
+              <p className="text-2xl font-bold text-green-800 mt-1">{dashboardData.totalBundlesDelivered}</p>
+              <p className="text-xs text-green-500 mt-0.5">Total historique</p>
+            </div>
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
+              <p className="text-sm font-medium text-emerald-700">Economies clients</p>
+              <p className="text-2xl font-bold text-emerald-800 mt-1">${dashboardData.totalBundleSavings.toFixed(2)}</p>
+              <p className="text-xs text-emerald-500 mt-0.5">Frais de service economises</p>
+            </div>
+          </div>
+        </motion.div>
       )}
     </div>
   );

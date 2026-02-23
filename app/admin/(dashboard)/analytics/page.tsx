@@ -9,7 +9,7 @@ import {
   ArrowRightLeft, TrendingUp, RefreshCw, Download, ChevronDown,
   ArrowUpRight, ArrowDownRight, ArrowRight, ArrowDown, Crown,
   Star, Gift, Clock, Calendar, MapPin, Smartphone, Wifi,
-  Check, X,
+  Check, X, Layers,
 } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -57,6 +57,13 @@ interface AnalyticsData {
   topClients: Array<{ userId: number; clerkId: string; name: string; email: string; city: string; packages: number; revenue: number; loyaltyPoints: number; lastPackage: string }>;
   deliveryMetrics: { avgReceivedToTransit: number; avgTransitToAvailable: number; avgAvailableToDelivered: number; avgTotal: number; deliveredCount: number };
   paymentMethods: Array<{ method: string; count: number; revenue: number; percentage: number }>;
+  bundleStats: {
+    totalBundles: number;
+    totalSavings: number;
+    avgPackagesPerBundle: number;
+    totalBundleCost: number;
+    trend: Array<{ date: string; count: number; savings: number }>;
+  };
 }
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -754,6 +761,53 @@ export default function AnalyticsPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* ── Bundle Stats ─────────────────────────────────────────────── */}
+      {data.bundleStats && data.bundleStats.totalBundles > 0 && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.82 }}
+          className="theme-card rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
+          <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Layers className="h-5 w-5 text-purple-600" />
+            Bundles
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+            <div className="p-3 rounded-xl bg-purple-50 border border-purple-100">
+              <p className="text-xs font-medium text-purple-700">Bundles livres</p>
+              <p className="text-2xl font-bold text-purple-800">{data.bundleStats.totalBundles}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-green-50 border border-green-100">
+              <p className="text-xs font-medium text-green-700">Economies totales</p>
+              <p className="text-2xl font-bold text-green-800">{fmt$(data.bundleStats.totalSavings)}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-blue-50 border border-blue-100">
+              <p className="text-xs font-medium text-blue-700">Moy. colis/bundle</p>
+              <p className="text-2xl font-bold text-blue-800">{data.bundleStats.avgPackagesPerBundle.toFixed(1)}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-100">
+              <p className="text-xs font-medium text-indigo-700">Revenue bundles</p>
+              <p className="text-2xl font-bold text-indigo-800">{fmt$(data.bundleStats.totalBundleCost)}</p>
+            </div>
+          </div>
+          {data.bundleStats.trend.length > 0 && (
+            <div className="h-56 sm:h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.bundleStats.trend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#9ca3af" />
+                  <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" />
+                  <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: '13px' }}
+                    formatter={(value: number | undefined, name: string | undefined) => {
+                      if (name === 'savings') return [fmt$(value ?? 0), 'Economies'];
+                      return [value ?? 0, 'Bundles'];
+                    }}
+                  />
+                  <Bar dataKey="count" fill="#8b5cf6" radius={[6, 6, 0, 0]} name="Bundles" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* ── Top 10 Clients ──────────────────────────────────────────── */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.85 }}

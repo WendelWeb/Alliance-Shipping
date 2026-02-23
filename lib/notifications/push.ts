@@ -89,6 +89,30 @@ const pushTemplates: Record<string, Record<Locale, { title: string; body: string
     ht: { title: '\ud83d\udcb2 Tarif Livrezon Mete Ajou', body: 'Tarif livrezon nou yo mete ajou.\n\n{{details}}\n\nChanjman sa yo efektif imedyatman. Tcheke app la pou tablo konpl\u00e8 tarif yo.' },
     es: { title: '\ud83d\udcb2 Tarifas Actualizadas', body: 'Nuestras tarifas de env\u00edo han sido actualizadas.\n\n{{details}}\n\nEstos cambios son efectivos de inmediato. Consulte la app para la tabla completa de tarifas.' },
   },
+  bundle_delivered: {
+    en: { title: '\ud83d\udce6\u2728 Bundle Delivered!', body: '{{count}} packages delivered together! You saved ${{savings}} on service fees.\n\ud83d\udccb Packages: {{trackingList}}\n\ud83d\udcb0 Total: ${{total}} (instead of ${{originalTotal}})\n\u2b50 Points earned: {{totalPoints}}\n\ud83c\udfe2 From: {{depot}} \u2014 {{city}}\nThank you for choosing Alliance Shipping!' },
+    fr: { title: '\ud83d\udce6\u2728 Bundle Livr\u00e9 !', body: '{{count}} colis livr\u00e9s ensemble ! Vous \u00e9conomisez ${{savings}} sur les frais de service.\n\ud83d\udccb Colis : {{trackingList}}\n\ud83d\udcb0 Total : ${{total}} (au lieu de ${{originalTotal}})\n\u2b50 Points gagn\u00e9s : {{totalPoints}}\n\ud83c\udfe2 Depuis : {{depot}} \u2014 {{city}}\nMerci d\'avoir choisi Alliance Shipping !' },
+    ht: { title: '\ud83d\udce6\u2728 Bundle Livre !', body: '{{count}} kolis livre ansanm ! Ou ekonomize ${{savings}} sou fr\u00e8 s\u00e8vis.\n\ud83d\udccb Kolis : {{trackingList}}\n\ud83d\udcb0 Total : ${{total}} (olye ${{originalTotal}})\n\u2b50 Pwen genyen : {{totalPoints}}\n\ud83c\udfe2 Soti nan : {{depot}} \u2014 {{city}}\nM\u00e8si paske ou chwazi Alliance Shipping !' },
+    es: { title: '\ud83d\udce6\u2728 \u00a1Bundle Entregado!', body: '{{count}} paquetes entregados juntos! Ahorr\u00f3 ${{savings}} en tarifas de servicio.\n\ud83d\udccb Paquetes: {{trackingList}}\n\ud83d\udcb0 Total: ${{total}} (en vez de ${{originalTotal}})\n\u2b50 Puntos ganados: {{totalPoints}}\n\ud83c\udfe2 Desde: {{depot}} \u2014 {{city}}\n\u00a1Gracias por elegir Alliance Shipping!' },
+  },
+  bundle_available: {
+    en: { title: '\ud83d\udce6 You have {{count}} packages to pick up!', body: 'Pick them up together and save ${{savings}} on service fees!\n\ud83c\udfe2 Depot: {{depot}}\n\ud83d\udd50 Hours: {{hours}}\n\ud83d\udccb Packages: {{trackingList}}\nPlease bring a valid ID. We look forward to seeing you!' },
+    fr: { title: '\ud83d\udce6 Vous avez {{count}} colis \u00e0 r\u00e9cup\u00e9rer !', body: 'Venez les chercher ensemble et \u00e9conomisez ${{savings}} sur les frais de service !\n\ud83c\udfe2 D\u00e9p\u00f4t : {{depot}}\n\ud83d\udd50 Horaires : {{hours}}\n\ud83d\udccb Colis : {{trackingList}}\nVeuillez apporter une pi\u00e8ce d\'identit\u00e9. Au plaisir de vous accueillir !' },
+    ht: { title: '\ud83d\udce6 Ou gen {{count}} kolis pou vin pran !', body: 'Vin pran yo ansanm epi ekonomize ${{savings}} sou fr\u00e8 s\u00e8vis !\n\ud83c\udfe2 Depo : {{depot}}\n\ud83d\udd50 Or\u00e8 : {{hours}}\n\ud83d\udccb Kolis : {{trackingList}}\nTanpri pote yon py\u00e8s idantite. N ap tann ou !' },
+    es: { title: '\ud83d\udce6 \u00a1Tiene {{count}} paquetes para recoger!', body: '\u00a1Rec\u00f3jalos juntos y ahorre ${{savings}} en tarifas de servicio!\n\ud83c\udfe2 Dep\u00f3sito: {{depot}}\n\ud83d\udd50 Horario: {{hours}}\n\ud83d\udccb Paquetes: {{trackingList}}\nPor favor traiga una identificaci\u00f3n v\u00e1lida. \u00a1Le esperamos!' },
+  },
+  bundle_cancelled: {
+    en: { title: '\ud83d\udce6 Bundle Delivery Cancelled', body: 'Your bundle delivery of {{count}} packages has been cancelled. Your packages are back to "Available" status.\n\ud83d\udccb Packages: {{trackingList}}\nPlease contact us if you have any questions.' },
+    fr: { title: '\ud83d\udce6 Livraison Bundle Annul\u00e9e', body: 'Votre livraison bundle de {{count}} colis a \u00e9t\u00e9 annul\u00e9e. Vos colis sont de retour au statut "Disponible".\n\ud83d\udccb Colis : {{trackingList}}\nContactez-nous si vous avez des questions.' },
+    ht: { title: '\ud83d\udce6 Livrezon Bundle Anile', body: 'Livrezon bundle {{count}} kolis ou yo anile. Kolis ou yo retounen nan estati "Disponib".\n\ud83d\udccb Kolis : {{trackingList}}\nKontakte nou si ou gen kesyon.' },
+    es: { title: '\ud83d\udce6 Entrega Bundle Cancelada', body: 'Su entrega bundle de {{count}} paquetes ha sido cancelada. Sus paquetes volvieron al estado "Disponible".\n\ud83d\udccb Paquetes: {{trackingList}}\nCont\u00e1ctenos si tiene alguna pregunta.' },
+  },
+  bundle_reminder: {
+    en: { title: '\u23f0 Reminder: {{count}} packages waiting!', body: 'Your {{count}} packages have been available for {{days}} days. Pick them up together and save ${{savings}}!\n\ud83c\udfe2 Depot: {{depot}}\n\ud83d\udccb Packages: {{trackingList}}\nDon\'t miss out on your bundle savings!' },
+    fr: { title: '\u23f0 Rappel : {{count}} colis en attente !', body: 'Vos {{count}} colis sont disponibles depuis {{days}} jours. R\u00e9cup\u00e9rez-les ensemble et \u00e9conomisez ${{savings}} !\n\ud83c\udfe2 D\u00e9p\u00f4t : {{depot}}\n\ud83d\udccb Colis : {{trackingList}}\nNe manquez pas vos \u00e9conomies bundle !' },
+    ht: { title: '\u23f0 Rap\u00e8l : {{count}} kolis ap tann ou !', body: '{{count}} kolis ou yo disponib depi {{days}} jou. Vin pran yo ansanm epi ekonomize ${{savings}} !\n\ud83c\udfe2 Depo : {{depot}}\n\ud83d\udccb Kolis : {{trackingList}}\nPa rate ekonomi bundle ou !' },
+    es: { title: '\u23f0 Recordatorio: \u00a1{{count}} paquetes esperando!', body: 'Sus {{count}} paquetes llevan {{days}} d\u00edas disponibles. \u00a1Rec\u00f3jalos juntos y ahorre ${{savings}}!\n\ud83c\udfe2 Dep\u00f3sito: {{depot}}\n\ud83d\udccb Paquetes: {{trackingList}}\n\u00a1No se pierda sus ahorros bundle!' },
+  },
 };
 
 function fillVars(text: string, vars: Record<string, string>): string {

@@ -19,6 +19,7 @@ import {
   Filter,
   RefreshCw,
   AlertTriangle,
+  Layers,
 } from 'lucide-react';
 import AddCustomsFeesModal from '@/components/admin/AddCustomsFeesModal';
 import { useToast } from '@/components/admin/Toast';
@@ -42,6 +43,7 @@ interface DeliveredPackage {
   paymentMethod: string;
   notes: string;
   status: string;
+  deliveryBundleId: number | null;
 }
 
 const paymentMethodLabels = {
@@ -96,6 +98,7 @@ export default function DeliveredPackagesPage() {
       paymentMethod: 'cash',
       notes: '',
       status: pkg.status,
+      deliveryBundleId: pkg.deliveryBundleId || null,
     }));
 
     return transformedPackages;
@@ -351,6 +354,12 @@ export default function DeliveredPackagesPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {pkg.deliveryBundleId && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
+                      <Layers className="h-3 w-3" />
+                      Bundle #{pkg.deliveryBundleId}
+                    </span>
+                  )}
                   <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
                     <CheckCircle className="h-3 w-3" />
                     Delivered

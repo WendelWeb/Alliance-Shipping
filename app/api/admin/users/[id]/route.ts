@@ -106,6 +106,7 @@ export async function GET(
           currentLocation: packages.currentLocation,
           estimatedDelivery: packages.estimatedDelivery,
           actualDelivery: packages.actualDelivery,
+          deliveryBundleId: packages.deliveryBundleId,
           priority: packages.priority,
           createdAt: packages.createdAt,
           updatedAt: packages.updatedAt,

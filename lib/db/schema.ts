@@ -65,6 +65,9 @@ export const packages = pgTable('packages', {
   chargeByWeight: boolean('charge_by_weight').default(false).notNull(),
   priority: varchar('priority', { length: 20 }).default('normal').notNull(), // normal, urgent, express
 
+  // Bundle delivery (when multiple packages delivered together, only 1 service fee)
+  deliveryBundleId: integer('delivery_bundle_id'),
+
   // Metadata
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -267,6 +270,34 @@ export const deliveryProof = pgTable('delivery_proof', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Delivery Bundles (multiple packages delivered together with 1 service fee)
+export const deliveryBundles = pgTable('delivery_bundles', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+
+  // Package count
+  packageCount: integer('package_count').notNull(),
+
+  // Financials
+  originalTotalServiceFees: decimal('original_total_service_fees', { precision: 10, scale: 2 }).notNull(),
+  bundleServiceFee: decimal('bundle_service_fee', { precision: 10, scale: 2 }).notNull(),
+  totalSavings: decimal('total_savings', { precision: 10, scale: 2 }).notNull(),
+  bundleTotalCost: decimal('bundle_total_cost', { precision: 10, scale: 2 }).notNull(),
+
+  // Status
+  status: varchar('status', { length: 20 }).default('delivered').notNull(), // delivered, cancelled
+  cancelledAt: timestamp('cancelled_at'),
+  cancelledBy: integer('cancelled_by').references(() => admins.id),
+  cancelReason: text('cancel_reason'),
+
+  // Delivery info
+  deliveredBy: integer('delivered_by').references(() => admins.id),
+  deliveredAt: timestamp('delivered_at').defaultNow().notNull(),
+
+  // Metadata
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Revenue Records
 export const revenueRecords = pgTable('revenue_records', {
   id: serial('id').primaryKey(),
@@ -415,6 +446,12 @@ export const deliveryProofRelations = relations(deliveryProof, ({ one }) => ({
   }),
 }));
 
+export const deliveryBundlesRelations = relations(deliveryBundles, ({ one }) => ({
+  user: one(users, { fields: [deliveryBundles.userId], references: [users.id] }),
+  deliveredByAdmin: one(admins, { fields: [deliveryBundles.deliveredBy], references: [admins.id] }),
+  cancelledByAdmin: one(admins, { fields: [deliveryBundles.cancelledBy], references: [admins.id] }),
+}));
+
 export const revenueRecordsRelations = relations(revenueRecords, ({ one }) => ({
   package: one(packages, {
     fields: [revenueRecords.packageId],
@@ -544,6 +581,9 @@ export type NewAnnouncement = typeof announcements.$inferInsert;
 
 export type DeliveryProof = typeof deliveryProof.$inferSelect;
 export type NewDeliveryProof = typeof deliveryProof.$inferInsert;
+
+export type DeliveryBundle = typeof deliveryBundles.$inferSelect;
+export type NewDeliveryBundle = typeof deliveryBundles.$inferInsert;
 
 export type RevenueRecord = typeof revenueRecords.$inferSelect;
 export type NewRevenueRecord = typeof revenueRecords.$inferInsert;

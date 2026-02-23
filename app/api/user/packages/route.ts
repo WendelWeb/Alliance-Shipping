@@ -80,6 +80,7 @@ export async function GET(request: NextRequest) {
         specialItemFixedFee: specialItemFees.fixedFee,
         quantity: packages.quantity,
         chargeByWeight: packages.chargeByWeight,
+        deliveryBundleId: packages.deliveryBundleId,
         currency: packages.currency,
         status: packages.status,
         currentLocation: packages.currentLocation,

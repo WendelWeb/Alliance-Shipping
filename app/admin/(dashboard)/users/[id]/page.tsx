@@ -38,6 +38,7 @@ import {
   ArrowDownRight,
   Plus,
   ExternalLink,
+  Layers,
 } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import { LoadingSpinner } from '@/components/admin/LoadingSpinner';
@@ -79,6 +80,7 @@ interface PackageData {
   currentLocation: string | null;
   estimatedDelivery: string | null;
   actualDelivery: string | null;
+  deliveryBundleId: number | null;
   priority: string;
   createdAt: string;
   updatedAt: string;
@@ -572,6 +574,12 @@ export default function UserDetailPage() {
                               <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded-full ${cfg.bg} ${cfg.color}`}>
                                 {cfg.label}
                               </span>
+                              {pkg.deliveryBundleId && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-purple-100 text-purple-700">
+                                  <Layers className="h-3 w-3" />
+                                  Bundle #{pkg.deliveryBundleId}
+                                </span>
+                              )}
                               {pkg.priority !== 'normal' && (
                                 <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-orange-100 text-orange-700">
                                   {pkg.priority}

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { packages, users, packageRequests, packageTransfers, revenueRecords } from '@/lib/db/schema';
+import { packages, users, packageRequests, packageTransfers, deliveryBundles } from '@/lib/db/schema';
 import { getAdminSession } from '@/lib/auth/admin';
-import { eq, gte, sql, desc } from 'drizzle-orm';
+import { eq, gte, sql, desc, and } from 'drizzle-orm';
 
 export async function GET() {
   try {
@@ -11,10 +11,11 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get total revenue
+    // Get total revenue from delivered packages
     const revenueData = await db
-      .select({ total: sql<number>`SUM(CAST(${revenueRecords.amount} AS DECIMAL))` })
-      .from(revenueRecords);
+      .select({ total: sql<number>`SUM(CAST(${packages.totalCost} AS DECIMAL))` })
+      .from(packages)
+      .where(eq(packages.status, 'delivered'));
     const totalRevenue = parseFloat(String(revenueData[0]?.total || 0));
 
     // Get active packages count
@@ -77,6 +78,28 @@ export async function GET() {
         ? 100
         : 0;
 
+    // Get potential bundles count (users with 2+ available packages)
+    const potentialBundlesData = await db
+      .select({ userId: packages.userId, count: sql<number>`COUNT(*)` })
+      .from(packages)
+      .where(eq(packages.status, 'available'))
+      .groupBy(packages.userId)
+      .having(sql`COUNT(*) >= 2`);
+    const potentialBundles = potentialBundlesData.length;
+
+    // Get total bundles delivered
+    const [{ count: totalBundlesDelivered }] = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(deliveryBundles)
+      .where(eq(deliveryBundles.status, 'delivered'));
+
+    // Get total bundle savings
+    const bundleSavingsData = await db
+      .select({ total: sql<number>`SUM(CAST(${deliveryBundles.totalSavings} AS DECIMAL))` })
+      .from(deliveryBundles)
+      .where(eq(deliveryBundles.status, 'delivered'));
+    const totalBundleSavings = parseFloat(String(bundleSavingsData[0]?.total || 0));
+
     // Get recent packages for the activity feed
     const recentPackages = await db
       .select({
@@ -104,6 +127,9 @@ export async function GET() {
       transfersToday: Number(transfersToday),
       totalTransfers: Number(totalTransfers),
       transferChange: Number(transferChange.toFixed(1)),
+      potentialBundles,
+      totalBundlesDelivered: Number(totalBundlesDelivered),
+      totalBundleSavings,
       recentPackages: recentPackages.map(pkg => ({
         id: pkg.trackingNumber,
         customer: `${pkg.userFirstName || ''} ${pkg.userLastName || ''}`.trim() || pkg.userEmail,
