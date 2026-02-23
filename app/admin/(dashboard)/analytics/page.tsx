@@ -318,6 +318,8 @@ export default function AnalyticsPage() {
                 { value: data.revenueBreakdown.weightCost, color: 'bg-blue-500', label: 'Poids' },
                 { value: data.revenueBreakdown.serviceFee, color: 'bg-emerald-500', label: 'Service' },
                 { value: data.revenueBreakdown.customsFees, color: 'bg-red-500', label: 'Douane' },
+                { value: data.revenueBreakdown.specialItemRevenue, color: 'bg-purple-500', label: 'Articles Speciaux' },
+                { value: data.revenueBreakdown.normalRevenue, color: 'bg-gray-500', label: 'Colis Standards' },
               ].filter(s => s.value > 0).map((s) => {
                 const pct = (s.value / data.kpis.revenue.value) * 100;
                 return (
@@ -332,6 +334,8 @@ export default function AnalyticsPage() {
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-500" /> Poids ({((data.revenueBreakdown.weightCost / (data.kpis.revenue.value || 1)) * 100).toFixed(1)}%)</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Service ({((data.revenueBreakdown.serviceFee / (data.kpis.revenue.value || 1)) * 100).toFixed(1)}%)</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500" /> Douane ({((data.revenueBreakdown.customsFees / (data.kpis.revenue.value || 1)) * 100).toFixed(1)}%)</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-purple-500" /> Articles Speciaux ({((data.revenueBreakdown.specialItemRevenue / (data.kpis.revenue.value || 1)) * 100).toFixed(1)}%)</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-gray-500" /> Colis Standards ({((data.revenueBreakdown.normalRevenue / (data.kpis.revenue.value || 1)) * 100).toFixed(1)}%)</span>
             </div>
           </div>
         )}
