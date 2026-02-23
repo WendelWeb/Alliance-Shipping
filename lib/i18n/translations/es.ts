@@ -66,6 +66,7 @@ export const es = {
     anySite: 'Cualquier sitio US',
     noCard: 'Sin tarjeta requerida',
     secure: 'Pago seguro',
+    heroBadge: 'Sin tarjeta US? Compramos por ti en cualquier sitio!',
   },
   pricing: {
     title: 'Precios Transparentes',
@@ -224,6 +225,10 @@ export const es = {
     subtitle: 'Todo lo que necesita saber',
     items: [
       {
+        question: '¿Puedo comprar sin tarjeta bancaria americana?',
+        answer: '¡Sí! Si no tienes tarjeta bancaria americana, Alliance Shipping puede comprar por ti. Simplemente envíanos el enlace del producto (Amazon, Walmart, eBay, Best Buy, o cualquier sitio US) y nuestro equipo realizará el pedido en tu nombre. El producto será entregado en nuestro almacén de Miami y luego enviado a tu ciudad en Haití como cualquier otro paquete. Contáctanos por WhatsApp o teléfono para usar este servicio.',
+      },
+      {
         question: '¿Cómo funciona Alliance Shipping de la A a la Z?',
         answer: '1) Crea tu cuenta gratis en nuestro sitio web o aplicación móvil. 2) Ordena tus artículos en línea (Amazon, Walmart, Shein, etc.) usando nuestra dirección de Miami: 8298 Northwest 68th Street, Apt PQ-068508, Miami, Florida 33195. Tel: +1 (954) 607-8226. El código PQ-068508 debe aparecer en tu nombre o en el campo Apt/Suite. 3) Envía una solicitud de paquete en Alliance Shipping con el número de rastreo del transportista (UPS, USPS, FedEx). 4) Tu paquete llega a nuestro almacén de Miami — lo recibimos, lo pesamos y te asignamos un número de rastreo Alliance Shipping. 5) Recibes un correo electrónico con el desglose de costos (servicio + peso + aduana si aplica). 6) Tu paquete se envía a tu ciudad en Haití (Cap-Haïtien, Port-au-Prince o Port-de-Paix) en 3 a 7 días. 7) Rastrea tu paquete en tiempo real y recibe una notificación cuando esté disponible para recoger.',
       },
@@ -302,10 +307,6 @@ export const es = {
       {
         question: '¿Cómo contacto al soporte?',
         answer: 'Puede contactarnos por teléfono, correo electrónico o WhatsApp. Nuestro equipo está disponible de lunes a sábado de 8AM a 6PM. Consulte la sección de contacto a continuación para todos nuestros datos.',
-      },
-      {
-        question: 'Puedo comprar sin tarjeta bancaria americana?',
-        answer: 'Si! Si no tienes tarjeta bancaria americana, Alliance Shipping puede comprar por ti. Simplemente envianos el enlace del producto (Amazon, Walmart, eBay, Best Buy, o cualquier sitio US) y nuestro equipo realizara el pedido en tu nombre. El producto sera entregado en nuestro almacen de Miami y luego enviado a tu ciudad en Haiti como cualquier otro paquete. Contactanos por WhatsApp o telefono para usar este servicio.',
       },
     ],
   },

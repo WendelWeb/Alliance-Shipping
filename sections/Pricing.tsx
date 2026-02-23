@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { DollarSign, Check, Shield, MapPin, Package, Star, Gift, Smartphone, Calculator, TrendingUp, Zap, Coins } from 'lucide-react';
+import { DollarSign, Check, Shield, MapPin, Package, Star, Gift, Smartphone, Calculator, TrendingUp, Zap, Coins, ShoppingCart, ArrowRight } from 'lucide-react';
 import { Container } from '@/components/Container';
 import { SectionTitle } from '@/components/SectionTitle';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -444,6 +444,25 @@ export function Pricing() {
                 {t.pricing.perfumeNote}
               </p>
             </div>
+
+            {/* Purchase Assistance Hint */}
+            <a
+              href="https://wa.me/50948812652"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-4 bg-violet-50 rounded-xl border border-violet-200 hover:bg-violet-100 transition-colors group"
+            >
+              <div className="flex-shrink-0 w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center">
+                <ShoppingCart className="w-4 h-4 text-violet-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-violet-800">
+                  {(t as any).purchaseAssistance?.subtitle || 'No US card? We buy for you!'}
+                </p>
+                <p className="text-xs text-violet-600">Amazon, Walmart, eBay, Best Buy...</p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-violet-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+            </a>
           </motion.div>
         </div>
       </Container>

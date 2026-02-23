@@ -66,6 +66,7 @@ export const ht = {
     anySite: 'Nenpòt sit US',
     noCard: 'Okenn kat pa nesesè',
     secure: 'Peman sekirize',
+    heroBadge: 'Pa gen kat US ? Nou achte pou ou sou nenpot sit!',
   },
   pricing: {
     title: 'Pri Klè',
@@ -224,6 +225,10 @@ export const ht = {
     subtitle: 'Tout sa ou bezwen konnen',
     items: [
       {
+        question: 'Èske m ka achte san kat bank ameriken?',
+        answer: 'Wi! Si ou pa gen kat bank ameriken, Alliance Shipping ka achte pou ou. Jis voye lyen pwodwi a ba nou (Amazon, Walmart, eBay, Best Buy, oswa nenpòt sit US) epi ekip nou an ap pase kòmand lan nan plas ou. Pwodwi a ap livre nan depo Miami nou an epi ekspedye nan vil ou an Ayiti menm jan ak nenpòt lòt koli. Kontakte nou pa WhatsApp oswa telefòn pou itilize sèvis sa a.',
+      },
+      {
         question: 'Kijan Alliance Shipping fonksyone de A a Z?',
         answer: '1) Kreye kont gratis ou sou sit wèb nou oswa aplikasyon mobil la. 2) Kòmande atik ou sou entènèt (Amazon, Walmart, Shein, elatriye) ak adrès Miami nou an : 8298 Northwest 68th Street, Apt PQ-068508, Miami, Florida 33195. Telefòn : +1 (954) 607-8226. Kòd PQ-068508 dwe parèt nan prenon ou oswa nan chan Apt/Suite. 3) Soumèt yon demann koli sou Alliance Shipping ak nimewo swivi transpòtè a (UPS, USPS, FedEx). 4) Koli ou rive nan depo Miami nou an — nou resevwa li, nou peze li, epi nou ba ou yon nimewo swivi Alliance Shipping. 5) Ou resevwa yon imèl ak detay frè yo (sèvis + pwa + ladwàn si aplikab). 6) Koli ou voye nan vil ou an Ayiti (Okap, Pòtoprens oswa Pòdpè) nan 3 a 7 jou. 7) Swiv koli ou an tan reyèl epi resevwa yon notifikasyon lè li disponib pou retire.',
       },
@@ -302,10 +307,6 @@ export const ht = {
       {
         question: 'Kijan pou m kontakte sipò?',
         answer: 'Ou kapab jwenn nou pa telefòn, imèl oswa WhatsApp. Ekip nou disponib lendi a samdi de 8è a 6è. Tcheke seksyon kontak la pi ba a pou tout enfòmasyon nou.',
-      },
-      {
-        question: 'Èske m ka achte san kat bank ameriken?',
-        answer: 'Wi! Si ou pa gen kat bank ameriken, Alliance Shipping ka achte pou ou. Jis voye lyen pwodwi a ba nou (Amazon, Walmart, eBay, Best Buy, oswa nenpòt sit US) epi ekip nou an ap pase kòmand lan nan plas ou. Pwodwi a ap livre nan depo Miami nou an epi ekspedye nan vil ou an Ayiti menm jan ak nenpòt lòt koli. Kontakte nou pa WhatsApp oswa telefòn pou itilize sèvis sa a.',
       },
     ],
   },

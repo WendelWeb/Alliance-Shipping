@@ -66,6 +66,7 @@ export const en = {
     anySite: 'Any US website',
     noCard: 'No card required',
     secure: 'Secure payment',
+    heroBadge: 'No US card? We buy for you on any US site!',
   },
   pricing: {
     title: 'Transparent Pricing',
@@ -224,6 +225,10 @@ export const en = {
     subtitle: 'Everything you need to know',
     items: [
       {
+        question: 'Can I buy without a US bank card?',
+        answer: 'Yes! If you don\'t have a US bank card, Alliance Shipping can buy for you. Simply send us the product link (Amazon, Walmart, eBay, Best Buy, or any US site) and our team will place the order on your behalf. The product will be delivered to our Miami warehouse then shipped to your city in Haiti like any other package. Contact us via WhatsApp or phone to use this service.',
+      },
+      {
         question: 'How does Alliance Shipping work from A to Z?',
         answer: '1) Create your free account on our website or mobile app. 2) Order your items online (Amazon, Walmart, Shein, etc.) using our Miami address: 8298 Northwest 68th Street, Apt PQ-068508, Miami, Florida 33195. Phone: +1 (954) 607-8226. The code PQ-068508 must appear in your first name or the Apt/Suite field. 3) Submit a package request on Alliance Shipping with your carrier tracking number (UPS, USPS, FedEx). 4) Your package arrives at our Miami warehouse — we receive it, weigh it, and assign you an Alliance Shipping tracking number. 5) You receive an email with the fee breakdown (service + weight + customs if applicable). 6) Your package is shipped to your city in Haiti (Cap-Haitien, Port-au-Prince, or Port-de-Paix) in 3 to 7 days. 7) Track your package in real time and receive a notification when it is available for pickup.',
       },
@@ -302,10 +307,6 @@ export const en = {
       {
         question: 'How do I contact support?',
         answer: 'You can reach us by phone, email, or WhatsApp. Our team is available Monday to Saturday from 8am to 6pm. Check the contact section below for all our details.',
-      },
-      {
-        question: 'Can I buy without a US bank card?',
-        answer: 'Yes! If you don\'t have a US bank card, Alliance Shipping can buy for you. Simply send us the product link (Amazon, Walmart, eBay, Best Buy, or any US site) and our team will place the order on your behalf. The product will be delivered to our Miami warehouse then shipped to your city in Haiti like any other package. Contact us via WhatsApp or phone to use this service.',
       },
     ],
   },

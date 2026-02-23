@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
-import { ArrowRight, Package, Shield, Clock, DollarSign, Truck, MapPin } from 'lucide-react';
+import { ArrowRight, Package, Shield, Clock, DollarSign, Truck, MapPin, ShoppingCart } from 'lucide-react';
 import { Container } from '@/components/Container';
 import { ImageGallery } from '@/components/ImageGallery';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -91,6 +91,20 @@ export function Hero() {
                   {t.hero.ctaSecondary}
                 </a>
               </div>
+
+              {/* Purchase Assistance Hint */}
+              <a
+                href="https://wa.me/50948812652"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 mb-6 sm:mb-8 rounded-full bg-violet-50 border border-violet-200 hover:bg-violet-100 transition-colors group"
+              >
+                <ShoppingCart className="w-4 h-4 text-violet-600" />
+                <span className="text-sm text-violet-700 font-medium">
+                  {(t as any).purchaseAssistance?.heroBadge || 'No US card? We buy for you on any US site!'}
+                </span>
+                <ArrowRight className="w-3 h-3 text-violet-500 group-hover:translate-x-0.5 transition-transform" />
+              </a>
 
               {/* Animated Stats */}
               <div className="grid grid-cols-3 gap-3 sm:gap-6">

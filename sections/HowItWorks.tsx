@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { UserPlus, FileText, Warehouse, Truck } from 'lucide-react';
+import { UserPlus, FileText, Warehouse, Truck, ShoppingCart, ArrowRight } from 'lucide-react';
 import { Container } from '@/components/Container';
 import { SectionTitle } from '@/components/SectionTitle';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -87,6 +87,28 @@ export function HowItWorks() {
             </motion.div>
           ))}
         </div>
+
+        {/* Purchase Assistance Hint */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="mt-6 text-center"
+        >
+          <a
+            href="https://wa.me/50948812652"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-violet-50 border border-violet-200 hover:bg-violet-100 transition-colors group"
+          >
+            <ShoppingCart className="w-4 h-4 text-violet-600" />
+            <span className="text-sm text-violet-700 font-medium">
+              {(t as any).purchaseAssistance?.heroBadge || 'No US card? We buy for you on any US site!'}
+            </span>
+            <ArrowRight className="w-3 h-3 text-violet-500 group-hover:translate-x-0.5 transition-transform" />
+          </a>
+        </motion.div>
       </Container>
     </section>
   );

@@ -33,6 +33,7 @@ export default function SupportPage() {
   const { t } = useTranslation();
 
   const faqs: FAQ[] = [
+    { id: '21', question: t.profile.support.faq21q, answer: t.profile.support.faq21a },
     { id: '1', question: t.profile.support.faq1q, answer: t.profile.support.faq1a },
     { id: '2', question: t.profile.support.faq2q, answer: t.profile.support.faq2a },
     { id: '3', question: t.profile.support.faq3q, answer: t.profile.support.faq3a },
@@ -53,7 +54,6 @@ export default function SupportPage() {
     { id: '18', question: t.profile.support.faq18q, answer: t.profile.support.faq18a },
     { id: '19', question: t.profile.support.faq19q, answer: t.profile.support.faq19a },
     { id: '20', question: t.profile.support.faq20q, answer: t.profile.support.faq20a },
-    { id: '21', question: t.profile.support.faq21q, answer: t.profile.support.faq21a },
   ];
 
   const handleSubmitMessage = (e: React.FormEvent) => {
