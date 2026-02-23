@@ -54,8 +54,8 @@ interface PackageItem {
   specialItemName?: string;
   specialItemBrand?: string;
   specialItemFixedFee?: string;
-  quantity?: number;
   chargeByWeight?: boolean;
+  deliveryBundleId?: number | null;
   serviceFee?: string;
   weightCost?: string;
   totalCost?: string;
@@ -322,6 +322,28 @@ export function PackageCard({ item, index }: PackageCardProps) {
           </View>
         )}
 
+        {/* Bundle Badge */}
+        {item.deliveryBundleId && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              alignSelf: 'flex-start',
+              backgroundColor: isDark ? colors.gray[200] : '#f3e8ff',
+              borderRadius: borderRadius.md,
+              paddingHorizontal: spacing.sm,
+              paddingVertical: spacing.xs,
+              marginBottom: spacing.sm,
+              gap: spacing.xs,
+            }}
+          >
+            <Layers size={12} color={isDark ? '#a78bfa' : '#7c3aed'} />
+            <Text style={{ fontFamily: fonts.semiBold, fontSize: 11, color: isDark ? '#a78bfa' : '#7c3aed' }}>
+              Bundle #{item.deliveryBundleId}
+            </Text>
+          </View>
+        )}
+
         {/* Info pills row: weight, category, taxes douane, date */}
         <View style={styles.bottomRow}>
           <View style={styles.metaRow}>
@@ -332,16 +354,6 @@ export function PackageCard({ item, index }: PackageCardProps) {
                 {item.weight} lbs
               </Text>
             </View>
-
-            {/* Quantity pill - only shown when quantity > 1 */}
-            {(item.quantity ?? 1) > 1 && (
-              <View style={[styles.metaPill, { backgroundColor: colors.gray[100] }]}>
-                <Layers size={12} color={colors.gray[500]} />
-                <Text style={[styles.metaPillText, { color: colors.gray[600] }]}>
-                  {(t.packages as any).quantity || 'Qty'}: {item.quantity}
-                </Text>
-              </View>
-            )}
 
             {/* Category pill */}
             <View style={[styles.metaPill, { backgroundColor: colors.gray[100] }]}>

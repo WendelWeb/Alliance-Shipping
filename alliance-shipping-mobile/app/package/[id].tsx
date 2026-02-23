@@ -33,6 +33,8 @@ import {
   Truck,
   CircleDot,
   Info,
+  Layers,
+  Gift,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/themes/ThemeProvider';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -66,6 +68,7 @@ interface PackageData {
   specialItemBrand?: string;
   specialItemFixedFee?: string;
   chargeByWeight?: boolean;
+  deliveryBundleId?: number;
   serviceFee?: string;
   weightCost?: string;
   totalCost?: string;
@@ -210,6 +213,7 @@ export default function PackageDetailPage() {
   // ── Translation helpers ────────────────────────────────────────
 
   const pd = (t as any).packageDetail || {};
+  const bt = (t as any).bundle || {};
 
   const statusProgressLabels = useMemo(() => [
     pd.statusProgress?.received || t.packages.status.received || 'Received',
@@ -853,6 +857,59 @@ export default function PackageDetailPage() {
           </Animated.View>
         )}
 
+        {/* ── Bundle Card ── */}
+        {pkg.deliveryBundleId && (
+          <Animated.View
+            entering={FadeInDown.delay(350).duration(400)}
+            style={{
+              backgroundColor: card.backgroundColor,
+              borderRadius: borderRadius.xl,
+              padding: spacing.lg,
+              marginBottom: spacing.md,
+              borderWidth: 1.5,
+              borderColor: isDark ? '#a78bfa' : '#ddd6fe',
+              ...shadows.sm,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md }}>
+              <View style={{
+                width: 40, height: 40, borderRadius: borderRadius.lg,
+                backgroundColor: '#7c3aed',
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Layers size={20} color="#fff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: fonts.bold, fontSize: 16, color: colors.gray[900] }}>
+                  {bt.title || 'Livraison Bundle'}
+                </Text>
+                <Text style={{ fontFamily: fonts.regular, fontSize: 12, color: isDark ? '#c4b5fd' : '#8b5cf6' }}>
+                  {bt.singleFee || bt.singleServiceFee || '1 seul frais de service'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Savings badge */}
+            <View style={{
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+              backgroundColor: isDark ? '#064e3b' : '#dcfce7',
+              borderRadius: borderRadius.md,
+              paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
+              borderWidth: 1, borderColor: isDark ? '#059669' : '#86efac',
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Gift size={16} color={isDark ? '#6ee7b7' : '#15803d'} />
+                <Text style={{ fontFamily: fonts.semiBold, fontSize: 13, color: isDark ? '#6ee7b7' : '#15803d' }}>
+                  {bt.serviceFeeWaived || bt.savings || 'OFFERT'}
+                </Text>
+              </View>
+              <Text style={{ fontFamily: fonts.bold, fontSize: 13, color: isDark ? '#6ee7b7' : '#15803d' }}>
+                {bt.singleFee || '1 seul frais de service'}
+              </Text>
+            </View>
+          </Animated.View>
+        )}
+
         {/* ── Fee Breakdown ── */}
         {totalCost > 0 && (
           <Animated.View entering={FadeInDown.delay(400).duration(400)} style={styles.feeCard}>
@@ -870,7 +927,18 @@ export default function PackageDetailPage() {
               <Text style={styles.feeLabel}>
                 {pd.serviceFee || (t.packages as any).feeBreakdown?.serviceFee || 'Service fee'}
               </Text>
-              <Text style={styles.feeValue}>${serviceFee.toFixed(2)}</Text>
+              {pkg.deliveryBundleId && serviceFee === 0 ? (
+                <View style={{
+                  backgroundColor: isDark ? '#064e3b' : '#dcfce7',
+                  paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4,
+                }}>
+                  <Text style={{ fontFamily: fonts.bold, fontSize: 11, color: isDark ? '#6ee7b7' : '#15803d' }}>
+                    {bt.serviceFeeWaived || 'OFFERT'}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.feeValue}>${serviceFee.toFixed(2)}</Text>
+              )}
             </View>
 
             {/* Weight Fee */}

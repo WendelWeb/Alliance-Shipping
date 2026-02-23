@@ -85,6 +85,7 @@ export default function CalculatorScreen() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [calculationType, setCalculationType] = useState<'weight' | 'special'>('weight');
   const [selectedSpecialItem, setSelectedSpecialItem] = useState<number | null>(null);
+  const [packageCount, setPackageCount] = useState(1);
 
   // Animated values
   const weightScale = useSharedValue(1);
@@ -169,8 +170,23 @@ export default function CalculatorScreen() {
   const specialItemPrice = selectedItem ? parseFloat(selectedItem.fixedFee) : 0;
   const specialItemTotal = specialItemPrice + serviceFee;
 
-  // Final total based on calculation type
-  const total = calculationType === 'weight' ? weightTotal : specialItemTotal;
+  // Bundle calculations (multi-colis)
+  const perPackageCost = calculationType === 'weight' ? weightTotal : specialItemTotal;
+  const totalWithoutBundle = perPackageCost * packageCount;
+  const bundleSavings = packageCount > 1 ? serviceFee * (packageCount - 1) : 0;
+  const totalWithBundle = totalWithoutBundle - bundleSavings;
+
+  // Final total based on calculation type and package count
+  const total = packageCount > 1 ? totalWithBundle : perPackageCost;
+
+  // Handle package count change
+  const handlePackageCountChange = (delta: number) => {
+    const newCount = Math.max(1, Math.min(10, packageCount + delta));
+    if (newCount !== packageCount) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setPackageCount(newCount);
+    }
+  };
 
   const deliveryDays = userCity
     ? hasPerfume
@@ -635,6 +651,93 @@ export default function CalculatorScreen() {
           </Animated.View>
         )}
 
+        {/* Package Count (Bundle) Stepper */}
+        <Animated.View entering={FadeInDown.delay(200).duration(300)}>
+          <View style={[styles.card, { backgroundColor: card.backgroundColor, borderRadius: borderRadius.xl, padding: spacing.lg, marginHorizontal: spacing.xl, marginTop: spacing.lg, ...shadows.md, borderWidth: 1, borderColor: card.borderColor }]}>
+            <View style={[styles.cardHeaderRow, { gap: spacing.sm, marginBottom: spacing.md }]}>
+              <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: isDark ? colors.gray[200] : '#f3e8ff', alignItems: 'center', justifyContent: 'center' }}>
+                <Package size={16} color="#7c3aed" />
+              </View>
+              <Text style={[styles.cardTitle, { fontFamily: fonts.bold, fontSize: 16, color: colors.gray[800] }]}>
+                {(t.calculator as any).packageCount || 'Nombre de colis'}
+              </Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xl }}>
+              <TouchableOpacity
+                onPress={() => handlePackageCountChange(-1)}
+                disabled={packageCount <= 1}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: borderRadius.lg,
+                  borderWidth: 2,
+                  borderColor: packageCount <= 1 ? card.borderColor : '#7c3aed',
+                  backgroundColor: packageCount <= 1 ? colors.gray[100] : card.backgroundColor,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Minus size={20} color={packageCount <= 1 ? colors.gray[400] : '#7c3aed'} strokeWidth={2.5} />
+              </TouchableOpacity>
+
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ fontFamily: fonts.headingBold, fontSize: 40, color: '#7c3aed' }}>
+                  {packageCount}
+                </Text>
+                <Text style={{ fontFamily: fonts.medium, fontSize: 12, color: colors.gray[500], marginTop: -4 }}>
+                  {packageCount === 1 ? ((t.calculator as any).singlePackage || 'colis') : ((t.calculator as any).packages || 'colis')}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => handlePackageCountChange(1)}
+                disabled={packageCount >= 10}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: borderRadius.lg,
+                  borderWidth: 2,
+                  borderColor: packageCount >= 10 ? card.borderColor : '#7c3aed',
+                  backgroundColor: packageCount >= 10 ? colors.gray[100] : card.backgroundColor,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Plus size={20} color={packageCount >= 10 ? colors.gray[400] : '#7c3aed'} strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Bundle savings hint */}
+            {packageCount > 1 && (
+              <View style={{
+                marginTop: spacing.md,
+                paddingTop: spacing.md,
+                borderTopWidth: 1,
+                borderTopColor: card.borderColor,
+                alignItems: 'center',
+              }}>
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing.xs,
+                  backgroundColor: isDark ? '#052e16' : '#dcfce7',
+                  paddingHorizontal: spacing.md,
+                  paddingVertical: spacing.sm,
+                  borderRadius: borderRadius.full,
+                }}>
+                  <Text style={{ fontSize: 13, color: '#16a34a', fontFamily: fonts.semiBold }}>
+                    {(t.calculator as any).bundleSavings || 'Economie Bundle'}: -${bundleSavings.toFixed(2)}
+                  </Text>
+                </View>
+                <Text style={{ fontFamily: fonts.regular, fontSize: 11, color: colors.gray[500], marginTop: spacing.xs, textAlign: 'center' }}>
+                  {(t.calculator as any).bundleNote || '1 seul frais de service pour tous les colis'}
+                </Text>
+              </View>
+            )}
+          </View>
+        </Animated.View>
+
         {/* Pricing Summary */}
         {(calculationType === 'weight' || (calculationType === 'special' && selectedSpecialItem)) && (
           <Animated.View entering={FadeInDown.delay(240).duration(300)}>
@@ -691,6 +794,29 @@ export default function CalculatorScreen() {
                   </>
                 )}
 
+                {/* Bundle multi-package rows */}
+                {packageCount > 1 && (
+                  <>
+                    <View style={{ height: 1, backgroundColor: colors.gray[200], marginVertical: spacing.xs }} />
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ fontFamily: fonts.regular, fontSize: 14, color: colors.gray[600] }}>
+                        × {packageCount} {(t.calculator as any).packages || 'colis'}
+                      </Text>
+                      <Text style={{ fontFamily: fonts.semiBold, fontSize: 15, color: colors.gray[900] }}>
+                        ${totalWithoutBundle.toFixed(2)}
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={{ fontFamily: fonts.semiBold, fontSize: 14, color: '#16a34a' }}>
+                        {(t.calculator as any).bundleSavings || 'Economie Bundle'}
+                      </Text>
+                      <Text style={{ fontFamily: fonts.bold, fontSize: 15, color: '#16a34a' }}>
+                        -${bundleSavings.toFixed(2)}
+                      </Text>
+                    </View>
+                  </>
+                )}
+
                 <View style={{ height: 2, backgroundColor: colors.gray[200], marginVertical: spacing.sm, borderRadius: 1 }} />
 
                 {/* Total with Gradient Background */}
@@ -715,6 +841,25 @@ export default function CalculatorScreen() {
                   </Text>
                 </LinearGradient>
               </View>
+
+              {/* Purchase Assistance Hint */}
+              <TouchableOpacity
+                onPress={() => import('react-native').then(({ Linking }) => Linking.openURL('https://wa.me/50948812652'))}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  marginTop: spacing.md,
+                  padding: spacing.sm,
+                  borderRadius: borderRadius.md,
+                  backgroundColor: isDark ? 'rgba(139,92,246,0.08)' : 'rgba(139,92,246,0.04)',
+                }}
+              >
+                <Text style={{ fontSize: 14 }}>🛒</Text>
+                <Text style={{ fontFamily: fonts.medium, fontSize: 11, color: isDark ? '#c4b5fd' : '#7c3aed', flex: 1 }}>
+                  {(t as any).purchaseAssistance?.subtitle || 'No US card? We buy for you!'}
+                </Text>
+              </TouchableOpacity>
 
               {/* Delivery Time */}
               {deliveryDays && calculationType === 'weight' && (

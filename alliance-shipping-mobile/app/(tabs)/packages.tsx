@@ -28,6 +28,14 @@ import {
   MapPin,
   Check,
   Send,
+  Layers,
+  Gift,
+  ChevronRight,
+  Scale,
+  ShoppingCart,
+  Globe,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react-native';
 import { useTheme } from '@/lib/themes/ThemeProvider';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -60,7 +68,6 @@ interface PackageItem {
   specialItemId?: number;
   specialItemName?: string;
   specialItemBrand?: string;
-  quantity?: number;
   chargeByWeight?: boolean;
   serviceFee?: string;
   weightCost?: string;
@@ -236,6 +243,37 @@ export default function PackagesScreen() {
 
     return result;
   }, [packages, activeFilter, searchQuery]);
+
+  // -------------------------------------------------------------------------
+  // Bundle grouping: group 2+ available packages into 1 card
+  // -------------------------------------------------------------------------
+
+  const availablePackages = useMemo(
+    () => packages.filter((pkg) => pkg.status === 'available'),
+    [packages],
+  );
+  const hasBundleOpportunity = availablePackages.length >= 2;
+
+  // When bundle opportunity exists, remove available packages from individual list
+  const displayPackages = useMemo(() => {
+    if (!hasBundleOpportunity) return filteredPackages;
+    // If user is filtering by 'available', show nothing (bundle card replaces them)
+    if (activeFilter === 'available') return [];
+    // If 'all' or other filter, remove available ones (they're in the bundle card)
+    return filteredPackages.filter((pkg) => pkg.status !== 'available');
+  }, [filteredPackages, hasBundleOpportunity, activeFilter]);
+
+  const bundleSavings = useMemo(() => {
+    if (!hasBundleOpportunity) return 0;
+    // Sum real service fees of all packages except the first (those get waived)
+    return availablePackages.slice(1).reduce(
+      (sum, p) => sum + (parseFloat(p.serviceFee || '0') || 0), 0
+    );
+  }, [availablePackages, hasBundleOpportunity]);
+
+  const bundleTotalWeight = useMemo(() => {
+    return availablePackages.reduce((sum, p) => sum + (parseFloat(String(p.weight)) || 0), 0);
+  }, [availablePackages]);
 
   // -------------------------------------------------------------------------
   // Filter label resolver
@@ -432,6 +470,16 @@ export default function PackagesScreen() {
           <Text style={[styles.retryBtnText, { fontFamily: fonts.semiBold, color: colors.white }]}>{t.common.retry}</Text>
         </TouchableOpacity>
       )}
+      {!fetchError && (
+        <TouchableOpacity
+          onPress={() => import('react-native').then(({ Linking }) => Linking.openURL('https://wa.me/50948812652'))}
+          style={{ marginTop: spacing.lg }}
+        >
+          <Text style={{ fontFamily: fonts.medium, fontSize: 12, color: isDark ? '#c4b5fd' : '#7c3aed', textAlign: 'center' }}>
+            🛒 {(t as any).purchaseAssistance?.subtitle || 'No US card? We buy for you!'}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -553,11 +601,187 @@ export default function PackagesScreen() {
       {/* Package list */}
       <View style={styles.listContainer}>
         <FlatList
-          data={filteredPackages}
+          data={displayPackages}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
           contentContainerStyle={[styles.listContent, { paddingHorizontal: spacing.xl, paddingTop: spacing.sm }]}
-          ListEmptyComponent={ListEmptyComponent}
+          ListEmptyComponent={!hasBundleOpportunity || (activeFilter !== 'all' && activeFilter !== 'available') ? ListEmptyComponent : null}
+          ListHeaderComponent={
+            hasBundleOpportunity && (activeFilter === 'all' || activeFilter === 'available') ? (
+              <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+                <Pressable
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    router.push('/bundle/available');
+                  }}
+                  style={{
+                    backgroundColor: card.backgroundColor,
+                    borderRadius: borderRadius.xl,
+                    borderWidth: 1.5,
+                    borderColor: '#7c3aed',
+                    marginBottom: spacing.lg,
+                    overflow: 'hidden',
+                    ...shadows.sm,
+                  }}
+                >
+                  {/* Purple header bar */}
+                  <View style={{
+                    backgroundColor: '#7c3aed',
+                    paddingHorizontal: spacing.lg,
+                    paddingVertical: spacing.md,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+                      <Layers size={20} color="#fff" />
+                      <Text style={{ fontFamily: fonts.bold, fontSize: 16, color: '#fff' }}>
+                        {availablePackages.length} {(t as any).bundle?.packagesAvailable || 'colis disponibles'}
+                      </Text>
+                    </View>
+                    <ChevronRight size={20} color="#fff" />
+                  </View>
+
+                  {/* Savings badge */}
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    backgroundColor: isDark ? '#064e3b' : '#dcfce7',
+                    marginHorizontal: spacing.md,
+                    marginTop: spacing.md,
+                    paddingHorizontal: spacing.md,
+                    paddingVertical: spacing.sm,
+                    borderRadius: borderRadius.md,
+                    borderWidth: 1,
+                    borderColor: isDark ? '#059669' : '#86efac',
+                  }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Gift size={16} color={isDark ? '#6ee7b7' : '#15803d'} />
+                      <Text style={{ fontFamily: fonts.semiBold, fontSize: 13, color: isDark ? '#6ee7b7' : '#15803d' }}>
+                        {(t as any).bundle?.saveWith || 'Economisez avec Bundle !'}
+                      </Text>
+                    </View>
+                    <Text style={{ fontFamily: fonts.bold, fontSize: 15, color: isDark ? '#6ee7b7' : '#15803d' }}>
+                      -${bundleSavings.toFixed(2)}
+                    </Text>
+                  </View>
+
+                  {/* Mini package list */}
+                  <View style={{ paddingHorizontal: spacing.md, paddingTop: spacing.sm, paddingBottom: spacing.md }}>
+                    {availablePackages.slice(0, 3).map((pkg, i) => (
+                      <View key={String(pkg.id)} style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        paddingVertical: 6,
+                        borderBottomWidth: i < Math.min(availablePackages.length, 3) - 1 ? 1 : 0,
+                        borderBottomColor: colors.gray[100],
+                      }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontFamily: fonts.semiBold, fontSize: 13, color: colors.gray[900] }} numberOfLines={1}>
+                            {pkg.trackingNumber}
+                          </Text>
+                          <Text style={{ fontFamily: fonts.regular, fontSize: 11, color: colors.gray[500] }} numberOfLines={1}>
+                            {pkg.description}
+                          </Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <Scale size={12} color={colors.gray[400]} />
+                          <Text style={{ fontFamily: fonts.medium, fontSize: 12, color: colors.gray[600] }}>
+                            {parseFloat(String(pkg.weight)).toFixed(1)} lbs
+                          </Text>
+                        </View>
+                      </View>
+                    ))}
+                    {availablePackages.length > 3 && (
+                      <Text style={{ fontFamily: fonts.medium, fontSize: 12, color: '#7c3aed', textAlign: 'center', marginTop: 6 }}>
+                        +{availablePackages.length - 3} {(t as any).bundle?.packagesAvailable || 'colis'}...
+                      </Text>
+                    )}
+                  </View>
+
+                  {/* Footer: total weight + CTA */}
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    paddingHorizontal: spacing.md,
+                    paddingVertical: spacing.sm,
+                    borderTopWidth: 1,
+                    borderTopColor: colors.gray[100],
+                    backgroundColor: isDark ? 'rgba(124, 58, 237, 0.08)' : 'rgba(124, 58, 237, 0.04)',
+                  }}>
+                    <Text style={{ fontFamily: fonts.medium, fontSize: 12, color: colors.gray[500] }}>
+                      {(t as any).bundle?.totalWeight || 'Poids total'}: {bundleTotalWeight.toFixed(1)} lbs
+                    </Text>
+                    <Text style={{ fontFamily: fonts.semiBold, fontSize: 13, color: '#7c3aed' }}>
+                      {(t as any).bundle?.viewBundleDetails || 'Voir les details'} →
+                    </Text>
+                  </View>
+                </Pressable>
+              </Animated.View>
+            ) : null
+          }
+          ListFooterComponent={
+            !loading ? (
+              <Animated.View entering={FadeInDown.delay(300).duration(400)} style={{ marginTop: spacing.lg, marginBottom: spacing.xl }}>
+                <Pressable
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    import('react-native').then(({ Linking }) => {
+                      Linking.openURL('https://wa.me/50948812652');
+                    });
+                  }}
+                  style={{
+                    backgroundColor: isDark ? 'rgba(139,92,246,0.08)' : 'rgba(139,92,246,0.04)',
+                    borderRadius: borderRadius.xl,
+                    borderWidth: 1,
+                    borderColor: isDark ? 'rgba(139,92,246,0.3)' : 'rgba(139,92,246,0.15)',
+                    padding: spacing.lg,
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+                    <View style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: borderRadius.lg,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: '#7c3aed',
+                    }}>
+                      <ShoppingCart size={22} color="#fff" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                        <View style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
+                          backgroundColor: isDark ? 'rgba(139,92,246,0.2)' : 'rgba(139,92,246,0.1)',
+                          paddingHorizontal: 6,
+                          paddingVertical: 2,
+                          borderRadius: borderRadius.full,
+                        }}>
+                          <Sparkles size={10} color={isDark ? '#c4b5fd' : '#7c3aed'} />
+                          <Text style={{ fontFamily: fonts.bold, fontSize: 9, color: isDark ? '#c4b5fd' : '#7c3aed' }}>
+                            {(t as any).purchaseAssistance?.badge || 'New Service'}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={{ fontFamily: fonts.bold, fontSize: 14, color: colors.gray[900] }}>
+                        {(t as any).purchaseAssistance?.title || 'US Purchase Service'}
+                      </Text>
+                      <Text style={{ fontFamily: fonts.regular, fontSize: 12, color: colors.gray[500], marginTop: 1 }}>
+                        {(t as any).purchaseAssistance?.subtitle || 'No US card? We buy for you!'}
+                      </Text>
+                    </View>
+                    <ArrowRight size={18} color={isDark ? '#c4b5fd' : '#7c3aed'} />
+                  </View>
+                </Pressable>
+              </Animated.View>
+            ) : null
+          }
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
