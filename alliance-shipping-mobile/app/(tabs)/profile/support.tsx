@@ -37,6 +37,7 @@ export default function SupportScreen() {
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   const faqItems: FaqItem[] = [
+    { question: t.profile.support.faq21q, answer: t.profile.support.faq21a },
     { question: t.profile.support.faq1q, answer: t.profile.support.faq1a },
     { question: t.profile.support.faq2q, answer: t.profile.support.faq2a },
     { question: t.profile.support.faq3q, answer: t.profile.support.faq3a },
@@ -57,7 +58,6 @@ export default function SupportScreen() {
     { question: t.profile.support.faq18q, answer: t.profile.support.faq18a },
     { question: t.profile.support.faq19q, answer: t.profile.support.faq19a },
     { question: t.profile.support.faq20q, answer: t.profile.support.faq20a },
-    { question: t.profile.support.faq21q, answer: t.profile.support.faq21a },
   ];
 
   const toggleFaq = (index: number) => {
