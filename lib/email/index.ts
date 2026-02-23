@@ -52,6 +52,20 @@ export {
   sendPackageReminderEmail,
 } from './email-templates';
 
+// Export Bundle Delivery Templates
+export {
+  sendBundleDeliveredEmail,
+  sendBundleCancelledEmail,
+  sendBundleAvailableEmail,
+  sendBundleReminderEmail,
+} from './email-templates';
+
+// Export Customs Fees & Warehouse Templates
+export {
+  sendCustomsFeesEmail,
+  sendWarehouseChangeEmail,
+} from './service';
+
 // Export User Workflow Templates
 export {
   sendRequestSubmittedSuccessEmail,

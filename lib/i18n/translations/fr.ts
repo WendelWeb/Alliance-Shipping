@@ -244,11 +244,11 @@ export const fr = {
         answer: 'Les délais varient selon la ville : Cap-Haïtien (3-6 jours), Port-au-Prince (3-5 jours), Port-de-Paix (5-7 jours). Les colis contenant des parfums nécessitent des jours supplémentaires pour le traitement douanier.',
       },
       {
-        question: 'Que sont les articles spéciaux ?',
+        question: 'Quel sont les articles spéciaux ?',
         answer: 'Les articles spéciaux (iPhone, Samsung, iPad, MacBook, Starlink, etc.) ont un frais d\'expédition fixe quel que soit le poids. Cela garantit un coût prévisible pour les appareils électroniques de valeur. Vous pouvez sélectionner un article spécial lors de votre requête de colis.',
       },
       {
-        question: 'Que sont les frais de douane ?',
+        question: 'Quel sont les frais de douane ?',
         answer: 'Les frais de douane peuvent être appliqués par la douane haïtienne sur certains articles. Le cas échéant, notre équipe admin ajoutera ces frais à votre colis et vous serez notifié par email. Les frais de douane sont séparés des frais d\'expédition.',
       },
       {
@@ -932,9 +932,9 @@ export const fr = {
       faq8a: 'Oui ! Une fois votre requête approuvée, vous recevez un numéro de suivi Alliance Shipping (AS-XXXXXXXXXX). Utilisez-le sur notre site web ou application mobile pour suivre votre colis en temps réel à chaque étape.',
       faq9q: 'Combien de temps prend la livraison ?',
       faq9a: 'Les délais varient selon la ville : Cap-Haïtien (3-6 jours), Port-au-Prince (3-5 jours), Port-de-Paix (5-7 jours). Les colis contenant des parfums nécessitent des jours supplémentaires pour le traitement douanier.',
-      faq10q: 'Que sont les articles spéciaux ?',
+      faq10q: 'Quel sont les articles spéciaux ?',
       faq10a: 'Les articles spéciaux (iPhone, Samsung, iPad, MacBook, Starlink, etc.) ont un frais d\'expédition fixe quel que soit le poids. Cela garantit un coût prévisible pour les appareils électroniques de valeur. Vous pouvez sélectionner un article spécial lors de votre requête de colis.',
-      faq11q: 'Que sont les frais de douane ?',
+      faq11q: 'Quel sont les frais de douane ?',
       faq11a: 'Les frais de douane peuvent être appliqués par la douane haïtienne sur certains articles. Le cas échéant, notre équipe admin ajoutera ces frais à votre colis et vous serez notifié par email. Les frais de douane sont séparés des frais d\'expédition.',
       faq12q: 'Comment envoyer un colis ?',
       faq12a: 'Vous devez créer un compte, puis soumettre une requête de colis avec le numéro de suivi de votre transporteur (UPS, USPS, FedEx, etc.). Notre équipe examine la requête, pèse le colis dans notre entrepôt de Miami, et vous attribue un numéro de suivi Alliance Shipping (AS-XXXXXXXXXX). C\'est obligatoire pour tous les envois.',

@@ -113,6 +113,136 @@ const pushTemplates: Record<string, Record<Locale, { title: string; body: string
     ht: { title: '\u23f0 Rap\u00e8l : {{count}} kolis ap tann ou !', body: '{{count}} kolis ou yo disponib depi {{days}} jou. Vin pran yo ansanm epi ekonomize ${{savings}} !\n\ud83c\udfe2 Depo : {{depot}}\n\ud83d\udccb Kolis : {{trackingList}}\nPa rate ekonomi bundle ou !' },
     es: { title: '\u23f0 Recordatorio: \u00a1{{count}} paquetes esperando!', body: 'Sus {{count}} paquetes llevan {{days}} d\u00edas disponibles. \u00a1Rec\u00f3jalos juntos y ahorre ${{savings}}!\n\ud83c\udfe2 Dep\u00f3sito: {{depot}}\n\ud83d\udccb Paquetes: {{trackingList}}\n\u00a1No se pierda sus ahorros bundle!' },
   },
+
+  // ═══ ANNOUNCEMENT-SPECIFIC PUSH TEMPLATES ═══════════════════
+  // Used when admin creates announcements via the announcement system.
+  // Variables: {{title}} = announcement title, {{summary}} = translated content excerpt
+
+  // ─── Pricing & Fees ─────────────────────────────────────────
+  city_fee_change: {
+    en: { title: '\ud83d\udcb0 Shipping Rates Updated', body: '{{title}}\n\n{{summary}}\n\nCheck the app for the updated pricing table.' },
+    fr: { title: '\ud83d\udcb0 Tarifs Mis \u00e0 Jour', body: '{{title}}\n\n{{summary}}\n\nConsultez l\'app pour le tableau de tarifs mis \u00e0 jour.' },
+    ht: { title: '\ud83d\udcb0 Tarif Mete Ajou', body: '{{title}}\n\n{{summary}}\n\nTcheke app la pou tablo tarif mete ajou a.' },
+    es: { title: '\ud83d\udcb0 Tarifas Actualizadas', body: '{{title}}\n\n{{summary}}\n\nConsulte la app para la tabla de tarifas actualizada.' },
+  },
+  delivery_time_change: {
+    en: { title: '\ud83d\udcc5 Delivery Times Updated', body: '{{title}}\n\n{{summary}}\n\nCheck the app for updated delivery estimates.' },
+    fr: { title: '\ud83d\udcc5 D\u00e9lais de Livraison Mis \u00e0 Jour', body: '{{title}}\n\n{{summary}}\n\nConsultez l\'app pour les d\u00e9lais mis \u00e0 jour.' },
+    ht: { title: '\ud83d\udcc5 Tan Livrezon Mete Ajou', body: '{{title}}\n\n{{summary}}\n\nTcheke app la pou tan livrezon mete ajou yo.' },
+    es: { title: '\ud83d\udcc5 Tiempos de Entrega Actualizados', body: '{{title}}\n\n{{summary}}\n\nConsulte la app para los tiempos de entrega actualizados.' },
+  },
+
+  // ─── Loyalty ────────────────────────────────────────────────
+  loyalty_rate_change: {
+    en: { title: '\ud83c\udf1f Loyalty Program Updated', body: '{{title}}\n\n{{summary}}\n\nCheck your loyalty balance in the app!' },
+    fr: { title: '\ud83c\udf1f Programme Fid\u00e9lit\u00e9 Mis \u00e0 Jour', body: '{{title}}\n\n{{summary}}\n\nConsultez votre solde fid\u00e9lit\u00e9 dans l\'app !' },
+    ht: { title: '\ud83c\udf1f Pwogram Fidelite Mete Ajou', body: '{{title}}\n\n{{summary}}\n\nTcheke balans fidelite ou nan app la !' },
+    es: { title: '\ud83c\udf1f Programa de Lealtad Actualizado', body: '{{title}}\n\n{{summary}}\n\n\u00a1Consulte su saldo de lealtad en la app!' },
+  },
+
+  // ─── Operations: Special Items ──────────────────────────────
+  new_special_item: {
+    en: { title: '\ud83d\udcf1 New Special Item Available', body: '{{title}}\n\n{{summary}}\n\nCheck the app for full details and pricing.' },
+    fr: { title: '\ud83d\udcf1 Nouvel Article Sp\u00e9cial Disponible', body: '{{title}}\n\n{{summary}}\n\nConsultez l\'app pour tous les d\u00e9tails et tarifs.' },
+    ht: { title: '\ud83d\udcf1 Nouvo Atik Espesyal Disponib', body: '{{title}}\n\n{{summary}}\n\nTcheke app la pou tout detay ak tarif yo.' },
+    es: { title: '\ud83d\udcf1 Nuevo Art\u00edculo Especial Disponible', body: '{{title}}\n\n{{summary}}\n\nConsulte la app para todos los detalles y precios.' },
+  },
+  modify_special_item: {
+    en: { title: '\u270f\ufe0f Special Item Updated', body: '{{title}}\n\n{{summary}}\n\nCheck the app for updated details.' },
+    fr: { title: '\u270f\ufe0f Article Sp\u00e9cial Modifi\u00e9', body: '{{title}}\n\n{{summary}}\n\nConsultez l\'app pour les d\u00e9tails mis \u00e0 jour.' },
+    ht: { title: '\u270f\ufe0f Atik Espesyal Modifye', body: '{{title}}\n\n{{summary}}\n\nTcheke app la pou detay mete ajou yo.' },
+    es: { title: '\u270f\ufe0f Art\u00edculo Especial Actualizado', body: '{{title}}\n\n{{summary}}\n\nConsulte la app para los detalles actualizados.' },
+  },
+  remove_special_item: {
+    en: { title: '\ud83d\uddd1\ufe0f Special Item Removed', body: '{{title}}\n\n{{summary}}\n\nThis item is no longer available as a special item.' },
+    fr: { title: '\ud83d\uddd1\ufe0f Article Sp\u00e9cial Retir\u00e9', body: '{{title}}\n\n{{summary}}\n\nCet article n\'est plus disponible comme article sp\u00e9cial.' },
+    ht: { title: '\ud83d\uddd1\ufe0f Atik Espesyal Retire', body: '{{title}}\n\n{{summary}}\n\nAtik sa a pa disponib ank\u00f2 k\u00f2m atik espesyal.' },
+    es: { title: '\ud83d\uddd1\ufe0f Art\u00edculo Especial Eliminado', body: '{{title}}\n\n{{summary}}\n\nEste art\u00edculo ya no est\u00e1 disponible como art\u00edculo especial.' },
+  },
+
+  // ─── Operations: Warehouses ─────────────────────────────────
+  new_warehouse: {
+    en: { title: '\ud83c\udfe2 New Depot Open!', body: '{{title}}\n\n{{summary}}\n\nCheck the app for the new depot details and location.' },
+    fr: { title: '\ud83c\udfe2 Nouveau D\u00e9p\u00f4t Ouvert !', body: '{{title}}\n\n{{summary}}\n\nConsultez l\'app pour les d\u00e9tails et l\'emplacement du nouveau d\u00e9p\u00f4t.' },
+    ht: { title: '\ud83c\udfe2 Nouvo Depo Ouvri !', body: '{{title}}\n\n{{summary}}\n\nTcheke app la pou detay ak anplasman nouvo depo a.' },
+    es: { title: '\ud83c\udfe2 \u00a1Nuevo Dep\u00f3sito Abierto!', body: '{{title}}\n\n{{summary}}\n\nConsulte la app para los detalles y ubicaci\u00f3n del nuevo dep\u00f3sito.' },
+  },
+  modify_warehouse: {
+    en: { title: '\ud83d\udd04 Depot Info Updated', body: '{{title}}\n\n{{summary}}\n\nCheck the app for updated depot information.' },
+    fr: { title: '\ud83d\udd04 Info D\u00e9p\u00f4t Mis \u00e0 Jour', body: '{{title}}\n\n{{summary}}\n\nConsultez l\'app pour les informations mises \u00e0 jour du d\u00e9p\u00f4t.' },
+    ht: { title: '\ud83d\udd04 Enf\u00f2masyon Depo Mete Ajou', body: '{{title}}\n\n{{summary}}\n\nTcheke app la pou enf\u00f2masyon depo mete ajou a.' },
+    es: { title: '\ud83d\udd04 Info Dep\u00f3sito Actualizada', body: '{{title}}\n\n{{summary}}\n\nConsulte la app para la informaci\u00f3n actualizada del dep\u00f3sito.' },
+  },
+  close_warehouse: {
+    en: { title: '\ud83d\udeab Depot Closed', body: '{{title}}\n\n{{summary}}\n\nPlease check the app for alternative depot locations.' },
+    fr: { title: '\ud83d\udeab D\u00e9p\u00f4t Ferm\u00e9', body: '{{title}}\n\n{{summary}}\n\nVeuillez consulter l\'app pour les d\u00e9p\u00f4ts alternatifs.' },
+    ht: { title: '\ud83d\udeab Depo Femen', body: '{{title}}\n\n{{summary}}\n\nTanpri tcheke app la pou depo alt\u00e8natif yo.' },
+    es: { title: '\ud83d\udeab Dep\u00f3sito Cerrado', body: '{{title}}\n\n{{summary}}\n\nPor favor consulte la app para dep\u00f3sitos alternativos.' },
+  },
+  remove_warehouse: {
+    en: { title: '\ud83d\uddd1\ufe0f Depot Removed', body: '{{title}}\n\n{{summary}}\n\nPlease check the app for alternative depot locations.' },
+    fr: { title: '\ud83d\uddd1\ufe0f D\u00e9p\u00f4t Supprim\u00e9', body: '{{title}}\n\n{{summary}}\n\nVeuillez consulter l\'app pour les d\u00e9p\u00f4ts alternatifs.' },
+    ht: { title: '\ud83d\uddd1\ufe0f Depo Efase', body: '{{title}}\n\n{{summary}}\n\nTanpri tcheke app la pou depo alt\u00e8natif yo.' },
+    es: { title: '\ud83d\uddd1\ufe0f Dep\u00f3sito Eliminado', body: '{{title}}\n\n{{summary}}\n\nPor favor consulte la app para dep\u00f3sitos alternativos.' },
+  },
+
+  // ─── Operations: Cities ─────────────────────────────────────
+  new_city: {
+    en: { title: '\ud83c\udfd9\ufe0f New Destination Available!', body: '{{title}}\n\n{{summary}}\n\nCheck the app for the new city pricing and details.' },
+    fr: { title: '\ud83c\udfd9\ufe0f Nouvelle Destination Disponible !', body: '{{title}}\n\n{{summary}}\n\nConsultez l\'app pour les tarifs et d\u00e9tails de la nouvelle ville.' },
+    ht: { title: '\ud83c\udfd9\ufe0f Nouvo Destinasyon Disponib !', body: '{{title}}\n\n{{summary}}\n\nTcheke app la pou tarif ak detay nouvo vil la.' },
+    es: { title: '\ud83c\udfd9\ufe0f \u00a1Nuevo Destino Disponible!', body: '{{title}}\n\n{{summary}}\n\nConsulte la app para los precios y detalles de la nueva ciudad.' },
+  },
+  remove_city: {
+    en: { title: '\ud83d\udeab City Removed', body: '{{title}}\n\n{{summary}}\n\nThis destination is no longer available for shipping.' },
+    fr: { title: '\ud83d\udeab Ville Retir\u00e9e', body: '{{title}}\n\n{{summary}}\n\nCette destination n\'est plus disponible pour l\'exp\u00e9dition.' },
+    ht: { title: '\ud83d\udeab Vil Retire', body: '{{title}}\n\n{{summary}}\n\nDestinasyon sa a pa disponib ank\u00f2 pou livrezon.' },
+    es: { title: '\ud83d\udeab Ciudad Eliminada', body: '{{title}}\n\n{{summary}}\n\nEste destino ya no est\u00e1 disponible para env\u00edos.' },
+  },
+
+  // ─── Communication Templates ────────────────────────────────
+  delivery_delay: {
+    en: { title: '\u23f3 Delivery Delay Notice', body: '{{title}}\n\n{{summary}}\n\nWe apologize for the inconvenience. Open the app for more details.' },
+    fr: { title: '\u23f3 Avis de Retard de Livraison', body: '{{title}}\n\n{{summary}}\n\nNous nous excusons pour le d\u00e9sagr\u00e9ment. Ouvrez l\'app pour plus de d\u00e9tails.' },
+    ht: { title: '\u23f3 Avi Reta Livrezon', body: '{{title}}\n\n{{summary}}\n\nNou eskize pou dezagreman an. Ouvri app la pou plis detay.' },
+    es: { title: '\u23f3 Aviso de Retraso en Entrega', body: '{{title}}\n\n{{summary}}\n\nNos disculpamos por la inconveniencia. Abra la app para m\u00e1s detalles.' },
+  },
+  new_service: {
+    en: { title: '\ud83c\udf1f New Service Available!', body: '{{title}}\n\n{{summary}}\n\nOpen the app to learn more about our new service.' },
+    fr: { title: '\ud83c\udf1f Nouveau Service Disponible !', body: '{{title}}\n\n{{summary}}\n\nOuvrez l\'app pour en savoir plus sur notre nouveau service.' },
+    ht: { title: '\ud83c\udf1f Nouvo S\u00e8vis Disponib !', body: '{{title}}\n\n{{summary}}\n\nOuvri app la pou apprann plis sou nouvo s\u00e8vis nou an.' },
+    es: { title: '\ud83c\udf1f \u00a1Nuevo Servicio Disponible!', body: '{{title}}\n\n{{summary}}\n\nAbra la app para conocer m\u00e1s sobre nuestro nuevo servicio.' },
+  },
+  promotion: {
+    en: { title: '\ud83c\udf89 Special Promotion!', body: '{{title}}\n\n{{summary}}\n\nDon\'t miss out! Open the app for full details.' },
+    fr: { title: '\ud83c\udf89 Promotion Sp\u00e9ciale !', body: '{{title}}\n\n{{summary}}\n\nNe ratez pas cette offre ! Ouvrez l\'app pour tous les d\u00e9tails.' },
+    ht: { title: '\ud83c\udf89 Pwomosyon Espesyal !', body: '{{title}}\n\n{{summary}}\n\nPa rate \u00f2f sa a ! Ouvri app la pou tout detay yo.' },
+    es: { title: '\ud83c\udf89 \u00a1Promoci\u00f3n Especial!', body: '{{title}}\n\n{{summary}}\n\n\u00a1No se lo pierda! Abra la app para todos los detalles.' },
+  },
+  maintenance: {
+    en: { title: '\ud83d\udd27 Scheduled Maintenance', body: '{{title}}\n\n{{summary}}\n\nWe apologize for any inconvenience. Service will resume shortly.' },
+    fr: { title: '\ud83d\udd27 Maintenance Pr\u00e9vue', body: '{{title}}\n\n{{summary}}\n\nNous nous excusons pour tout d\u00e9sagr\u00e9ment. Le service reprendra bient\u00f4t.' },
+    ht: { title: '\ud83d\udd27 Mant\u00e8nans Planifye', body: '{{title}}\n\n{{summary}}\n\nNou eskize pou tout dezagreman. S\u00e8vis la ap reprann byento.' },
+    es: { title: '\ud83d\udd27 Mantenimiento Programado', body: '{{title}}\n\n{{summary}}\n\nNos disculpamos por cualquier inconveniencia. El servicio se reanudar\u00e1 pronto.' },
+  },
+  temporary_closure: {
+    en: { title: '\u26a0\ufe0f Temporary Closure Notice', body: '{{title}}\n\n{{summary}}\n\nPlease check the app for alternative options and reopening dates.' },
+    fr: { title: '\u26a0\ufe0f Avis de Fermeture Temporaire', body: '{{title}}\n\n{{summary}}\n\nVeuillez consulter l\'app pour les alternatives et dates de r\u00e9ouverture.' },
+    ht: { title: '\u26a0\ufe0f Avi F\u00e8mti Tanpor\u00e8', body: '{{title}}\n\n{{summary}}\n\nTanpri tcheke app la pou opsyon alt\u00e8natif ak dat reouv\u00e8ti yo.' },
+    es: { title: '\u26a0\ufe0f Aviso de Cierre Temporal', body: '{{title}}\n\n{{summary}}\n\nPor favor consulte la app para opciones alternativas y fechas de reapertura.' },
+  },
+  weather_alert: {
+    en: { title: '\u26c8\ufe0f Weather Alert', body: '{{title}}\n\n{{summary}}\n\nStay safe! Check the app for service updates.' },
+    fr: { title: '\u26c8\ufe0f Alerte M\u00e9t\u00e9o', body: '{{title}}\n\n{{summary}}\n\nRestez en s\u00e9curit\u00e9 ! Consultez l\'app pour les mises \u00e0 jour de service.' },
+    ht: { title: '\u26c8\ufe0f Al\u00e8t Meteo', body: '{{title}}\n\n{{summary}}\n\nRete an sekirite ! Tcheke app la pou mizajou s\u00e8vis yo.' },
+    es: { title: '\u26c8\ufe0f Alerta Meteorol\u00f3gica', body: '{{title}}\n\n{{summary}}\n\n\u00a1Mant\u00e9ngase seguro! Consulte la app para actualizaciones del servicio.' },
+  },
+  new_destination: {
+    en: { title: '\u2708\ufe0f New Destination!', body: '{{title}}\n\n{{summary}}\n\nOpen the app to see our expanded delivery network.' },
+    fr: { title: '\u2708\ufe0f Nouvelle Destination !', body: '{{title}}\n\n{{summary}}\n\nOuvrez l\'app pour d\u00e9couvrir notre r\u00e9seau de livraison \u00e9largi.' },
+    ht: { title: '\u2708\ufe0f Nouvo Destinasyon !', body: '{{title}}\n\n{{summary}}\n\nOuvri app la pou w\u00e8 rezo livrezon \u00e9laji nou an.' },
+    es: { title: '\u2708\ufe0f \u00a1Nuevo Destino!', body: '{{title}}\n\n{{summary}}\n\nAbra la app para ver nuestra red de entrega ampliada.' },
+  },
 };
 
 function fillVars(text: string, vars: Record<string, string>): string {
@@ -272,7 +402,8 @@ export async function sendPushToAllUsers(params: {
       ? user.preferredLanguage
       : 'fr') as Locale;
 
-    const template = pushTemplates[templateKey]?.[locale];
+    // Try specific template, fallback to new_announcement
+    const template = pushTemplates[templateKey]?.[locale] || pushTemplates['new_announcement']?.[locale];
     if (!template) {
       failed++;
       continue;

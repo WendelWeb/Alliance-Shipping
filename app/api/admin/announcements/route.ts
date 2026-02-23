@@ -5,6 +5,7 @@ import { getAdminSession } from '@/lib/auth/admin';
 import { eq, desc, or, like, and, isNull } from 'drizzle-orm';
 import { executeAction } from '@/lib/announcements/action-executors';
 import { sendPushToAllUsers } from '@/lib/notifications/push';
+import { broadcastAnnouncementEmails } from '@/lib/announcements/broadcast';
 import {
   getTemplateById,
   generateActionTranslations,
@@ -152,19 +153,28 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    // Send push notification to all users (if not scheduled for later)
+    // Send push notification + email to all users (if not scheduled for later)
+    // Use specific template if available (e.g. new_special_item, city_fee_change), fallback to generic
     if (!isScheduled) {
       const summary = typeof translations === 'object' && translations !== null
-        ? ((translations as any).fr?.content || (translations as any).en?.content || '').substring(0, 100)
+        ? ((translations as any).fr?.content || (translations as any).en?.content || '').substring(0, 120)
         : '';
+      const pushTemplateKey = templateId || 'new_announcement';
+
+      // Push notification (fire-and-forget)
       sendPushToAllUsers({
-        templateKey: 'new_announcement',
+        templateKey: pushTemplateKey,
         variables: {
           title: newAnnouncement.title,
           summary: summary ? `${summary}...` : '',
         },
         data: { announcementId: newAnnouncement.id },
-      }).catch(() => {});
+      }).catch((err) => console.error('[ANNOUNCEMENT] Push broadcast failed:', err));
+
+      // Email broadcast (fire-and-forget, automatic)
+      broadcastAnnouncementEmails({
+        announcementId: newAnnouncement.id,
+      }).catch((err) => console.error('[ANNOUNCEMENT] Email broadcast failed:', err));
     }
 
     return NextResponse.json({

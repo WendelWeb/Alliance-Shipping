@@ -8,7 +8,7 @@ import {
 import { getAdminSession } from '@/lib/auth/admin';
 import { eq, and, inArray } from 'drizzle-orm';
 import { sendPushNotification } from '@/lib/notifications/push';
-import { sendBundleDeliveredEmail } from '@/lib/email/email-templates';
+import { sendBundleDeliveredEmail, sendBundleCancelledEmail } from '@/lib/email/email-templates';
 
 // POST - Bundle deliver: deliver multiple packages for same user with 1 service fee
 export async function POST(request: NextRequest) {
@@ -446,6 +446,17 @@ export async function PATCH(request: NextRequest) {
         trackingList: bundlePackages.map(p => p.pkg.trackingNumber).join(', '),
       },
     }).catch(() => {});
+
+    // Send cancellation email
+    if (user?.email) {
+      const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Client';
+      sendBundleCancelledEmail(
+        user.email,
+        userName,
+        bundlePackages.map(p => p.pkg.trackingNumber),
+        user.preferredLanguage || 'fr',
+      ).catch(() => {});
+    }
 
     return NextResponse.json({
       success: true,
