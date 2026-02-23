@@ -8,6 +8,7 @@ import {
   sendPackageAvailableEmail,
   sendPackageDeliveredEmail
 } from '@/lib/email/service';
+import { sendBundleAvailableEmail } from '@/lib/email/email-templates';
 import { sendPushNotification } from '@/lib/notifications/push';
 
 // POST - Bulk update package statuses
@@ -368,6 +369,81 @@ export async function POST(request: NextRequest) {
         pointsEarned: packagePointsEarned,
         creditsEarned: packageCreditsEarned,
       });
+    }
+
+    // Bundle available detection: when setting packages to "available",
+    // check if any user now has 2+ available packages and notify them
+    if (status === 'available') {
+      try {
+        // Group updated packages by userId
+        const userPackageMap = new Map<number, typeof updatedPackages>();
+        for (const pkg of updatedPackages) {
+          const list = userPackageMap.get(pkg.userId) || [];
+          list.push(pkg);
+          userPackageMap.set(pkg.userId, list);
+        }
+
+        for (const [userId, userPkgs] of userPackageMap) {
+          if (userPkgs.length >= 2) {
+            // At least 2 packages just became available for same user
+            const userInfo = packagesToUpdate.find(p => p.pkg.userId === userId)?.user;
+            if (userInfo) {
+              const trackingList = userPkgs.map(p => p.trackingNumber).join(', ');
+
+              // Send bundle_available push notification
+              sendPushNotification({
+                userId,
+                templateKey: 'bundle_available',
+                variables: {
+                  count: String(userPkgs.length),
+                  trackingList,
+                },
+              }).catch(() => {});
+
+              // Send bundle available email
+              if (userInfo.email) {
+                const userName = `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || 'Client';
+                // Calculate potential savings (all service fees minus 1)
+                let cityServiceFee = 5.00;
+                if (userInfo.city) {
+                  const [cp] = await db
+                    .select({ serviceFee: cityPricing.serviceFee })
+                    .from(cityPricing)
+                    .where(eq(cityPricing.city, userInfo.city))
+                    .limit(1);
+                  if (cp) cityServiceFee = parseFloat(cp.serviceFee);
+                }
+                const potentialSavings = cityServiceFee * (userPkgs.length - 1);
+
+                // Get depot info
+                let depotName = 'Alliance Shipping';
+                let depotAddress = '';
+                if (userInfo.warehouseId) {
+                  const [wh] = await db
+                    .select({ name: warehouses.name, address: warehouses.address })
+                    .from(warehouses)
+                    .where(eq(warehouses.id, userInfo.warehouseId))
+                    .limit(1);
+                  if (wh) { depotName = wh.name; depotAddress = wh.address || ''; }
+                }
+
+                sendBundleAvailableEmail(
+                  userInfo.email,
+                  userName,
+                  userPkgs.map(p => p.trackingNumber),
+                  potentialSavings,
+                  depotName,
+                  depotAddress,
+                  userInfo.preferredLanguage || 'fr',
+                ).catch(() => {});
+              }
+            }
+          }
+        }
+      } catch (bundleError) {
+        console.error('Error checking bundle availability:', bundleError);
+        // Don't fail the main request
+      }
     }
 
     return NextResponse.json({

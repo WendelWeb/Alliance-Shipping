@@ -22,6 +22,7 @@ import {
   Scale,
   AlertTriangle,
   Smartphone,
+  Layers,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -44,6 +45,7 @@ interface PackageData {
   specialItemBrand?: string;
   specialItemFixedFee?: string;
   chargeByWeight?: boolean;
+  deliveryBundleId?: number;
   totalCost: string;
   currentLocation: string;
   estimatedDelivery: string | null;
@@ -424,6 +426,28 @@ export default function PackagesPage() {
                         </div>
                       )}
 
+                      {/* Bundle Badge */}
+                      {pkg.deliveryBundleId && (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold mb-3" style={{
+                          background: isDark
+                            ? 'linear-gradient(135deg, #581c87, #312e81)'
+                            : 'linear-gradient(135deg, #f3e8ff, #ede9fe)',
+                          color: isDark ? '#c4b5fd' : '#6d28d9',
+                          border: `1px solid ${isDark ? '#7c3aed' : '#c4b5fd'}`,
+                        }}>
+                          <Layers className="w-3.5 h-3.5" />
+                          {(t as any).bundle?.badge || 'Bundle'} #{pkg.deliveryBundleId}
+                          {serviceFee === 0 && (
+                            <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold" style={{
+                              backgroundColor: isDark ? '#064e3b' : '#dcfce7',
+                              color: isDark ? '#6ee7b7' : '#15803d',
+                            }}>
+                              {(t as any).bundle?.serviceFeeWaived || 'OFFERT'}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
                       {/* Info Grid */}
                       <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 mb-3">
                         <div className="flex items-center gap-2">
@@ -483,9 +507,21 @@ export default function PackagesPage() {
                           Detail des Frais
                         </p>
                         <div className="space-y-1 text-xs">
-                          <div className="flex justify-between">
+                          <div className="flex justify-between items-center">
                             <span style={{ color: colors.gray[600] }}>Frais de service:</span>
-                            <span className="font-semibold" style={{ color: colors.gray[900] }}>${serviceFee.toFixed(2)}</span>
+                            {pkg.deliveryBundleId && serviceFee === 0 ? (
+                              <span className="flex items-center gap-1.5">
+                                <span className="line-through" style={{ color: colors.gray[400] }}>$5.00</span>
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{
+                                  backgroundColor: isDark ? '#064e3b' : '#dcfce7',
+                                  color: isDark ? '#6ee7b7' : '#15803d',
+                                }}>
+                                  {(t as any).bundle?.serviceFeeWaived || 'OFFERT'}
+                                </span>
+                              </span>
+                            ) : (
+                              <span className="font-semibold" style={{ color: colors.gray[900] }}>${serviceFee.toFixed(2)}</span>
+                            )}
                           </div>
                           <div className="flex justify-between">
                             <span style={{ color: colors.gray[600] }}>Frais de poids ({parseFloat(pkg.weight).toFixed(1)} lbs):</span>

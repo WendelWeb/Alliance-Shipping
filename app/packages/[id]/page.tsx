@@ -30,6 +30,8 @@ import {
   Info,
   ExternalLink,
   Check,
+  Layers,
+  Gift,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -53,6 +55,7 @@ interface PackageData {
   specialItemBrand?: string;
   specialItemFixedFee?: string;
   chargeByWeight?: boolean;
+  deliveryBundleId?: number;
   totalCost: string;
   currentLocation: string;
   estimatedDelivery: string | null;
@@ -116,8 +119,13 @@ export default function PackageDetailPage() {
   const [pkg, setPkg] = useState<PackageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [bundleData, setBundleData] = useState<{
+    bundle: { packageCount: number; totalSavings: string; bundleTotalCost: string; deliveredAt: string };
+    packages: Array<{ id: number; trackingNumber: string; description: string; weight: string; totalCost: string }>;
+  } | null>(null);
 
   const pd = (t as any).packageDetail || {};
+  const bt = (t as any).bundle || {};
 
   // ── Fetch ─────────────────────────────────────────────────────
 
@@ -141,6 +149,15 @@ export default function PackageDetailPage() {
     };
     fetchPackage();
   }, [user, isLoaded, packageId]);
+
+  // Fetch bundle data if package is in a bundle
+  useEffect(() => {
+    if (!pkg?.deliveryBundleId) return;
+    fetch(`/api/user/bundles/${pkg.deliveryBundleId}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data?.success) setBundleData(data); })
+      .catch(() => {});
+  }, [pkg?.deliveryBundleId]);
 
   // ── Computed ──────────────────────────────────────────────────
 
@@ -568,6 +585,95 @@ export default function PackageDetailPage() {
                 </motion.div>
               )}
 
+              {/* Bundle Card */}
+              {pkg.deliveryBundleId && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                  className="rounded-2xl border p-5 sm:p-6"
+                  style={{
+                    background: isDark
+                      ? 'linear-gradient(135deg, #1e1b3a, #1a1640)'
+                      : 'linear-gradient(135deg, #f5f3ff, #ede9fe)',
+                    borderColor: isDark ? '#5b21b6' : '#c4b5fd',
+                    boxShadow: theme.shadow.md,
+                  }}
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
+                      background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                    }}>
+                      <Layers className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold" style={{ color: isDark ? '#e9d5ff' : '#5b21b6' }}>
+                        {bt.title || 'Livraison Bundle'}
+                      </h3>
+                      <p className="text-xs" style={{ color: isDark ? '#a78bfa' : '#7c3aed' }}>
+                        {bt.singleServiceFee || '1 seul frais de service'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Savings highlight */}
+                  {bundleData && (
+                    <div className="rounded-xl p-4 mb-4" style={{
+                      backgroundColor: isDark ? '#064e3b' : '#dcfce7',
+                      border: `1px solid ${isDark ? '#059669' : '#86efac'}`,
+                    }}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Gift className="w-4 h-4" style={{ color: isDark ? '#6ee7b7' : '#15803d' }} />
+                          <span className="text-sm font-semibold" style={{ color: isDark ? '#6ee7b7' : '#15803d' }}>
+                            {bt.savedAmount || 'Vous avez économisé'}
+                          </span>
+                        </div>
+                        <span className="text-lg font-bold" style={{ color: isDark ? '#6ee7b7' : '#15803d' }}>
+                          ${parseFloat(bundleData.bundle.totalSavings).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Other packages in bundle */}
+                  {bundleData && bundleData.packages.length > 1 && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: isDark ? '#a78bfa' : '#7c3aed' }}>
+                        {bt.otherPackages || 'Autres colis du bundle'} ({bundleData.bundle.packageCount})
+                      </p>
+                      <div className="space-y-2">
+                        {bundleData.packages
+                          .filter(p => p.id !== pkg.id)
+                          .map(p => (
+                            <Link
+                              key={p.id}
+                              href={`/packages/${p.id}`}
+                              className="flex items-center justify-between rounded-lg p-3 transition-all hover:shadow-sm"
+                              style={{
+                                backgroundColor: isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.08)',
+                                border: `1px solid ${isDark ? '#4c1d95' : '#ddd6fe'}`,
+                              }}
+                            >
+                              <div>
+                                <p className="font-mono text-sm font-semibold" style={{ color: isDark ? '#e9d5ff' : '#5b21b6' }}>
+                                  {p.trackingNumber}
+                                </p>
+                                <p className="text-xs line-clamp-1" style={{ color: isDark ? '#a78bfa' : '#7c3aed' }}>
+                                  {p.description}
+                                </p>
+                              </div>
+                              <span className="text-sm font-bold" style={{ color: isDark ? '#c4b5fd' : '#6d28d9' }}>
+                                ${parseFloat(p.totalCost).toFixed(2)}
+                              </span>
+                            </Link>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
               {/* Timeline */}
               {pkg.timeline && pkg.timeline.length > 0 && (
                 <motion.div
@@ -666,9 +772,21 @@ export default function PackageDetailPage() {
                     <span className="text-sm" style={{ color: colors.gray[600] }}>
                       {pd.serviceFee || 'Service fee'}
                     </span>
-                    <span className="font-semibold" style={{ color: colors.gray[900] }}>
-                      ${serviceFee.toFixed(2)}
-                    </span>
+                    {pkg.deliveryBundleId && serviceFee === 0 ? (
+                      <span className="flex items-center gap-1.5">
+                        <span className="line-through text-sm" style={{ color: colors.gray[400] }}>$5.00</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{
+                          backgroundColor: isDark ? '#064e3b' : '#dcfce7',
+                          color: isDark ? '#6ee7b7' : '#15803d',
+                        }}>
+                          {bt.serviceFeeWaived || 'OFFERT'}
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="font-semibold" style={{ color: colors.gray[900] }}>
+                        ${serviceFee.toFixed(2)}
+                      </span>
+                    )}
                   </div>
 
                   {/* Weight Fee */}
