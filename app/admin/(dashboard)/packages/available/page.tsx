@@ -38,7 +38,6 @@ interface AvailablePackage {
   userPhone: string;
   destination: string;
   weight: number;
-  quantity: number;
   serviceFee: number;
   weightCost: number;
   totalFee: number;
@@ -68,7 +67,6 @@ interface PotentialBundle {
     weightCost: string;
     customsFees: string;
     totalCost: string;
-    quantity: number;
     description: string | null;
     createdAt: string;
   }[];
@@ -112,7 +110,6 @@ export default function AvailablePackagesPage() {
       userPhone: pkg.user?.phone || 'N/A',
       destination: pkg.user?.city || '-',
       weight: parseFloat(pkg.weight) || 0,
-      quantity: parseInt(pkg.quantity) || 1,
       serviceFee: parseFloat(pkg.serviceFee) || 0,
       weightCost: parseFloat(pkg.weightCost) || 0,
       totalFee: parseFloat(pkg.totalCost) || 0,
@@ -275,7 +272,6 @@ export default function AvailablePackagesPage() {
         weightCost: String(p.weightCost),
         customsFees: String(p.customsFees),
         totalCost: String(p.totalCost),
-        quantity: p.quantity,
         description: null,
         createdAt: p.arrivedAt,
       })),
@@ -665,7 +661,6 @@ export default function AvailablePackagesPage() {
                                   </div>
                                   <div className="flex items-center gap-4 mt-1 text-xs text-gray-500 flex-wrap">
                                     <span>{pkg.weight} lbs</span>
-                                    <span>Qty: {pkg.quantity}</span>
                                     <span>Service: ${pkg.serviceFee.toFixed(2)}</span>
                                     {pkg.customsFees > 0 && (
                                       <span className="text-red-600">Douane: ${pkg.customsFees.toFixed(2)}</span>
@@ -798,10 +793,6 @@ export default function AvailablePackagesPage() {
                     <div className="flex items-center gap-2 text-sm">
                       <MapPin className="h-4 w-4 text-gray-400" />
                       <span className="text-gray-600">{pkg.pickupLocation}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Package className="h-4 w-4 text-gray-400" />
-                      <span className="text-gray-600">Quantite: {pkg.quantity || 1}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Package className="h-4 w-4 text-gray-400" />
@@ -1030,7 +1021,7 @@ export default function AvailablePackagesPage() {
                             )}
                           </div>
                           <div className="text-xs text-gray-500 mt-0.5">
-                            {parseFloat(pkg.weight).toFixed(1)} lbs | Qty: {pkg.quantity}
+                            {parseFloat(pkg.weight).toFixed(1)} lbs
                             {parseFloat(pkg.customsFees) > 0 && ` | Douane: $${parseFloat(pkg.customsFees).toFixed(2)}`}
                           </div>
                         </div>

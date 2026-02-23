@@ -23,6 +23,10 @@ import {
   AlertTriangle,
   Smartphone,
   Layers,
+  ShoppingCart,
+  Globe,
+  ArrowRight,
+  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -178,6 +182,25 @@ export default function PackagesPage() {
       if (!aIsBottom && bIsBottom) return -1;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
+
+  // Bundle grouping: 2+ available packages → grouped card
+  const availablePackages = packages.filter(p => p.status === 'available');
+  const hasBundleOpportunity = availablePackages.length >= 2;
+  // Sum real service fees of all packages except the first (those get waived in bundle)
+  const bundleSavings = hasBundleOpportunity
+    ? availablePackages.slice(1).reduce((sum, p) => sum + (parseFloat(p.serviceFee || '0') || 0), 0)
+    : 0;
+  const bundleTotalWeight = availablePackages.reduce((s, p) => s + parseFloat(p.weight), 0);
+
+  // City service fee: find any package with non-zero service fee (all share same city pricing)
+  const cityServiceFee = packages.find(p => parseFloat(p.serviceFee || '0') > 0)?.serviceFee || '5.00';
+
+  // Display packages: remove available when they're grouped
+  const displayPackages = hasBundleOpportunity
+    ? filteredAndSortedPackages.filter(p => p.status !== 'available')
+    : filteredAndSortedPackages;
+
+  const bt = (t as any).bundle || {};
 
   return (
     <div className="overflow-x-hidden">
@@ -350,9 +373,99 @@ export default function PackagesPage() {
             </motion.div>
           )}
 
+          {/* Bundle Opportunity Card */}
+          {!loading && hasBundleOpportunity && (statusFilter === 'all' || statusFilter === 'available') && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mb-6"
+            >
+              <Link href="/bundle/available">
+                <div
+                  className="rounded-2xl border overflow-hidden cursor-pointer transition-all hover:shadow-xl"
+                  style={{
+                    borderColor: '#7c3aed',
+                    borderWidth: '1.5px',
+                    boxShadow: theme.shadow.md,
+                  }}
+                >
+                  {/* Purple header */}
+                  <div className="px-5 py-4 flex items-center justify-between" style={{ backgroundColor: '#7c3aed' }}>
+                    <div className="flex items-center gap-3">
+                      <Layers className="w-5 h-5 text-white" />
+                      <span className="text-white font-bold text-lg">
+                        {availablePackages.length} {bt.packagesAvailable || 'colis disponibles'}
+                      </span>
+                    </div>
+                    <ChevronDown className="w-5 h-5 text-white -rotate-90" />
+                  </div>
+
+                  {/* Savings badge */}
+                  <div className="mx-4 mt-4 px-4 py-3 rounded-xl flex items-center justify-between" style={{
+                    backgroundColor: isDark ? '#064e3b' : '#dcfce7',
+                    border: `1px solid ${isDark ? '#059669' : '#86efac'}`,
+                  }}>
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-4 h-4" style={{ color: isDark ? '#6ee7b7' : '#15803d' }} />
+                      <span className="font-semibold text-sm" style={{ color: isDark ? '#6ee7b7' : '#15803d' }}>
+                        {bt.saveWith || 'Économisez avec Bundle !'}
+                      </span>
+                    </div>
+                    <span className="font-bold text-base" style={{ color: isDark ? '#6ee7b7' : '#15803d' }}>
+                      -${bundleSavings.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Mini package list */}
+                  <div className="px-4 pt-3 pb-4">
+                    {availablePackages.slice(0, 4).map((pkg, i) => (
+                      <div key={pkg.id} className="flex items-center justify-between py-2" style={{
+                        borderBottom: i < Math.min(availablePackages.length, 4) - 1 ? `1px solid ${colors.gray[100]}` : 'none',
+                      }}>
+                        <div className="min-w-0 flex-1 mr-3">
+                          <p className="font-mono text-sm font-semibold truncate" style={{ color: colors.gray[900] }}>
+                            {pkg.trackingNumber}
+                          </p>
+                          <p className="text-xs truncate" style={{ color: colors.gray[500] }}>
+                            {pkg.description}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <Scale className="w-3 h-3" style={{ color: colors.gray[400] }} />
+                          <span className="text-xs font-medium" style={{ color: colors.gray[600] }}>
+                            {parseFloat(pkg.weight).toFixed(1)} lbs
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {availablePackages.length > 4 && (
+                      <p className="text-xs text-center mt-1 font-medium" style={{ color: '#7c3aed' }}>
+                        +{availablePackages.length - 4} {bt.packagesAvailable || 'colis'}...
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between px-4 py-3 border-t" style={{
+                    borderColor: colors.gray[100],
+                    backgroundColor: isDark ? 'rgba(124,58,237,0.08)' : 'rgba(124,58,237,0.04)',
+                  }}>
+                    <span className="text-xs font-medium" style={{ color: colors.gray[500] }}>
+                      {bt.totalWeight || 'Poids total'}: {bundleTotalWeight.toFixed(1)} lbs
+                    </span>
+                    <span className="text-sm font-semibold" style={{ color: '#7c3aed' }}>
+                      {bt.viewBundleDetails || 'Voir les détails'} →
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          )}
+
           {/* Packages List */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {!loading && filteredAndSortedPackages.map((pkg, index) => {
+            {!loading && displayPackages.map((pkg, index) => {
               const statusInfo = statusConfig[pkg.status] || statusConfig.pending;
               const StatusIcon = statusInfo?.icon || Clock;
               const serviceFee = pkg.serviceFee ? parseFloat(pkg.serviceFee) : 0;
@@ -511,7 +624,7 @@ export default function PackagesPage() {
                             <span style={{ color: colors.gray[600] }}>Frais de service:</span>
                             {pkg.deliveryBundleId && serviceFee === 0 ? (
                               <span className="flex items-center gap-1.5">
-                                <span className="line-through" style={{ color: colors.gray[400] }}>$5.00</span>
+                                <span className="line-through" style={{ color: colors.gray[400] }}>${cityServiceFee}</span>
                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{
                                   backgroundColor: isDark ? '#064e3b' : '#dcfce7',
                                   color: isDark ? '#6ee7b7' : '#15803d',
@@ -578,6 +691,66 @@ export default function PackagesPage() {
               );
             })}
           </div>
+
+          {/* Purchase Assistance Banner */}
+          {!loading && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="mt-8"
+            >
+              <a
+                href="https://wa.me/50948812652"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-2xl border overflow-hidden transition-all hover:shadow-xl group"
+                style={{
+                  borderColor: isDark ? 'rgba(139,92,246,0.3)' : 'rgba(139,92,246,0.2)',
+                  background: isDark
+                    ? 'linear-gradient(135deg, rgba(139,92,246,0.08), rgba(59,130,246,0.06))'
+                    : 'linear-gradient(135deg, rgba(139,92,246,0.04), rgba(59,130,246,0.03))',
+                }}
+              >
+                <div className="px-5 py-5 sm:px-6 sm:py-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shrink-0 shadow-md">
+                    <ShoppingCart className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold" style={{
+                        backgroundColor: isDark ? 'rgba(139,92,246,0.2)' : 'rgba(139,92,246,0.1)',
+                        color: isDark ? '#c4b5fd' : '#7c3aed',
+                      }}>
+                        <Sparkles className="w-3 h-3" />
+                        {(t as any).purchaseAssistance?.badge || 'New Service'}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-base mb-0.5" style={{ color: colors.gray[900] }}>
+                      {(t as any).purchaseAssistance?.title || 'US Purchase Service'}
+                    </h3>
+                    <p className="text-sm" style={{ color: colors.gray[500] }}>
+                      {(t as any).purchaseAssistance?.subtitle || 'No US card? We buy for you!'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="hidden sm:flex items-center gap-4 mr-2">
+                      <div className="flex items-center gap-1.5">
+                        <Globe className="w-3.5 h-3.5" style={{ color: isDark ? '#c4b5fd' : '#7c3aed' }} />
+                        <span className="text-xs font-medium" style={{ color: colors.gray[500] }}>
+                          {(t as any).purchaseAssistance?.anySite || 'Any US site'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white text-sm font-bold flex items-center gap-1.5 group-hover:shadow-lg transition-all">
+                      {(t as any).purchaseAssistance?.cta || 'Contact us'}
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </motion.div>
+          )}
         </Container>
       </main>
       <BottomNav />

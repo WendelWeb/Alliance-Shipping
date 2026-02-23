@@ -34,7 +34,6 @@ interface DeliveredPackage {
   userEmail: string;
   destination: string;
   weight: number;
-  quantity: number;
   totalFee: number;
   customsFees: number; // ⭐ Customs fees
   totalCost: number; // ⭐ Total cost for modal
@@ -93,7 +92,6 @@ export default function DeliveredPackagesPage() {
       userEmail: pkg.user?.email || 'N/A',
       destination: pkg.user?.city || '-',
       weight: parseFloat(pkg.weight) || 0,
-      quantity: parseInt(pkg.quantity) || 1,
       totalFee: parseFloat(pkg.totalCost) || 0,
       customsFees: parseFloat(pkg.customsFees) || 0, // ⭐ Extract customs fees
       totalCost: parseFloat(pkg.totalCost) || 0, // ⭐ For modal
@@ -452,7 +450,7 @@ export default function DeliveredPackagesPage() {
               </div>
 
               {/* Package Details */}
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
                 <div>
                   <p className="text-xs text-gray-500">Destination</p>
                   <div className="flex items-center gap-1 mt-1">
@@ -460,13 +458,6 @@ export default function DeliveredPackagesPage() {
                     <span className="text-sm font-medium text-gray-900">
                       {pkg.destination}
                     </span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Quantite</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Package className="h-3 w-3 text-gray-400" />
-                    <span className="text-sm font-medium text-gray-900">{pkg.quantity || 1}</span>
                   </div>
                 </div>
                 <div>

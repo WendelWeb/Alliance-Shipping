@@ -32,7 +32,6 @@ import {
   MessageCircle,
   Building2,
   Smartphone, // ⭐ Pour articles spéciaux
-  Hash,
 } from 'lucide-react';
 import { LoadingSpinner, SkeletonLoader, CardSkeleton } from '@/components/admin/LoadingSpinner';
 
@@ -130,7 +129,6 @@ function transformPackage(pkg: any) {
     warehouseName: pkg.warehouseName || '',
     destination: pkg.user?.city || '-',
     status: pkg.status,
-    quantity: pkg.quantity || 1,
     weight: parseFloat(pkg.weight) || 0,
     declaredValue: 0,
     serviceFee: parseFloat(pkg.serviceFee) || 0,
@@ -588,13 +586,6 @@ export default function AllPackagesPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Hash className="h-4 w-4 text-gray-400 shrink-0" />
-                        <div>
-                          <p className="text-[10px] uppercase tracking-wide text-gray-400">Quantite</p>
-                          <p className="text-sm font-medium text-gray-900">{pkg.quantity || 1}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
                         <Scale className="h-4 w-4 text-gray-400 shrink-0" />
                         <div>
                           <p className="text-[10px] uppercase tracking-wide text-gray-400">Poids</p>
@@ -636,13 +627,6 @@ export default function AllPackagesPage() {
                         Detail des Frais
                       </p>
                       <div className="space-y-1.5 text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Quantite:</span>
-                          <span className="font-semibold text-gray-900">
-                            {pkg.quantity || 1} article{(pkg.quantity || 1) > 1 ? 's' : ''}
-                          </span>
-                        </div>
-
                         <div className="flex justify-between">
                           <span className="text-gray-600">Frais de service:</span>
                           <span className="font-semibold text-gray-900">
@@ -1086,12 +1070,6 @@ export default function AllPackagesPage() {
                       <h3 className="text-base font-semibold text-gray-900">Détails du colis</h3>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Quantite</p>
-                        <p className="text-2xl font-bold text-gray-900">
-                          {selectedPackageDetails.quantity || 1}
-                        </p>
-                      </div>
                       <div>
                         <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Poids</p>
                         <p className="text-2xl font-bold text-gray-900">

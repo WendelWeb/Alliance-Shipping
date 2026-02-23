@@ -774,7 +774,7 @@ export default function PackageDetailPage() {
                     </span>
                     {pkg.deliveryBundleId && serviceFee === 0 ? (
                       <span className="flex items-center gap-1.5">
-                        <span className="line-through text-sm" style={{ color: colors.gray[400] }}>$5.00</span>
+                        <span className="line-through text-sm" style={{ color: colors.gray[400] }}>${bundleData?.bundle?.bundleServiceFee || '5.00'}</span>
                         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{
                           backgroundColor: isDark ? '#064e3b' : '#dcfce7',
                           color: isDark ? '#6ee7b7' : '#15803d',

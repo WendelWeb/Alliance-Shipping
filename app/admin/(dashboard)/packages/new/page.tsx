@@ -30,7 +30,6 @@ export default function NewPackagePage() {
   const [formData, setFormData] = useState({
     externalTrackingNumber: '',
     category: 'general',
-    quantity: '1',
     weight: '',
     description: '',
     status: 'received',
@@ -276,7 +275,6 @@ export default function NewPackagePage() {
         body: JSON.stringify({
           externalTrackingNumber: formData.externalTrackingNumber,
           description: formData.description,
-          quantity: formData.quantity,
           weight: formData.weight,
           category: formData.category,
           status: formData.status,
@@ -723,28 +721,7 @@ export default function NewPackagePage() {
               </div>
 
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Quantite *
-                    </label>
-                    <div className="relative">
-                      <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <input
-                        type="number"
-                        name="quantity"
-                        value={formData.quantity}
-                        onChange={handleChange}
-                        required
-                        min="1"
-                        step="1"
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        placeholder="Ex: 1"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">Nombre d&apos;articles</p>
-                  </div>
-
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Poids (lbs) *
@@ -866,12 +843,6 @@ export default function NewPackagePage() {
                 </div>
               ) : (
                 <div className="space-y-3 mb-6">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Quantite:</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      {formData.quantity || '1'} article{parseInt(formData.quantity || '1') > 1 ? 's' : ''}
-                    </span>
-                  </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">Poids:</span>
                     <span className="text-sm font-medium text-gray-900">
