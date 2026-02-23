@@ -20,7 +20,9 @@ import {
   RefreshCw,
   AlertTriangle,
   Layers,
+  X,
 } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import AddCustomsFeesModal from '@/components/admin/AddCustomsFeesModal';
 import { useToast } from '@/components/admin/Toast';
 
@@ -68,6 +70,10 @@ export default function DeliveredPackagesPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showCustomsModal, setShowCustomsModal] = useState(false);
   const [selectedPackageForCustoms, setSelectedPackageForCustoms] = useState<DeliveredPackage | null>(null);
+  const [bundleFilter, setBundleFilter] = useState<'all' | 'bundled' | 'individual'>('all');
+  const [cancelBundleId, setCancelBundleId] = useState<number | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const fetchDeliveredPackages = useCallback(async () => {
     const response = await fetch('/api/admin/packages?status=delivered');
@@ -107,13 +113,39 @@ export default function DeliveredPackagesPage() {
   const { data, loading, refreshing, refresh } = useCachedFetch<DeliveredPackage[]>('admin-packages-delivered', fetchDeliveredPackages);
   const packages = data || [];
 
+  // Count packages per bundle for enriched badge
+  const bundleCounts = packages.reduce<Record<number, number>>((acc, pkg) => {
+    if (pkg.deliveryBundleId) {
+      acc[pkg.deliveryBundleId] = (acc[pkg.deliveryBundleId] || 0) + 1;
+    }
+    return acc;
+  }, {});
+
   const filteredPackages = packages.filter((pkg) => {
     const matchesSearch =
       pkg.trackingNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pkg.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pkg.userName.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Date filter logic would go here
+    // Date filter
+    if (dateFilter !== 'all' && pkg.deliveredAt) {
+      const deliveredDate = new Date(pkg.deliveredAt);
+      const now = new Date();
+      if (dateFilter === 'today') {
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (deliveredDate < startOfDay) return false;
+      } else if (dateFilter === 'week') {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        if (deliveredDate < weekAgo) return false;
+      } else if (dateFilter === 'month') {
+        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        if (deliveredDate < monthAgo) return false;
+      }
+    }
+
+    // Bundle filter
+    if (bundleFilter === 'bundled' && !pkg.deliveryBundleId) return false;
+    if (bundleFilter === 'individual' && pkg.deliveryBundleId) return false;
+
     return matchesSearch;
   });
 
@@ -142,6 +174,30 @@ export default function DeliveredPackagesPage() {
     console.log('Archiving package:', pkg.trackingNumber);
     // TODO: API call to archive
     alert('Package archived successfully');
+  };
+
+  const handleCancelBundle = async () => {
+    if (!cancelBundleId) return;
+    setIsCancelling(true);
+    try {
+      const response = await fetch('/api/admin/packages/bundle-deliver', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bundleId: cancelBundleId, reason: cancelReason || undefined }),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to cancel bundle');
+      }
+      toast.success('Bundle annule', 'Les colis sont de retour en statut Disponible');
+      setCancelBundleId(null);
+      setCancelReason('');
+      await refresh();
+    } catch (error: any) {
+      toast.error('Erreur', error.message || 'Impossible d\'annuler le bundle');
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   const handleBulkUpdateStatus = async () => {
@@ -279,47 +335,40 @@ export default function DeliveredPackagesPage() {
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setDateFilter('today')}
-            className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
-              dateFilter === 'today'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Today
-          </button>
-          <button
-            onClick={() => setDateFilter('week')}
-            className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
-              dateFilter === 'week'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            This Week
-          </button>
-          <button
-            onClick={() => setDateFilter('month')}
-            className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
-              dateFilter === 'month'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            This Month
-          </button>
-          <button
-            onClick={() => setDateFilter('all')}
-            className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
-              dateFilter === 'all'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            All Time
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Date filters */}
+          {(['today', 'week', 'month', 'all'] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setDateFilter(f)}
+              className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
+                dateFilter === f
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {f === 'today' ? 'Today' : f === 'week' ? 'This Week' : f === 'month' ? 'This Month' : 'All Time'}
+            </button>
+          ))}
+
+          <div className="h-5 w-px bg-gray-300" />
+
+          {/* Bundle filters */}
+          {(['all', 'bundled', 'individual'] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setBundleFilter(f)}
+              className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
+                bundleFilter === f
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {f === 'all' ? 'Tous' : f === 'bundled' ? (
+                <span className="inline-flex items-center gap-1"><Layers className="h-3 w-3" /> Bundles</span>
+              ) : 'Individuels'}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -357,7 +406,7 @@ export default function DeliveredPackagesPage() {
                   {pkg.deliveryBundleId && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
                       <Layers className="h-3 w-3" />
-                      Bundle #{pkg.deliveryBundleId}
+                      Bundle #{pkg.deliveryBundleId} &bull; {bundleCounts[pkg.deliveryBundleId] || '?'} colis
                     </span>
                   )}
                   <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
@@ -547,6 +596,16 @@ export default function DeliveredPackagesPage() {
                   <AlertTriangle className="h-4 w-4" />
                   {pkg.customsFees > 0 ? 'Voir Douane' : 'Ajouter Douane'}
                 </button>
+                {/* Bundle Cancel Button */}
+                {pkg.deliveryBundleId && (
+                  <button
+                    onClick={() => setCancelBundleId(pkg.deliveryBundleId)}
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-purple-300 text-purple-700 font-medium rounded-lg hover:bg-purple-50 transition-colors"
+                  >
+                    <Layers className="h-4 w-4" />
+                    Annuler Bundle
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>
@@ -717,6 +776,72 @@ export default function DeliveredPackagesPage() {
         </div>
       );
     })()}
+
+      {/* Bundle Cancel Modal */}
+      <AnimatePresence>
+        {cancelBundleId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="theme-card rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+            >
+              <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-4 rounded-t-2xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Layers className="h-6 w-6" />
+                    <div>
+                      <h3 className="text-lg font-bold">Annuler le Bundle #{cancelBundleId}</h3>
+                      <p className="text-sm text-purple-200">
+                        {bundleCounts[cancelBundleId] || '?'} colis seront remis en &quot;Disponible&quot;
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { setCancelBundleId(null); setCancelReason(''); }}
+                    className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <p className="text-sm text-amber-800">
+                    Les frais de service originaux seront restaures sur chaque colis et les points de fidelite seront annules.
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Raison (optionnelle)</label>
+                  <textarea
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="Ex: Erreur de livraison, demande client..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                  />
+                </div>
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    onClick={() => { setCancelBundleId(null); setCancelReason(''); }}
+                    className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={handleCancelBundle}
+                    disabled={isCancelling}
+                    className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-purple-800 transition-all disabled:opacity-50 shadow-lg"
+                  >
+                    {isCancelling ? 'Annulation...' : 'Confirmer l\'annulation'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* ⭐ Customs Fees Modal */}
       {showCustomsModal && selectedPackageForCustoms && (
