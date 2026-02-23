@@ -445,7 +445,7 @@ export default function BundleAvailablePage() {
                                 className="text-[10px] uppercase tracking-wide"
                                 style={{ color: colors.gray[400] }}
                               >
-                                {t.packages?.details?.weight || 'Poids'}
+                                {(t as any).packages?.details?.weight || 'Poids'}
                               </p>
                               <p
                                 className="text-sm font-semibold"
@@ -716,7 +716,7 @@ export default function BundleAvailablePage() {
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4" style={{ color: colors.gray[400] }} />
                     <span className="text-sm" style={{ color: colors.gray[500] }}>
-                      {t.packages?.details?.serviceFee || 'Frais de service'} (×1)
+                      {(t as any).packages?.details?.serviceFee || 'Frais de service'} (×1)
                     </span>
                   </div>
                   <span className="text-sm font-semibold" style={{ color: colors.gray[700] }}>
@@ -730,7 +730,7 @@ export default function BundleAvailablePage() {
                     <div className="flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4" style={{ color: '#dc2626' }} />
                       <span className="text-sm font-semibold" style={{ color: '#dc2626' }}>
-                        {t.packages?.details?.customsFees || 'Taxes Douane'}
+                        {(t as any).packages?.details?.customsFees || 'Taxes Douane'}
                       </span>
                     </div>
                     <span className="text-sm font-bold" style={{ color: '#dc2626' }}>

@@ -351,6 +351,15 @@ export default function PackagesPage() {
                   {t.packages.createPackage}
                 </Button>
               </Link>
+              <a
+                href="https://wa.me/50948812652"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 mt-4 text-sm font-medium transition-colors hover:underline"
+                style={{ color: isDark ? '#c4b5fd' : '#7c3aed' }}
+              >
+                🛒 {(t as any).purchaseAssistance?.subtitle || 'No US card? We buy for you!'}
+              </a>
             </motion.div>
           )}
 

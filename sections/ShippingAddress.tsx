@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Copy, Check, AlertTriangle, MapPin, ArrowRight, Warehouse, Package, Plane, Phone } from 'lucide-react';
+import { Copy, Check, AlertTriangle, MapPin, ArrowRight, Warehouse, Package, Plane, Phone, ShoppingCart, Globe, CreditCard, Shield, Sparkles } from 'lucide-react';
 import { Container } from '@/components/Container';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useUser } from '@clerk/nextjs';
@@ -264,6 +264,57 @@ export function ShippingAddress() {
                   </a>
                 )}
               </div>
+            </div>
+
+            {/* Purchase Assistance Banner */}
+            <div className="border-t border-violet-100 bg-gradient-to-r from-violet-50/80 via-purple-50/60 to-blue-50/40 px-4 sm:px-8 py-5 sm:py-6">
+              <a
+                href="https://wa.me/50948812652"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col sm:flex-row items-start sm:items-center gap-4"
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shrink-0 shadow-md group-hover:shadow-lg transition-shadow">
+                    <ShoppingCart className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-700">
+                        <Sparkles className="w-3 h-3" />
+                        {(t as any).purchaseAssistance?.badge || 'New Service'}
+                      </span>
+                    </div>
+                    <p className="text-sm sm:text-base font-bold text-gray-900">
+                      {(t as any).purchaseAssistance?.title || 'US Purchase Service'}
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-500">
+                      {(t as any).purchaseAssistance?.subtitle || 'No US card? We buy for you!'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="hidden md:flex items-center gap-3">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium text-gray-600 bg-white/80 border border-gray-200">
+                      <Globe className="w-3 h-3 text-violet-500" />
+                      {(t as any).purchaseAssistance?.anySite || 'Any US site'}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium text-gray-600 bg-white/80 border border-gray-200">
+                      <CreditCard className="w-3 h-3 text-violet-500" />
+                      {(t as any).purchaseAssistance?.noCard || 'No card required'}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium text-gray-600 bg-white/80 border border-gray-200">
+                      <Shield className="w-3 h-3 text-violet-500" />
+                      {(t as any).purchaseAssistance?.secure || 'Secure payment'}
+                    </span>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white text-sm font-bold shadow-sm group-hover:shadow-lg transition-all whitespace-nowrap">
+                    {(t as any).purchaseAssistance?.cta || 'Contact us'}
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                  </span>
+                </div>
+              </a>
             </div>
           </div>
         </motion.div>

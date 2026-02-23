@@ -355,6 +355,19 @@ export default function CalculatorPage() {
                             </span>
                           </div>
                         )}
+
+                        {/* Purchase Assistance Hint */}
+                        <a
+                          href="https://wa.me/50948812652"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl p-3 hover:bg-white/20 transition-colors"
+                        >
+                          <span className="text-base">🛒</span>
+                          <span className="text-sm text-white/80 font-medium">
+                            {(t as any).purchaseAssistance?.subtitle || 'No US card? We buy for you!'}
+                          </span>
+                        </a>
                       </div>
                     </div>
                   ) : (

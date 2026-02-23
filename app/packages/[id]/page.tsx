@@ -120,7 +120,7 @@ export default function PackageDetailPage() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [bundleData, setBundleData] = useState<{
-    bundle: { packageCount: number; totalSavings: string; bundleTotalCost: string; deliveredAt: string };
+    bundle: { packageCount: number; totalSavings: string; bundleTotalCost: string; deliveredAt: string; bundleServiceFee?: string };
     packages: Array<{ id: number; trackingNumber: string; description: string; weight: string; totalCost: string }>;
   } | null>(null);
 

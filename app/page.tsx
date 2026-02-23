@@ -4,7 +4,6 @@ import { Header } from '@/components/Header';
 import { Hero } from '@/sections/Hero';
 import { ShippingAddress } from '@/sections/ShippingAddress';
 import { HowItWorks } from '@/sections/HowItWorks';
-import { PurchaseAssistance } from '@/sections/PurchaseAssistance';
 import { Tracking } from '@/sections/Tracking';
 import { Pricing } from '@/sections/Pricing';
 import { DeliveryTimeline } from '@/sections/DeliveryTimeline';
@@ -23,7 +22,6 @@ export default function Home() {
         <Hero />
         <ShippingAddress />
         <HowItWorks />
-        <PurchaseAssistance />
         <Tracking />
         <Pricing />
         <DeliveryTimeline />
