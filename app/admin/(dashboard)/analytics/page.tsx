@@ -36,8 +36,9 @@ interface AnalyticsData {
   };
   revenueBreakdown: {
     weightCost: number; serviceFee: number; customsFees: number;
-    specialItemRevenue: number; normalRevenue: number;
+    specialItemFees: number; specialItemRevenue: number; normalRevenue: number;
     totalWeightLbs: number; totalQuantity: number;
+    specialItemCount: number; normalCount: number;
   };
   specialItems: Array<{ id: number; brand: string; itemName: string; category: string; fixedFee: number; count: number; revenue: number }>;
   regularPackages: { count: number; revenue: number };
@@ -287,62 +288,152 @@ export default function AnalyticsPage() {
       {/* ── Revenue Breakdown ─────────────────────────────────────── */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
         className="theme-card rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-        <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
           <DollarSign className="h-5 w-5 text-green-600" />
           Decomposition du Revenue
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
-          {[
-            { label: 'Frais de Poids', value: data.revenueBreakdown.weightCost, color: 'bg-blue-500', lightBg: 'bg-blue-50', textColor: 'text-blue-700', sub: `${data.revenueBreakdown.totalWeightLbs.toFixed(1)} lbs total` },
-            { label: 'Frais de Service', value: data.revenueBreakdown.serviceFee, color: 'bg-emerald-500', lightBg: 'bg-emerald-50', textColor: 'text-emerald-700', sub: `${data.kpis.packages.value} colis` },
-            { label: 'Taxes de Douane', value: data.revenueBreakdown.customsFees, color: 'bg-red-500', lightBg: 'bg-red-50', textColor: 'text-red-700', sub: 'Frais douaniers' },
-            { label: 'Articles Speciaux', value: data.revenueBreakdown.specialItemRevenue, color: 'bg-purple-500', lightBg: 'bg-purple-50', textColor: 'text-purple-700', sub: `${data.specialItems.reduce((s, i) => s + i.count, 0)} articles` },
-            { label: 'Colis Standards', value: data.revenueBreakdown.normalRevenue, color: 'bg-gray-500', lightBg: 'bg-gray-50', textColor: 'text-gray-700', sub: 'Sans article special' },
-          ].map((item) => (
-            <div key={item.label} className={`${item.lightBg} rounded-xl p-4 border border-gray-100`}>
-              <div className="flex items-center gap-2 mb-2">
-                <div className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
-                <span className="text-xs font-medium text-gray-500 truncate">{item.label}</span>
-              </div>
-              <p className={`text-xl font-bold ${item.textColor}`}>{fmt$(item.value)}</p>
-              <p className="text-[10px] text-gray-400 mt-0.5">{item.sub}</p>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* ── Left: Par type de frais (= 100%) ─── */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-1 w-4 rounded-full bg-gradient-to-r from-blue-500 to-emerald-500" />
+              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Par type de frais</h3>
             </div>
-          ))}
-        </div>
-        {/* Horizontal bar breakdown */}
-        {data.kpis.revenue.value > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Repartition</p>
-            <div className="h-5 rounded-full overflow-hidden flex bg-gray-100">
+            <div className="grid grid-cols-2 gap-2.5 mb-4">
               {[
-                { value: data.revenueBreakdown.weightCost, color: 'bg-blue-500', label: 'Poids' },
-                { value: data.revenueBreakdown.serviceFee, color: 'bg-emerald-500', label: 'Service' },
-                { value: data.revenueBreakdown.customsFees, color: 'bg-red-500', label: 'Douane' },
-                { value: data.revenueBreakdown.specialItemRevenue, color: 'bg-purple-500', label: 'Articles Speciaux' },
-                { value: data.revenueBreakdown.normalRevenue, color: 'bg-gray-500', label: 'Colis Standards' },
-              ].filter(s => s.value > 0).map((s) => {
-                const pct = (s.value / data.kpis.revenue.value) * 100;
-                return (
-                  <div key={s.label} className={`${s.color} relative group`} style={{ width: `${pct}%` }}
-                    title={`${s.label}: ${fmt$(s.value)} (${pct.toFixed(1)}%)`}>
-                    {pct > 8 && <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">{pct.toFixed(0)}%</span>}
+                { label: 'Frais de Poids', value: data.revenueBreakdown.weightCost, color: 'bg-blue-500', lightBg: 'bg-blue-50', textColor: 'text-blue-700', sub: `${data.revenueBreakdown.totalWeightLbs.toFixed(1)} lbs` },
+                { label: 'Frais de Service', value: data.revenueBreakdown.serviceFee, color: 'bg-emerald-500', lightBg: 'bg-emerald-50', textColor: 'text-emerald-700', sub: `${data.kpis.packages.value} colis` },
+                { label: 'Frais Articles Speciaux', value: data.revenueBreakdown.specialItemFees || 0, color: 'bg-purple-500', lightBg: 'bg-purple-50', textColor: 'text-purple-700', sub: `${data.revenueBreakdown.specialItemCount || data.specialItems.reduce((s: number, i: any) => s + i.count, 0)} articles` },
+                { label: 'Taxes de Douane', value: data.revenueBreakdown.customsFees, color: 'bg-red-500', lightBg: 'bg-red-50', textColor: 'text-red-700', sub: 'Frais douaniers' },
+              ].map((item) => (
+                <div key={item.label} className={`${item.lightBg} rounded-xl p-3 border border-gray-100`}>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <div className={`h-2 w-2 rounded-full ${item.color}`} />
+                    <span className="text-[11px] font-medium text-gray-500 truncate">{item.label}</span>
                   </div>
-                );
-              })}
+                  <p className={`text-lg font-bold ${item.textColor}`}>{fmt$(item.value)}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{item.sub}</p>
+                </div>
+              ))}
             </div>
-            <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-500" /> Poids ({((data.revenueBreakdown.weightCost / (data.kpis.revenue.value || 1)) * 100).toFixed(1)}%)</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Service ({((data.revenueBreakdown.serviceFee / (data.kpis.revenue.value || 1)) * 100).toFixed(1)}%)</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500" /> Douane ({((data.revenueBreakdown.customsFees / (data.kpis.revenue.value || 1)) * 100).toFixed(1)}%)</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-purple-500" /> Articles Speciaux ({((data.revenueBreakdown.specialItemRevenue / (data.kpis.revenue.value || 1)) * 100).toFixed(1)}%)</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-gray-500" /> Colis Standards ({((data.revenueBreakdown.normalRevenue / (data.kpis.revenue.value || 1)) * 100).toFixed(1)}%)</span>
+            {/* Bar: par type de frais */}
+            {data.kpis.revenue.value > 0 && (() => {
+              const feeItems = [
+                { value: data.revenueBreakdown.weightCost, color: 'bg-blue-500', dotColor: 'bg-blue-500', label: 'Poids' },
+                { value: data.revenueBreakdown.serviceFee, color: 'bg-emerald-500', dotColor: 'bg-emerald-500', label: 'Service' },
+                { value: data.revenueBreakdown.specialItemFees || 0, color: 'bg-purple-500', dotColor: 'bg-purple-500', label: 'Art. Speciaux' },
+                { value: data.revenueBreakdown.customsFees, color: 'bg-red-500', dotColor: 'bg-red-500', label: 'Douane' },
+              ].filter(s => s.value > 0);
+              const feeTotal = feeItems.reduce((sum, s) => sum + s.value, 0);
+              return (
+                <div className="space-y-2">
+                  <div className="h-4 rounded-full overflow-hidden flex bg-gray-100">
+                    {feeItems.map((s) => {
+                      const pct = (s.value / feeTotal) * 100;
+                      return (
+                        <div key={s.label} className={`${s.color} relative group`} style={{ width: `${pct}%` }}
+                          title={`${s.label}: ${fmt$(s.value)} (${pct.toFixed(1)}%)`}>
+                          {pct > 10 && <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white">{pct.toFixed(0)}%</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-500">
+                    {feeItems.map((s) => (
+                      <span key={s.label} className="flex items-center gap-1">
+                        <span className={`h-2 w-2 rounded-full ${s.dotColor}`} />
+                        {s.label} ({((s.value / feeTotal) * 100).toFixed(1)}%)
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* ── Right: Par type de colis (= 100%) ─── */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-1 w-4 rounded-full bg-gradient-to-r from-purple-500 to-gray-500" />
+              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Par type de colis</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5 mb-4">
+              {[
+                { label: 'Colis avec Article Special', value: data.revenueBreakdown.specialItemRevenue, color: 'bg-purple-500', lightBg: 'bg-purple-50', textColor: 'text-purple-700', sub: `${data.revenueBreakdown.specialItemCount || data.specialItems.reduce((s: number, i: any) => s + i.count, 0)} colis` },
+                { label: 'Colis Standards', value: data.revenueBreakdown.normalRevenue, color: 'bg-gray-500', lightBg: 'bg-gray-50', textColor: 'text-gray-700', sub: `${data.revenueBreakdown.normalCount || (data.kpis.packages.value - (data.revenueBreakdown.specialItemCount || data.specialItems.reduce((s: number, i: any) => s + i.count, 0)))} colis` },
+              ].map((item) => (
+                <div key={item.label} className={`${item.lightBg} rounded-xl p-3 border border-gray-100`}>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <div className={`h-2 w-2 rounded-full ${item.color}`} />
+                    <span className="text-[11px] font-medium text-gray-500 truncate">{item.label}</span>
+                  </div>
+                  <p className={`text-lg font-bold ${item.textColor}`}>{fmt$(item.value)}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{item.sub}</p>
+                </div>
+              ))}
+            </div>
+            {/* Bar: par type de colis */}
+            {data.kpis.revenue.value > 0 && (() => {
+              const colisItems = [
+                { value: data.revenueBreakdown.specialItemRevenue, color: 'bg-purple-500', dotColor: 'bg-purple-500', label: 'Articles Speciaux' },
+                { value: data.revenueBreakdown.normalRevenue, color: 'bg-gray-400', dotColor: 'bg-gray-400', label: 'Standards' },
+              ].filter(s => s.value > 0);
+              const colisTotal = colisItems.reduce((sum, s) => sum + s.value, 0);
+              return (
+                <div className="space-y-2">
+                  <div className="h-4 rounded-full overflow-hidden flex bg-gray-100">
+                    {colisItems.map((s) => {
+                      const pct = (s.value / colisTotal) * 100;
+                      return (
+                        <div key={s.label} className={`${s.color} relative group`} style={{ width: `${pct}%` }}
+                          title={`${s.label}: ${fmt$(s.value)} (${pct.toFixed(1)}%)`}>
+                          {pct > 10 && <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white">{pct.toFixed(0)}%</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-500">
+                    {colisItems.map((s) => (
+                      <span key={s.label} className="flex items-center gap-1">
+                        <span className={`h-2 w-2 rounded-full ${s.dotColor}`} />
+                        {s.label} ({((s.value / colisTotal) * 100).toFixed(1)}%)
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Revenu moyen par colis */}
+            <div className="mt-4 grid grid-cols-2 gap-2.5">
+              <div className="bg-purple-50/50 rounded-lg p-2.5 border border-purple-100 text-center">
+                <p className="text-[10px] text-purple-500 font-medium uppercase">Moy / colis special</p>
+                <p className="text-sm font-bold text-purple-700">
+                  {(data.revenueBreakdown.specialItemCount || data.specialItems.reduce((s: number, i: any) => s + i.count, 0)) > 0
+                    ? fmt$(data.revenueBreakdown.specialItemRevenue / (data.revenueBreakdown.specialItemCount || data.specialItems.reduce((s: number, i: any) => s + i.count, 0)))
+                    : '$0'}
+                </p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-100 text-center">
+                <p className="text-[10px] text-gray-500 font-medium uppercase">Moy / colis standard</p>
+                <p className="text-sm font-bold text-gray-700">
+                  {(data.revenueBreakdown.normalCount || (data.kpis.packages.value - (data.revenueBreakdown.specialItemCount || data.specialItems.reduce((s: number, i: any) => s + i.count, 0)))) > 0
+                    ? fmt$(data.revenueBreakdown.normalRevenue / (data.revenueBreakdown.normalCount || (data.kpis.packages.value - (data.revenueBreakdown.specialItemCount || data.specialItems.reduce((s: number, i: any) => s + i.count, 0)))))
+                    : '$0'}
+                </p>
+              </div>
             </div>
           </div>
-        )}
-        <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-4 text-sm">
-          <span className="text-gray-500">Total Quantite: <span className="font-bold text-gray-900">{data.revenueBreakdown.totalQuantity} articles</span></span>
-          <span className="text-gray-500">Total Poids: <span className="font-bold text-gray-900">{data.revenueBreakdown.totalWeightLbs.toFixed(1)} lbs</span></span>
-          <span className="text-gray-500">Moy/lbs: <span className="font-bold text-gray-900">{data.revenueBreakdown.totalWeightLbs > 0 ? fmt$(data.kpis.revenue.value / data.revenueBreakdown.totalWeightLbs) : '$0'}/lb</span></span>
+        </div>
+
+        {/* Footer stats */}
+        <div className="mt-5 pt-4 border-t border-gray-100 flex flex-wrap gap-4 sm:gap-6 text-sm">
+          <span className="text-gray-500">Revenue Total: <span className="font-bold text-gray-900">{fmt$(data.kpis.revenue.value)}</span></span>
+          <span className="text-gray-500">Total Colis: <span className="font-bold text-gray-900">{data.kpis.packages.value}</span></span>
+          <span className="text-gray-500">Poids Total: <span className="font-bold text-gray-900">{data.revenueBreakdown.totalWeightLbs.toFixed(1)} lbs</span></span>
+          <span className="text-gray-500">Moy/colis: <span className="font-bold text-gray-900">{data.kpis.packages.value > 0 ? fmt$(data.kpis.revenue.value / data.kpis.packages.value) : '$0'}</span></span>
+          <span className="text-gray-500">Moy/lb: <span className="font-bold text-gray-900">{data.revenueBreakdown.totalWeightLbs > 0 ? fmt$(data.kpis.revenue.value / data.revenueBreakdown.totalWeightLbs) : '$0'}/lb</span></span>
         </div>
       </motion.div>
 

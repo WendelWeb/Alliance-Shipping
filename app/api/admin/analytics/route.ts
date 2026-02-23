@@ -156,10 +156,13 @@ export async function GET(request: NextRequest) {
         totalWeightCost: sql<string>`COALESCE(SUM(CAST(${packages.weightCost} AS DECIMAL)), 0)`,
         totalServiceFee: sql<string>`COALESCE(SUM(CAST(${packages.serviceFee} AS DECIMAL)), 0)`,
         totalCustomsFees: sql<string>`COALESCE(SUM(CAST(${packages.customsFees} AS DECIMAL)), 0)`,
+        totalSpecialItemFees: sql<string>`COALESCE(SUM(CASE WHEN ${packages.specialItemId} IS NOT NULL THEN CAST(${packages.totalCost} AS DECIMAL) - CAST(${packages.weightCost} AS DECIMAL) - CAST(${packages.serviceFee} AS DECIMAL) - CAST(${packages.customsFees} AS DECIMAL) ELSE 0 END), 0)`,
         totalSpecialItemRevenue: sql<string>`COALESCE(SUM(CASE WHEN ${packages.specialItemId} IS NOT NULL THEN CAST(${packages.totalCost} AS DECIMAL) ELSE 0 END), 0)`,
         totalNormalRevenue: sql<string>`COALESCE(SUM(CASE WHEN ${packages.specialItemId} IS NULL THEN CAST(${packages.totalCost} AS DECIMAL) ELSE 0 END), 0)`,
         totalWeightLbs: sql<string>`COALESCE(SUM(CAST(${packages.weight} AS DECIMAL)), 0)`,
         totalQuantity: sql<number>`COALESCE(SUM(${packages.quantity}), 0)`,
+        specialItemCount: sql<number>`COUNT(CASE WHEN ${packages.specialItemId} IS NOT NULL THEN 1 END)`,
+        normalCount: sql<number>`COUNT(CASE WHEN ${packages.specialItemId} IS NULL THEN 1 END)`,
       })
       .from(packages)
       .where(and(gte(packages.createdAt, cs), lte(packages.createdAt, ce)))
@@ -547,10 +550,13 @@ export async function GET(request: NextRequest) {
       weightCost: parseFloat(String(breakdownRaw[0]?.totalWeightCost)) || 0,
       serviceFee: parseFloat(String(breakdownRaw[0]?.totalServiceFee)) || 0,
       customsFees: parseFloat(String(breakdownRaw[0]?.totalCustomsFees)) || 0,
+      specialItemFees: parseFloat(String(breakdownRaw[0]?.totalSpecialItemFees)) || 0,
       specialItemRevenue: parseFloat(String(breakdownRaw[0]?.totalSpecialItemRevenue)) || 0,
       normalRevenue: parseFloat(String(breakdownRaw[0]?.totalNormalRevenue)) || 0,
       totalWeightLbs: parseFloat(String(breakdownRaw[0]?.totalWeightLbs)) || 0,
       totalQuantity: Number(breakdownRaw[0]?.totalQuantity) || 0,
+      specialItemCount: Number(breakdownRaw[0]?.specialItemCount) || 0,
+      normalCount: Number(breakdownRaw[0]?.normalCount) || 0,
     };
 
     if (dates.previous) {
