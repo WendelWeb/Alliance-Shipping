@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useCachedFetch } from '@/hooks/useAdminCache';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -39,6 +39,17 @@ import {
   Plus,
   ExternalLink,
   Layers,
+  Search,
+  ArrowRight,
+  Copy,
+  Check,
+  List,
+  Table2,
+  LayoutGrid,
+  ChevronRight,
+  Sparkles,
+  Shield,
+  ReceiptText,
 } from 'lucide-react';
 import { useToast } from '@/components/admin/Toast';
 import { LoadingSpinner } from '@/components/admin/LoadingSpinner';
@@ -75,6 +86,8 @@ interface PackageData {
   serviceFee: string;
   weightCost: string;
   totalCost: string;
+  customsFees?: string;
+  specialItemId?: number | null;
   currency: string;
   status: string;
   currentLocation: string | null;
@@ -128,17 +141,24 @@ interface Stats {
 }
 
 // ── Status config ──────────────────────────────────────────────────────
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  pending: { label: 'En attente', color: 'text-yellow-700', bg: 'bg-yellow-100' },
-  received: { label: 'Recu', color: 'text-blue-700', bg: 'bg-blue-100' },
-  'in-transit': { label: 'En transit', color: 'text-purple-700', bg: 'bg-purple-100' },
-  customs: { label: 'Douane', color: 'text-orange-700', bg: 'bg-orange-100' },
-  available: { label: 'Disponible', color: 'text-green-700', bg: 'bg-green-100' },
-  delivered: { label: 'Livre', color: 'text-emerald-700', bg: 'bg-emerald-100' },
-  rejected: { label: 'Rejete', color: 'text-red-700', bg: 'bg-red-100' },
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; gradient: string }> = {
+  pending: { label: 'En attente', color: 'text-yellow-700', bg: 'bg-yellow-100', border: 'border-yellow-200', gradient: 'from-yellow-400 to-yellow-500' },
+  received: { label: 'Recu', color: 'text-blue-700', bg: 'bg-blue-100', border: 'border-blue-200', gradient: 'from-blue-400 to-blue-500' },
+  'in-transit': { label: 'En transit', color: 'text-purple-700', bg: 'bg-purple-100', border: 'border-purple-200', gradient: 'from-purple-400 to-purple-500' },
+  customs: { label: 'Douane', color: 'text-orange-700', bg: 'bg-orange-100', border: 'border-orange-200', gradient: 'from-orange-400 to-orange-500' },
+  available: { label: 'Disponible', color: 'text-green-700', bg: 'bg-green-100', border: 'border-green-200', gradient: 'from-green-400 to-green-500' },
+  delivered: { label: 'Livre', color: 'text-emerald-700', bg: 'bg-emerald-100', border: 'border-emerald-200', gradient: 'from-emerald-400 to-emerald-500' },
+  rejected: { label: 'Rejete', color: 'text-red-700', bg: 'bg-red-100', border: 'border-red-200', gradient: 'from-red-400 to-red-500' },
 };
 
 const ALL_STATUSES = ['pending', 'received', 'in-transit', 'customs', 'available', 'delivered'];
+
+const NEXT_STATUS: Record<string, string> = {
+  pending: 'received',
+  received: 'in-transit',
+  'in-transit': 'available',
+  available: 'delivered',
+};
 
 const LOCATIONS = [
   'Miami Warehouse',
@@ -191,6 +211,15 @@ export default function UserDetailPage() {
   const [bundleRecipient, setBundleRecipient] = useState('');
   const [bundleNotes, setBundleNotes] = useState('');
 
+  // New states
+  const [viewMode, setViewMode] = useState<'list' | 'table' | 'kanban'>('list');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'date' | 'cost' | 'weight' | 'tracking'>('date');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [copiedTracking, setCopiedTracking] = useState<string | null>(null);
+  const [showBulkStatusDropdown, setShowBulkStatusDropdown] = useState(false);
+
   // Edit form state
   const [editForm, setEditForm] = useState({ status: '', currentLocation: '', weight: '' });
 
@@ -218,6 +247,41 @@ export default function UserDetailPage() {
     pointsBalance: 0, totalPointsEarned: 0, totalPointsUsed: 0,
     transactionCount: 0, recentTransactions: [],
   };
+
+  // ── Financial Summary ─────────────────────────────────────────────
+  const financials = useMemo(() => {
+    const totalRevenue = userPackages.reduce((s, p) => s + (parseFloat(p.totalCost) || 0), 0);
+    const totalService = userPackages.reduce((s, p) => s + (parseFloat(p.serviceFee) || 0), 0);
+    const totalWeightCost = userPackages.reduce((s, p) => s + (parseFloat(p.weightCost) || 0), 0);
+    const totalCustoms = userPackages.reduce((s, p) => s + (parseFloat(p.customsFees || '0') || 0), 0);
+    const totalSpecial = Math.max(0, totalRevenue - totalService - totalWeightCost - totalCustoms);
+    return { totalRevenue, totalService, totalWeightCost, totalCustoms, totalSpecial };
+  }, [userPackages]);
+
+  // ── Processed packages (filter + search + sort) ───────────────────
+  const processedPackages = useMemo(() => {
+    let result = [...userPackages];
+    if (statusFilter !== 'all') result = result.filter(p => p.status === statusFilter);
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(p =>
+        p.trackingNumber.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q) ||
+        (p.externalTrackingNumber?.toLowerCase().includes(q))
+      );
+    }
+    result.sort((a, b) => {
+      const dir = sortDir === 'asc' ? 1 : -1;
+      switch (sortBy) {
+        case 'date': return dir * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        case 'cost': return dir * (parseFloat(a.totalCost) - parseFloat(b.totalCost));
+        case 'weight': return dir * (parseFloat(a.weight) - parseFloat(b.weight));
+        case 'tracking': return dir * a.trackingNumber.localeCompare(b.trackingNumber);
+        default: return 0;
+      }
+    });
+    return result;
+  }, [userPackages, statusFilter, searchQuery, sortBy, sortDir]);
 
   // ── Handlers ───────────────────────────────────────────────────────
   const handleUpdatePackage = async (packageId: number) => {
@@ -265,6 +329,96 @@ export default function UserDetailPage() {
     }
   };
 
+  const handleQuickStatus = async (pkg: PackageData) => {
+    const next = NEXT_STATUS[pkg.status];
+    if (!next) return;
+    try {
+      const res = await fetch('/api/admin/packages', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: pkg.id, status: next }),
+      });
+      if (!res.ok) throw new Error('Failed');
+      const nextLabel = STATUS_CONFIG[next]?.label || next;
+      toast.success('Statut mis a jour', `${pkg.trackingNumber} → ${nextLabel}`);
+      refresh();
+    } catch {
+      toast.error('Erreur', 'Echec du changement de statut');
+    }
+  };
+
+  const handleCopyTracking = async (tracking: string) => {
+    try {
+      await navigator.clipboard.writeText(tracking);
+      setCopiedTracking(tracking);
+      setTimeout(() => setCopiedTracking(null), 2000);
+    } catch {
+      toast.error('Erreur', 'Impossible de copier');
+    }
+  };
+
+  // ── Bulk Actions ──────────────────────────────────────────────────
+  const handleBulkStatusChange = async (newStatus: string) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    try {
+      await Promise.all(ids.map(pkgId =>
+        fetch('/api/admin/packages', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: pkgId, status: newStatus }),
+        })
+      ));
+      const label = STATUS_CONFIG[newStatus]?.label || newStatus;
+      toast.success('Mise a jour groupee', `${ids.length} colis → ${label}`);
+      setSelectedIds(new Set());
+      setShowBulkStatusDropdown(false);
+      refresh();
+    } catch {
+      toast.error('Erreur', 'Echec de la mise a jour groupee');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    const confirmed = await toast.confirm({
+      title: `Supprimer ${ids.length} colis`,
+      description: `Etes-vous sur de vouloir supprimer ${ids.length} colis ? Cette action est irreversible.`,
+      confirmLabel: 'Supprimer tout',
+      cancelLabel: 'Annuler',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+    try {
+      await Promise.all(ids.map(pkgId =>
+        fetch(`/api/admin/packages?id=${pkgId}`, { method: 'DELETE' })
+      ));
+      toast.success('Suppression groupee', `${ids.length} colis supprimes`);
+      setSelectedIds(new Set());
+      refresh();
+    } catch {
+      toast.error('Erreur', 'Echec de la suppression groupee');
+    }
+  };
+
+  const toggleSelect = (pkgId: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(pkgId)) next.delete(pkgId);
+      else next.add(pkgId);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === processedPackages.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(processedPackages.map(p => p.id)));
+    }
+  };
+
   const handleCancelBundle = async () => {
     if (!cancelBundleId) return;
     setIsCancelling(true);
@@ -293,7 +447,6 @@ export default function UserDetailPage() {
   const availablePackages = userPackages.filter(p => p.status === 'available');
   const hasBundleOpportunity = availablePackages.length >= 2;
 
-  // Sum real service fees of all packages except the first (those get waived)
   const bundleSavings = hasBundleOpportunity
     ? availablePackages.slice(1).reduce((sum, p) => sum + (parseFloat(p.serviceFee || '0') || 0), 0)
     : 0;
@@ -382,11 +535,6 @@ export default function UserDetailPage() {
     });
   };
 
-  // ── Filter ─────────────────────────────────────────────────────────
-  const filteredPackages = statusFilter === 'all'
-    ? userPackages
-    : userPackages.filter((p) => p.status === statusFilter);
-
   const vip = getVipTier(stats.totalSpent, stats.packageCount);
 
   // ── Loading ────────────────────────────────────────────────────────
@@ -410,6 +558,9 @@ export default function UserDetailPage() {
     );
   }
 
+  // ── Revenue % helper ──────────────────────────────────────────────
+  const pct = (val: number) => financials.totalRevenue > 0 ? ((val / financials.totalRevenue) * 100).toFixed(1) : '0';
+
   return (
     <div className="space-y-6 pb-10">
       {/* ── Back button ─────────────────────────────────────────────── */}
@@ -429,7 +580,6 @@ export default function UserDetailPage() {
       >
         <div className="relative h-24 sm:h-32 bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700">
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
-          {/* Actions on header */}
           <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex items-center gap-2">
             <button
               onClick={refresh}
@@ -457,7 +607,6 @@ export default function UserDetailPage() {
         </div>
 
         <div className="relative px-4 sm:px-6 pb-5">
-          {/* Avatar */}
           <div className="absolute -top-8 sm:-top-10 left-4 sm:left-6">
             {user.imageUrl ? (
               <img src={user.imageUrl} alt={user.name} className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl object-cover ring-4 ring-white shadow-lg" />
@@ -468,9 +617,7 @@ export default function UserDetailPage() {
             )}
           </div>
 
-          {/* User info */}
           <div className="pt-10 sm:pt-14">
-            {/* Name row */}
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -491,7 +638,6 @@ export default function UserDetailPage() {
                   )}
                 </div>
 
-                {/* Contact chips */}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 text-sm text-gray-500">
                   <a href={`mailto:${user.email}`} className="flex items-center gap-1.5 hover:text-primary-600 transition-colors">
                     <Mail className="h-4 w-4" />{user.email}
@@ -514,7 +660,6 @@ export default function UserDetailPage() {
                   )}
                 </div>
 
-                {/* Meta info */}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-gray-400">
                   {user.city && (
                     <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{user.city}</span>
@@ -531,7 +676,6 @@ export default function UserDetailPage() {
                 </div>
               </div>
 
-              {/* Stats mini */}
               <div className="flex items-center gap-3 flex-shrink-0">
                 <div className="bg-primary-50 rounded-xl px-4 py-2.5 text-center min-w-[80px]">
                   <p className="text-xl sm:text-2xl font-bold text-primary-700">{stats.packageCount}</p>
@@ -554,6 +698,74 @@ export default function UserDetailPage() {
           </div>
         </div>
       </motion.div>
+
+      {/* ── Financial Summary ────────────────────────────────────────── */}
+      {userPackages.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {[
+              { label: 'Revenue Total', value: financials.totalRevenue, icon: DollarSign, color: 'text-emerald-700', bg: 'bg-emerald-50', barColor: 'bg-emerald-500' },
+              { label: 'Frais Service', value: financials.totalService, icon: ReceiptText, color: 'text-blue-700', bg: 'bg-blue-50', barColor: 'bg-blue-500' },
+              { label: 'Frais Poids', value: financials.totalWeightCost, icon: Weight, color: 'text-orange-700', bg: 'bg-orange-50', barColor: 'bg-orange-500' },
+              { label: 'Articles Speciaux', value: financials.totalSpecial, icon: Sparkles, color: 'text-violet-700', bg: 'bg-violet-50', barColor: 'bg-violet-500' },
+              { label: 'Frais Douane', value: financials.totalCustoms, icon: Shield, color: 'text-amber-700', bg: 'bg-amber-50', barColor: 'bg-amber-500' },
+            ].map((item, i) => (
+              <div key={i} className="theme-card rounded-xl border border-gray-100 p-3.5 hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`p-1.5 rounded-lg ${item.bg}`}>
+                    <item.icon className={`h-3.5 w-3.5 ${item.color}`} />
+                  </div>
+                  <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{item.label}</span>
+                </div>
+                <p className={`text-lg font-bold ${item.color}`}>${item.value.toFixed(2)}</p>
+                {i > 0 && (
+                  <p className="text-[10px] text-gray-400 mt-0.5">{pct(item.value)}% du total</p>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Revenue bar */}
+          {financials.totalRevenue > 0 && (
+            <div className="mt-3 theme-card rounded-xl border border-gray-100 p-3.5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Decomposition du revenue</span>
+              </div>
+              <div className="h-3 rounded-full overflow-hidden flex bg-gray-100">
+                {[
+                  { value: financials.totalService, color: 'bg-blue-500' },
+                  { value: financials.totalWeightCost, color: 'bg-orange-500' },
+                  { value: financials.totalSpecial, color: 'bg-violet-500' },
+                  { value: financials.totalCustoms, color: 'bg-amber-500' },
+                ].filter(s => s.value > 0).map((seg, i) => (
+                  <div
+                    key={i}
+                    className={`${seg.color} transition-all duration-500`}
+                    style={{ width: `${(seg.value / financials.totalRevenue) * 100}%` }}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center gap-4 mt-2 flex-wrap">
+                {[
+                  { label: 'Service', color: 'bg-blue-500', value: financials.totalService },
+                  { label: 'Poids', color: 'bg-orange-500', value: financials.totalWeightCost },
+                  { label: 'Special', color: 'bg-violet-500', value: financials.totalSpecial },
+                  { label: 'Douane', color: 'bg-amber-500', value: financials.totalCustoms },
+                ].filter(l => l.value > 0).map((l, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <div className={`w-2.5 h-2.5 rounded-full ${l.color}`} />
+                    <span className="text-[10px] text-gray-500">{l.label} {pct(l.value)}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* ── Tabs ──────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl w-fit">
@@ -587,50 +799,136 @@ export default function UserDetailPage() {
       {/* ── Tab: Packages ─────────────────────────────────────────────── */}
       {activeTab === 'packages' && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          {/* Status filter chips */}
-          <div className="flex items-center gap-2 flex-wrap mb-4">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${statusFilter === 'all' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-            >
-              Tous ({userPackages.length})
-            </button>
-            {ALL_STATUSES.map((s) => {
-              const cfg = STATUS_CONFIG[s];
-              const cnt = userPackages.filter((p) => p.status === s).length;
-              if (cnt === 0) return null;
-              return (
-                <button
-                  key={s}
-                  onClick={() => setStatusFilter(s)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${statusFilter === s ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                >
-                  {cfg?.label || s} ({cnt})
-                </button>
-              );
-            })}
+          {/* ── Toolbar ───────────────────────────────────────────────── */}
+          <div className="space-y-3 mb-4">
+            {/* Row 1: Search + Sort + View Modes */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              {/* Search */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Rechercher tracking, description..."
+                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 hover:bg-gray-100 rounded">
+                    <X className="h-3.5 w-3.5 text-gray-400" />
+                  </button>
+                )}
+              </div>
 
-            {/* Bundle Deliver Button */}
-            {hasBundleOpportunity && (
+              {/* Sort */}
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="date">Date</option>
+                  <option value="cost">Cout</option>
+                  <option value="weight">Poids</option>
+                  <option value="tracking">Tracking</option>
+                </select>
+                <button
+                  onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}
+                  className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  title={sortDir === 'asc' ? 'Croissant' : 'Decroissant'}
+                >
+                  {sortDir === 'asc' ? <ArrowUpRight className="h-4 w-4 text-gray-500" /> : <ArrowDownRight className="h-4 w-4 text-gray-500" />}
+                </button>
+              </div>
+
+              {/* View Modes */}
+              <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+                {[
+                  { mode: 'list' as const, icon: List, label: 'Liste' },
+                  { mode: 'table' as const, icon: Table2, label: 'Tableau' },
+                  { mode: 'kanban' as const, icon: LayoutGrid, label: 'Kanban' },
+                ].map((v) => (
+                  <button
+                    key={v.mode}
+                    onClick={() => setViewMode(v.mode)}
+                    title={v.label}
+                    className={`p-2 rounded-md transition-colors ${
+                      viewMode === v.mode
+                        ? 'bg-white text-primary-600 shadow-sm'
+                        : 'text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    <v.icon className="h-4 w-4" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Row 2: Status chips + Bundle + Select All */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Select All checkbox */}
+              {processedPackages.length > 0 && (
+                <button
+                  onClick={toggleSelectAll}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                    selectedIds.size === processedPackages.length && processedPackages.length > 0
+                      ? 'bg-primary-50 border-primary-200 text-primary-700'
+                      : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+                  }`}
+                >
+                  {selectedIds.size === processedPackages.length && processedPackages.length > 0 ? (
+                    <Check className="h-3.5 w-3.5" />
+                  ) : (
+                    <div className="h-3.5 w-3.5 border border-gray-300 rounded" />
+                  )}
+                  Tout
+                </button>
+              )}
+
               <button
-                onClick={() => setShowBundleDeliverModal(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
+                onClick={() => setStatusFilter('all')}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${statusFilter === 'all' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
               >
-                <Layers className="h-4 w-4" />
-                Livrer Bundle ({availablePackages.length} colis)
-                <span className="px-1.5 py-0.5 bg-white/20 rounded text-[10px]">
-                  -{bundleSavings.toFixed(2)}$
-                </span>
+                Tous ({userPackages.length})
               </button>
-            )}
+              {ALL_STATUSES.map((s) => {
+                const cfg = STATUS_CONFIG[s];
+                const cnt = userPackages.filter((p) => p.status === s).length;
+                const rev = userPackages.filter(p => p.status === s).reduce((sum, p) => sum + (parseFloat(p.totalCost) || 0), 0);
+                if (cnt === 0) return null;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setStatusFilter(s)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${statusFilter === s ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  >
+                    {cfg?.label || s} ({cnt})
+                    <span className="ml-1 opacity-60">${rev.toFixed(0)}</span>
+                  </button>
+                );
+              })}
+
+              {hasBundleOpportunity && (
+                <button
+                  onClick={() => setShowBundleDeliverModal(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg ml-auto"
+                >
+                  <Layers className="h-4 w-4" />
+                  Livrer Bundle ({availablePackages.length})
+                  <span className="px-1.5 py-0.5 bg-white/20 rounded text-[10px]">
+                    -{bundleSavings.toFixed(2)}$
+                  </span>
+                </button>
+              )}
+            </div>
           </div>
 
-          {filteredPackages.length === 0 ? (
+          {processedPackages.length === 0 ? (
             <div className="theme-card rounded-2xl border border-gray-100 p-12 text-center">
               <PackageIcon className="h-14 w-14 text-gray-200 mx-auto mb-3" />
               <p className="text-gray-500 font-medium">Aucun colis</p>
               <p className="text-sm text-gray-400 mt-1">
-                {statusFilter !== 'all' ? 'Essayez de retirer le filtre' : 'Cet utilisateur n\'a pas encore de colis'}
+                {searchQuery ? 'Aucun resultat pour cette recherche' : statusFilter !== 'all' ? 'Essayez de retirer le filtre' : 'Cet utilisateur n\'a pas encore de colis'}
               </p>
               <button
                 onClick={() => router.push(`/admin/packages/new?userId=${user.dbId}`)}
@@ -641,235 +939,598 @@ export default function UserDetailPage() {
               </button>
             </div>
           ) : (
-            <div className="space-y-3">
-              {filteredPackages.map((pkg, idx) => {
-                const cfg = STATUS_CONFIG[pkg.status] || { label: pkg.status, color: 'text-gray-700', bg: 'bg-gray-100' };
-                const isExpanded = expandedPackage === pkg.id;
-                const isEditing = editingPackage === pkg.id;
+            <>
+              {/* ── LIST VIEW ──────────────────────────────────────── */}
+              {viewMode === 'list' && (
+                <div className="space-y-3">
+                  {processedPackages.map((pkg, idx) => {
+                    const cfg = STATUS_CONFIG[pkg.status] || { label: pkg.status, color: 'text-gray-700', bg: 'bg-gray-100', border: 'border-gray-200', gradient: 'from-gray-400 to-gray-500' };
+                    const isExpanded = expandedPackage === pkg.id;
+                    const isEditing = editingPackage === pkg.id;
+                    const isSelected = selectedIds.has(pkg.id);
+                    const nextStatus = NEXT_STATUS[pkg.status];
 
-                return (
-                  <motion.div
-                    key={pkg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.03 }}
-                    className="theme-card rounded-xl border border-gray-100 shadow-sm overflow-hidden"
-                  >
-                    {/* Package Header */}
-                    <div
-                      className="p-4 cursor-pointer hover:bg-gray-50/50 transition-colors"
-                      onClick={() => setExpandedPackage(isExpanded ? null : pkg.id)}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="p-2 bg-primary-50 rounded-lg flex-shrink-0">
-                            <PackageIcon className="h-4 w-4 text-primary-600" />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-semibold text-gray-900 text-sm">{pkg.trackingNumber}</h3>
-                              <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded-full ${cfg.bg} ${cfg.color}`}>
-                                {cfg.label}
-                              </span>
-                              {pkg.deliveryBundleId && (
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-purple-100 text-purple-700">
-                                  <Layers className="h-3 w-3" />
-                                  Bundle #{pkg.deliveryBundleId}
-                                </span>
-                              )}
-                              {pkg.priority !== 'normal' && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-orange-100 text-orange-700">
-                                  {pkg.priority}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-gray-500 mt-0.5 truncate">{pkg.description}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 flex-shrink-0">
-                          <div className="text-right hidden sm:block">
-                            <p className="text-sm font-bold text-gray-900">${pkg.totalCost}</p>
-                            <p className="text-[10px] text-gray-400">{pkg.weight} {pkg.weightUnit}</p>
-                          </div>
-                          {isExpanded ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
-                        </div>
-                      </div>
-                    </div>
+                    return (
+                      <motion.div
+                        key={pkg.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.02 }}
+                        className={`theme-card rounded-xl border shadow-sm overflow-hidden transition-all ${
+                          isSelected ? 'border-primary-300 ring-2 ring-primary-100' : 'border-gray-100'
+                        }`}
+                      >
+                        {/* Package Header */}
+                        <div className="p-4">
+                          <div className="flex items-center gap-3">
+                            {/* Checkbox */}
+                            <button
+                              onClick={() => toggleSelect(pkg.id)}
+                              className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                                isSelected ? 'bg-primary-600 border-primary-600' : 'border-gray-300 hover:border-primary-400'
+                              }`}
+                            >
+                              {isSelected && <Check className="h-3 w-3 text-white" />}
+                            </button>
 
-                    {/* Expanded Content */}
-                    <AnimatePresence>
-                      {isExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="px-4 pb-4 border-t border-gray-100 pt-4 space-y-4">
-                            {/* Info Grid */}
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                              <div className="bg-gray-50 rounded-lg p-2.5">
-                                <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5"><Hash className="h-3 w-3" />Tracking</div>
-                                <p className="text-xs font-medium text-gray-900">{pkg.trackingNumber}</p>
-                                {pkg.externalTrackingNumber && (
-                                  <p className="text-[10px] text-gray-500 mt-0.5">Ext: {pkg.externalTrackingNumber}</p>
+                            {/* Status dot */}
+                            <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 bg-gradient-to-br ${cfg.gradient}`} />
+
+                            {/* Main info */}
+                            <div
+                              className="flex-1 min-w-0 cursor-pointer"
+                              onClick={() => setExpandedPackage(isExpanded ? null : pkg.id)}
+                            >
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {/* Tracking - clickable to copy */}
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleCopyTracking(pkg.trackingNumber); }}
+                                  className="inline-flex items-center gap-1 font-semibold text-gray-900 text-sm hover:text-primary-600 transition-colors group"
+                                >
+                                  {pkg.trackingNumber}
+                                  {copiedTracking === pkg.trackingNumber ? (
+                                    <Check className="h-3 w-3 text-green-500" />
+                                  ) : (
+                                    <Copy className="h-3 w-3 text-gray-300 group-hover:text-primary-400 transition-colors" />
+                                  )}
+                                </button>
+                                <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded-full ${cfg.bg} ${cfg.color}`}>
+                                  {cfg.label}
+                                </span>
+                                {pkg.deliveryBundleId && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-purple-100 text-purple-700">
+                                    <Layers className="h-3 w-3" />
+                                    Bundle #{pkg.deliveryBundleId}
+                                  </span>
+                                )}
+                                {pkg.priority !== 'normal' && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-orange-100 text-orange-700">
+                                    {pkg.priority}
+                                  </span>
                                 )}
                               </div>
-                              <div className="bg-gray-50 rounded-lg p-2.5">
-                                <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5"><Weight className="h-3 w-3" />Poids</div>
-                                <p className="text-xs font-medium text-gray-900">{pkg.weight} {pkg.weightUnit}</p>
-                              </div>
-                              <div className="bg-gray-50 rounded-lg p-2.5">
-                                <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5"><MapPin className="h-3 w-3" />Emplacement</div>
-                                <p className="text-xs font-medium text-gray-900">{pkg.currentLocation || 'N/A'}</p>
-                              </div>
-                              <div className="bg-gray-50 rounded-lg p-2.5">
-                                <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5"><DollarSign className="h-3 w-3" />Total</div>
-                                <p className="text-xs font-bold text-primary-700">${pkg.totalCost}</p>
-                                <p className="text-[10px] text-gray-400">Service: ${pkg.serviceFee} + Poids: ${pkg.weightCost}</p>
+                              <div className="flex items-center gap-3 mt-0.5">
+                                <p className="text-xs text-gray-500 truncate">{pkg.description}</p>
+                                <span className="text-[10px] text-gray-300 flex-shrink-0">
+                                  {new Date(pkg.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                                </span>
                               </div>
                             </div>
 
-                            {/* Edit Form */}
-                            {isEditing ? (
-                              <div className="bg-primary-50/50 rounded-xl p-4 border border-primary-100">
-                                <h4 className="text-sm font-semibold text-gray-900 mb-3">Modifier le colis</h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                  <div>
-                                    <label className="text-xs font-medium text-gray-500 block mb-1">Statut</label>
-                                    <select
-                                      value={editForm.status}
-                                      onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
-                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    >
-                                      {ALL_STATUSES.map((s) => (
-                                        <option key={s} value={s}>{STATUS_CONFIG[s]?.label || s}</option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                  <div>
-                                    <label className="text-xs font-medium text-gray-500 block mb-1">Emplacement</label>
-                                    <select
-                                      value={editForm.currentLocation}
-                                      onChange={(e) => setEditForm((f) => ({ ...f, currentLocation: e.target.value }))}
-                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    >
-                                      <option value="">-- Selectionner --</option>
-                                      {LOCATIONS.map((l) => (
-                                        <option key={l} value={l}>{l}</option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                  <div>
-                                    <label className="text-xs font-medium text-gray-500 block mb-1">Poids (lbs)</label>
-                                    <input
-                                      type="number"
-                                      step="0.1"
-                                      value={editForm.weight}
-                                      onChange={(e) => setEditForm((f) => ({ ...f, weight: e.target.value }))}
-                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                    />
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2 mt-3">
-                                  <button
-                                    onClick={() => handleUpdatePackage(pkg.id)}
-                                    className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
-                                  >
-                                    Sauvegarder
-                                  </button>
-                                  <button
-                                    onClick={() => { setEditingPackage(null); setEditForm({ status: '', currentLocation: '', weight: '' }); }}
-                                    className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
-                                  >
-                                    Annuler
-                                  </button>
-                                </div>
+                            {/* Right side: cost + weight + quick action */}
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <div className="text-right hidden sm:block">
+                                <p className="text-sm font-bold text-gray-900">${pkg.totalCost}</p>
+                                <p className="text-[10px] text-gray-400">{pkg.weight} {pkg.weightUnit}</p>
                               </div>
-                            ) : null}
 
-                            {/* Timeline */}
-                            {pkg.timeline && pkg.timeline.length > 0 && (
-                              <div>
-                                <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Historique</h4>
-                                <div className="space-y-2">
-                                  {pkg.timeline.map((entry, i) => (
-                                    <div key={entry.id} className="flex items-start gap-3">
-                                      <div className="relative flex-shrink-0">
-                                        <div className={`h-2.5 w-2.5 rounded-full mt-1 ${i === 0 ? 'bg-primary-500 ring-4 ring-primary-100' : 'bg-gray-300'}`} />
-                                        {i < pkg.timeline.length - 1 && (
-                                          <div className="absolute top-3.5 left-1 w-px h-5 bg-gray-200" />
-                                        )}
-                                      </div>
-                                      <div>
-                                        <p className="text-xs font-medium text-gray-900">{entry.status}</p>
-                                        <p className="text-[10px] text-gray-500">{entry.location} {entry.description ? `- ${entry.description}` : ''}</p>
-                                        <p className="text-[10px] text-gray-400 mt-0.5">
-                                          {new Date(entry.timestamp).toLocaleDateString('fr-FR', {
-                                            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
-                                          })}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Actions */}
-                            <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-                              <button
-                                onClick={(e) => { e.stopPropagation(); startEditing(pkg); }}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
-                              >
-                                <Edit3 className="h-3.5 w-3.5" />
-                                Modifier
-                              </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleDeletePackage(pkg.id, pkg.trackingNumber); }}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                                Supprimer
-                              </button>
-                              {pkg.status === 'available' && hasBundleOpportunity && (
+                              {/* Quick status button */}
+                              {nextStatus && (
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); setShowBundleDeliverModal(true); }}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                                  onClick={(e) => { e.stopPropagation(); handleQuickStatus(pkg); }}
+                                  title={`→ ${STATUS_CONFIG[nextStatus]?.label}`}
+                                  className={`p-1.5 rounded-lg border transition-all hover:shadow-sm ${STATUS_CONFIG[nextStatus]?.bg} ${STATUS_CONFIG[nextStatus]?.border} ${STATUS_CONFIG[nextStatus]?.color}`}
                                 >
-                                  <Layers className="h-3.5 w-3.5" />
-                                  Bundle
+                                  <ChevronRight className="h-3.5 w-3.5" />
                                 </button>
                               )}
-                              {pkg.deliveryBundleId && pkg.status === 'delivered' && (
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); setCancelBundleId(pkg.deliveryBundleId); }}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
-                                >
-                                  <Layers className="h-3.5 w-3.5" />
-                                  Annuler Bundle
-                                </button>
-                              )}
+
+                              <button
+                                onClick={() => setExpandedPackage(isExpanded ? null : pkg.id)}
+                                className="p-1 rounded hover:bg-gray-100 transition-colors"
+                              >
+                                {isExpanded ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+                              </button>
                             </div>
                           </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                );
-              })}
-            </div>
+                        </div>
+
+                        {/* Expanded Content */}
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="px-4 pb-4 border-t border-gray-100 pt-4 space-y-4">
+                                {/* Info Grid */}
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                  <div className="bg-gray-50 rounded-lg p-2.5">
+                                    <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5"><Hash className="h-3 w-3" />Tracking</div>
+                                    <p className="text-xs font-medium text-gray-900">{pkg.trackingNumber}</p>
+                                    {pkg.externalTrackingNumber && (
+                                      <p className="text-[10px] text-gray-500 mt-0.5">Ext: {pkg.externalTrackingNumber}</p>
+                                    )}
+                                  </div>
+                                  <div className="bg-gray-50 rounded-lg p-2.5">
+                                    <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5"><Weight className="h-3 w-3" />Poids</div>
+                                    <p className="text-xs font-medium text-gray-900">{pkg.weight} {pkg.weightUnit}</p>
+                                  </div>
+                                  <div className="bg-gray-50 rounded-lg p-2.5">
+                                    <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5"><MapPin className="h-3 w-3" />Emplacement</div>
+                                    <p className="text-xs font-medium text-gray-900">{pkg.currentLocation || 'N/A'}</p>
+                                  </div>
+                                  <div className="bg-gray-50 rounded-lg p-2.5">
+                                    <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5"><DollarSign className="h-3 w-3" />Breakdown</div>
+                                    <p className="text-xs font-bold text-primary-700">${pkg.totalCost}</p>
+                                    <div className="text-[10px] text-gray-400 space-y-0.5 mt-0.5">
+                                      <p>Service: ${pkg.serviceFee}</p>
+                                      <p>Poids: ${pkg.weightCost}</p>
+                                      {parseFloat(pkg.customsFees || '0') > 0 && <p>Douane: ${pkg.customsFees}</p>}
+                                      {pkg.specialItemId && (
+                                        <p className="text-violet-500">Special: ${(parseFloat(pkg.totalCost) - parseFloat(pkg.serviceFee) - parseFloat(pkg.weightCost) - parseFloat(pkg.customsFees || '0')).toFixed(2)}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Edit Form */}
+                                {isEditing ? (
+                                  <div className="bg-primary-50/50 rounded-xl p-4 border border-primary-100">
+                                    <h4 className="text-sm font-semibold text-gray-900 mb-3">Modifier le colis</h4>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                      <div>
+                                        <label className="text-xs font-medium text-gray-500 block mb-1">Statut</label>
+                                        <select
+                                          value={editForm.status}
+                                          onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        >
+                                          {ALL_STATUSES.map((s) => (
+                                            <option key={s} value={s}>{STATUS_CONFIG[s]?.label || s}</option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                      <div>
+                                        <label className="text-xs font-medium text-gray-500 block mb-1">Emplacement</label>
+                                        <select
+                                          value={editForm.currentLocation}
+                                          onChange={(e) => setEditForm((f) => ({ ...f, currentLocation: e.target.value }))}
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        >
+                                          <option value="">-- Selectionner --</option>
+                                          {LOCATIONS.map((l) => (
+                                            <option key={l} value={l}>{l}</option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                      <div>
+                                        <label className="text-xs font-medium text-gray-500 block mb-1">Poids (lbs)</label>
+                                        <input
+                                          type="number"
+                                          step="0.1"
+                                          value={editForm.weight}
+                                          onChange={(e) => setEditForm((f) => ({ ...f, weight: e.target.value }))}
+                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-3">
+                                      <button
+                                        onClick={() => handleUpdatePackage(pkg.id)}
+                                        className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors"
+                                      >
+                                        Sauvegarder
+                                      </button>
+                                      <button
+                                        onClick={() => { setEditingPackage(null); setEditForm({ status: '', currentLocation: '', weight: '' }); }}
+                                        className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                                      >
+                                        Annuler
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : null}
+
+                                {/* Timeline */}
+                                {pkg.timeline && pkg.timeline.length > 0 && (
+                                  <div>
+                                    <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Historique</h4>
+                                    <div className="space-y-2">
+                                      {pkg.timeline.map((entry, i) => (
+                                        <div key={entry.id} className="flex items-start gap-3">
+                                          <div className="relative flex-shrink-0">
+                                            <div className={`h-2.5 w-2.5 rounded-full mt-1 ${i === 0 ? 'bg-primary-500 ring-4 ring-primary-100' : 'bg-gray-300'}`} />
+                                            {i < pkg.timeline.length - 1 && (
+                                              <div className="absolute top-3.5 left-1 w-px h-5 bg-gray-200" />
+                                            )}
+                                          </div>
+                                          <div>
+                                            <p className="text-xs font-medium text-gray-900">{entry.status}</p>
+                                            <p className="text-[10px] text-gray-500">{entry.location} {entry.description ? `- ${entry.description}` : ''}</p>
+                                            <p className="text-[10px] text-gray-400 mt-0.5">
+                                              {new Date(entry.timestamp).toLocaleDateString('fr-FR', {
+                                                day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+                                              })}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Actions */}
+                                <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); startEditing(pkg); }}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
+                                  >
+                                    <Edit3 className="h-3.5 w-3.5" />
+                                    Modifier
+                                  </button>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleDeletePackage(pkg.id, pkg.trackingNumber); }}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    Supprimer
+                                  </button>
+                                  {pkg.status === 'available' && hasBundleOpportunity && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setShowBundleDeliverModal(true); }}
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                                    >
+                                      <Layers className="h-3.5 w-3.5" />
+                                      Bundle
+                                    </button>
+                                  )}
+                                  {pkg.deliveryBundleId && pkg.status === 'delivered' && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setCancelBundleId(pkg.deliveryBundleId); }}
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                                    >
+                                      <Layers className="h-3.5 w-3.5" />
+                                      Annuler Bundle
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* ── TABLE VIEW ─────────────────────────────────────── */}
+              {viewMode === 'table' && (
+                <div className="theme-card rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-50 border-b border-gray-200">
+                          <th className="px-3 py-3 text-left">
+                            <button
+                              onClick={toggleSelectAll}
+                              className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                                selectedIds.size === processedPackages.length && processedPackages.length > 0
+                                  ? 'bg-primary-600 border-primary-600' : 'border-gray-300 hover:border-primary-400'
+                              }`}
+                            >
+                              {selectedIds.size === processedPackages.length && processedPackages.length > 0 && <Check className="h-3 w-3 text-white" />}
+                            </button>
+                          </th>
+                          {[
+                            { key: 'tracking', label: 'Tracking' },
+                            { key: 'description', label: 'Description' },
+                            { key: 'status', label: 'Statut' },
+                            { key: 'weight', label: 'Poids' },
+                            { key: 'service', label: 'Service' },
+                            { key: 'weightCost', label: 'Poids$' },
+                            { key: 'customs', label: 'Douane' },
+                            { key: 'cost', label: 'Total' },
+                            { key: 'date', label: 'Date' },
+                          ].map((col) => (
+                            <th
+                              key={col.key}
+                              className="px-3 py-3 text-left text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-700 transition-colors whitespace-nowrap"
+                              onClick={() => {
+                                if (['date', 'cost', 'weight', 'tracking'].includes(col.key)) {
+                                  if (sortBy === col.key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+                                  else { setSortBy(col.key as any); setSortDir('desc'); }
+                                }
+                              }}
+                            >
+                              <span className="inline-flex items-center gap-1">
+                                {col.label}
+                                {sortBy === col.key && (
+                                  sortDir === 'asc' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />
+                                )}
+                              </span>
+                            </th>
+                          ))}
+                          <th className="px-3 py-3 text-right text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {processedPackages.map((pkg, idx) => {
+                          const cfg = STATUS_CONFIG[pkg.status] || { label: pkg.status, color: 'text-gray-700', bg: 'bg-gray-100', border: 'border-gray-200', gradient: 'from-gray-400 to-gray-500' };
+                          const isSelected = selectedIds.has(pkg.id);
+                          const nextStatus = NEXT_STATUS[pkg.status];
+                          return (
+                            <tr key={pkg.id} className={`transition-colors ${idx % 2 === 0 ? '' : 'bg-gray-50/30'} ${isSelected ? 'bg-primary-50/50' : 'hover:bg-gray-50/50'}`}>
+                              <td className="px-3 py-2.5">
+                                <button
+                                  onClick={() => toggleSelect(pkg.id)}
+                                  className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                                    isSelected ? 'bg-primary-600 border-primary-600' : 'border-gray-300 hover:border-primary-400'
+                                  }`}
+                                >
+                                  {isSelected && <Check className="h-3 w-3 text-white" />}
+                                </button>
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <button
+                                  onClick={() => handleCopyTracking(pkg.trackingNumber)}
+                                  className="inline-flex items-center gap-1 font-medium text-gray-900 hover:text-primary-600 transition-colors text-xs"
+                                >
+                                  {pkg.trackingNumber}
+                                  {copiedTracking === pkg.trackingNumber ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3 text-gray-300" />}
+                                </button>
+                              </td>
+                              <td className="px-3 py-2.5 max-w-[150px]">
+                                <p className="text-xs text-gray-600 truncate">{pkg.description}</p>
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded-full ${cfg.bg} ${cfg.color}`}>
+                                  {cfg.label}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5 text-xs text-gray-700">{pkg.weight} {pkg.weightUnit}</td>
+                              <td className="px-3 py-2.5 text-xs text-gray-700">${pkg.serviceFee}</td>
+                              <td className="px-3 py-2.5 text-xs text-gray-700">${pkg.weightCost}</td>
+                              <td className="px-3 py-2.5 text-xs text-gray-700">${pkg.customsFees || '0.00'}</td>
+                              <td className="px-3 py-2.5 text-xs font-bold text-gray-900">${pkg.totalCost}</td>
+                              <td className="px-3 py-2.5 text-[10px] text-gray-400 whitespace-nowrap">
+                                {new Date(pkg.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <div className="flex items-center gap-1 justify-end">
+                                  {nextStatus && (
+                                    <button
+                                      onClick={() => handleQuickStatus(pkg)}
+                                      title={`→ ${STATUS_CONFIG[nextStatus]?.label}`}
+                                      className={`p-1 rounded ${STATUS_CONFIG[nextStatus]?.bg} ${STATUS_CONFIG[nextStatus]?.color} transition-colors`}
+                                    >
+                                      <ChevronRight className="h-3.5 w-3.5" />
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => { startEditing(pkg); setExpandedPackage(pkg.id); setViewMode('list'); }}
+                                    className="p-1 rounded text-primary-600 bg-primary-50 hover:bg-primary-100 transition-colors"
+                                    title="Modifier"
+                                  >
+                                    <Edit3 className="h-3.5 w-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeletePackage(pkg.id, pkg.trackingNumber)}
+                                    className="p-1 rounded text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
+                                    title="Supprimer"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      {/* Footer totals */}
+                      <tfoot>
+                        <tr className="bg-gray-50 border-t-2 border-gray-200 font-semibold">
+                          <td className="px-3 py-2.5" />
+                          <td className="px-3 py-2.5 text-xs text-gray-700">{processedPackages.length} colis</td>
+                          <td className="px-3 py-2.5" />
+                          <td className="px-3 py-2.5" />
+                          <td className="px-3 py-2.5 text-xs text-gray-700">{processedPackages.reduce((s, p) => s + parseFloat(p.weight || '0'), 0).toFixed(1)} lbs</td>
+                          <td className="px-3 py-2.5 text-xs text-blue-700">${processedPackages.reduce((s, p) => s + parseFloat(p.serviceFee || '0'), 0).toFixed(2)}</td>
+                          <td className="px-3 py-2.5 text-xs text-orange-700">${processedPackages.reduce((s, p) => s + parseFloat(p.weightCost || '0'), 0).toFixed(2)}</td>
+                          <td className="px-3 py-2.5 text-xs text-amber-700">${processedPackages.reduce((s, p) => s + parseFloat(p.customsFees || '0'), 0).toFixed(2)}</td>
+                          <td className="px-3 py-2.5 text-xs font-bold text-gray-900">${processedPackages.reduce((s, p) => s + parseFloat(p.totalCost || '0'), 0).toFixed(2)}</td>
+                          <td className="px-3 py-2.5" />
+                          <td className="px-3 py-2.5" />
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* ── KANBAN VIEW ────────────────────────────────────── */}
+              {viewMode === 'kanban' && (
+                <div className="flex gap-3 overflow-x-auto pb-4 -mx-1 px-1">
+                  {ALL_STATUSES.map((status) => {
+                    const cfg = STATUS_CONFIG[status] || { label: status, color: 'text-gray-700', bg: 'bg-gray-100', border: 'border-gray-200', gradient: 'from-gray-400 to-gray-500' };
+                    const statusPackages = processedPackages.filter(p => p.status === status);
+                    const statusRevenue = statusPackages.reduce((s, p) => s + (parseFloat(p.totalCost) || 0), 0);
+
+                    return (
+                      <div key={status} className="flex-shrink-0 w-[240px] sm:w-[260px]">
+                        {/* Column Header */}
+                        <div className={`rounded-t-xl bg-gradient-to-r ${cfg.gradient} px-3 py-2.5`}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-white">{cfg.label}</span>
+                            <span className="px-2 py-0.5 bg-white/25 rounded-full text-[10px] font-bold text-white">
+                              {statusPackages.length}
+                            </span>
+                          </div>
+                          {statusPackages.length > 0 && (
+                            <p className="text-[10px] text-white/80 mt-0.5">${statusRevenue.toFixed(2)}</p>
+                          )}
+                        </div>
+
+                        {/* Column Body */}
+                        <div className="bg-gray-50/50 rounded-b-xl border border-t-0 border-gray-200 p-2 min-h-[200px] max-h-[60vh] overflow-y-auto space-y-2">
+                          {statusPackages.length === 0 ? (
+                            <div className="text-center py-8">
+                              <PackageIcon className="h-8 w-8 text-gray-200 mx-auto mb-2" />
+                              <p className="text-[10px] text-gray-400">Aucun colis</p>
+                            </div>
+                          ) : (
+                            statusPackages.map((pkg) => {
+                              const isSelected = selectedIds.has(pkg.id);
+                              const nextStatus = NEXT_STATUS[pkg.status];
+                              return (
+                                <motion.div
+                                  key={pkg.id}
+                                  initial={{ opacity: 0, scale: 0.95 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  className={`bg-white rounded-lg border p-2.5 cursor-pointer hover:shadow-md transition-all ${
+                                    isSelected ? 'border-primary-300 ring-1 ring-primary-100' : 'border-gray-200 hover:border-gray-300'
+                                  }`}
+                                  onClick={() => { setExpandedPackage(pkg.id); setViewMode('list'); }}
+                                >
+                                  <div className="flex items-start justify-between gap-1.5">
+                                    <div className="min-w-0 flex-1">
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); handleCopyTracking(pkg.trackingNumber); }}
+                                        className="text-xs font-bold text-gray-900 hover:text-primary-600 transition-colors truncate block"
+                                      >
+                                        {pkg.trackingNumber}
+                                      </button>
+                                      <p className="text-[10px] text-gray-500 truncate mt-0.5">{pkg.description}</p>
+                                    </div>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); toggleSelect(pkg.id); }}
+                                      className={`flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                                        isSelected ? 'bg-primary-600 border-primary-600' : 'border-gray-300'
+                                      }`}
+                                    >
+                                      {isSelected && <Check className="h-2.5 w-2.5 text-white" />}
+                                    </button>
+                                  </div>
+
+                                  <div className="flex items-center justify-between mt-2">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] text-gray-400">{pkg.weight} lbs</span>
+                                      <span className="text-xs font-bold text-gray-800">${pkg.totalCost}</span>
+                                    </div>
+                                    {nextStatus && (
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); handleQuickStatus(pkg); }}
+                                        title={`→ ${STATUS_CONFIG[nextStatus]?.label}`}
+                                        className={`p-1 rounded ${STATUS_CONFIG[nextStatus]?.bg} ${STATUS_CONFIG[nextStatus]?.color} transition-colors`}
+                                      >
+                                        <ChevronRight className="h-3 w-3" />
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  {pkg.priority !== 'normal' && (
+                                    <span className="inline-flex items-center mt-1.5 px-1.5 py-0.5 text-[9px] font-semibold rounded bg-orange-100 text-orange-700">
+                                      {pkg.priority}
+                                    </span>
+                                  )}
+                                </motion.div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
           )}
         </motion.div>
       )}
 
+      {/* ── Bulk Actions Bar ──────────────────────────────────────────── */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40"
+          >
+            <div className="bg-gray-900 text-white rounded-2xl shadow-2xl px-5 py-3 flex items-center gap-3 border border-gray-700">
+              <span className="text-sm font-medium">{selectedIds.size} selectionne{selectedIds.size > 1 ? 's' : ''}</span>
+
+              <div className="w-px h-6 bg-gray-600" />
+
+              {/* Bulk Status Change */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowBulkStatusDropdown(!showBulkStatusDropdown)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 text-sm font-medium rounded-lg hover:bg-white/20 transition-colors"
+                >
+                  Changer statut
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </button>
+                {showBulkStatusDropdown && (
+                  <div className="absolute bottom-full mb-2 left-0 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden min-w-[160px]">
+                    {ALL_STATUSES.map((s) => {
+                      const c = STATUS_CONFIG[s];
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => handleBulkStatusChange(s)}
+                          className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                        >
+                          <div className={`w-2.5 h-2.5 rounded-full bg-gradient-to-br ${c?.gradient || 'from-gray-400 to-gray-500'}`} />
+                          <span className="text-gray-700">{c?.label || s}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Bulk Delete */}
+              <button
+                onClick={handleBulkDelete}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 text-red-300 text-sm font-medium rounded-lg hover:bg-red-500/30 transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Supprimer
+              </button>
+
+              <div className="w-px h-6 bg-gray-600" />
+
+              {/* Deselect */}
+              <button
+                onClick={() => { setSelectedIds(new Set()); setShowBulkStatusDropdown(false); }}
+                className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Tab: Loyalty ──────────────────────────────────────────────── */}
       {activeTab === 'loyalty' && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-          {/* Points & Credits Summary */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Points Card */}
             <div className="theme-card rounded-xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="bg-gradient-to-r from-yellow-50 to-amber-50 px-5 py-3 border-b border-yellow-100">
                 <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
@@ -901,7 +1562,6 @@ export default function UserDetailPage() {
               </div>
             </div>
 
-            {/* Credits Card */}
             <div className="theme-card rounded-xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="bg-gradient-to-r from-purple-50 to-indigo-50 px-5 py-3 border-b border-purple-100">
                 <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
@@ -934,7 +1594,6 @@ export default function UserDetailPage() {
             </div>
           </div>
 
-          {/* Recent Transactions */}
           {loyalty.recentTransactions.length > 0 ? (
             <div className="theme-card rounded-xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="px-5 py-3 border-b border-gray-100">
@@ -1120,7 +1779,6 @@ export default function UserDetailPage() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="theme-card rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden max-h-[90vh] flex flex-col"
             >
-              {/* Header */}
               <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-4 rounded-t-2xl flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -1141,9 +1799,7 @@ export default function UserDetailPage() {
                 </div>
               </div>
 
-              {/* Body - scrollable */}
               <div className="overflow-y-auto flex-1 p-6 space-y-4">
-                {/* Savings Banner */}
                 <div className="bg-green-50 border border-green-200 rounded-xl p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -1155,7 +1811,6 @@ export default function UserDetailPage() {
                   <p className="text-xs text-green-600 mt-1">1 seul frais de service au lieu de {availablePackages.length}</p>
                 </div>
 
-                {/* Package List */}
                 <div>
                   <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Colis inclus</h4>
                   <div className="space-y-2">
@@ -1186,7 +1841,6 @@ export default function UserDetailPage() {
                   </div>
                 </div>
 
-                {/* Financial Recap */}
                 <div className="bg-gray-50 rounded-xl p-4 space-y-2">
                   <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Recap financier</h4>
                   <div className="flex justify-between text-sm">
@@ -1207,7 +1861,6 @@ export default function UserDetailPage() {
                   </div>
                 </div>
 
-                {/* Optional fields */}
                 <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Destinataire (optionnel)</label>
@@ -1232,7 +1885,6 @@ export default function UserDetailPage() {
                 </div>
               </div>
 
-              {/* Footer */}
               <div className="px-6 py-4 border-t border-gray-100 flex items-center gap-3 flex-shrink-0">
                 <button
                   onClick={() => { setShowBundleDeliverModal(false); setBundleRecipient(''); setBundleNotes(''); }}
