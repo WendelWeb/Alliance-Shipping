@@ -942,110 +942,220 @@ export default function UserDetailPage() {
             <>
               {/* ── LIST VIEW ──────────────────────────────────────── */}
               {viewMode === 'list' && (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {processedPackages.map((pkg, idx) => {
                     const cfg = STATUS_CONFIG[pkg.status] || { label: pkg.status, color: 'text-gray-700', bg: 'bg-gray-100', border: 'border-gray-200', gradient: 'from-gray-400 to-gray-500' };
                     const isExpanded = expandedPackage === pkg.id;
                     const isEditing = editingPackage === pkg.id;
                     const isSelected = selectedIds.has(pkg.id);
                     const nextStatus = NEXT_STATUS[pkg.status];
+                    const statusIdx = ALL_STATUSES.indexOf(pkg.status);
+                    const specialFee = pkg.specialItemId ? Math.max(0, parseFloat(pkg.totalCost) - parseFloat(pkg.serviceFee) - parseFloat(pkg.weightCost) - parseFloat(pkg.customsFees || '0')) : 0;
 
                     return (
                       <motion.div
                         key={pkg.id}
-                        initial={{ opacity: 0, y: 10 }}
+                        initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.02 }}
-                        className={`theme-card rounded-xl border shadow-sm overflow-hidden transition-all ${
+                        transition={{ delay: idx * 0.03 }}
+                        className={`theme-card rounded-2xl border shadow-sm overflow-hidden transition-all hover:shadow-md ${
                           isSelected ? 'border-primary-300 ring-2 ring-primary-100' : 'border-gray-100'
                         }`}
                       >
-                        {/* Package Header */}
-                        <div className="p-4">
-                          <div className="flex items-center gap-3">
+                        {/* ── Colored top bar ─────────────────────────── */}
+                        <div className={`h-1.5 bg-gradient-to-r ${cfg.gradient}`} />
+
+                        <div className="p-4 sm:p-5">
+                          {/* ── Row 1: Header ────────────────────────── */}
+                          <div className="flex items-start gap-3">
                             {/* Checkbox */}
                             <button
                               onClick={() => toggleSelect(pkg.id)}
-                              className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                              className={`flex-shrink-0 w-5 h-5 mt-0.5 rounded border-2 flex items-center justify-center transition-colors ${
                                 isSelected ? 'bg-primary-600 border-primary-600' : 'border-gray-300 hover:border-primary-400'
                               }`}
                             >
                               {isSelected && <Check className="h-3 w-3 text-white" />}
                             </button>
 
-                            {/* Status dot */}
-                            <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 bg-gradient-to-br ${cfg.gradient}`} />
-
-                            {/* Main info */}
-                            <div
-                              className="flex-1 min-w-0 cursor-pointer"
-                              onClick={() => setExpandedPackage(isExpanded ? null : pkg.id)}
-                            >
+                            <div className="flex-1 min-w-0">
+                              {/* Tracking + badges */}
                               <div className="flex items-center gap-2 flex-wrap">
-                                {/* Tracking - clickable to copy */}
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); handleCopyTracking(pkg.trackingNumber); }}
-                                  className="inline-flex items-center gap-1 font-semibold text-gray-900 text-sm hover:text-primary-600 transition-colors group"
+                                  onClick={() => handleCopyTracking(pkg.trackingNumber)}
+                                  className="inline-flex items-center gap-1.5 font-bold text-gray-900 text-base hover:text-primary-600 transition-colors group"
                                 >
                                   {pkg.trackingNumber}
                                   {copiedTracking === pkg.trackingNumber ? (
-                                    <Check className="h-3 w-3 text-green-500" />
+                                    <Check className="h-3.5 w-3.5 text-green-500" />
                                   ) : (
-                                    <Copy className="h-3 w-3 text-gray-300 group-hover:text-primary-400 transition-colors" />
+                                    <Copy className="h-3.5 w-3.5 text-gray-300 group-hover:text-primary-400 transition-colors" />
                                   )}
                                 </button>
-                                <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded-full ${cfg.bg} ${cfg.color}`}>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 text-[11px] font-bold rounded-full ${cfg.bg} ${cfg.color}`}>
                                   {cfg.label}
                                 </span>
                                 {pkg.deliveryBundleId && (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-purple-100 text-purple-700">
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-purple-100 text-purple-700">
                                     <Layers className="h-3 w-3" />
                                     Bundle #{pkg.deliveryBundleId}
                                   </span>
                                 )}
                                 {pkg.priority !== 'normal' && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-orange-100 text-orange-700">
+                                  <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded-full bg-orange-100 text-orange-700">
                                     {pkg.priority}
                                   </span>
                                 )}
+                                {pkg.specialItemId && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-violet-100 text-violet-700">
+                                    <Sparkles className="h-3 w-3" />
+                                    Special
+                                  </span>
+                                )}
                               </div>
-                              <div className="flex items-center gap-3 mt-0.5">
-                                <p className="text-xs text-gray-500 truncate">{pkg.description}</p>
-                                <span className="text-[10px] text-gray-300 flex-shrink-0">
-                                  {new Date(pkg.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                                </span>
+
+                              {/* Description + meta */}
+                              <div className="flex items-center gap-3 mt-1">
+                                <p className="text-sm text-gray-600 truncate">{pkg.description}</p>
+                                {pkg.externalTrackingNumber && (
+                                  <span className="text-[10px] text-gray-400 flex-shrink-0 hidden sm:inline">Ext: {pkg.externalTrackingNumber}</span>
+                                )}
                               </div>
                             </div>
 
-                            {/* Right side: cost + weight + quick action */}
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <div className="text-right hidden sm:block">
-                                <p className="text-sm font-bold text-gray-900">${pkg.totalCost}</p>
-                                <p className="text-[10px] text-gray-400">{pkg.weight} {pkg.weightUnit}</p>
-                              </div>
+                            {/* Total cost - prominent */}
+                            <div className="text-right flex-shrink-0">
+                              <p className="text-xl font-bold text-gray-900">${pkg.totalCost}</p>
+                              <p className="text-xs text-gray-400">{pkg.weight} {pkg.weightUnit}</p>
+                            </div>
+                          </div>
 
-                              {/* Quick status button */}
+                          {/* ── Row 2: Status pipeline ───────────────── */}
+                          <div className="mt-4 flex items-center gap-1">
+                            {ALL_STATUSES.map((s, i) => {
+                              const sCfg = STATUS_CONFIG[s];
+                              const isActive = i <= statusIdx;
+                              const isCurrent = s === pkg.status;
+                              return (
+                                <div key={s} className="flex-1 flex flex-col items-center gap-1">
+                                  <div className={`w-full h-1.5 rounded-full transition-all ${
+                                    isActive ? `bg-gradient-to-r ${sCfg?.gradient || 'from-gray-400 to-gray-500'}` : 'bg-gray-100'
+                                  }`} />
+                                  <span className={`text-[9px] font-medium hidden sm:block ${
+                                    isCurrent ? (sCfg?.color || 'text-gray-700') + ' font-bold' : isActive ? 'text-gray-500' : 'text-gray-300'
+                                  }`}>
+                                    {sCfg?.label || s}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* ── Row 3: Info grid ─────────────────────── */}
+                          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+                            {/* Location */}
+                            <div className="bg-gray-50 rounded-lg p-2.5">
+                              <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5"><MapPin className="h-3 w-3" />Emplacement</div>
+                              <p className="text-xs font-medium text-gray-800 truncate">{pkg.currentLocation || 'N/A'}</p>
+                            </div>
+
+                            {/* Date */}
+                            <div className="bg-gray-50 rounded-lg p-2.5">
+                              <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5"><Calendar className="h-3 w-3" />Date</div>
+                              <p className="text-xs font-medium text-gray-800">
+                                {new Date(pkg.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </p>
+                            </div>
+
+                            {/* Service Fee */}
+                            <div className="bg-blue-50/60 rounded-lg p-2.5">
+                              <div className="flex items-center gap-1 text-[10px] text-blue-400 mb-0.5"><ReceiptText className="h-3 w-3" />Service</div>
+                              <p className="text-xs font-bold text-blue-700">${pkg.serviceFee}</p>
+                            </div>
+
+                            {/* Weight Fee */}
+                            <div className="bg-orange-50/60 rounded-lg p-2.5">
+                              <div className="flex items-center gap-1 text-[10px] text-orange-400 mb-0.5"><Weight className="h-3 w-3" />Poids</div>
+                              <p className="text-xs font-bold text-orange-700">${pkg.weightCost}</p>
+                            </div>
+
+                            {/* Customs Fee (only if > 0) */}
+                            {parseFloat(pkg.customsFees || '0') > 0 && (
+                              <div className="bg-amber-50/60 rounded-lg p-2.5">
+                                <div className="flex items-center gap-1 text-[10px] text-amber-400 mb-0.5"><Shield className="h-3 w-3" />Douane</div>
+                                <p className="text-xs font-bold text-amber-700">${pkg.customsFees}</p>
+                              </div>
+                            )}
+
+                            {/* Special Item Fee (only if special) */}
+                            {pkg.specialItemId && specialFee > 0 && (
+                              <div className="bg-violet-50/60 rounded-lg p-2.5">
+                                <div className="flex items-center gap-1 text-[10px] text-violet-400 mb-0.5"><Sparkles className="h-3 w-3" />Special</div>
+                                <p className="text-xs font-bold text-violet-700">${specialFee.toFixed(2)}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* ── Row 4: Actions ───────────────────────── */}
+                          <div className="mt-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {/* Quick status */}
                               {nextStatus && (
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); handleQuickStatus(pkg); }}
-                                  title={`→ ${STATUS_CONFIG[nextStatus]?.label}`}
-                                  className={`p-1.5 rounded-lg border transition-all hover:shadow-sm ${STATUS_CONFIG[nextStatus]?.bg} ${STATUS_CONFIG[nextStatus]?.border} ${STATUS_CONFIG[nextStatus]?.color}`}
+                                  onClick={() => handleQuickStatus(pkg)}
+                                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all hover:shadow-sm ${STATUS_CONFIG[nextStatus]?.bg} ${STATUS_CONFIG[nextStatus]?.border} ${STATUS_CONFIG[nextStatus]?.color}`}
                                 >
-                                  <ChevronRight className="h-3.5 w-3.5" />
+                                  <ArrowRight className="h-3.5 w-3.5" />
+                                  {STATUS_CONFIG[nextStatus]?.label}
                                 </button>
                               )}
 
                               <button
-                                onClick={() => setExpandedPackage(isExpanded ? null : pkg.id)}
-                                className="p-1 rounded hover:bg-gray-100 transition-colors"
+                                onClick={() => startEditing(pkg)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
                               >
-                                {isExpanded ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+                                <Edit3 className="h-3.5 w-3.5" />
+                                Modifier
                               </button>
+                              <button
+                                onClick={() => handleDeletePackage(pkg.id, pkg.trackingNumber)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                Supprimer
+                              </button>
+                              {pkg.status === 'available' && hasBundleOpportunity && (
+                                <button
+                                  onClick={() => setShowBundleDeliverModal(true)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                                >
+                                  <Layers className="h-3.5 w-3.5" />
+                                  Bundle
+                                </button>
+                              )}
+                              {pkg.deliveryBundleId && pkg.status === 'delivered' && (
+                                <button
+                                  onClick={() => setCancelBundleId(pkg.deliveryBundleId)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+                                >
+                                  <Layers className="h-3.5 w-3.5" />
+                                  Annuler Bundle
+                                </button>
+                              )}
                             </div>
+
+                            {/* Expand timeline button */}
+                            <button
+                              onClick={() => setExpandedPackage(isExpanded ? null : pkg.id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                            >
+                              {pkg.timeline?.length > 0 && <span className="text-[10px]">{pkg.timeline.length} events</span>}
+                              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </button>
                           </div>
                         </div>
 
-                        {/* Expanded Content */}
+                        {/* ── Expanded: Edit Form + Timeline ─────────── */}
                         <AnimatePresence>
                           {isExpanded && (
                             <motion.div
@@ -1055,40 +1165,9 @@ export default function UserDetailPage() {
                               transition={{ duration: 0.2 }}
                               className="overflow-hidden"
                             >
-                              <div className="px-4 pb-4 border-t border-gray-100 pt-4 space-y-4">
-                                {/* Info Grid */}
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                  <div className="bg-gray-50 rounded-lg p-2.5">
-                                    <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5"><Hash className="h-3 w-3" />Tracking</div>
-                                    <p className="text-xs font-medium text-gray-900">{pkg.trackingNumber}</p>
-                                    {pkg.externalTrackingNumber && (
-                                      <p className="text-[10px] text-gray-500 mt-0.5">Ext: {pkg.externalTrackingNumber}</p>
-                                    )}
-                                  </div>
-                                  <div className="bg-gray-50 rounded-lg p-2.5">
-                                    <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5"><Weight className="h-3 w-3" />Poids</div>
-                                    <p className="text-xs font-medium text-gray-900">{pkg.weight} {pkg.weightUnit}</p>
-                                  </div>
-                                  <div className="bg-gray-50 rounded-lg p-2.5">
-                                    <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5"><MapPin className="h-3 w-3" />Emplacement</div>
-                                    <p className="text-xs font-medium text-gray-900">{pkg.currentLocation || 'N/A'}</p>
-                                  </div>
-                                  <div className="bg-gray-50 rounded-lg p-2.5">
-                                    <div className="flex items-center gap-1 text-[10px] text-gray-400 mb-0.5"><DollarSign className="h-3 w-3" />Breakdown</div>
-                                    <p className="text-xs font-bold text-primary-700">${pkg.totalCost}</p>
-                                    <div className="text-[10px] text-gray-400 space-y-0.5 mt-0.5">
-                                      <p>Service: ${pkg.serviceFee}</p>
-                                      <p>Poids: ${pkg.weightCost}</p>
-                                      {parseFloat(pkg.customsFees || '0') > 0 && <p>Douane: ${pkg.customsFees}</p>}
-                                      {pkg.specialItemId && (
-                                        <p className="text-violet-500">Special: ${(parseFloat(pkg.totalCost) - parseFloat(pkg.serviceFee) - parseFloat(pkg.weightCost) - parseFloat(pkg.customsFees || '0')).toFixed(2)}</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-
+                              <div className="px-4 sm:px-5 pb-4 sm:pb-5 border-t border-gray-100 pt-4 space-y-4">
                                 {/* Edit Form */}
-                                {isEditing ? (
+                                {isEditing && (
                                   <div className="bg-primary-50/50 rounded-xl p-4 border border-primary-100">
                                     <h4 className="text-sm font-semibold text-gray-900 mb-3">Modifier le colis</h4>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1143,71 +1222,39 @@ export default function UserDetailPage() {
                                       </button>
                                     </div>
                                   </div>
-                                ) : null}
+                                )}
 
                                 {/* Timeline */}
                                 {pkg.timeline && pkg.timeline.length > 0 && (
                                   <div>
-                                    <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Historique</h4>
-                                    <div className="space-y-2">
+                                    <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">Historique</h4>
+                                    <div className="space-y-3">
                                       {pkg.timeline.map((entry, i) => (
                                         <div key={entry.id} className="flex items-start gap-3">
                                           <div className="relative flex-shrink-0">
-                                            <div className={`h-2.5 w-2.5 rounded-full mt-1 ${i === 0 ? 'bg-primary-500 ring-4 ring-primary-100' : 'bg-gray-300'}`} />
+                                            <div className={`h-3 w-3 rounded-full mt-0.5 ${i === 0 ? 'bg-primary-500 ring-4 ring-primary-100' : 'bg-gray-300'}`} />
                                             {i < pkg.timeline.length - 1 && (
-                                              <div className="absolute top-3.5 left-1 w-px h-5 bg-gray-200" />
+                                              <div className="absolute top-4 left-1.5 w-px h-6 bg-gray-200" />
                                             )}
                                           </div>
                                           <div>
-                                            <p className="text-xs font-medium text-gray-900">{entry.status}</p>
-                                            <p className="text-[10px] text-gray-500">{entry.location} {entry.description ? `- ${entry.description}` : ''}</p>
-                                            <p className="text-[10px] text-gray-400 mt-0.5">
-                                              {new Date(entry.timestamp).toLocaleDateString('fr-FR', {
-                                                day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
-                                              })}
-                                            </p>
+                                            <div className="flex items-center gap-2">
+                                              <p className="text-xs font-semibold text-gray-900">{STATUS_CONFIG[entry.status]?.label || entry.status}</p>
+                                              <span className="text-[10px] text-gray-400">
+                                                {new Date(entry.timestamp).toLocaleDateString('fr-FR', {
+                                                  day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+                                                })}
+                                              </span>
+                                            </div>
+                                            {(entry.location || entry.description) && (
+                                              <p className="text-[11px] text-gray-500 mt-0.5">{entry.location}{entry.description ? ` — ${entry.description}` : ''}</p>
+                                            )}
                                           </div>
                                         </div>
                                       ))}
                                     </div>
                                   </div>
                                 )}
-
-                                {/* Actions */}
-                                <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); startEditing(pkg); }}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors"
-                                  >
-                                    <Edit3 className="h-3.5 w-3.5" />
-                                    Modifier
-                                  </button>
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); handleDeletePackage(pkg.id, pkg.trackingNumber); }}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                    Supprimer
-                                  </button>
-                                  {pkg.status === 'available' && hasBundleOpportunity && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); setShowBundleDeliverModal(true); }}
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
-                                    >
-                                      <Layers className="h-3.5 w-3.5" />
-                                      Bundle
-                                    </button>
-                                  )}
-                                  {pkg.deliveryBundleId && pkg.status === 'delivered' && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); setCancelBundleId(pkg.deliveryBundleId); }}
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
-                                    >
-                                      <Layers className="h-3.5 w-3.5" />
-                                      Annuler Bundle
-                                    </button>
-                                  )}
-                                </div>
                               </div>
                             </motion.div>
                           )}
