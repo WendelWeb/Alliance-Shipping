@@ -8,6 +8,13 @@ const isPublicRoute = createRouteMatcher([
   '/',
   '/news',
   '/calculator',
+  // Legal & compliance pages (required public by Google Play / App Store)
+  '/privacy-policy',
+  '/terms',
+  '/terms-of-service',
+  '/shipping-policy',
+  '/delete-account',
+  '/api/user/delete-request',
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/api/webhooks(.*)',

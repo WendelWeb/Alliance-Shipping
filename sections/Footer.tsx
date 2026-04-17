@@ -26,6 +26,7 @@ export function Footer() {
     { label: t.footer.privacyPolicy, href: '/privacy-policy' },
     { label: t.footer.termsOfService, href: '/terms-of-service' },
     { label: t.footer.shippingPolicy, href: '/shipping-policy' },
+    { label: 'Delete account', href: '/delete-account' },
   ];
 
   const socialIcons: Record<string, any> = {

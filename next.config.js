@@ -6,6 +6,12 @@ const nextConfig = {
   },
   // External packages for server components
   serverExternalPackages: ['@neondatabase/serverless'],
+  async redirects() {
+    return [
+      { source: '/terms', destination: '/terms-of-service', permanent: true },
+      { source: '/privacy', destination: '/privacy-policy', permanent: true },
+    ];
+  },
 }
 
 module.exports = nextConfig
